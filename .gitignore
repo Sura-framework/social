@@ -1,0 +1,5 @@
+/system/config.php
+/system/db.php
+/vendor
+/.idea
+.env
