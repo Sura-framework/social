@@ -2,11 +2,15 @@
     "name": "sura/sura",
     "type": "project",
     "description": "The Sura framewwork.",
-    "keywords": [
-        "framewwork",
-        "sura"
-    ],
+    "keywords": ["framewwork", "sura","router", "mvc"],
     "license": "MIT",
+    "authors": [
+      {
+          "name": "Semen Alekseev",
+          "email": "semyon492@ya.ru",
+          "homepage": "https://alekseevs.ru/"
+      }
+    ],
     "require": {
       "php": "^7.4",
       "ext-json": "*",
@@ -18,6 +22,8 @@
       "james-heinrich/getid3": "^1.9",
       "intervention/image": "^2.5",
       "thiagoalessio/tesseract_ocr": "^2.9",
+    },
+    "require-dev": {
       "phpunit/phpunit": "^9.1"
     },
     "autoload": {
