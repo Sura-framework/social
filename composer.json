@@ -1,0 +1,31 @@
+{
+    "name": "sura/sura",
+    "type": "project",
+    "description": "The Sura framewwork.",
+    "keywords": [
+        "framewwork",
+        "sura"
+    ],
+    "license": "MIT",
+    "require": {
+      "php": "^7.4",
+      "ext-json": "*",
+      "ext-iconv": "*",
+      "ext-gd": "*",
+      "ext-mysqli": "*",
+      "ext-openssl": "*",
+      "php-ffmpeg/php-ffmpeg": "^0.14.0",
+      "james-heinrich/getid3": "^1.9",
+      "intervention/image": "^2.5",
+      "thiagoalessio/tesseract_ocr": "^2.9",
+      "phpunit/phpunit": "^9.1"
+    },
+    "autoload": {
+      "files": [
+        "system/helpers.php"
+      ],
+      "psr-4": {
+          "System\\": "system/"
+      }
+    }
+}
