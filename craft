@@ -1,0 +1,92 @@
+<?php
+
+if (PHP_SAPI === 'cli') {
+	
+	$config = include __DIR__.'/system/data/config.php';
+	include __DIR__.'/system/data/db.php';
+	require __DIR__.'/system/classes/mysql.php';
+	$db = new db;
+
+}else{
+	echo 'error: not cli';
+	die();
+}
+
+$go = $_SERVER['argv']['1'];
+      switch ($go) {
+      	case '-all':
+	      commandline_help();
+	      die();
+	      case '-video':
+      			// print "Start convert\n";
+		      if ($_SERVER['argv']['2']=='convert') {
+				$row = $db->super_query("SELECT id, video, type FROM `".PREFIX."_videos_decode` LIMIT 0, 1", 1);
+
+				$row_count = count($row);
+				if ($row_count > 0) {
+					foreach ($row as $key) {
+						$dir_file_name = str_replace('.'.$key['type'], '', $key['video']);
+						$video_convert = false;
+						if (file_exists($dir_file_name.'_240.mp4')) {
+							$db->query("DELETE FROM `".PREFIX."_videos_decode` WHERE video = '".$key['video']."'");
+							print "End convert\nFinish\n";
+							die();
+						}else{
+							$video_convert = true;
+						}
+
+
+						if ($key['type'] == 'mp4' AND $video_convert == true) {
+
+							//
+					    	//240
+					    	exec('/usr/bin/ffmpeg -y -i '.$key['video'].' -vcodec libx264 -vprofile baseline -preset slow -b:v 250k -maxrate 250k -bufsize 500k -vf scale=320:180 -threads 0 -ab 96k '.$dir_file_name.'_240.mp4');
+
+				    		// 720
+					    	exec('/usr/bin/ffmpeg -y -i '.$key['video'].' -vcodec libx264 -vprofile baseline -preset slow -b:v 1000k -maxrate 500k -bufsize 1000k -vf scale=854:480 -threads 0 -ab 150k '.$dir_file_name.'_720.mp4');
+					    	
+
+							if (file_exists($dir_file_name.'_240.mp4')) {
+								$db->query("DELETE FROM `".PREFIX."_videos_decode` WHERE video = '".$key['video']."'");	
+							}				    	
+					    	// ffmpeg -i inputfile.avi -vcodec libx264 -vprofile high -preset slower -b:v 1000k -vf scale=-1:576 -threads 0 -acodec libvo_aacenc -ab 196k output.mp4
+
+					    	// exec('/usr/bin/ffmpeg -y -i '.$key['video'].' -vcodec libx264 -vprofile baseline -preset slow -b:v 250k -maxrate 250k -bufsize 500k -vf scale=320:240 -threads 0 -ab 96k '.$dir_file_name.'_240.mp4');
+
+
+					    	//480
+					    	//'ffmpeg -i input_file.avi -vcodec libx264 -vprofile high -preset slow -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=-1:480 -threads 0 -acodec libvo_aacenc -b:a 128k output_file.mp4'
+
+					    	//480p video for iPads and tablets (480p at 400kbit/s in main profile):
+							//ffmpeg -i inputfile.avi -vcodec libx264 -vprofile main -preset slow -b:v 400k -maxrate 400k -bufsize 800k -vf scale=-1:480 -threads 0 -acodec libvo_aacenc -ab 128k output.mp4
+					    
+			     			print "Convert Finish\n";
+					    	die();
+						}
+					}
+				}else{
+					print "Not found new videos\n";
+					die();
+				}
+
+			      die();
+		      }else{
+			      commandline_help();
+			      die();
+		      }
+	     	die();	      	
+
+      	default:
+	      commandline_help();
+	      die();
+      }
+
+  function commandline_help() {
+    print "Usage: php craft <options>\n\n";
+    print "Options:\n";
+    print " -all\t\t Info\n";
+    print " -video convert \t\t convert uploads video\n";
+    print " -d <num>\t Set  <num> (deprecated)\n";
+  }
+
+?>
