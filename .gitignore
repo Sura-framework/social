@@ -1,5 +1,10 @@
 /system/config.php
 /system/db.php
 /vendor
+/public/uploads/ads
+/public/uploads/apps
+/public/uploads/attah
+/public/uploads/users
+/public/uploads/videos
 /.idea
 .env
