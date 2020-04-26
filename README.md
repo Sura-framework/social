@@ -1,37 +1,100 @@
-## Welcome to GitHub Pages
+# Sura
 
-You can use the [editor on GitHub](https://github.com/semyon492/sura/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+<p align="center">
+    <a href="https://packagist.org/packages/sura/framework">
+        <img src="https://poser.pugx.org/sura/framework/downloads" alt="Total Downloads">
+    </a>
+    <a href="https://packagist.org/packages/sura/framework">
+        <img src="https://poser.pugx.org/sura/framework/v/stable" alt="Latest Stable Version">
+    </a>
+    <a href="https://packagist.org/packages/sura/framework">
+    <img src="https://poser.pugx.org/sura/framework/license" alt="License">
+    </a>
+</p>
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## Installation
+<a name="server-requirements"></a>
+### Server Requirements
 
-### Markdown
+The Sura framework has a few system requirements. 
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+However, if you are not using Homestead, you will need to make sure your server meets the following requirements:
 
-```markdown
-Syntax highlighted code block
+<div class="content-list" markdown="1" style="display: flex;flex-direction: column">
 
-# Header 1
-## Header 2
-### Header 3
+- PHP >= 7.4
+- JSON PHP Extension
+- ICONV PHP Extension
+- GD PHP extension
+- MySQLI PHP Extension
+- OpenSSL PHP Extension
+</div>
 
-- Bulleted
-- List
+<a name="installing-sura"></a>
+### Installing Sura
 
-1. Numbered
-2. List
+It's recommended that you use [Composer](https://getcomposer.org/) to install Slim.
 
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+```bash
+$ composer require sura/sura:^0.1.0
 ```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+<a name="configuration"></a>
+### Configuration
 
-### Jekyll Themes
+#### Public Directory
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/semyon492/sura/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+After installing Sura, you should configure your web server's document / web root to be the `public` directory. The `index.php` in this directory serves as the front controller for all HTTP requests entering your application.
 
-### Support or Contact
+#### Configuration Files
 
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+All of the configuration files for the Sura framework are stored in the `config` directory.
+
+
+<a name="urls"></a>
+### URLs
+
+#### Apache
+
+Sura includes a `public/.htaccess` file that is used to provide URLs without the `index.php` front controller in the path. Before serving Sura with Apache, be sure to enable the `mod_rewrite` module so the `.htaccess` file will be honored by the server.
+
+If the `.htaccess` file that ships with Sura does not work with your Apache installation, try this alternative:
+```
+    Options +FollowSymLinks -Indexes
+    RewriteEngine On
+
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+```
+#### Nginx
+
+If you are using Nginx, the following directive in your site configuration will direct all requests to the `index.php` front controller:
+```
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+```
+
+## Contributing
+
+Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+
+## Security
+
+If you discover security related issues, please email semyon492@ya.ru instead of using the issue tracker.
+
+## For enterprise
+
+semyon492@ya.ru
+
+### Financial Contributors
+
+Become a financial contributor and help us sustain our community. (semyon492@ya.ru)
+
+## License
+
+The Sura Framework is licensed under the MIT license. See [License File](LICENSE.md) for more information.
