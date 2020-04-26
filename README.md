@@ -33,7 +33,7 @@ However, if you are not using Homestead, you will need to make sure your server 
 <a name="installing-sura"></a>
 ### Installing Sura
 
-It's recommended that you use [Composer](https://getcomposer.org/) to install Slim.
+It's recommended that you use [Composer](https://getcomposer.org/) to install Sura.
 
 ```bash
 $ composer require sura/sura:^0.1.0
