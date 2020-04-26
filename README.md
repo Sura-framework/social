@@ -39,6 +39,18 @@ It's recommended that you use [Composer](https://getcomposer.org/) to install Su
 $ composer require sura/sura:^0.1.0
 ```
 
+To create a migration, use the -migrate
+
+```bash
+$ php craft -migrate
+```
+
+To create a user admin, use the -make:add-user <name> <lastname> <mail> <pass>
+
+```bash
+$ php craft -make:add-user Ivan Petrov petrov@example.com password
+```
+
 <a name="configuration"></a>
 ### Configuration
 
