@@ -27,7 +27,6 @@ However, if you are not using Homestead, you will need to make sure your server 
 - ICONV PHP Extension
 - GD PHP extension
 - MySQLI PHP Extension
-- OpenSSL PHP Extension
 </div>
 
 <a name="installing-sura"></a>
@@ -74,9 +73,6 @@ If the `.htaccess` file that ships with Sura does not work with your Apache inst
 ```
     Options +FollowSymLinks -Indexes
     RewriteEngine On
-
-    RewriteCond %{HTTP:Authorization} .
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
