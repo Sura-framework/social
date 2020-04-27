@@ -18,7 +18,7 @@ ob_start();
 ob_implicit_flush(0);
 
 
-$config = include __DIR__.'/data/config.php';
+$config = include __DIR__.'/../config/config.php';
 $params['config'] = $config;
 
 if(!$config['home_url']) die("Sura Engine not installed. Please run install.php");

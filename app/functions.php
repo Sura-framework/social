@@ -72,7 +72,7 @@ function xfieldsdataload($id){
 }
 
 function profileload() {
-	$path = __DIR__.'/data/xfields.txt';
+	$path = __DIR__.'/../config/xfields.txt';
 	$filecontents = file($path);
 
 	if(!is_array($filecontents)){
