@@ -14,7 +14,7 @@
 <header class="fixed-top">
   <div class="ml-3 mr-3">
     <nav class="flex-nowrap navbar navbar-expand-lg navbar-dark">
-        <a href="/"  onClick="Page.Go(this.href); return false;" class="navbar-brand logo">Joch</a>
+        <a href="/"  onClick="Page.Go(this.href); return false;" class="navbar-brand logo">Sura</a>
         <form class="d-none d-sm-none d-lg-flex form-inline my-2 my-lg-0" id="/* search_tab */">
           <input class="form-control serch_inpt" type="search" placeholder="Search" aria-label="Search" style="width: 50%;" id="query" maxlength="65" onblur="if(this.value=='') this.value='Поиск';this.style.color = '#c1cad0';" onfocus="if(this.value=='Поиск')this.value='';this.style.color = '#000'" onkeypress="if(event.keyCode == 13) gSearch.go();" onkeyup="FSE.Txt()">
           <div id="search_types">
@@ -116,7 +116,7 @@
 <footer>
     <div class="container">
         <div class="footer">
-            Joch &copy; 2020 <a class="cursor_pointer" onClick="trsn.box()"
+            Sura &copy; 2020 <a class="cursor_pointer" onClick="trsn.box()"
             onMouseOver="myhtml.title('1', 'Выбор используемого языка на сайте', 'langTitle', 1)"
             id="langTitle1">{lang}</a>
             <div class="fl_r">
