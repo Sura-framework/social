@@ -250,6 +250,7 @@ $router->add([
     '/settings/saveprivacy/'                      => 'Settings@saveprivacy',
     '/settings/addblacklist/'                     => 'Settings@addblacklist',
     '/settings/delblacklist/'                     => 'Settings@delblacklist',
+    '/settings/timezona/'                     => 'Settings@time_zona',
 
     //Помощь
     '/support/'                                   => 'Support@Index',

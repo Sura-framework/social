@@ -98,7 +98,7 @@ $go = $_SERVER['argv']['1'];
         case '-migrate':
             $db = Db::getDB();
             $tableSchema = array();
-            
+
             $tableSchema[] = "CREATE TABLE `ads` (
   `id` int(11) NOT NULL,
   `text` varchar(64) NOT NULL,
@@ -116,7 +116,7 @@ $go = $_SERVER['argv']['1'];
   `active` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
 
-            
+
             $tableSchema[] = "CREATE TABLE `ads_settings` (
   `idad` int(11) NOT NULL,
   `country` int(11) NOT NULL,
@@ -126,7 +126,7 @@ $go = $_SERVER['argv']['1'];
   `agel` int(11) NOT NULL,
   `sp` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `albums` (
   `aid` int(11) UNSIGNED NOT NULL,
   `user_id` int(11) UNSIGNED NOT NULL,
@@ -140,7 +140,7 @@ $go = $_SERVER['argv']['1'];
   `position` smallint(6) UNSIGNED NOT NULL,
   `privacy` varchar(3) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `antispam` (
   `id` int(11) NOT NULL,
   `act` tinyint(3) NOT NULL,
@@ -148,7 +148,7 @@ $go = $_SERVER['argv']['1'];
   `date` int(10) NOT NULL,
   `txt` varchar(32) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `apps` (
   `id` int(11) NOT NULL,
   `url` varchar(255) NOT NULL,
@@ -172,7 +172,7 @@ $go = $_SERVER['argv']['1'];
   `iframe` text NOT NULL,
   `tb1.game_id` int(11) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `apps_transactions` (
   `id` int(11) NOT NULL,
   `application_id` int(11) NOT NULL,
@@ -181,7 +181,7 @@ $go = $_SERVER['argv']['1'];
   `whom` int(11) NOT NULL,
   `date` int(11) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `apps_users` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -189,7 +189,7 @@ $go = $_SERVER['argv']['1'];
   `balance` int(10) NOT NULL DEFAULT '0',
   `date` int(11) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `attach` (
   `id` int(11) NOT NULL,
   `photo` varchar(255) NOT NULL,
@@ -198,7 +198,7 @@ $go = $_SERVER['argv']['1'];
   `public_id` int(11) NOT NULL,
   `add_date` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `attach_comm` (
   `id` int(11) NOT NULL,
   `forphoto` varchar(30) NOT NULL,
@@ -206,7 +206,7 @@ $go = $_SERVER['argv']['1'];
   `text` text NOT NULL,
   `adate` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `audio` (
   `id` int(11) UNSIGNED NOT NULL,
   `oid` int(11) UNSIGNED NOT NULL,
@@ -222,7 +222,7 @@ $go = $_SERVER['argv']['1'];
   `original` int(11) NOT NULL,
   `public` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `banned` (
   `id` int(11) NOT NULL,
   `descr` text NOT NULL,
@@ -230,14 +230,14 @@ $go = $_SERVER['argv']['1'];
   `always` smallint(4) NOT NULL,
   `ip` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `blog` (
   `id` int(11) UNSIGNED NOT NULL,
   `title` varchar(65) NOT NULL,
   `story` text NOT NULL,
   `date` varchar(15) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `bugs` (
   `id` int(11) UNSIGNED NOT NULL,
   `uids` int(11) UNSIGNED NOT NULL,
@@ -249,13 +249,13 @@ $go = $_SERVER['argv']['1'];
   `admin_text` text NOT NULL,
   `admin_id` int(11) NOT NULL DEFAULT '693'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `city` (
   `id` int(11) UNSIGNED NOT NULL,
   `id_country` int(11) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "INSERT INTO `city` (`id`, `id_country`, `name`) VALUES
 (1, 1, 'Москва'),
 (2, 1, 'Абрамцево'),
@@ -2532,7 +2532,7 @@ $go = $_SERVER['argv']['1'];
 (2273, 1, 'Тазовский'),
 (2274, 1, 'Тобольск'),
 (2275, 1, 'Тюмень')";
-            
+
             $tableSchema[] = "INSERT INTO `city` (`id`, `id_country`, `name`) VALUES
 (2276, 1, 'Уват'),
 (2277, 1, 'Унъюган'),
@@ -3607,7 +3607,7 @@ $go = $_SERVER['argv']['1'];
 (3346, 7, 'Таллин'),
 (3347, 7, 'Тарту'),
 (3348, 7, 'Хаапсалу')";
-            
+
             $tableSchema[] = "CREATE TABLE `codes` (
   `id` int(11) NOT NULL,
   `code` varchar(255) NOT NULL,
@@ -3617,7 +3617,7 @@ $go = $_SERVER['argv']['1'];
   `activate` int(11) NOT NULL,
   `user_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `communities` (
   `id` int(11) UNSIGNED NOT NULL,
   `admin` text NOT NULL,
@@ -3646,7 +3646,7 @@ $go = $_SERVER['argv']['1'];
   `cover` varchar(25) NOT NULL,
   `cover_pos` varchar(4) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `communities_audio` (
   `aid` int(11) UNSIGNED NOT NULL,
   `public_id` int(11) UNSIGNED NOT NULL,
@@ -3655,7 +3655,7 @@ $go = $_SERVER['argv']['1'];
   `name` varchar(50) NOT NULL,
   `adate` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `communities_feedback` (
   `cid` int(11) NOT NULL,
   `fuser_id` int(11) NOT NULL,
@@ -3664,7 +3664,7 @@ $go = $_SERVER['argv']['1'];
   `femail` varchar(40) NOT NULL,
   `fdate` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `communities_forum` (
   `fid` int(11) UNSIGNED NOT NULL,
   `public_id` int(11) UNSIGNED NOT NULL,
@@ -3680,7 +3680,7 @@ $go = $_SERVER['argv']['1'];
   `status` tinyint(2) UNSIGNED NOT NULL,
   `vote` mediumint(8) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `communities_forum_msg` (
   `mid` int(11) UNSIGNED NOT NULL,
   `fid` int(11) UNSIGNED NOT NULL,
@@ -3689,7 +3689,7 @@ $go = $_SERVER['argv']['1'];
   `attach` text NOT NULL,
   `mdate` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `communities_join` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -3697,7 +3697,7 @@ $go = $_SERVER['argv']['1'];
   `public_id` int(11) NOT NULL,
   `date` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `communities_stats` (
   `id` int(11) NOT NULL,
   `gid` int(11) NOT NULL,
@@ -3708,14 +3708,14 @@ $go = $_SERVER['argv']['1'];
   `exit_users` int(11) NOT NULL,
   `date_x` int(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `communities_stats_log` (
   `gid` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `act` tinyint(3) NOT NULL,
   `date` int(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `communities_wall` (
   `id` int(11) UNSIGNED NOT NULL,
   `public_id` int(11) UNSIGNED NOT NULL,
@@ -3732,18 +3732,18 @@ $go = $_SERVER['argv']['1'];
   `tell_comm` text NOT NULL,
   `fixed` tinyint(1) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `communities_wall_like` (
   `rec_id` int(11) UNSIGNED NOT NULL,
   `user_id` int(11) UNSIGNED NOT NULL,
   `date` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `country` (
   `id` int(5) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "INSERT INTO `country` (`id`, `name`) VALUES
 (1, 'Россия'),
 (2, 'Украина'),
@@ -3755,7 +3755,7 @@ $go = $_SERVER['argv']['1'];
 (8, 'Азербайджан'),
 (9, 'Литва'),
 (10, 'США')";
-            
+
             $tableSchema[] = "CREATE TABLE `doc` (
   `did` int(11) UNSIGNED NOT NULL,
   `duser_id` int(11) UNSIGNED NOT NULL,
@@ -3764,13 +3764,13 @@ $go = $_SERVER['argv']['1'];
   `ddate` varchar(10) NOT NULL,
   `ddownload_name` varchar(30) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `fave` (
   `user_id` int(11) UNSIGNED NOT NULL,
   `fave_id` int(11) UNSIGNED NOT NULL,
   `date` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `friends` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -3779,13 +3779,13 @@ $go = $_SERVER['argv']['1'];
   `subscriptions` tinyint(3) UNSIGNED NOT NULL,
   `views` mediumint(8) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `friends_demands` (
   `for_user_id` int(11) UNSIGNED NOT NULL,
   `from_user_id` int(11) UNSIGNED NOT NULL,
   `demand_date` datetime NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `gifts` (
   `gid` int(11) UNSIGNED NOT NULL,
   `uid` int(11) UNSIGNED NOT NULL,
@@ -3796,13 +3796,13 @@ $go = $_SERVER['argv']['1'];
   `gdate` varchar(10) NOT NULL,
   `status` tinyint(3) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `gifts_list` (
   `gid` int(11) NOT NULL,
   `img` varchar(50) NOT NULL,
   `price` mediumint(8) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "INSERT INTO `gifts_list` (`gid`, `img`, `price`) VALUES
 (8, '11', 30),
 (9, '14', 3),
@@ -3878,7 +3878,7 @@ $go = $_SERVER['argv']['1'];
 (79, '500', 25),
 (80, '501', 30),
 (82, '502', 20)";
-            
+
             $tableSchema[] = "CREATE TABLE `im` (
   `id` int(11) NOT NULL,
   `iuser_id` int(11) UNSIGNED NOT NULL,
@@ -3887,31 +3887,31 @@ $go = $_SERVER['argv']['1'];
   `msg_num` mediumint(8) UNSIGNED NOT NULL,
   `all_msg_num` int(11) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "INSERT INTO `im` (`id`, `iuser_id`, `im_user_id`, `idate`, `msg_num`, `all_msg_num`) VALUES
 (0, 4, 2, '1587922615', 6, 8),
 (0, 2, 9, '1587922737', 1, 10),
 (0, 6, 2, '', 10, 48),
 (0, 9, 2, '1587922737', 29, 30),
 (0, 2, 4, '1587922615', 0, 11)";
-            
+
             $tableSchema[] = "CREATE TABLE `invites` (
   `uid` int(11) NOT NULL,
   `ruid` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `log` (
   `id` int(11) NOT NULL,
   `uid` int(11) NOT NULL,
   `browser` text NOT NULL,
   `ip` varchar(15) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `mail_tpl` (
   `id` mediumint(8) NOT NULL,
   `text` text NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "INSERT INTO `mail_tpl` (`id`, `text`) VALUES
 (1, 'Доброго времени суток, {%user%}!\r\nПользователь {%user-friend%}, отправил Вам заявку на дружбу.\r\n\r\nПросмотреть заявку Вы можете по ссылке: http://mysocial.ua/friends/requests\r\n\r\nС уважением, Социальная сеть.\r\nАдминистрация http://mysocial.ua/'),
 (2, 'Доброго времени суток, {%user%}!\r\nПользователь {%user-friend%}, ответил на Вашу запись {%rec-link%}\r\n\r\nС уважением, Социальная сеть.\r\nАдминистрация http://mysocial.ua/'),
@@ -3921,7 +3921,7 @@ $go = $_SERVER['argv']['1'];
 (6, 'Доброго времени суток, {%user%}!\r\nПользователь {%user-friend%}, отправил Вам подарок.\r\n\r\nПросмотреть подарок Вы можете по ссылке: {%rec-link%}\r\n\r\nС уважением, Социальная сеть.\r\nАдминистрация http://mysocial.ua/'),
 (7, 'Доброго времени суток, {%user%}!\r\nПользователь {%user-friend%}, оставил на Вашей стене новую запись.\r\n\r\nПросмотреть запись можете по ссылке: {%rec-link%}\r\n\r\nС уважением, Социальная сеть.\r\nАдминистрация http://mysocial.ua/'),
 (8, 'Доброго времени суток, {%user%}!\r\nПользователь {%user-friend%}, отправил Вам новое личное сообщение.\r\n\r\nПросмотреть сообщение можете по ссылке: {%rec-link%}\r\n\r\nС уважением, Социальная сеть.\r\nАдминистрация http://mysocial.ua/')";
-            
+
             $tableSchema[] = "CREATE TABLE `messages` (
   `id` int(11) UNSIGNED NOT NULL,
   `theme` varchar(255) NOT NULL,
@@ -3938,7 +3938,7 @@ $go = $_SERVER['argv']['1'];
   `public` tinyint(2) UNSIGNED NOT NULL,
   `tell_comm` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `news` (
   `ac_id` int(11) UNSIGNED NOT NULL,
   `ac_user_id` int(11) UNSIGNED NOT NULL,
@@ -3950,7 +3950,7 @@ $go = $_SERVER['argv']['1'];
   `answer_text` text NOT NULL,
   `link` varchar(200) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `photos` (
   `id` int(11) UNSIGNED NOT NULL,
   `album_id` int(11) UNSIGNED NOT NULL,
@@ -3964,7 +3964,7 @@ $go = $_SERVER['argv']['1'];
   `rating_all` int(11) NOT NULL,
   `rating_max` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `photos_comments` (
   `id` int(11) UNSIGNED NOT NULL,
   `owner_id` int(11) UNSIGNED NOT NULL,
@@ -3976,7 +3976,7 @@ $go = $_SERVER['argv']['1'];
   `hash` varchar(32) NOT NULL,
   `photo_name` varchar(25) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `photos_mark` (
   `muser_id` int(11) UNSIGNED NOT NULL,
   `mphoto_id` int(11) UNSIGNED NOT NULL,
@@ -3986,7 +3986,7 @@ $go = $_SERVER['argv']['1'];
   `mmark_user_id` int(11) UNSIGNED NOT NULL,
   `mapprove` tinyint(1) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `photos_rating` (
   `id` int(11) NOT NULL,
   `photo_id` int(11) NOT NULL,
@@ -3995,7 +3995,7 @@ $go = $_SERVER['argv']['1'];
   `rating` tinyint(3) NOT NULL,
   `owner_user_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `report` (
   `id` int(11) UNSIGNED NOT NULL,
   `act` varchar(10) NOT NULL,
@@ -4005,14 +4005,14 @@ $go = $_SERVER['argv']['1'];
   `date` varchar(10) NOT NULL,
   `ruser_id` int(11) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `restore` (
   `id` int(11) NOT NULL,
   `email` varchar(50) NOT NULL,
   `hash` varchar(32) NOT NULL,
   `ip` varchar(15) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `reviews` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -4020,7 +4020,7 @@ $go = $_SERVER['argv']['1'];
   `date` int(10) NOT NULL,
   `approve` tinyint(1) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `sms_log` (
   `user_id` int(11) NOT NULL,
   `from_u` varchar(20) NOT NULL,
@@ -4031,14 +4031,14 @@ $go = $_SERVER['argv']['1'];
   `abonent_cost` float NOT NULL,
   `date` varchar(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `static` (
   `id` int(11) NOT NULL,
   `alt_name` varchar(50) NOT NULL,
   `title` varchar(150) NOT NULL,
   `text` text NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `support` (
   `id` int(11) UNSIGNED NOT NULL,
   `title` varchar(65) NOT NULL,
@@ -4048,7 +4048,7 @@ $go = $_SERVER['argv']['1'];
   `sdate` varchar(15) NOT NULL,
   `сdate` varchar(15) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `support_answers` (
   `id` int(11) UNSIGNED NOT NULL,
   `qid` int(11) UNSIGNED NOT NULL,
@@ -4056,7 +4056,7 @@ $go = $_SERVER['argv']['1'];
   `adate` varchar(15) NOT NULL,
   `answer` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `updates` (
   `id` int(11) UNSIGNED NOT NULL,
   `for_user_id` mediumint(8) UNSIGNED NOT NULL,
@@ -4068,7 +4068,7 @@ $go = $_SERVER['argv']['1'];
   `user_search_pref` varchar(50) NOT NULL,
   `user_photo` varchar(25) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `users` (
   `user_id` mediumint(11) NOT NULL,
   `user_email` varchar(50) NOT NULL,
@@ -4128,9 +4128,10 @@ $go = $_SERVER['argv']['1'];
   `user_rating` mediumint(8) NOT NULL,
   `invties_pub_num` smallint(6) NOT NULL,
   `notifications_list` text NOT NULL,
-  `user_text` varchar(255) NOT NULL
+  `user_text` varchar(255) NOT NULL,
+  `user_timezona` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `users_rating` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -4138,7 +4139,7 @@ $go = $_SERVER['argv']['1'];
   `addnum` int(11) NOT NULL,
   `date` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `users_stats` (
   `id` int(11) NOT NULL,
   `user_id` int(11) UNSIGNED NOT NULL,
@@ -4147,14 +4148,14 @@ $go = $_SERVER['argv']['1'];
   `date` int(6) UNSIGNED NOT NULL,
   `date_x` int(8) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `users_stats_log` (
   `id` int(11) NOT NULL,
   `user_id` int(11) UNSIGNED NOT NULL,
   `for_user_id` int(11) UNSIGNED NOT NULL,
   `date` int(8) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `videos` (
   `id` int(11) UNSIGNED NOT NULL,
   `owner_user_id` int(11) UNSIGNED NOT NULL,
@@ -4169,7 +4170,7 @@ $go = $_SERVER['argv']['1'];
   `views` mediumint(8) UNSIGNED NOT NULL,
   `download` int(11) DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `videos_comments` (
   `id` int(11) UNSIGNED NOT NULL,
   `author_user_id` int(11) UNSIGNED NOT NULL,
@@ -4177,27 +4178,27 @@ $go = $_SERVER['argv']['1'];
   `text` text NOT NULL,
   `add_date` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `videos_decode` (
   `id` int(11) NOT NULL,
   `video` varchar(255) NOT NULL,
   `type` varchar(5) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `votes` (
   `id` int(11) NOT NULL,
   `title` varchar(80) NOT NULL,
   `answers` text NOT NULL,
   `answer_num` mediumint(8) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `votes_result` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `vote_id` int(11) NOT NULL,
   `answer` tinyint(3) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `wall` (
   `id` int(11) UNSIGNED NOT NULL,
   `author_user_id` int(11) UNSIGNED NOT NULL,
@@ -4215,25 +4216,25 @@ $go = $_SERVER['argv']['1'];
   `attach` text NOT NULL,
   `tell_comm` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "CREATE TABLE `wall_like` (
   `id` int(11) NOT NULL,
   `rec_id` int(11) UNSIGNED NOT NULL,
   `user_id` int(11) UNSIGNED NOT NULL,
   `date` varchar(15) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
-            
+
             $tableSchema[] = "INSERT INTO `wall_like` (`id`, `rec_id`, `user_id`, `date`) VALUES
 (1, 11, 6, '1584628952'),
 (2, 9, 6, '1584629246'),
 (3, 45, 9, '1586795838')";
-            
+
             $tableSchema[] = "ALTER TABLE `ads`
   ADD PRIMARY KEY (`id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `ads_settings`
   ADD UNIQUE KEY `idad` (`idad`)";
-            
+
             $tableSchema[] = "ALTER TABLE `albums`
   ADD PRIMARY KEY (`aid`),
   ADD KEY `user_id` (`user_id`),
@@ -4241,92 +4242,92 @@ $go = $_SERVER['argv']['1'];
   ADD KEY `position` (`position`),
   ADD KEY `privacy` (`privacy`),
   ADD KEY `ahash` (`ahash`)";
-            
+
             $tableSchema[] = "ALTER TABLE `antispam`
   ADD PRIMARY KEY (`id`),
   ADD KEY `act` (`act`,`user_id`,`date`),
   ADD KEY `act_2` (`act`,`user_id`,`date`,`txt`)";
-            
+
             $tableSchema[] = "ALTER TABLE `apps`
   ADD PRIMARY KEY (`id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `apps_users`
   ADD PRIMARY KEY (`id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `attach`
   ADD PRIMARY KEY (`id`),
   ADD KEY `photo` (`photo`),
   ADD KEY `public_id` (`public_id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `attach_comm`
   ADD PRIMARY KEY (`id`),
   ADD KEY `forphoto` (`forphoto`)";
-            
+
             $tableSchema[] = "ALTER TABLE `audio`
   ADD PRIMARY KEY (`id`),
   ADD KEY `auser_id` (`oid`),
   ADD KEY `adate` (`date`);
 ";
-            
-            $tableSchema[] = "ALTER TABLE `audio` 
+
+            $tableSchema[] = "ALTER TABLE `audio`
             ADD FULLTEXT KEY `artist` (`artist`,`title`)";
 
             $tableSchema[] = "ALTER TABLE `banned`
   ADD PRIMARY KEY (`id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `blog`
   ADD PRIMARY KEY (`id`),
   ADD KEY `date` (`date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `bugs`
   ADD UNIQUE KEY `id` (`id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `city`
   ADD PRIMARY KEY (`id`),
   ADD KEY `id_country` (`id_country`)";
-            
+
             $tableSchema[] = "ALTER TABLE `codes`
   ADD PRIMARY KEY (`id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `communities`
   ADD PRIMARY KEY (`id`),
   ADD KEY `del` (`del`),
   ADD KEY `ban` (`ban`),
   ADD KEY `traf` (`traf`),
   ADD KEY `photo` (`photo`)";
-            
-            $tableSchema[] = "ALTER TABLE `communities` 
+
+            $tableSchema[] = "ALTER TABLE `communities`
             ADD FULLTEXT KEY `title` (`title`)";
 
             $tableSchema[] = "ALTER TABLE `communities_audio`
   ADD PRIMARY KEY (`aid`),
   ADD KEY `auser_id` (`public_id`),
   ADD KEY `adate` (`adate`)";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_feedback`
   ADD KEY `cid` (`cid`),
   ADD KEY `fuser_id` (`fuser_id`),
   ADD KEY `fdate` (`fdate`)";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_forum`
   ADD PRIMARY KEY (`fid`),
   ADD KEY `public_id` (`public_id`),
   ADD KEY `fdate` (`fdate`),
   ADD KEY `lastdate` (`lastdate`),
   ADD KEY `fixed` (`fixed`)";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_forum_msg`
   ADD PRIMARY KEY (`mid`),
   ADD KEY `fid` (`fid`),
   ADD KEY `muser_id` (`muser_id`),
   ADD KEY `mdate` (`mdate`)";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_join`
   ADD PRIMARY KEY (`id`),
   ADD KEY `for_sel` (`for_user_id`,`public_id`),
   ADD KEY `for_sel_1` (`user_id`,`public_id`,`date`),
   ADD KEY `for_sel_2` (`for_user_id`,`public_id`,`user_id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_stats`
   ADD KEY `sel` (`gid`,`date`),
   ADD KEY `date` (`date`),
@@ -4335,49 +4336,49 @@ $go = $_SERVER['argv']['1'];
   ADD KEY `new_users` (`new_users`),
   ADD KEY `exit_users` (`exit_users`),
   ADD KEY `sel_1` (`gid`,`date_x`)";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_stats_log`
   ADD KEY `gid` (`gid`,`user_id`,`date`,`act`)";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_wall`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fast_comm_id` (`fast_comm_id`),
   ADD KEY `public_id` (`public_id`),
   ADD KEY `add_date` (`add_date`),
   ADD KEY `tell_date` (`tell_date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_wall_like`
   ADD KEY `rec_id` (`rec_id`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `date` (`date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `country`
   ADD PRIMARY KEY (`id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `doc`
   ADD PRIMARY KEY (`did`),
   ADD KEY `duser_id` (`duser_id`),
   ADD KEY `ddate` (`ddate`)";
-            
+
             $tableSchema[] = "ALTER TABLE `fave`
   ADD KEY `for_fast_select1` (`user_id`,`fave_id`,`date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `friends`
   ADD KEY `for_fast_select1` (`user_id`,`friend_id`,`friends_date`),
   ADD KEY `subscriptions` (`subscriptions`),
   ADD KEY `views` (`views`),
   ADD KEY `friends_date` (`friends_date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `friends_demands`
   ADD KEY `for_fast_select1` (`for_user_id`,`from_user_id`,`demand_date`)";
-                    
+
             $tableSchema[] = "ALTER TABLE `gifts`
   ADD PRIMARY KEY (`gid`),
   ADD KEY `uid` (`uid`),
   ADD KEY `from_uid` (`from_uid`),
   ADD KEY `status` (`status`),
   ADD KEY `gdate` (`gdate`)";
-            
+
             $tableSchema[] = "ALTER TABLE `gifts_list`
   ADD PRIMARY KEY (`gid`),
   ADD KEY `img` (`img`)";
@@ -4386,17 +4387,17 @@ $go = $_SERVER['argv']['1'];
   ADD KEY `iuser_id` (`iuser_id`),
   ADD KEY `im_user_id` (`im_user_id`),
   ADD KEY `idate` (`idate`)";
-            
+
             $tableSchema[] = "ALTER TABLE `invites`
   ADD KEY `uid` (`uid`)";
-            
+
             $tableSchema[] = "ALTER TABLE `log`
   ADD PRIMARY KEY (`id`),
   ADD KEY `uid` (`uid`)";
-            
+
             $tableSchema[] = "ALTER TABLE `mail_tpl`
   ADD PRIMARY KEY (`id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `messages`
   ADD PRIMARY KEY (`id`),
   ADD KEY `for_fast_select1` (`for_user_id`,`from_user_id`,`folder`,`history_user_id`),
@@ -4405,7 +4406,7 @@ $go = $_SERVER['argv']['1'];
   ADD KEY `from_user_id` (`from_user_id`),
   ADD KEY `history_user_id` (`history_user_id`),
   ADD KEY `folder` (`folder`)";
-            
+
             $tableSchema[] = "ALTER TABLE `news`
   ADD PRIMARY KEY (`ac_id`),
   ADD KEY `for_fast_select1` (`ac_user_id`,`action_time`),
@@ -4413,7 +4414,7 @@ $go = $_SERVER['argv']['1'];
   ADD KEY `for_user_id` (`for_user_id`),
   ADD KEY `obj_id` (`obj_id`),
   ADD KEY `action_time` (`action_time`)";
-            
+
             $tableSchema[] = "ALTER TABLE `photos`
   ADD PRIMARY KEY (`id`),
   ADD KEY `album_id` (`album_id`),
@@ -4421,7 +4422,7 @@ $go = $_SERVER['argv']['1'];
   ADD KEY `position` (`position`),
   ADD KEY `date` (`date`),
   ADD KEY `photo_name` (`photo_name`)";
-            
+
             $tableSchema[] = "ALTER TABLE `photos_comments`
   ADD PRIMARY KEY (`id`),
   ADD KEY `owner_id` (`owner_id`),
@@ -4430,61 +4431,61 @@ $go = $_SERVER['argv']['1'];
   ADD KEY `hash` (`hash`),
   ADD KEY `photo_name` (`photo_name`),
   ADD KEY `date` (`date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `photos_mark`
   ADD KEY `muser_id` (`muser_id`),
   ADD KEY `mphoto_id` (`mphoto_id`),
   ADD KEY `mdate` (`mdate`)";
 
 $tableSchema[] = "ALTER TABLE `photos_mark` ADD FULLTEXT KEY `mphoto_name` (`mphoto_name`)";
-            
+
             $tableSchema[] = "ALTER TABLE `photos_rating`
   ADD PRIMARY KEY (`id`),
   ADD KEY `for_select_1` (`id`,`user_id`),
   ADD KEY `for_select_2` (`photo_id`,`user_id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `report`
   ADD PRIMARY KEY (`id`),
   ADD KEY `ruser_id` (`ruser_id`),
   ADD KEY `mid` (`mid`),
   ADD KEY `act` (`act`),
   ADD KEY `date` (`date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `restore`
   ADD PRIMARY KEY (`id`),
   ADD KEY `email` (`email`),
   ADD KEY `hash` (`hash`),
   ADD KEY `ip` (`ip`)";
-            
+
             $tableSchema[] = "ALTER TABLE `reviews`
   ADD PRIMARY KEY (`id`),
   ADD KEY `date` (`date`),
   ADD KEY `for_sel` (`user_id`,`approve`),
   ADD KEY `approve` (`approve`)";
-            
+
             $tableSchema[] = "ALTER TABLE `sms_log`
   ADD KEY `user_id` (`user_id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `static`
   ADD PRIMARY KEY (`id`),
   ADD KEY `alt_name` (`alt_name`)";
-            
+
             $tableSchema[] = "ALTER TABLE `support`
   ADD PRIMARY KEY (`id`),
   ADD KEY `suser_id` (`suser_id`),
   ADD KEY `сdate` (`сdate`)";
-            
+
             $tableSchema[] = "ALTER TABLE `support_answers`
   ADD PRIMARY KEY (`id`),
   ADD KEY `qid` (`qid`),
   ADD KEY `auser_id` (`auser_id`),
   ADD KEY `adate` (`adate`)";
-            
+
             $tableSchema[] = "ALTER TABLE `updates`
   ADD PRIMARY KEY (`id`),
   ADD KEY `for_user_id` (`for_user_id`),
   ADD KEY `date` (`date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `users`
   ADD PRIMARY KEY (`user_id`),
   ADD KEY `user_logged_hash` (`user_hid`),
@@ -4504,22 +4505,22 @@ $tableSchema[] = "ALTER TABLE `photos_mark` ADD FULLTEXT KEY `mphoto_name` (`mph
   ADD KEY `user_sp` (`user_sp`),
   ADD KEY `user_rating` (`user_rating`),
   ADD KEY `user_search_pref` (`user_search_pref`)";
-            
+
             $tableSchema[] = "ALTER TABLE `users_rating`
   ADD PRIMARY KEY (`id`),
   ADD KEY `for_select` (`user_id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `users_stats`
   ADD KEY `date` (`date`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `date_x` (`date_x`),
   ADD KEY `views` (`views`),
   ADD KEY `users` (`users`)";
-            
+
             $tableSchema[] = "ALTER TABLE `users_stats_log`
   ADD PRIMARY KEY (`id`),
   ADD KEY `user_id` (`user_id`,`for_user_id`,`date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `videos`
   ADD PRIMARY KEY (`id`),
   ADD KEY `owner_user_id` (`owner_user_id`),
@@ -4528,180 +4529,180 @@ $tableSchema[] = "ALTER TABLE `photos_mark` ADD FULLTEXT KEY `mphoto_name` (`mph
   ADD KEY `add_date` (`add_date`)";
 
 $tableSchema[] = "ALTER TABLE `videos` ADD FULLTEXT KEY `title` (`title`)";
-            
+
             $tableSchema[] = "ALTER TABLE `videos_comments`
   ADD PRIMARY KEY (`id`),
   ADD KEY `for_fast_select1` (`author_user_id`,`video_id`),
   ADD KEY `add_date` (`add_date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `videos_decode`
   ADD PRIMARY KEY (`id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `votes`
   ADD PRIMARY KEY (`id`)";
-            
+
             $tableSchema[] = "ALTER TABLE `votes_result`
   ADD PRIMARY KEY (`id`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `vote_id` (`vote_id`),
   ADD KEY `answer` (`answer`)";
-            
+
             $tableSchema[] = "ALTER TABLE `wall`
   ADD PRIMARY KEY (`id`),
   ADD KEY `for_fast_select1` (`for_user_id`,`author_user_id`),
   ADD KEY `fast_comm_id` (`fast_comm_id`),
   ADD KEY `tell_uid` (`tell_uid`,`tell_date`),
   ADD KEY `add_date` (`add_date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `wall_like`
   ADD PRIMARY KEY (`id`),
   ADD KEY `for_fast_select1` (`rec_id`,`user_id`),
   ADD KEY `date` (`date`)";
-            
+
             $tableSchema[] = "ALTER TABLE `ads`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4";
-            
+
             $tableSchema[] = "ALTER TABLE `albums`
   MODIFY `aid` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2";
-            
+
             $tableSchema[] = "ALTER TABLE `antispam`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=155";
-            
+
             $tableSchema[] = "ALTER TABLE `apps`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `apps_users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `attach`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21";
-            
+
             $tableSchema[] = "ALTER TABLE `attach_comm`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `audio`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21";
-            
+
             $tableSchema[] = "ALTER TABLE `banned`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `blog`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `bugs`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20";
-            
+
             $tableSchema[] = "ALTER TABLE `city`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3349";
-            
+
             $tableSchema[] = "ALTER TABLE `codes`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2";
-            
+
             $tableSchema[] = "ALTER TABLE `communities`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_audio`
   MODIFY `aid` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_forum`
   MODIFY `fid` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_forum_msg`
   MODIFY `mid` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_join`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `communities_wall`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25";
-            
+
             $tableSchema[] = "ALTER TABLE `country`
   MODIFY `id` int(5) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16";
-            
+
             $tableSchema[] = "ALTER TABLE `doc`
   MODIFY `did` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `gifts`
   MODIFY `gid` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `gifts_list`
   MODIFY `gid` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83";
-            
+
             $tableSchema[] = "ALTER TABLE `log`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9";
-            
+
             $tableSchema[] = "ALTER TABLE `mail_tpl`
   MODIFY `id` mediumint(8) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9";
-            
+
             $tableSchema[] = "ALTER TABLE `messages`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=207";
-            
+
             $tableSchema[] = "ALTER TABLE `news`
   MODIFY `ac_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78";
-            
+
             $tableSchema[] = "ALTER TABLE `photos`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3";
-            
+
             $tableSchema[] = "ALTER TABLE `photos_comments`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `photos_rating`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `report`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `restore`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4";
-            
+
             $tableSchema[] = "ALTER TABLE `reviews`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `static`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `support`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3";
-            
+
             $tableSchema[] = "ALTER TABLE `support_answers`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `updates`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=87";
-            
+
             $tableSchema[] = "ALTER TABLE `users`
   MODIFY `user_id` mediumint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14";
-            
+
             $tableSchema[] = "ALTER TABLE `users_rating`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14";
-            
+
             $tableSchema[] = "ALTER TABLE `users_stats_log`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16";
-            
+
             $tableSchema[] = "ALTER TABLE `videos`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8";
-            
+
             $tableSchema[] = "ALTER TABLE `videos_comments`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `videos_decode`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2";
-            
+
             $tableSchema[] = "ALTER TABLE `votes`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
-            
+
             $tableSchema[] = "ALTER TABLE `votes_result`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4";
-            
+
             $tableSchema[] = "ALTER TABLE `wall`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46";
-            
+
             $tableSchema[] = "ALTER TABLE `wall_like`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4";
-            
+
     foreach($tableSchema as $table)
          $db->query($table);
-            
+
         die();
 
         default:

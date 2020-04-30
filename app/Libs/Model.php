@@ -1,10 +1,10 @@
 <?php
 
 
-namespace System\Libs;
+namespace App\Libs;
 
 
-use System\Classes\Db;
+use Sura\Classes\Db;
 
 abstract class Model
 {

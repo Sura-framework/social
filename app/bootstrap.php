@@ -5,6 +5,7 @@ use Sura\Classes\Db;
 use Sura\Libs\Auth;
 use Sura\Libs\Langs;
 use App\Models\Profile;
+use Sura\Libs\Profile_check;
 
 //error_reporting(E_ALL ^ E_WARNING ^ E_NOTICE);
 
@@ -21,7 +22,7 @@ ob_implicit_flush(0);
 $config = include __DIR__.'/../config/config.php';
 $params['config'] = $config;
 
-if(!$config['home_url']) die("Sura Engine not installed. Please run install.php");
+if(!$config['home_url']) die("Vii Engine not installed. Please run install.php");
 include __DIR__.'/functions.php';
 
 //FOR MOBILE VERSION 1.0
@@ -51,9 +52,16 @@ $logged = $user['logged'];
 if($config['offline'] == "yes")
     App\Modules\OfflineController::index();
 
+$server_time = intval($_SERVER['REQUEST_TIME']);
+
 if ($user['logged'] == true) {
     if ($user['user_info']['user_delet'] == 1)
         App\Modules\Profile_delet::index();
+
+    if($user['user_info']['user_ban_date'] >= $server_time OR $user['user_info']['user_ban_date'] == '0')
+        App\Modules\Profile_ban::index();
+
+    Profile_check::timezona($user['user_info']['user_timezona']);
 }
 //$sql_banned = $db->super_query("SELECT * FROM ".PREFIX."_banned", true, "banned", true);
 //if(isset($sql_banned)) {
@@ -61,11 +69,6 @@ if ($user['logged'] == true) {
 //    System\Modules\Profile_ban::index($tpl);
 //    die();
 //}
-$server_time = intval($_SERVER['REQUEST_TIME']);
-if ($user['logged'] == true){
-    if($user['user_info']['user_ban_date'] >= $server_time OR $user['user_info']['user_ban_date'] == '0')
-        App\Modules\Profile_ban::index();
-}
 
 //Настройки групп пользователей
 //$user_group = unserialize(serialize(array(1 => array('addnews' => '1', ), /*Администрация*/2 => array('addnews' => '0', ), /*Главный модератор*/3 => array('addnews' => '0', ), /*Модератор*/4 => array('addnews' => '0', ), /*Техподдержка*/5 => array('addnews' => '0', ), /*Пользователи*/)));

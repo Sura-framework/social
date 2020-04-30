@@ -44,17 +44,19 @@ class NewsController extends Module
 					//$type = $_GET['type']; #тип сортировки
 
                     $path = explode('/', $_SERVER['REQUEST_URI']);
-                    $type = ($path['2']);
-					
-					//Если вызвана страница обновлений
-					if($type == 'updates' OR $type == 'photos' OR $type == 'videos'){
-                        $for_new_sql = "AND subscriptions IN (0,1)";
-                    }else{
-					    $for_new_sql = '';
-                    }
+                    $type = ($path['2']);	
 
-					$sql_where = "tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}' {$for_new_sql}) AND";
-					
+					//Если вызвана страница обновлений
+					// if($type == 'updates' OR $type == 'photos' OR $type == 'videos'){
+     //                    $for_new_sql = "AND subscriptions IN (0,1)";
+     //                }else{
+					//     $for_new_sql = '';
+     //                }
+
+        			$sql_where = "tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}') AND";
+
+					//$sql_where = "tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}' {$for_new_sql}) AND";
+
 					//Если вызвана страница обновлений
 					if($type == 'updates'){
 						$metatags['title'] = $lang['news_updates'];
@@ -82,7 +84,8 @@ class NewsController extends Module
 						$metatags['title'] = $lang['news_notifications'];
 						$user_speedbar = $lang['news_speedbar_notifications'];
 						$mobile_speedbar = 'Последние ответы';
-						$sql_sort = '6,7,8,9,10,12';
+						//$sql_sort = '6,7,8,9,10,12';
+						$sql_sort = '6,7,8,9,10';
 						$dop_sort = "AND tb1.for_user_id = '{$user_id}'";
 						$no_news = '<br />'.$lang['news_none_notifica'].'<br />';
 						$sql_where = '';
