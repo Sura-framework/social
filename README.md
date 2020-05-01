@@ -35,7 +35,7 @@ However, if you are not using Homestead, you will need to make sure your server 
 It's recommended that you use [Composer](https://getcomposer.org/) to install Sura.
 
 ```bash
-$ composer create-project sura/sura:^0.1 MYPROJECT --prefer-dist
+$ composer create-project sura/sura:^0.2 MYPROJECT --prefer-dist
 ```
 
 To create a migration, use the -migrate
