@@ -3,7 +3,7 @@
   "type": "project",
   "description": "The Sura framewwork.",
   "keywords": ["framewwork", "sura","router", "mvc"],
-    "license": "MIT",
+  "license": "MIT",
   "authors": [
     {
       "name": "Semen Alekseev",
@@ -17,7 +17,7 @@
     "ext-iconv": "*",
     "ext-gd": "*",
     "ext-mysqli": "*",
-    "sura/framework": "^0.2.0",
+    "sura/framework": "^0.2",
     "php-ffmpeg/php-ffmpeg": "^0.14.0",
     "james-heinrich/getid3": "^1.9",
     "intervention/image": "^2.5",
