@@ -19,6 +19,7 @@ use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 use Sura\Libs\Cache;
 use Sura\Libs\Gramatic;
+use Sura\Models\Profile;
 
 class ProfileController extends Module{
 
@@ -39,7 +40,7 @@ class ProfileController extends Module{
 
         if($logged){
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = include __DIR__.'/../../config/config.php';
 
             $path = explode('/', $_SERVER['REQUEST_URI']);
             $id = str_replace('u', '', $path);
@@ -55,7 +56,8 @@ class ProfileController extends Module{
 //            var_dump($row);
             //Проверяем на наличие кеша, если нету то выводи из БД и создаём его
             if(!$row){
-                $row = $db->super_query("SELECT user_id, user_search_pref, user_country_city_name, user_birthday, user_xfields, user_xfields_all, user_city, user_country, user_photo, user_friends_num, user_notes_num, user_subscriptions_num, user_wall_num, user_albums_num, user_last_visit, user_videos_num, user_status, user_privacy, user_sp, user_sex, user_gifts, user_public_num, user_audio, user_delet, user_ban_date, xfields, user_logged_mobile , user_cover, user_cover_pos, user_rating FROM `users` WHERE user_id = '{$id}'");
+                $row = Profile::user_row($id);
+                //$row = $db->super_query("SELECT user_id, user_search_pref, user_country_city_name, user_birthday, user_xfields, user_xfields_all, user_city, user_country, user_photo, user_friends_num, user_notes_num, user_subscriptions_num, user_wall_num, user_albums_num, user_last_visit, user_videos_num, user_status, user_privacy, user_sp, user_sex, user_gifts, user_public_num, user_audio, user_delet, user_ban_date, xfields, user_logged_mobile , user_cover, user_cover_pos, user_rating FROM `users` WHERE user_id = '{$id}'");
                 if($row){
                     Cache::mozg_create_folder_cache($cache_folder);
                     Cache::mozg_create_cache($cache_folder.'/profile_'.$id, serialize($row));
@@ -63,7 +65,7 @@ class ProfileController extends Module{
                 $row_online['user_last_visit'] = $row['user_last_visit'];
                 $row_online['user_logged_mobile'] = $row['user_logged_mobile'];
             } else{
-                $row_online = $db->super_query("SELECT user_last_visit, user_logged_mobile FROM `users` WHERE user_id = '{$id}'");
+                $row_online = Profile::user_online($id);
             }
 
             //Если есть такой, юзер то продолжаем выполнение скрипта
@@ -99,8 +101,8 @@ class ProfileController extends Module{
 
                     //################### Друзья ###################//
                     if($row['user_friends_num']){
-                        $sql_friends = $db->super_query("SELECT tb1.friend_id, tb2.user_search_pref, user_photo FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$id}' AND tb1.friend_id = tb2.user_id  AND subscriptions = 0 ORDER by rand() DESC LIMIT 0, 6", 1);
-                        $tpl->load_template('/profile/profile_friends.tpl');
+
+                        $sql_friends = Profile::friends($id);
 
                         foreach($sql_friends as $row_friends){
                             $friend_info = explode(' ', $row_friends['user_search_pref']);
@@ -122,11 +124,11 @@ class ProfileController extends Module{
 
                     //Кол-во друзей в онлайне
                     if($row['user_friends_num']){
-                        $online_friends = $db->super_query("SELECT COUNT(*) AS cnt FROM `users` tb1, `friends` tb2 WHERE tb1.user_id = tb2.friend_id AND tb2.user_id = '{$id}' AND tb1.user_last_visit >= '{$online_time}' AND subscriptions = 0");
+                        $online_friends = Profile::friends_online_cnt($id, $online_time);
 
                         //Если друзья на сайте есть то идем дальше
                         if($online_friends['cnt']){
-                            $sql_friends_online = $db->super_query("SELECT tb1.user_id, user_country_city_name, user_search_pref, user_birthday, user_photo FROM `users` tb1, `friends` tb2 WHERE tb1.user_id = tb2.friend_id AND tb2.user_id = '{$id}' AND tb1.user_last_visit >= '{$online_time}'  AND subscriptions = 0 ORDER by rand() DESC LIMIT 0, 6", 1);
+                            $sql_friends_online = Profile::friends_online($id, $online_time);
                             $tpl->load_template('/profile/profile_friends.tpl');
                             foreach($sql_friends_online as $row_friends_online){
                                 $friend_info_online = explode(' ', $row_friends_online['user_search_pref']);
@@ -139,24 +141,6 @@ class ProfileController extends Module{
                                     $tpl->set('{ava}', '/images/no_ava_50.png');
                                 $tpl->compile('all_online_friends');
                             }
-                        }
-                    }
-
-                    //################### Заметки ###################//
-                    if($row['user_notes_num']){
-                        $tpl->result['notes'] = Cache::mozg_cache($cache_folder.'/notes_user_'.$id);
-                        if(!$tpl->result['notes']){
-                            $sql_notes = $db->super_query("SELECT id, title, date, comm_num FROM `notes` WHERE owner_user_id = '{$id}' ORDER by `date` DESC LIMIT 0,5", 1);
-                            $tpl->load_template('/profile/profile_note.tpl');
-                            foreach($sql_notes as $row_notes){
-                                $tpl->set('{id}', $row_notes['id']);
-                                $tpl->set('{title}', stripslashes($row_notes['title']));
-                                $tpl->set('{comm-num}', $row_notes['comm_num'].' '.Gramatic::gram_record($row_notes['comm_num'], 'comments'));
-                                $date = megaDate(strtotime($row_notes['date']), 'no_year');
-                                $tpl->set('{date}', $date);
-                                $tpl->compile('notes');
-                            }
-                            Cache::mozg_create_cache($cache_folder.'/notes_user_'.$id, $tpl->result['notes']);
                         }
                     }
 
@@ -175,11 +159,11 @@ class ProfileController extends Module{
 
                         //Если страницу смотрит другой юзер, то считаем кол-во видео
                         if($user_id != $id){
-                            $video_cnt = $db->super_query("SELECT COUNT(*) AS cnt FROM `videos` WHERE owner_user_id = '{$id}' {$sql_privacy} AND public_id = '0'", false, "user_{$id}/videos_num{$cache_pref_videos}");
+                            $video_cnt = Profile::videos_online_cnt($id, $sql_privacy, $cache_pref_videos);
                             $row['user_videos_num'] = $video_cnt['cnt'];
                         }
 
-                        $sql_videos = $db->super_query("SELECT id, title, add_date, comm_num, photo FROM `videos` WHERE owner_user_id = '{$id}' {$sql_privacy} AND public_id = '0' ORDER by `add_date` DESC LIMIT 0,2", 1, "user_{$id}/page_videos_user{$cache_pref_videos}");
+                        $sql_videos = Profile::videos_online($id, $sql_privacy, $cache_pref_videos);
 
                         $tpl->load_template('/profile/profile_video.tpl');
                         foreach($sql_videos as $row_videos){
@@ -199,7 +183,7 @@ class ProfileController extends Module{
                     if($row['user_subscriptions_num']){
                         $tpl->result['subscriptions'] = Cache::mozg_cache('/subscr_user_'.$id);
                         if(!$tpl->result['subscriptions']){
-                            $sql_subscriptions = $db->super_query("SELECT tb1.friend_id, tb2.user_search_pref, user_photo, user_country_city_name, user_status FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$id}' AND tb1.friend_id = tb2.user_id AND  	tb1.subscriptions = 1 ORDER by `friends_date` DESC LIMIT 0,5", 1);
+                            $sql_subscriptions = Profile::subscriptions($id);
                             $tpl->load_template('/profile/profile_subscription.tpl');
                             foreach($sql_subscriptions as $row_subscr){
                                 $tpl->set('{user-id}', $row_subscr['friend_id']);
@@ -224,7 +208,7 @@ class ProfileController extends Module{
 
                     //################### Музыка ###################//
                     if($row['user_audio']){
-                        $sql_audio = $db->super_query("SELECT id, url, artist, title, duration FROM `audio` WHERE oid = '{$id}' and public = '0' ORDER by `id` DESC LIMIT 0, 3", 1);
+                        $sql_audio = Profile::audio($id);
                         foreach($sql_audio as $row_audio){
                             $stime = gmdate("i:s", $row_audio['duration']);
                             if(!$row_audio['artist']) $row_audio['artist'] = 'Неизвестный исполнитель';
@@ -289,7 +273,7 @@ class ProfileController extends Module{
 
                     //################### Праздники друзей ###################//
                     if($user_id == $id AND !$_SESSION['happy_friends_block_hide']){
-                        $sql_happy_friends = $db->super_query("SELECT tb1.friend_id, tb2.user_search_pref, user_photo, user_birthday FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '".$id."' AND tb1.friend_id = tb2.user_id  AND subscriptions = 0 AND user_day = '".date('j', $server_time)."' AND user_month = '".date('n', $server_time)."' ORDER by `user_last_visit` DESC LIMIT 0, 50", 1);
+                        $sql_happy_friends = Profile::happy_friends($id, $server_time);
                         $tpl->load_template('/profile/profile_happy_friends.tpl');
                         $cnt_happfr = 0;
                         foreach($sql_happy_friends as $happy_row_friends){
@@ -330,10 +314,11 @@ class ProfileController extends Module{
                             $limit_page = ($page-1)*$gcount;
 
                             //Выводим имя юзера и настройки приватности
-                            $row_user = $db->super_query("SELECT user_name, user_wall_num, user_privacy FROM `users` WHERE user_id = '{$id}'");
-                            $user_privacy = xfieldsdataload($row_user['user_privacy']);
+                            //not used row_user['user_privacy']
+                            //$row_user = $db->super_query("SELECT user_name, user_wall_num, user_privacy FROM `users` WHERE user_id = '{$id}'");
+                            $user_privacy = xfieldsdataload($row['user_privacy']);
 
-                            if($row_user){
+                            if($row['user_wall_num'] > 0){
                                 //ЧС
                                 $CheckBlackList = Tools::CheckBlackList($id);
                                 if(!$CheckBlackList){
@@ -342,7 +327,7 @@ class ProfileController extends Module{
                                         $check_friend = Tools::CheckFriends($id);
 
                                     if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $check_friend OR $user_id == $id)
-                                        $cnt_rec['cnt'] = $row_user['user_wall_num'];
+                                        $cnt_rec['cnt'] = $row['user_wall_num'];
                                     else
                                         $cnt_rec = $db->super_query("SELECT COUNT(*) AS cnt FROM `wall` WHERE for_user_id = '{$id}' AND author_user_id = '{$id}' AND fast_comm_id = 0");
 
@@ -368,7 +353,7 @@ class ProfileController extends Module{
                                         $user_speedbar = 'На стене '.$cnt_rec['cnt'].' '.Gramatic::declOfNum($cnt_rec['cnt'], $titles);
 
                                     $tpl->load_template('wall/head.tpl');
-                                    $tpl->set('{name}', Gramatic::gramatikName($row_user['user_name']));
+                                    $tpl->set('{name}', Gramatic::gramatikName($row['user_name']));
                                     $tpl->set('{uid}', $id);
                                     $tpl->set('{rec-id}', $rid);
                                     $tpl->set("{activetab-{$_GET['type']}}", 'activetab');
@@ -385,18 +370,13 @@ class ProfileController extends Module{
                         }
 
                         if(!$CheckBlackList){
-                            //include __DIR__.'/../Classes/Wall.php';
-                            //$wall = new Wall();
-
                             if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $check_friend OR $user_id == $id)
-                                //$wall->query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}");
                                 $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
                             elseif($wallAuthorId['author_user_id'] == $id)
-                                //$wall->query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}");
                                 $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
                             else {
-                                //$wall->query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 AND tb1.author_user_id = '{$id}' ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}");
                                 $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 AND tb1.author_user_id = '{$id}' ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
+
                                 if($wallAuthorId['author_user_id'])
                                     $Hacking = true;
                             }
@@ -420,7 +400,7 @@ class ProfileController extends Module{
                                 }
 
                                 $server_time = intval($_SERVER['REQUEST_TIME']);
-                                $config = include __DIR__.'/data/config.php';
+                                $config = include __DIR__.'/../../config/config.php';
 
                                 //$this->template;
                                 foreach($query as $row_wall){
@@ -498,7 +478,7 @@ class ProfileController extends Module{
 
                                                     $video_id = intval($attach_type[2]);
 
-                                                    $row_video = $db->super_query("SELECT video, title, download FROM `videos` WHERE id = '{$video_id}'", false, "wall/video{$video_id}");
+                                                    $row_video = row_video($video_id);
                                                     $row_video['title'] = stripslashes($row_video['title']);
                                                     $row_video['video'] = stripslashes($row_video['video']);
                                                     $row_video['video'] = strtr($row_video['video'], array('width="770"' => 'width="390"', 'height="420"' => 'height="310"'));
@@ -530,8 +510,8 @@ class ProfileController extends Module{
                                                 //Музыка
                                             } elseif($attach_type[0] == 'audio'){
                                                 $data = explode('_', $attach_type[1]);
-                                                $audioId = intval($data[0]);
-                                                $row_audio = $db->super_query("SELECT id, oid, artist, title, url, duration FROM `audio` WHERE id = '{$audioId}'");
+                                                $audio_id = intval($data[0]);
+                                                $row_audio = Profile::row_audio($audio_id)
                                                 if($row_audio){
                                                     $stime = gmdate("i:s", $row_audio['duration']);
                                                     if(!$row_audio['artist']) $row_audio['artist'] = 'Неизвестный исполнитель';
@@ -624,7 +604,7 @@ class ProfileController extends Module{
 
                                                 $doc_id = intval($attach_type[1]);
 
-                                                $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false, "wall/doc{$doc_id}");
+                                                $row_doc = Profile::row_doc($doc_id);
 
                                                 if($row_doc){
 
@@ -1181,7 +1161,7 @@ class ProfileController extends Module{
                         }
 
                         //Проверка естьли запрашиваемый юзер в закладках у юзера который смотрит стр
-                        $check_fave = $db->super_query("SELECT user_id FROM `fave` WHERE user_id = '{$user_info['user_id']}' AND fave_id = '{$id}'");
+                        $check_fave = Profile::check_fave($id, $user_info['user_id']);
                         if($check_fave){
                             $tpl->set('[yes-fave]', '');
                             $tpl->set('[/yes-fave]', '');
@@ -1193,7 +1173,7 @@ class ProfileController extends Module{
                         }
 
                         //Проверка естьли запрашиваемый юзер в подписках у юзера который смотрит стр
-                        $check_subscr = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_info['user_id']}' AND friend_id = '{$id}' AND subscriptions = 1");
+                        $check_subscr = Profile::check_subscr($id, $user_info['user_id']);
                         if($check_subscr){
                             $tpl->set('[yes-subscription]', '');
                             $tpl->set('[/yes-subscription]', '');
@@ -1279,7 +1259,7 @@ class ProfileController extends Module{
 
                     if($user_id != $id){
                         if($user_privacy['val_wall1'] == 3 OR $user_privacy['val_wall1'] == 2 AND !$check_friend){
-                            $cnt_rec = $db->super_query("SELECT COUNT(*) AS cnt FROM `wall` WHERE for_user_id = '{$id}' AND author_user_id = '{$id}' AND fast_comm_id = 0");
+                            $cnt_rec = Profile::cnt_rec($id);
                             $row['user_wall_num'] = $cnt_rec['cnt'];
                         }
                     }
@@ -1343,7 +1323,7 @@ class ProfileController extends Module{
                     //Семейное положение
                     $user_sp = explode('|', $row['user_sp']);
                     if($user_sp[1]){
-                        $rowSpUserName = $db->super_query("SELECT user_search_pref, user_sp, user_sex FROM `users` WHERE user_id = '{$user_sp[1]}'");
+                        $rowSpUserName = Profile::user_sp($user_sp[1]);
                         if($row['user_sex'] == 1) $check_sex = 2;
                         if($row['user_sex'] == 2) $check_sex = 1;
                         if($rowSpUserName['user_sp'] == $user_sp[0].'|'.$id OR $user_sp[0] == 5 AND $rowSpUserName['user_sex'] == $check_sex){
@@ -1412,7 +1392,7 @@ class ProfileController extends Module{
 
                     //################### Подарки ###################//
                     if($row['user_gifts']){
-                        $sql_gifts = $db->super_query("SELECT gift FROM `gifts` WHERE uid = '{$id}' ORDER by `gdate` DESC LIMIT 0, 5", 1, "user_{$id}/gifts");
+                        $sql_gifts = Profile::gifts($id);
                         foreach($sql_gifts as $row_gift){
                             $gifts .= "<img src=\"/uploads/gifts/{$row_gift['gift']}.png\" class=\"gift_onepage\" />";
                         }
@@ -1427,7 +1407,7 @@ class ProfileController extends Module{
                     //################### Интересные страницы ###################//
                     if($row['user_public_num']){
                         $groups = '';
-                        $sql_groups = $db->super_query("SELECT tb1.friend_id, tb2.id, title, photo, adres, status_text FROM `friends` tb1, `communities` tb2 WHERE tb1.user_id = '{$id}' AND tb1.friend_id = tb2.id AND tb1.subscriptions = 2 ORDER by `traf` DESC LIMIT 0, 5", 1, "groups/".$id);
+                        $sql_groups = Profile::groups($id);
                         foreach($sql_groups as $row_groups){
                             if($row_groups['adres']) $adres = $row_groups['adres'];
                             else $adres = 'public'.$row_groups['id'];
@@ -1485,54 +1465,9 @@ class ProfileController extends Module{
 
                     }
 
-                    if($id == 7) $tpl->set('{group}', '<font color="#f87d7d">Модератор</font>');
-                    else $tpl->set('{group}', '');
-
-                    //Обложка
-                    if($row['user_photo']){
-
-                        $avaImgIsinfo = getimagesize(__DIR__."/../../public/uploads/users/{$row['user_id']}/{$row['user_photo']}");
-
-                        if($avaImgIsinfo[1] < 200){
-
-                            $rForme = $avaImgIsinfo[1] * 100 / 230 * 2;
-
-                            $ava_marg_top = 'style="margin-top:-'.$rForme.'px"';
-
-                        }
-
-                        $tpl->set('{cover-param-7}', $ava_marg_top);
-
-                    } else
-                        $tpl->set('{cover-param-7}', "");
-
-                    if($row['user_cover']){
-
-                        $imgIsinfo = getimagesize(__DIR__."/../../public/uploads/users/{$id}/{$row['user_cover']}");
-
-                        $tpl->set('{cover}', "/uploads/users/{$id}/{$row['user_cover']}");
-                        $tpl->set('{cover-height}', $imgIsinfo[1]);
-                        $tpl->set('{cover-param}', '');
-                        $tpl->set('{cover-param-2}', 'no_display');
-                        $tpl->set('{cover-param-3}', 'style="position:absolute;z-index:2;display:block;margin-left:397px"');
-                        $tpl->set('{cover-param-4}', 'style="cursor:default"');
-                        $tpl->set('{cover-param-5}', 'style="top:-'.$row['user_cover_pos'].'px;position:relative"');
-                        $tpl->set('{cover-pos}', $row['user_cover_pos']);
-
-                        $tpl->set('[cover]', '');
-                        $tpl->set('[/cover]', '');
-
-                    } else {
-
-                        $tpl->set('{cover}', "");
-                        $tpl->set('{cover-param}', 'no_display');
-                        $tpl->set('{cover-param-2}', '');
-                        $tpl->set('{cover-param-3}', '');
-                        $tpl->set('{cover-param-4}', '');
-                        $tpl->set('{cover-param-5}', '');
-                        $tpl->set('{cover-pos}', '');
-                        $tpl->set_block("'\\[cover\\](.*?)\\[/cover\\]'si","");
-                    }
+                    //what? (deprecated)
+                    //if($id == 7) $tpl->set('{group}', '<font color="#f87d7d">Модератор</font>');
+                    //else $tpl->set('{group}', '');
 
                     //Rating
                     if($row['user_rating'] > 1000){
@@ -1554,23 +1489,20 @@ class ProfileController extends Module{
 
                     $tpl->compile('content');
 
-                    //Гости
-                    if($id != $user_info['user_id']){
-                        $checkGuest = $db->super_query("SELECT COUNT(*) AS cnt FROM `guests` WHERE ouid = '{$id}' AND guid = '{$user_id}'");
-                        if($checkGuest['cnt'])
-                            $db->query("UPDATE `guests` SET gdate = '{$server_time}', new = '1' WHERE ouid = '{$id}' AND guid = '{$user_id}'");
-                        else
-                            $db->query("INSERT INTO `guests` SET gdate = '{$server_time}', ouid = '{$id}', guid = '{$user_id}', new = '1'");
-                        $db->super_query("UPDATE `users` SET guests = guests + 1 WHERE user_id = '{$id}'");
-                    }
-
                     //Обновляем кол-во посищений на страницу, если юзер есть у меня в друзьях
                     if($check_friend)
                         $db->query("UPDATE LOW_PRIORITY `friends` SET views = views+1 WHERE user_id = '{$user_info['user_id']}' AND friend_id = '{$id}' AND subscriptions = 0");
 
                     //Вставляем в статистику
+                    //!NB optimize generate users stat
                     if($user_info['user_id'] != $id){
 
+
+                        //StatsUser::add($id, $user_info['user_id']);
+                        //Cron Generate stats
+
+
+                        //start old
                         $stat_date = date('Ymd', $server_time);
                         $stat_x_date = date('Ym', $server_time);
 
@@ -1586,6 +1518,7 @@ class ProfileController extends Module{
                         } else {
                             $db->query("UPDATE `users_stats` SET views = views + 1 WHERE user_id = '{$id}' AND date = '{$stat_date}'");
                         }
+                        //end old
                     }
 
 
@@ -1599,7 +1532,7 @@ class ProfileController extends Module{
             $db->free();
         } else {
             $user_speedbar = 'Информация';
-            msgbox('', $lang['not_logged'], 'info');
+            msgbox('', $lang['not_logged'], 'info');//not_logged
         }
 
         $params['tpl'] = $tpl;

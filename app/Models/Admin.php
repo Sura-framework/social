@@ -1,7 +1,7 @@
 <?php
 
 
-namespace System\Models;
+namespace Sura\Models;
 
 
 class Admin
