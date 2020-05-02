@@ -5,7 +5,7 @@
 				<img class="RP4i1 " src="/images/home_phone.jpg" alt="">
 			</div>
 		</div>
-		<h1 class="d-none">Spiso framework - Первая независимая социальная сеть, которая поможет всегда оставаться на связи и общаться со своими друзьями.</h1>
+		<h1 class="d-none">Sura - Первая независимая социальная сеть, которая поможет всегда оставаться на связи и общаться со своими друзьями.</h1>
 		<style>
 		._4_yKc {-webkit-box-orient: horizontal;-webkit-box-direction: normal;-webkit-flex-direction: row;-ms-flex-direction: row;flex-direction: row;-webkit-box-flex: 1;-webkit-flex-grow: 1;-ms-flex-positive: 1;flex-grow: 1;-webkit-box-pack: center;-webkit-justify-content: center;-ms-flex-pack: center;justify-content: center;margin: 30px auto 0;max-width: 935px;padding-bottom: 44px;width: 100%;align-items: center;}
 		.yOZjD {-webkit-align-self: center;-ms-flex-item-align: center;align-self: center;background-image: url(/images/phones.png);background-position: 0 0;background-size: 454px 618px;-webkit-flex-basis: 454px;-ms-flex-preferred-size: 454px;flex-basis: 454px;height: 618px;margin-left: -35px;margin-right: -15px;width: 450px;}
@@ -21,11 +21,10 @@
 		._80tAB {display: none;}
 		}
 		</style>
-
 		<div class="rgFsT">
 			<div class="card shadows">
 				<form class="card-body" onSubmit="return login.send()">
-					<h1 class="display-4 text-center mb-3">Spiso framework</h1>
+					<h1 class="display-4 text-center mb-3">Sura</h1>
 					<p class="text-muted text-center mb-5">Чтобы продолжить, создайте аккаунт или войдите.</p>
 					<div id="err2"></div>
 						<div class="form-group">

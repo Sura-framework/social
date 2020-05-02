@@ -122,7 +122,7 @@ class AudioController extends Module{
         }
     }
     public function add($params){
-        $tpl = Registry::get('tpl');
+        //$tpl = Registry::get('tpl');
         $lang = langs::get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -538,7 +538,7 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             $offset = $count * $page;
 
-            $act = $_REQUEST['act'];
+            //$act = $_REQUEST['act'];
             $metatags['title'] = $lang['audio'];
 
 
