@@ -1,16 +1,4 @@
 <?php
-/* 
-	Appointment: Настройки
-	File: settings.php 
-	Author: f0rt1 
-	Engine: Vii Engine
-	Copyright: NiceWeb Group (с) 2011
-	e-mail: niceweb@i.ua
-	URL: http://www.niceweb.in.ua/
-	ICQ: 427-825-959
-	Данный код защищен авторскими правами
-*/
-
 namespace App\Modules;
 
 use Sura\Libs\Cache;
@@ -436,8 +424,7 @@ class SettingsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
-        if($ajax == 'yes')
+        if(isset($_POST['ajax']) AND $_POST['ajax'] == 'yes')
             Tools::NoAjaxQuery();
 
         if($logged){
@@ -446,7 +433,7 @@ class SettingsController extends Module{
             $metatags['title'] = $lang['settings'];
 
             $mobile_speedbar = 'Общие настройки';
-            $row = $db->super_query("SELECT user_name, user_lastname, user_email FROM `users` WHERE user_id = '{$user_id}'");
+            $row = $db->super_query("SELECT user_name, user_lastname, user_email, user_timezona FROM `users` WHERE user_id = '{$user_id}'");
 
             //Загружаем вверх
             $tpl->load_template('settings/general.tpl');
@@ -462,57 +449,58 @@ class SettingsController extends Module{
             if(isset($_GET['code1'])){
                 $code1 = Validation::strip_data($_GET['code1']);
                 $code2 = Validation::strip_data($_GET['code2']);
-            }
 
-            if(strlen($code1) == 32){
-                $_IP = null;
-                $code2 = '';
+                if(strlen($code1) == 32){
+                    $_IP = null;
+                    $code2 = '';
 
-                $check_code1 = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$code1}' AND ip = '{$_IP}'");
+                    $check_code1 = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$code1}' AND ip = '{$_IP}'");
 
-                if($check_code1['email']){
+                    if($check_code1['email']){
 
-                    $check_code2 = $db->super_query("SELECT COUNT(*) AS cnt FROM `restore` WHERE hash != '{$code1}' AND email = '{$check_code1['email']}' AND ip = '{$_IP}'");
+                        $check_code2 = $db->super_query("SELECT COUNT(*) AS cnt FROM `restore` WHERE hash != '{$code1}' AND email = '{$check_code1['email']}' AND ip = '{$_IP}'");
 
-                    if($check_code2['cnt'])
-                        $tpl->set('{code-1}', '');
-                    else {
-                        $tpl->set('{code-1}', 'no_display');
-                        $tpl->set('{code-3}', '');
+                        if($check_code2['cnt'])
+                            $tpl->set('{code-1}', '');
+                        else {
+                            $tpl->set('{code-1}', 'no_display');
+                            $tpl->set('{code-3}', '');
 
-                        //Меняем
-                        $db->query("UPDATE `users` SET user_email = '{$check_code1['email']}' WHERE user_id = '{$user_id}'");
-                        $row['user_email'] = $check_code1['email'];
+                            //Меняем
+                            $db->query("UPDATE `users` SET user_email = '{$check_code1['email']}' WHERE user_id = '{$user_id}'");
+                            $row['user_email'] = $check_code1['email'];
+
+                        }
+
+                        $db->query("DELETE FROM `restore` WHERE hash = '{$code1}' AND ip = '{$_IP}'");
 
                     }
-
-                    $db->query("DELETE FROM `restore` WHERE hash = '{$code1}' AND ip = '{$_IP}'");
 
                 }
 
-            }
+                if(strlen($code2) == 32){
 
-            if(strlen($code2) == 32){
+                    $check_code2 = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$code2}' AND ip = '{$_IP}'");
 
-                $check_code2 = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$code2}' AND ip = '{$_IP}'");
+                    if($check_code2['email']){
 
-                if($check_code2['email']){
+                        $check_code1 = $db->super_query("SELECT COUNT(*) AS cnt FROM `restore` WHERE hash != '{$code2}' AND email = '{$check_code2['email']}' AND ip = '{$_IP}'");
 
-                    $check_code1 = $db->super_query("SELECT COUNT(*) AS cnt FROM `restore` WHERE hash != '{$code2}' AND email = '{$check_code2['email']}' AND ip = '{$_IP}'");
+                        if($check_code1['cnt'])
+                            $tpl->set('{code-2}', '');
+                        else {
+                            $tpl->set('{code-2}', 'no_display');
+                            $tpl->set('{code-3}', '');
 
-                    if($check_code1['cnt'])
-                        $tpl->set('{code-2}', '');
-                    else {
-                        $tpl->set('{code-2}', 'no_display');
-                        $tpl->set('{code-3}', '');
+                            //Меняем
+                            $db->query("UPDATE `users` SET user_email = '{$check_code2['email']}'  WHERE user_id = '{$user_id}'");
+                            $row['user_email'] = $check_code2['email'];
 
-                        //Меняем
-                        $db->query("UPDATE `users` SET user_email = '{$check_code2['email']}'  WHERE user_id = '{$user_id}'");
-                        $row['user_email'] = $check_code2['email'];
+                        }
+
+                        $db->query("DELETE FROM `restore` WHERE hash = '{$code2}' AND ip = '{$_IP}'");
 
                     }
-
-                    $db->query("DELETE FROM `restore` WHERE hash = '{$code2}' AND ip = '{$_IP}'");
 
                 }
 
@@ -523,6 +511,31 @@ class SettingsController extends Module{
             $epx1 = explode('@', $row['user_email']);
             $tpl->set('{email}', $substre.'*******@'.$epx1[1]);
 
+
+            $tpl->set('{timezs}', installationSelected($row['user_timezona'], ' <option value="1">GMT-11 "Samoa"</option> 
+ <option value="2">GMT-10 "Hawaii"</option>
+ <option value="3">GMT-9 "Alaska"</option> 
+ <option value="4">GMT-8 "Los Angeles"</option>  
+ <option value="5">GMT-7 "Denver"</option>
+  <option value="6">GMT-6 "Chicago"</option>
+  <option value="7">GMT-5 "New York"</option> 
+  <option value="8">GMT-4 "Caracas"</option> 
+ <option value="9">GMT-3 "Buenos Aires"</option>
+ <option value="10">GMT-2 "Sao Paulo"</option> 
+ <option value="11">GMT-1 "Azores"</option>  
+ <option value="12">GMT 0 "London"</option>
+  <option value="13">GMT1 "Berlin,Paris"</option>
+  <option value="14">GMT 2 "Kyiv, Minsk"</option> 
+  <option value="15">GMT 3 "Moscow, Saint-Peterburg"</option> 
+ <option value="16">GMT 4 "Yerevan"</option>
+ <option value="17">GMT 5 "Yekaterinburg, Tashkent"</option> 
+ <option value="18">GMT 6 "Novosibirsk"</option>  
+ <option value="19">GMT 7 "Krasnoyarsk, Bangkok"</option>
+  <option value="20">GMT 8 "Singapore, Hong Kong"</option>
+  <option value="21">GMT 9 "Tokyo"</option> 
+  <option value="22">GMT 10 "Vladivostok"</option> 
+ <option value="23">GMT 11 "Sydney"</option>
+ <option value="24">GMT 12 "Kamchatka"</option> '));
 
             $tpl->compile('info');
 

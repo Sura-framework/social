@@ -44,6 +44,18 @@
             <div class="texta">&nbsp;</div>
                 <button onClick="settings.savenewmail(); return false" id="saveNewEmail" class="btn btn-success">Сохранить адрес</button>
             <div class="mgclr"></div>
+
+            <div class="allbar_title">Региональные настройки</div>
+            <div class="err_yellow no_display" id="ok_timez" style="font-weight:normal;">Часовой пояс успешно сохранён.</div>
+            <div class="texta">Часовой пояс:</div>
+            <select id="timezona" class="inpst" style="width:200px">
+                <option value="0">- Не выбрано -</option>
+                {timezs}
+            </select>
+            <div class="mgclr"></div>
+            <div class="texta">&nbsp;</div><div class="button_div fl_l"><button onClick="settings.savetimezona(); return false" id="saveTimezona">Сохранить</button></div>
+            <div class="mgclr"></div>
+                        
             <div class="nSDelPg">Вы можете <a class="cursor_pointer" onClick="delMyPage()">удалить свою страницу</a>.</div>
         </div>
     </div>

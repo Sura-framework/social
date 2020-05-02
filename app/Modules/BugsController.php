@@ -1,8 +1,6 @@
 <?php
 
-
 namespace App\Modules;
-
 
 use Intervention\Image\ImageManager;
 use Sura\Classes\Db;
