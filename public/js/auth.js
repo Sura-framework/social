@@ -236,7 +236,7 @@ function checkCode(){
 	$('#code_loading').html('<img src="/images/loading_mini.gif" style="margin-top:21px" />');
 	$.get('/antibot/code/?user_code='+val_sec_code, function(data){
 		if(data == 'ok'){
-			auth.send(val_sec_code);
+			reg.send(val_sec_code);
 		} else {
 			updateCode();
 			$('#code_loading').html('<input type="text" id="val_sec_code" class="inpst" maxlength="6" style="margin-top:10px;width:110px" />');
