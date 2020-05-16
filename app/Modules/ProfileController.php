@@ -9,7 +9,7 @@ use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 use Sura\Libs\Cache;
 use Sura\Libs\Gramatic;
-use Sura\Models\Profile;
+use App\Models\Profile;
 
 class ProfileController extends Module{
 
