@@ -38,6 +38,8 @@ It's recommended that you use [Composer](https://getcomposer.org/) to install Su
 $ composer create-project sura/sura:^0.2 MYPROJECT --prefer-dist
 ```
 
+The database configuration is located in config/config.php
+
 To create a migration, use the -migrate
 
 ```bash

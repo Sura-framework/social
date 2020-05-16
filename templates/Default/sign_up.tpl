@@ -2,7 +2,7 @@
     <div class="col-5 mt-2">
         <div class="card">
             <div class="card-body">
-                <h1 class="display-4 text-center mb-3">Spiso framework</h1>
+                <h1 class="display-4 text-center mb-3">Sura framework</h1>
                 <p class="text-muted text-center mb-5">Чтобы продолжить, создайте аккаунт или войдите.</p>
 
 
@@ -29,11 +29,21 @@
                     Пожалуйста, укажите Вашу <b>дату рождения</b>, <b>пол</b> и <b>страну проживания</b>.
                     <div class="err_red no_display frmero" id="err" style="margin-bottom:0px"></div>
                     <div>
-                        <select id="sex" class="inpst sel_reg">
-                            <option value="0">Выбрать пол</option>
-                            <option value="1">мужской</option>
-                            <option value="2">женский</option>
-                        </select>
+
+                        <div class="form-group">
+                            <label for="exampleFormControlSelect2">Example multiple select</label>
+                            <select id="sex" class="inpst sel_reg">
+                                <option value="0">Выбрать пол</option>
+                                <option value="1">мужской</option>
+                                <option value="2">женский</option>
+                            </select>
+                        </div>
+
+{*                        <select id="sex" class="inpst sel_reg">*}
+{*                            <option value="0">Выбрать пол</option>*}
+{*                            <option value="1">мужской</option>*}
+{*                            <option value="2">женский</option>*}
+{*                        </select>*}
                         <div class="clear"></div>
                         <select id="day" class="inpst sel_reg">
                             <option>День рождения</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option>
@@ -94,7 +104,7 @@
                 </div>
 
 
-                <h1 onClick="reg.step1(); return false" id="reg_lnk">В чем поможет Josh Framework?</h1>
+                <h1 onClick="reg.step1(); return false" id="reg_lnk">В чем поможет Sura Framework?</h1>
 
                 <ul class="listing2">
                     <li><span>Найти людей, с которыми Вы когда-либо учились, работали или отдыхали.</span></li>
