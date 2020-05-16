@@ -501,7 +501,7 @@ class ProfileController extends Module{
                                             } elseif($attach_type[0] == 'audio'){
                                                 $data = explode('_', $attach_type[1]);
                                                 $audio_id = intval($data[0]);
-                                                $row_audio = Profile::row_audio($audio_id)
+                                                $row_audio = Profile::row_audio($audio_id);
                                                 if($row_audio){
                                                     $stime = gmdate("i:s", $row_audio['duration']);
                                                     if(!$row_audio['artist']) $row_audio['artist'] = 'Неизвестный исполнитель';
