@@ -1,4 +1,5 @@
-<?php  
+<?php
+
 namespace App\Modules;
 
 use Sura\Libs\Module as Core_module;

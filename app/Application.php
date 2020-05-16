@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App;
 
 use Sura\Application as Core_app;

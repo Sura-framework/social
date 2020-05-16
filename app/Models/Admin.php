@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Sura\Models;
-
 
 class Admin
 {
