@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use App\Models\Register;
 use Sura\Libs\Cache;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
@@ -93,7 +94,7 @@ class RegisterController extends Module{
                 if ($errors == 0) {
 
                     //Если email и существует то пропускаем
-                    $check_email = $db->super_query("SELECT COUNT(*) AS cnt FROM `users` WHERE user_email = '{$user_email}'");
+                    $check_email = Register::check_email($user_email);
                     if (!$check_email['cnt']) {
                         //$md5_pass = md5(md5($password_first));
                         $pass_hash = password_hash($password_first, PASSWORD_DEFAULT);
