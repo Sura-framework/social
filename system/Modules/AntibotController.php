@@ -11,20 +11,20 @@
 	Данный код защищен авторскими правами
 */
 
-namespace System\Modules;
+namespace App\Modules;
 
-use System\Libs\Langs;
-use System\Libs\Registry;
-use System\Libs\Tools;
+use Sura\Libs\Langs;
+use Sura\Libs\Registry;
+use Sura\Libs\Tools;
 
 class AntibotController extends Module{
 
     public function index()
     {
 
-        session_start();
+        //session_start();
 
-        error_reporting(E_ALL ^ E_WARNING ^ E_NOTICE);
+        //error_reporting(E_ALL ^ E_WARNING ^ E_NOTICE);
 
 //        if(clean_url($_SERVER['HTTP_REFERER']) != clean_url($_SERVER['HTTP_HOST']))
 //            die("Hacking attempt!");
@@ -34,7 +34,7 @@ class AntibotController extends Module{
         $font_size = 16;   			//Размер шрифта
         $let_amount = 5;			//Количество символов, которые нужно набрать
         $fon_let_amount = 30;		//Количество символов на фоне
-        $font = __DIR__.'/../fonts/cour.ttf';	//Путь к шрифту
+        $font = __DIR__.'/../../vendor/sura/framework/src/fonts/cour.ttf';	//Путь к шрифту
 
         //набор символов
         $letters = array('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');

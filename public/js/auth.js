@@ -37,7 +37,7 @@ var reg = {
 		var email = $('#email').val();
 		var new_pass = $('#new_pass').val();
 		var new_pass2 = $('#new_pass2').val();
-		var rndval = new Date().getTime(); 
+		var rndval = new Date().getTime();
 		if(email !== 0 && isValidEmailAddress(email)){
 			if(new_pass !== 0 && new_pass.length >= 6){
 				if(new_pass === new_pass2){
@@ -70,19 +70,19 @@ var reg = {
 		var country = $("#country").val();
 		var city = $("#select_city").val();
 		$.post('/register/', {
-				name: name,
-				lastname: lastname,
-				email: email,
-				sex: sex,
-				day: day,
-				month: month,
-				year: year,
-				country: country,
-				city: city,
-				password_first: new_pass,
-				password_second: new_pass2,
-				sec_code: sec_code
-			}, function(d){
+			name: name,
+			lastname: lastname,
+			email: email,
+			sex: sex,
+			day: day,
+			month: month,
+			year: year,
+			country: country,
+			city: city,
+			password_first: new_pass,
+			password_second: new_pass2,
+			sec_code: sec_code
+		}, function(d){
 			var exp = d.split('|');
 			if(exp[0] == 'ok'){
 				//window.location = '/u'+exp[1]+'after';
@@ -221,11 +221,11 @@ var login = {
 }
 function isValidName(xname){
 	var pattern = new RegExp(/^[a-zA-Zа-яА-Я]+$/);
- 	return pattern.test(xname);
+	return pattern.test(xname);
 }
 function isValidEmailAddress(emailAddress) {
- 	var pattern = new RegExp(/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?((25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.))((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i);
- 	return pattern.test(emailAddress);
+	var pattern = new RegExp(/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?((25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.))((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i);
+	return pattern.test(emailAddress);
 }
 function updateCode(){
 	var rndval = new Date().getTime();
@@ -236,7 +236,7 @@ function checkCode(){
 	$('#code_loading').html('<img src="/images/loading_mini.gif" style="margin-top:21px" />');
 	$.get('/antibot/code/?user_code='+val_sec_code, function(data){
 		if(data == 'ok'){
-			auth.send(val_sec_code);
+			reg.send(val_sec_code);
 		} else {
 			updateCode();
 			$('#code_loading').html('<input type="text" id="val_sec_code" class="inpst" maxlength="6" style="margin-top:10px;width:110px" />');
