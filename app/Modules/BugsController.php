@@ -533,7 +533,7 @@ class BugsController extends Module
         if($_GET['page_cnt'] > 0) $page_cnt = intval($_GET['page_cnt']) * $limit_num;
         else $page_cnt = 0;
 
-        $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `vii_users` tb2 WHERE tb1.uids = tb2.user_id {$where_sql} {$where_cat} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
+        $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id {$where_sql} {$where_cat} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
 
         if($sql_){
 
