@@ -102,8 +102,8 @@ class RegisterController extends Module{
                         $user_group = '5';
 
                         if ($user_country > 0 or $user_city > 0) {
-                            $country_info = $db->super_query("SELECT name FROM `country` WHERE id = '" . $user_country . "'");
-                            $city_info = $db->super_query("SELECT name FROM `city` WHERE id = '" . $user_city . "'");
+                            $country_info = Register::country_info($user_country);
+                            $city_info = Register::city_info($user_city);
 
                             $user_country_city_name = $country_info['name'] . '|' . $city_info['name'];
                         }
@@ -129,13 +129,14 @@ class RegisterController extends Module{
                         //Создаём папку юзера в кеше
                         Cache::mozg_create_folder_cache("user_{$id}");
 
+                        //Лишнее
                         //Директория юзеров
-                        $uploaddir = __DIR__ . '/../../public/uploads/users/';
-
-                        mkdir($uploaddir . $id, 0777);
-                        chmod($uploaddir . $id, 0777);
-                        mkdir($uploaddir . $id . '/albums', 0777);
-                        chmod($uploaddir . $id . '/albums', 0777);
+//                        $uploaddir = __DIR__ . '/../../public/uploads/users/';
+//
+//                        mkdir($uploaddir . $id, 0777);
+//                        chmod($uploaddir . $id, 0777);
+//                        mkdir($uploaddir . $id . '/albums', 0777);
+//                        chmod($uploaddir . $id . '/albums', 0777);
 
                         //Если юзер регался по реф ссылки, то начисляем рефералу 10 убм
                         if ($_SESSION['ref_id']) {
