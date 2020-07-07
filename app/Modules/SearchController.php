@@ -5,6 +5,7 @@ namespace App\Modules;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -19,14 +20,14 @@ class SearchController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
-        $config = include __DIR__.'/../data/config.php';
+        $config = Settings::loadsettings();
 
         if($logged){
-            $metatags['title'] = $lang['search'];
+            $params['title'] = $lang['search'].' | Sura';
 
             $mobile_speedbar = 'Поиск';
 
@@ -54,13 +55,20 @@ class SearchController extends Module{
             $sp = intval($_GET['sp']);
 
             //Задаём параметры сортировки
-            if($sex) $sql_sort .= "AND user_sex = '{$sex}'";
+            if($sex) {
+                $sql_sort = '';
+                $sql_sort .= "AND user_sex = '{$sex}'";
+            }
             if($day) $sql_sort .= "AND user_day = '{$day}'";
             if($month) $sql_sort .= "AND user_month = '{$month}'";
             if($year) $sql_sort .= "AND user_year = '{$year}'";
             if($country) $sql_sort .= "AND user_country = '{$country}'";
             if($city) $sql_sort .= "AND user_city = '{$city}'";
-            if($online) $sql_sort .= "AND user_last_visit >= '{$online_time}'";
+            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $online_time = $server_time - 60;
+            if($online) {
+                $sql_sort .= "AND user_last_visit >= '{$online_time}'";
+            }
             if($user_photo) $sql_sort .= "AND user_photo != ''";
             if($sp) $sql_sort .= "AND SUBSTRING(user_sp, 1, 1) regexp '[[:<:]]({$sp})[[:>:]]'";
             if($query OR $sql_sort) $where_sql_gen = "WHERE user_search_pref LIKE '%{$query}%' AND user_delet = '0' AND user_ban = '0'";
@@ -367,7 +375,7 @@ class SearchController extends Module{
                 } else
                     msgbox('', $lang['search_none'], 'info_2');
 
-                $tpl = Tools::navigation($gcount, $count['cnt'], '/index.php?'.$query_string.'&page=', $tpl);
+                $tpl = Tools::navigation($gcount, $count['cnt'], '/search/?'.$query_string.'&page=', $tpl);
 
                 $tpl->result['content'] .= '</div>
 

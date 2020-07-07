@@ -2,7 +2,7 @@
 
 namespace App\Libs;
 
-use Sura\Classes\Db;
+use Sura\Libs\Db;
 
 abstract class Model
 {

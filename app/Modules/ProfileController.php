@@ -2,10 +2,12 @@
 
 namespace App\Modules;
 
-use Sura\Classes\Db;
+use Sura\Libs\Db;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
+use Sura\Libs\Templates;
 use Sura\Libs\Tools;
 use Sura\Libs\Cache;
 use Sura\Libs\Gramatic;
@@ -20,9 +22,11 @@ class ProfileController extends Module{
 
         $db = Db::getDB();
         $user_info = $this->user_info();
+
+
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
@@ -30,7 +34,7 @@ class ProfileController extends Module{
 
         if($logged){
 
-            $config = include __DIR__.'/../../config/config.php';
+            $config = Settings::loadsettings();
 
             $path = explode('/', $_SERVER['REQUEST_URI']);
             $id = str_replace('u', '', $path);
@@ -49,6 +53,9 @@ class ProfileController extends Module{
                 $row = Profile::user_row($id);
                 //$row = $db->super_query("SELECT user_id, user_search_pref, user_country_city_name, user_birthday, user_xfields, user_xfields_all, user_city, user_country, user_photo, user_friends_num, user_notes_num, user_subscriptions_num, user_wall_num, user_albums_num, user_last_visit, user_videos_num, user_status, user_privacy, user_sp, user_sex, user_gifts, user_public_num, user_audio, user_delet, user_ban_date, xfields, user_logged_mobile , user_cover, user_cover_pos, user_rating FROM `users` WHERE user_id = '{$id}'");
                 if($row){
+
+
+
                     Cache::mozg_create_folder_cache($cache_folder);
                     Cache::mozg_create_cache($cache_folder.'/profile_'.$id, serialize($row));
                 }
@@ -62,7 +69,8 @@ class ProfileController extends Module{
             if($row){
                 $mobile_speedbar = $row['user_search_pref'];
                 $user_speedbar = $row['user_search_pref'];
-                $metatags['title'] = $row['user_search_pref'];
+                //Profile_ban = $row['user_search_pref'];
+                $params['title'] = $row['user_search_pref'].' | Sura';
 
                 $server_time = intval($_SERVER['REQUEST_TIME']);
 
@@ -296,7 +304,7 @@ class ProfileController extends Module{
                                 $id = $user_id;
 
                             $walluid = $id;
-                            $metatags['title'] = $lang['wall_title'];
+                            $params['title'] = $lang['wall_title'];
                             $user_speedbar = 'На стене нет записей';
 
                             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
@@ -1044,12 +1052,12 @@ class ProfileController extends Module{
                     }
 
                     $tpl->set('{activity}', nl2br(stripslashes($xfields_all['activity'])));
-                    $tpl->set('{interests}', nl2br(stripslashes($xfields_all['interests'])));
+//                    $tpl->set('{interests}', nl2br(stripslashes($xfields_all['interests'])));
                     $tpl->set('{myinfo}', nl2br(stripslashes($xfields_all['myinfo'])));
-                    $tpl->set('{music}', nl2br(stripslashes($xfields_all['music'])));
-                    $tpl->set('{kino}', nl2br(stripslashes($xfields_all['kino'])));
-                    $tpl->set('{books}', nl2br(stripslashes($xfields_all['books'])));
-                    $tpl->set('{games}', nl2br(stripslashes($xfields_all['games'])));
+//                    $tpl->set('{music}', nl2br(stripslashes($xfields_all['music'])));
+//                    $tpl->set('{kino}', nl2br(stripslashes($xfields_all['kino'])));
+//                    $tpl->set('{books}', nl2br(stripslashes($xfields_all['books'])));
+//                    $tpl->set('{games}', nl2br(stripslashes($xfields_all['games'])));
                     $tpl->set('{quote}', nl2br(stripslashes($xfields_all['quote'])));
                     $tpl->set('{name}', $user_name_lastname_exp[0]);
                     $tpl->set('{lastname}', $user_name_lastname_exp[1]);
@@ -1528,5 +1536,51 @@ class ProfileController extends Module{
         $params['tpl'] = $tpl;
         Page::generate($params);
         return true;
+    }
+
+    /**
+     * 
+     */
+    public static function ban()
+    {
+        $tpl = new Templates();
+        $config = Settings::loadsettings();
+        $tpl->dir = __DIR__.'/../templates/'.$config['temp'];
+
+        $user_info = Registry::get('user_info');
+        if($user_info['user_group'] != '1'){
+            $tpl->load_template('profile/profile_baned.tpl');
+            if($user_info['user_ban_date'])
+                $tpl->set('{date}', langdate('j F Y в H:i', $user_info['user_ban_date']));
+            else
+                $tpl->set('{date}', 'Неограниченно');
+            $tpl->compile('main');
+            //echo str_replace('{theme}', '/templates/'.$config['temp'], $tpl->result['main']);
+            echo $tpl->result['main'];
+        }
+
+        return die();
+    }
+
+    /**
+     *
+     */
+    public static function delete()
+    {
+        $tpl = new Templates();
+        $config = Settings::loadsettings();
+        $tpl->dir = __DIR__.'/../templates/'.$config['temp'];
+
+        $config = Settings::loadsettings();
+
+        $user_info = Registry::get('user_info');
+        if($user_info['user_group'] != '1'){
+            $tpl->load_template('profile_deleted.tpl');
+            $tpl->compile('main');
+            //echo str_replace('{theme}', '/templates/'.$config['temp'], $tpl->result['main']);
+            echo $tpl->result['main'];
+        }
+
+        return die();
     }
 }

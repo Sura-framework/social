@@ -5,6 +5,7 @@ namespace App\Modules;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
@@ -19,7 +20,7 @@ class FaveController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -28,7 +29,7 @@ class FaveController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 70;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['fave'];
+            $params['title'] = $lang['fave'].' | Sura';
 
             Tools::NoAjaxQuery();
             $fave_id = intval($_POST['fave_id']);
@@ -59,7 +60,7 @@ class FaveController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -68,7 +69,7 @@ class FaveController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 70;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['fave'];
+            $params['title'] = $lang['fave'].' | Sura';
 
             Tools::NoAjaxQuery();
             $fave_id = intval($_POST['fave_id']);
@@ -96,7 +97,7 @@ class FaveController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
@@ -108,7 +109,7 @@ class FaveController extends Module{
             $gcount = 70;
             $limit_page = ($page-1)*$gcount;
 
-            $metatags['title'] = $lang['fave'];
+            $params['title'] = $lang['fave'].' | Sura';
 
             $mobile_speedbar = 'Закладки';
 
@@ -129,7 +130,7 @@ class FaveController extends Module{
                 $tpl->load_template('fave.tpl');
                 $tpl->result['content'] .= '<table class="food_planner" id="fave_users">';
 
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
 
                 foreach($sql_ as $row){
                     if($row['user_photo'])

@@ -5,6 +5,7 @@ namespace App\Modules;
 use Intervention\Image\ImageManager;
 use Sura\Libs\Langs;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
@@ -65,7 +66,7 @@ class AttachController extends Module{
                         $db->query("INSERT INTO `attach` SET photo = '{$image_rename}{$res_type}', ouser_id = '{$user_id}', add_date = '{$server_time}'");
                         $ins_id = $db->insert_id();
 
-                        $config = include __DIR__.'/../data/config.php';
+                        $config = Settings::loadsettings();
 
                         $img_url = $config['home_url'].'uploads/attach/'.$user_id.'/c_'.$image_rename.$res_type;
 

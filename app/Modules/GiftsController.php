@@ -6,6 +6,7 @@ use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -21,7 +22,7 @@ class GiftsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -33,7 +34,7 @@ class GiftsController extends Module{
 
             $sql_ = $db->super_query("SELECT gid, img, price FROM `gifts_list` ORDER by `gid` DESC", 1);
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             foreach($sql_ as $gift){
 
@@ -64,7 +65,7 @@ class GiftsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -128,7 +129,7 @@ class GiftsController extends Module{
 
                     Cache::mozg_mass_clear_cache_file("user_{$for_user_id}/profile_{$for_user_id}|user_{$for_user_id}/gifts");
 
-                    $config = include __DIR__.'/../data/config.php';
+                    $config = Settings::loadsettings();
 
                     //Если цена подарка выше бонусного, то начисляем цену подарка на рейтинг
                     if($gifts['price'] > $config['bonus_rate']){
@@ -171,7 +172,7 @@ class GiftsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -201,7 +202,7 @@ class GiftsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
@@ -209,7 +210,7 @@ class GiftsController extends Module{
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            $metatags['title'] = $lang['gifts'];
+            $params['title'] = $lang['gifts'].' | Sura';
             $uid = intval($_GET['uid']);
 
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;

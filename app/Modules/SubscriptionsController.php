@@ -5,6 +5,7 @@ namespace App\Modules;
 use Sura\Libs\Cache;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
@@ -118,7 +119,7 @@ class SubscriptionsController extends Module{
                 $tpl->compile('content');
 
                 $tpl->load_template('profile_friends.tpl');
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
                 foreach($sql_ as $row){
                     if($row['user_photo'])
                         $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['friend_id'].'/50_'.$row['user_photo']);

@@ -2,9 +2,10 @@
 
 namespace App\Modules;
 
-use Sura\Classes\Templates;
+use Sura\Libs\Templates;
 use Sura\Libs\Registry;
 use App\Modules\Module;
+use Sura\Libs\Settings;
 
 /**
  * Временное отключение сайта
@@ -15,7 +16,7 @@ class OfflineController extends Module
 	public static function index()
 	{
         $tpl = new Templates();
-        $config = include __DIR__.'/../data/config.php';
+        $config = Settings::loadsettings();
         $tpl->dir = __DIR__.'/../templates/'.$config['temp'];
 
 		// if($user_info['user_group'] != '1'){

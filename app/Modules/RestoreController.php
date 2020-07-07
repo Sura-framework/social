@@ -5,6 +5,7 @@ namespace App\Modules;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
@@ -15,12 +16,12 @@ class RestoreController extends Module{
         $lang = langs::get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if(!$logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['restore_title'];
+            $params['title'] = $lang['restore_title'].' | Sura';
 
             Tools::NoAjaxQuery();
             $email = Validation::ajax_utf8($_POST['email']);
@@ -44,7 +45,7 @@ class RestoreController extends Module{
                 //Отправляем письмо на почту для воостановления
                 include_once __DIR__.'/../Classes/mail.php';
 
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
 
                 $mail = new \dle_mail($config);
                 $message = <<<HTML
@@ -68,12 +69,12 @@ class RestoreController extends Module{
         $lang = langs::get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if(!$logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['restore_title'];
+            $params['title'] = $lang['restore_title'].' | Sura';
 
             $hash = $db->safesql(Validation::strip_data($_GET['h']));
             $row = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$hash}' AND ip = '{$_IP}'");
@@ -110,12 +111,12 @@ class RestoreController extends Module{
         $lang = langs::get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if(!$logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['restore_title'];
+            $params['title'] = $lang['restore_title'].' | Sura';
 
             Tools::NoAjaxQuery();
             $hash = $db->safesql(Validation::strip_data($_POST['hash']));
@@ -145,13 +146,13 @@ class RestoreController extends Module{
         $logged = Registry::get('logged');
 //        $user_info = Registry::get('user_info');
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
         if(!$logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['restore_title'];
+            $params['title'] = $lang['restore_title'].' | Sura';
 
             $tpl->load_template('restore/main.tpl');
             $tpl->compile('content');
@@ -176,7 +177,7 @@ class RestoreController extends Module{
         $logged = Registry::get('logged');
 //        $user_info = Registry::get('user_info');
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 

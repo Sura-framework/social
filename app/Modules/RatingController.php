@@ -74,8 +74,8 @@ class RatingController extends Module{
 
             Tools::AjaxTpl($tpl);
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
+//            $params['tpl'] = $tpl;
+//            Page::generate($params);
             return true;
         }
     }

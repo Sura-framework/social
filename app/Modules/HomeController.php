@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use App\Modules\FeedController;
 use Sura\Libs\Auth;
 use Sura\Libs\Cache;
 use Sura\Libs\Langs;
@@ -9,11 +10,13 @@ use Sura\Libs\Page;
 use Sura\Libs\Password;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 use App\Modules\Module;
 use App\Modules\NewsController;
+
 
 class HomeController extends Module{
 
@@ -26,8 +29,9 @@ class HomeController extends Module{
 //        var_dump($params);
         //$logged = $this->logged();
         $logged = $params['user']['logged'];
+        $params['title'] = 'Новости'.' | Sura';
         if ($logged == true){
-            (new NewsController)->index($params);
+            (new FeedController)->index($params);
         }else{
             //################## Загружаем Страны ##################//
             try {
@@ -120,7 +124,7 @@ class HomeController extends Module{
                     $_BROWSER = null;
                     $db->query("UPDATE `log` SET browser = '".$_BROWSER."', ip = '".$_IP."' WHERE uid = '".$check_user['user_id']."'");
 
-                    $config = include __DIR__.'/../data/config.php';
+                    $config = Settings::loadsettings();
 
                        // header('Location: /');
                     echo 'ok|'.$check_user['user_id'];

@@ -6,6 +6,7 @@ use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -19,13 +20,13 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $user_id = $user_info['user_id'];
             //$act = $_GET['act'];
-            $metatags['title'] = $lang['settings'];
+            $params['title'] = $lang['settings'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -57,13 +58,13 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $user_id = $user_info['user_id'];
             $act = $_GET['act'];
-            $metatags['title'] = $lang['settings'];
+            $params['title'] = $lang['settings'].' | Sura';
 
             Tools::NoAjaxQuery();
             $user_name = Validation::ajax_utf8(Validation::textFilter($_POST['name']));
@@ -113,13 +114,13 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $user_id = $user_info['user_id'];
             $act = $_GET['act'];
-            $metatags['title'] = $lang['settings'];
+            $params['title'] = $lang['settings'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -151,13 +152,13 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $user_id = $user_info['user_id'];
             $act = $_GET['act'];
-            $metatags['title'] = $lang['settings'];
+            $params['title'] = $lang['settings'].' | Sura';
 
             $sql_ = $db->super_query("SELECT user_privacy FROM `users` WHERE user_id = '{$user_id}'");
             $row = xfieldsdataload($sql_['user_privacy']);
@@ -182,13 +183,13 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $user_id = $user_info['user_id'];
             $act = $_GET['act'];
-            $metatags['title'] = $lang['settings'];
+            $params['title'] = $lang['settings'].' | Sura';
 
             Tools::NoAjaxQuery();
             $bad_user_id = intval($_POST['bad_user_id']);
@@ -243,13 +244,13 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $user_id = $user_info['user_id'];
             $act = $_GET['act'];
-            $metatags['title'] = $lang['settings'];
+            $params['title'] = $lang['settings'].' | Sura';
 
             Tools::NoAjaxQuery();
             $bad_user_id = intval($_POST['bad_user_id']);
@@ -279,13 +280,13 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $user_id = $user_info['user_id'];
             $act = $_GET['act'];
-            $metatags['title'] = $lang['settings'];
+            $params['title'] = $lang['settings'].' | Sura';
 
             $row = $db->super_query("SELECT user_blacklist, user_blacklist_num FROM `users` WHERE user_id = '{$user_id}'");
 
@@ -328,15 +329,15 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $user_id = $user_info['user_id'];
             $act = $_GET['act'];
-            $metatags['title'] = $lang['settings'];
+            $params['title'] = $lang['settings'].' | Sura';
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             //Отправляем письмо на обе почты
             include_once __DIR__.'/../Classes/mail.php';
@@ -431,7 +432,7 @@ class SettingsController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
             //$act = $_GET['act'];
-            $metatags['title'] = $lang['settings'];
+            $params['title'] = $lang['settings'].' | Sura';
 
             $mobile_speedbar = 'Общие настройки';
             $row = $db->super_query("SELECT user_name, user_lastname, user_email, user_timezona FROM `users` WHERE user_id = '{$user_id}'");
@@ -561,14 +562,14 @@ class SettingsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
         if($logged){
             $user_id = $user_info['user_id'];
             //$act = $_GET['act'];
-            $metatags['title'] = $lang['settings'];
+            $params['title'] = $lang['settings'].' | Sura';
 
             $mobile_speedbar = 'Общие настройки';
             $row = $db->super_query("SELECT user_name, user_lastname, user_email FROM `users` WHERE user_id = '{$user_id}'");

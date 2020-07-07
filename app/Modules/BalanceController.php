@@ -6,6 +6,7 @@ use Sura\Libs\Gramatic;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 
 class BalanceController extends Module{
@@ -22,7 +23,7 @@ class BalanceController extends Module{
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['balance'];
+            $params['title'] = $lang['balance'].' | Sura';
             $mobile_speedbar = $lang['balance'];
 
             Tools::NoAjaxQuery();
@@ -48,13 +49,13 @@ class BalanceController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['balance'];
+            $params['title'] = $lang['balance'].' | Sura';
             $mobile_speedbar = $lang['balance'];
 
             $tpl->load_template('balance/invite.tpl');
@@ -72,13 +73,13 @@ class BalanceController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['balance'];
+            $params['title'] = $lang['balance'].' | Sura';
             $mobile_speedbar = $lang['balance'];
 
             $tpl->load_template('balance/invited.tpl');
@@ -126,13 +127,13 @@ class BalanceController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['balance'];
+            $params['title'] = $lang['balance'].' | Sura';
             $mobile_speedbar = $lang['balance'];
 
             NoAjaxQuery();
@@ -148,7 +149,7 @@ class BalanceController extends Module{
             $tpl->set('{text-rub}', Gramatic::declOfNum($owner['balance_rub'], array('рубль', 'рубля', 'рублей')));
             $tpl->set('{user-id}', $user_info['user_id']);
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             $tpl->set('{sms_number}', $config['sms_number']);
 
@@ -167,17 +168,17 @@ class BalanceController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['balance'];
+            $params['title'] = $lang['balance'].' | Sura';
             $mobile_speedbar = $lang['balance'];
 
             NoAjaxQuery();
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             $owner = $db->super_query("SELECT user_balance, balance_rub FROM `users` WHERE user_id = '{$user_id}'");
 
@@ -205,13 +206,13 @@ class BalanceController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['balance'];
+            $params['title'] = $lang['balance'].' | Sura';
             $mobile_speedbar = $lang['balance'];
 
             NoAjaxQuery();
@@ -219,7 +220,7 @@ class BalanceController extends Module{
             $num = intval($_POST['num']);
             if($num <= 0) $num = 0;
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             $resCost = $num * $config['cost_balance'];
 
@@ -249,14 +250,14 @@ class BalanceController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['balance'];
+            $params['title'] = $lang['balance'].' | Sura';
             $mobile_speedbar = $lang['balance'];
 
             $owner = $db->super_query("SELECT user_balance, balance_rub FROM `users` WHERE user_id = '{$user_id}'");

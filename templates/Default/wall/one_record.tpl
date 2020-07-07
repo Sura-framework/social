@@ -1,16 +1,16 @@
 <div class="card mt-3" id="wall_record_{rec-id}">
  [record]
-
+<div id="link_tag_{user-id}_{rec-id}"></div>
  <div class="card-body">
   <div class="mb-3">
    <div class="row align-items-center">
     <div class="col-auto [privacy-comment][if-comments]wall_ava_mini[/if-comments][/privacy-comment]" id="ava_rec_{rec-id}">
-     <a href="/u{user-id}" class="avatar">
+     <a href="/u{user-id}" class="avatar"  onmouseover="wall.showTag({user-id}, {rec-id}, 1)" onmouseout="wall.hideTag({user-id}, {rec-id}, 1)">
       <img src="{ava}" alt="..." class="avatar-img rounded-circle">
      </a>
     </div>
     <div class="col ml-n2">
-     <h4 class="mb-1">{name} {online}</h4>
+     <h4 class="mb-1" onmouseover="wall.showTag({user-id}, {rec-id}, 1)" onmouseout="wall.hideTag({user-id}, {rec-id}, 1)">{name} {online}</h4>
      <p class="card-text small text-muted">
       <span class="fe fe-clock"></span>{type} <time datetime="2018-05-24"> {date}</time>
      </p>

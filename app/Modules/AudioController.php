@@ -7,6 +7,7 @@ use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Gramatic;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
@@ -23,7 +24,7 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             //$offset = $count * $page;
             //$act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             echo <<<HTML
             <div class="audio_upload_cont">
@@ -76,14 +77,14 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             $offset = $count * $page;
             $act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             $res = array();
             $offset = 6*$page;
             $sql_count_ = $db->super_query("SELECT count(*) as cnt FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$user_info['user_id']}' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 0 AND user_audio > '0'");
             $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.user_birthday, user_photo, user_search_pref, user_audio, user_last_visit, user_logged_mobile FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$user_info['user_id']}' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 0 AND user_audio > '0' ORDER by `views` DESC LIMIT {$offset}, 6", 1);
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             foreach($sql_ as $row){
                 $row['user_photo'] = ($row['user_photo']) ? $config['home_url'].'uploads/users/'.$row['friend_id'].'/50_'.$row['user_photo'] : '/templates/'.$config['temp'].'/images/no_ava_50.png';
@@ -105,7 +106,7 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             $offset = $count * $page;
             $act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             $id = intval($_POST['id']);
             $check = $db->super_query("SELECT oid, url, filename, original, public FROM `audio` WHERE id = '{$id}'");
@@ -132,7 +133,7 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             $offset = $count * $page;
             $act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             $id = intval($_POST['id']);
             $check = $db->super_query("SELECT url, artist, title, duration, filename FROM `audio` WHERE id = '{$id}'");
@@ -158,7 +159,7 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             $offset = $count * $page;
             $act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             $gcount = 20;
             if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
@@ -258,7 +259,7 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             $offset = $count * $page;
             $act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             $id = intval($_POST['id']);
             $genre = intval($_POST['genre']);
@@ -288,7 +289,7 @@ class AudioController extends Module{
             //$page = intval($_REQUEST['page']);
             //$offset = $count * $page;
             //$act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             include __DIR__.'/../../vendor/james-heinrich/getid3/getid3.php';
             $getID3 = new \getID3;
@@ -302,7 +303,7 @@ class AudioController extends Module{
             $type = strtolower($file_extension);
 
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             if($type == 'mp3' AND $config['audio_mod_add'] == 'yes' AND $file_size < 200000000){
                 $res_type = '.'.$type;
@@ -346,7 +347,7 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             $offset = $count * $page;
             $act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             $pid = intval($_POST['pid']);
             $audios = array();
@@ -423,7 +424,7 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             $offset = $count * $page;
             $act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             $uid = intval($_REQUEST['uid']);
             $audios = array();
@@ -450,7 +451,7 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             $offset = $count * $page;
             $act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             $audios = array();
             $data = explode('_', $_POST['data']);
@@ -492,7 +493,7 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             $offset = $count * $page;
             $act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             $data = explode('_', $_POST['id']);
             $id = $data[0];
@@ -512,7 +513,7 @@ class AudioController extends Module{
             $page = intval($_REQUEST['page']);
             $offset = $count * $page;
             $act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
             $id = intval($_POST['id']);
             $genres = array(array(0,"Other"),array(1,"Rock"),array(2,"Pop"),array(3,"Rap & Hip-Hop"),array(4,"House & Dance"),array(5,"Alternative"),array(6,"Instrumental"),array(7,"Easy Listening"),array(8,"Metal"),array(9,"Dubstep"),array(10,"Indie Pop"),array(11,"Drum & Bass"),array(12,"Trance"),array(13,"Ethnic"),array(14,"Acoustic & Vocal"),array(15,"Reggae"),array(16,"Classical"),array(17,"Electropop & Disco"));
@@ -539,7 +540,7 @@ class AudioController extends Module{
             $offset = $count * $page;
 
             //$act = $_REQUEST['act'];
-            $metatags['title'] = $lang['audio'];
+            $params['title'] = $lang['audio'].' | Sura';
 
 
 

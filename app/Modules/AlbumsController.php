@@ -3,11 +3,12 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Classes\Thumb;
+use Sura\Libs\Thumb;
 use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -23,7 +24,7 @@ class AlbumsController extends Module{
         //$user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -36,12 +37,11 @@ class AlbumsController extends Module{
      * Страница создания альбома
      */
     public function create_page($params){
-        $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -61,7 +61,7 @@ class AlbumsController extends Module{
 
                 //Выводи кол-во альбомов у юзера
                 $row = $db->super_query("SELECT user_albums_num FROM `users` WHERE user_id = '{$user_info['user_id']}'");
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
                 if($row['user_albums_num'] < $config['max_albums']){
                     //hash
                     $_IP = '';
@@ -96,7 +96,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -111,7 +111,8 @@ class AlbumsController extends Module{
             //Проверка на существование альбома
             $row = $db->super_query("SELECT name, aid FROM `albums` WHERE aid = '{$aid}' AND user_id = '{$user_id}'");
             if($row){
-                $metatags['title'] = $lang['add_photo'];
+                //$params['title'] = $lang['add_photo'];
+                $params['title'] = $lang['add_photo'];
                 $user_speedbar = $lang['add_photo_2'];
                 $tpl->load_template('/albums/albums_addphotos.tpl');
                 $tpl->set('{aid}', $aid);
@@ -131,17 +132,14 @@ class AlbumsController extends Module{
     /**
      * Загрузка фотографии в альбом
      */
-    public static function upload($params){
-        $tpl = Registry::get('tpl');
+    public function upload($params){
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        //$lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
-            //$act = $_GET['act'];
 
             Tools::NoAjaxQuery();
 
@@ -154,7 +152,7 @@ class AlbumsController extends Module{
             //Проверка на существование альбома и то что загружает владелец альбома
             $row = $db->super_query("SELECT aid, photo_num, cover FROM `albums` WHERE aid = '{$aid}' AND user_id = '{$user_id}'");
             if($row){
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
                 //Проверка на кол-во фоток в альбоме
                 if($row['photo_num'] < $config['max_album_photos']){
 
@@ -175,7 +173,7 @@ class AlbumsController extends Module{
                         @mkdir($upload_dir, 0777);
                         @chmod($upload_dir, 0777);
                     }
-                    $config = include __DIR__.'/../data/config.php';
+                    $config = Settings::loadsettings();
                     //Разришенные форматы
                     $allowed_files = explode(', ', $config['photo_format']);
 
@@ -190,7 +188,7 @@ class AlbumsController extends Module{
 
                     //Проверям если, формат верный то пропускаем
                     if(in_array(strtolower($type), $allowed_files)){
-                        $config = include __DIR__.'/../data/config.php';
+                        $config = Settings::loadsettings();
                         $config['max_photo_size'] = $config['max_photo_size'] * 1000;
                         if($image_size < $config['max_photo_size']){
                             $res_type = strtolower('.'.$type);
@@ -235,7 +233,7 @@ class AlbumsController extends Module{
 
                                 $db->query("UPDATE `albums` SET photo_num = photo_num+1, adate = '{$date}' WHERE aid = '{$aid}'");
 
-                                $config = include __DIR__.'/../data/config.php';
+                                $config = Settings::loadsettings();
                                 $img_url = $config['home_url'].'uploads/users/'.$user_id.'/albums/'.$aid.'/c_'.$image_rename.$res_type;
 
                                 //Результат для ответа
@@ -283,7 +281,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -355,7 +353,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -381,13 +379,13 @@ class AlbumsController extends Module{
     /**
      * Сохранение описания к фотографии
      */
-    public static function save_descr($params){
+    public function save_descr($params){
         $tpl = Registry::get('tpl');
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -419,7 +417,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -444,7 +442,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -454,7 +452,7 @@ class AlbumsController extends Module{
             $array = $_POST['album'];
             $count = 1;
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             //Если есть данные о масиве
             if($array AND $config['albums_drag'] == 'yes'){
@@ -481,7 +479,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -491,7 +489,7 @@ class AlbumsController extends Module{
             $array	= $_POST['photo'];
             $count = 1;
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             //Если есть данные о масиве
             if($array AND $config['photos_drag'] == 'yes'){
@@ -521,7 +519,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -561,7 +559,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -603,12 +601,13 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
 
+            $checkLang = '';
             include __DIR__.'/../lang/'.$checkLang.'/site.lng';
             Tools::NoAjaxQuery();
 
@@ -639,7 +638,7 @@ class AlbumsController extends Module{
                     $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
                     $tpl->compile('content');
 
-                    $config = include __DIR__.'/../data/config.php';
+                    $config = Settings::loadsettings();
 
                     //Выводим масивом фотографии
                     $tpl->load_template('/albums/albums_editcover_photo.tpl');
@@ -681,13 +680,13 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
 
-            Tools::NoAjaxQuery();
+            //Tools::NoAjaxQuery();
             $user_id = $user_info['user_id'];
             $notes = intval($_POST['notes']);
 
@@ -790,7 +789,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -847,7 +846,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -927,10 +926,12 @@ class AlbumsController extends Module{
                 //Если вызвана страница всех комментов
                 if($uid AND !$aid){
                     $user_speedbar = $lang['comm_form_album_all'];
-                    $metatags['title'] = $lang['comm_form_album_all'];
+                    //$params['title'] = $lang['comm_form_album_all'];
+                    $params['title'] = $lang['comm_form_album_all'].' | Sura';
                 } else {
                     $user_speedbar = $lang['comm_form_album'];
-                    $metatags['title'] = $lang['comm_form_album'];
+                    //$params['title'] = $lang['comm_form_album'];
+                    $params['title'] = $lang['comm_form_album'].' | Sura';
                 }
 
                 //Загружаем HEADER альбома
@@ -974,7 +975,7 @@ class AlbumsController extends Module{
                         $tpl->set('{hash}', $row_comm['hash']);
                         $tpl->set('{author}', $row_comm['user_search_pref']);
 
-                        $config = include __DIR__.'/../data/config.php';
+                        $config = Settings::loadsettings();
 
                         //Выводим данные о фотографии
                         $tpl->set('{photo}', $config['home_url'].'uploads/users/'.$uid.'/albums/'.$row_comm['album_id'].'/c_'.$row_comm['photo_name']);
@@ -1054,7 +1055,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1072,7 +1073,8 @@ class AlbumsController extends Module{
             if($check_album){
                 $sql_ = $db->super_query("SELECT id, photo_name FROM `photos` WHERE album_id = '{$aid}' AND user_id = '{$user_id}' ORDER by `position` ASC", 1);
 
-                $metatags['title'] = $lang['editphotos'];
+                //$params['title'] = $lang['editphotos'];
+                $params['title'] = $lang['editphotos'].' | Sura';
                 $user_speedbar = $lang['editphotos'];
 
                 $tpl->load_template('/albums/albums_top.tpl');
@@ -1087,7 +1089,7 @@ class AlbumsController extends Module{
                 $tpl->set_block("'\\[comments\\](.*?)\\[/comments\\]'si","");
                 $tpl->set_block("'\\[albums-comments\\](.*?)\\[/albums-comments\\]'si","");
 
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
 
                 if($config['photos_drag'] == 'no')
                     $tpl->set_block("'\\[admin-drag\\](.*?)\\[/admin-drag\\]'si","");
@@ -1122,7 +1124,8 @@ class AlbumsController extends Module{
                 }
 
             } else {
-                $metatags['title'] = $lang['hacking'];
+                //$params['title'] = $lang['hacking'];
+                $params['title'] = $lang['hacking'].' | Sura';
                 $user_speedbar = $lang['no_infooo'];
                 msgbox('', $lang['hacking'], 'info_2');
 
@@ -1142,7 +1145,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
@@ -1216,13 +1219,13 @@ class AlbumsController extends Module{
 
                     //Мета теги и формирование спидбара
                     $titles = array('фотография', 'фотографии', 'фотографий');
-                    $metatags['title'] = stripslashes($row_album['name']).' | '.$row_album['photo_num'].' '.Gramatic::declOfNum($row_album['photo_num'], $titles);
+                    $params['title'] = stripslashes($row_album['name']).' | '.$row_album['photo_num'].' '.Gramatic::declOfNum($row_album['photo_num'], $titles).' | Sura';
                     $user_speedbar = '<span id="photo_num">'.$row_album['photo_num'].'</span> '.Gramatic::declOfNum($row_album['photo_num'], $titles);
 
                     if($sql_photos){
                         $tpl->load_template('albums/album_photo.tpl');
 
-                        $config = include __DIR__.'/../data/config.php';
+                        $config = Settings::loadsettings();
                         foreach($sql_photos as $row){
                             $tpl->set('{photo}', $config['home_url'].'uploads/users/'.$row_album['user_id'].'/albums/'.$aid.'/c_'.$row['photo_name']);
                             $tpl->set('{id}', $row['id']);
@@ -1280,7 +1283,7 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1304,7 +1307,7 @@ class AlbumsController extends Module{
 
 //        $lang = $this->get_langs();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
@@ -1327,7 +1330,7 @@ class AlbumsController extends Module{
             if(!$CheckBlackList){
                 $author_info = explode(' ', $row_owner['user_search_pref']);
 
-                $metatags['title'] = $lang['title_albums'].' '.Gramatic::gramatikName($author_info[0]).' '.Gramatic::gramatikName($author_info[1]);
+                $params['title'] = $lang['title_albums'].' '.Gramatic::gramatikName($author_info[0]).' '.Gramatic::gramatikName($author_info[1]).' | Sura';
                 $user_speedbar = $lang['title_albums'];
 
                 //Выводи данные о альбоме
@@ -1376,7 +1379,7 @@ class AlbumsController extends Module{
                             $date = megaDate(strtotime($row['adate']), 1, 1);
                             $tpl->set('{date}', $date);
 
-                            $config = include __DIR__.'/../data/config.php';
+                            $config = Settings::loadsettings();
 
                             if($row['cover'])
                                 $tpl->set('{cover}', $config['home_url'].'uploads/users/'.$uid.'/albums/'.$row['aid'].'/c_'.$row['cover']);
@@ -1426,7 +1429,7 @@ class AlbumsController extends Module{
                             $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
                         }
 
-                        $config = include __DIR__.'/../data/config.php';
+                        $config = Settings::loadsettings();
 
                         if($config['albums_drag'] == 'no')
                             $tpl->set_block("'\\[admin-drag\\](.*?)\\[/admin-drag\\]'si","");

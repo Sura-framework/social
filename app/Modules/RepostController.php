@@ -5,6 +5,7 @@ namespace App\Modules;
 use Sura\Libs\Cache;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
@@ -283,7 +284,7 @@ class RepostController extends Module{
                             Cache::mozg_clear_cache_file('user_'.$for_user_id.'/im');
                             Cache::mozg_create_cache('user_'.$for_user_id.'/im_update', '1');
 
-                            $config = include __DIR__.'/../data/config.php';
+                            $config = Settings::loadsettings();
 
                             //Отправка уведомления на E-mail
                             if($config['news_mail_8'] == 'yes' AND $user_id != $for_user_id){

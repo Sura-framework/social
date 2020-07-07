@@ -3,11 +3,12 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Classes\Thumb;
+use Sura\Libs\Thumb;
 use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -226,7 +227,7 @@ class WallController extends Module{
 
                                     }
 
-                                    $config = include __DIR__.'/../data/config.php';
+                                    $config = Settings::loadsettings();
 
                                     //Отправка уведомления на E-mail
                                     if($config['news_mail_2'] == 'yes'){
@@ -791,7 +792,7 @@ class WallController extends Module{
 
                                 Cache::mozg_clear_cache_file('user_'.$for_user_id.'/profile_'.$for_user_id);
 
-                                $config = include __DIR__.'/../data/config.php';
+                                $config = Settings::loadsettings();
 
                                 //Отправка уведомления на E-mail
                                 if($config['news_mail_7'] == 'yes' AND $user_id != $for_user_id){
@@ -836,8 +837,8 @@ class WallController extends Module{
 
                             Tools::AjaxTpl($tpl);
 
-                            $params['tpl'] = $tpl;
-                            Page::generate($params);
+                            //$params['tpl'] = $tpl;
+                            //Page::generate($params);
                             return true;
 
                         } else
@@ -1091,7 +1092,7 @@ class WallController extends Module{
 
                     $tpl->load_template('profile_friends.tpl');
 
-                    $config = include __DIR__.'/../data/config.php';
+                    $config = Settings::loadsettings();
 
                     foreach($sql_ as $row){
                         if($row['user_photo'])
@@ -1413,7 +1414,7 @@ class WallController extends Module{
                     $id = $user_id;
 
                 $walluid = $id;
-                $metatags['title'] = $lang['wall_title'];
+                $params['title'] = $lang['wall_title'].' | Sura';
                 $user_speedbar = 'На стене нет записей';
 
                 if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;

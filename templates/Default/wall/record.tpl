@@ -1,5 +1,10 @@
 [record]<div class="wallrecord wall_upage" id="wall_record_{rec-id}" style="padding-bottom:4px;margin-top:5px">
- <div style="float:left;width:60px"><div class="ava_mini [privacy-comment][if-comments]wall_ava_mini[/if-comments][/privacy-comment]" id="ava_rec_{rec-id}"><a href="/u{user-id}" onClick="Page.Go(this.href); return false"><img src="{ava}" alt="" title="" /></a>{online}</div></div>
+ <div style="float:left;width:60px">
+  <div class="ava_mini [privacy-comment][if-comments]wall_ava_mini[/if-comments][/privacy-comment]" id="ava_rec_{rec-id}">
+   <a href="/u{user-id}" onClick="Page.Go(this.href); return false" onmouseover="wall.showTag({user-id}, 1, 1)">
+    <img src="{ava}" alt="" title="" /></a>{online}
+  </div>
+ </div>
  <div class="wall_rec_autoresize">
  <div class="wallauthor fl_l" style="padding-left:0px"><a href="/u{user-id}" onClick="Page.Go(this.href); return false">{name}</a> <span class="color777">{type}</span></div>
  [owner]<div class="wall_delete" onMouseOver="myhtml.title('{rec-id}', 'Удалить запись', 'wall_del_')" onClick="wall.delet('{rec-id}'); return false" id="wall_del_{rec-id}"></div>[/owner]

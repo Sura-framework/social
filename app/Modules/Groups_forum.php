@@ -21,7 +21,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -64,7 +64,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -97,7 +97,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -210,7 +210,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -307,7 +307,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -346,7 +346,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -385,7 +385,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -426,7 +426,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -465,7 +465,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -508,7 +508,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -548,7 +548,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -591,7 +591,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -652,7 +652,7 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -972,7 +972,7 @@ class Groups_forum extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];

@@ -2,7 +2,7 @@
     <div class="col-5 mt-2">
         <div class="card">
             <div class="card-body">
-                <h1 class="display-4 text-center mb-3">Spiso framework</h1>
+                <h1 class="display-4 text-center mb-3">Spiso</h1>
                 <p class="text-muted text-center mb-5">Чтобы продолжить, создайте аккаунт или войдите.</p>
 
 
@@ -12,11 +12,11 @@
                     <div>
                         <div class="form-group">
                             <label for="exampleInputEmail1">Ваше имя</label>
-                            <input type="text" maxlength="30" id="name" placeholder="Ваше имя" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+                            <input type="text" maxlength="30" id="name" placeholder="Ваше имя" class="mt-3 mb-3 form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
                         </div>
                         <div class="form-group">
                             <label for="exampleInputEmail1">Ваша фамилия</label>
-                            <input type="text" maxlength="30" id="lastname" placeholder="Ваша фамилия" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+                            <input type="text" maxlength="30" id="lastname" placeholder="Ваша фамилия" class="mt-3 mb-3 form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
                         </div>
                         <button onClick="reg.step1(); return false" class="btn btn-primary">Зарегистрироваться</button>
                     </div>
@@ -28,7 +28,7 @@
                     <div class="err_red no_display frmero" id="err" style="margin-bottom:0px"></div>
                     <div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label for="exampleFormControlSelect2">Выберите пол </label>
                             <select id="sex" class="form-control">
                                 <option value="0">Выбрать пол</option>
@@ -107,16 +107,13 @@
                 </div>
 
 
-                <h1 onClick="reg.step1(); return false" id="reg_lnk">В чем поможет Josh Framework?</h1>
+                <h1 onClick="reg.step1(); return false" id="reg_lnk">В чем поможет Spiso?</h1>
 
-                <ul class="listing2">
-                    <li><span>Найти людей, с которыми Вы когда-либо учились, работали или отдыхали.</span></li>
-                    <li><span>Узнать больше о людях, которые Вас окружают, и найти новых друзей.</span></li>
-                    <li><span>Всегда оставаться в контакте с теми, кто Вам дорог.</span></li>
+                <ul class="list-group">
+                    <li class="list-group-item"><span>Найти людей, с которыми Вы когда-либо учились, работали или отдыхали.</span></li>
+                    <li class="list-group-item"><span>Узнать больше о людях, которые Вас окружают, и найти новых друзей.</span></li>
+                    <li class="list-group-item"><span>Всегда оставаться в контакте с теми, кто Вам дорог.</span></li>
                 </ul>
-                <table cellspacing="0" cellpadding="0" id="ij_screens"><tr>
-                        <td><a class="ij_scr" onclick="JoinPhotoview.show(0)"><img src="templates/Default/images/reg_images/profile.png" class="ijs_img" /></a></td>
-                    </tr></table>
 
             </div>
         </div>

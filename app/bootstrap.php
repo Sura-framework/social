@@ -1,11 +1,12 @@
 <?php
 
 use App\Application;
-use Sura\Classes\Db;
+use Sura\Libs\Db;
 use Sura\Libs\Auth;
 use Sura\Libs\Langs;
 use App\Models\Profile;
 use Sura\Libs\Profile_check;
+use Sura\Libs\Settings;
 
 //error_reporting(E_ALL ^ E_WARNING ^ E_NOTICE);
 
@@ -19,7 +20,8 @@ ob_start();
 ob_implicit_flush(0);
 
 
-$config = include __DIR__.'/../config/config.php';
+$config = Settings::loadsettings();
+
 $params['config'] = $config;
 
 if(!$config['home_url']) die("Vii Engine not installed. Please run install.php");
@@ -56,10 +58,10 @@ $server_time = intval($_SERVER['REQUEST_TIME']);
 
 if ($user['logged'] == true) {
     if ($user['user_info']['user_delet'] == 1)
-        App\Modules\Profile_delet::index();
+        App\Modules\ProfileController::delete();
 
     if($user['user_info']['user_ban_date'] >= $server_time OR $user['user_info']['user_ban_date'] == '0')
-        App\Modules\Profile_ban::index();
+        App\Modules\ProfileController::ban();
 
     Profile_check::timezona($user['user_info']['user_timezona']);
 }

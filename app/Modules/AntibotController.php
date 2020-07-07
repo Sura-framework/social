@@ -8,6 +8,9 @@ use Sura\Libs\Tools;
 
 class AntibotController extends Module{
 
+    /**
+     * создание капчи
+     */
     public function index()
     {
 
@@ -68,6 +71,9 @@ class AntibotController extends Module{
         die();
     }
 
+    /**
+     *  проверка капчи
+     */
     public static function code()
     {
         session_start();

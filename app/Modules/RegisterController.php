@@ -16,7 +16,7 @@ class RegisterController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
 
-//        $ajax = $_POST['ajax'];
+//        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
 //        if($ajax == 'yes')
 //            Tools::NoAjaxQuery();
 

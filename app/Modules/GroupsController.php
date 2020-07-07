@@ -3,11 +3,12 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Classes\Public_wall;
+use Sura\Libs\Public_wall;
 use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -23,7 +24,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -32,7 +33,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $title = Validation::ajax_utf8(Validation::textFilter($_POST['title'], false, true));
@@ -71,7 +72,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -80,7 +81,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -131,7 +132,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -140,7 +141,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $tpl->load_template('groups/load_photo.tpl');
@@ -163,7 +164,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -172,7 +173,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -256,7 +257,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -265,7 +266,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -296,7 +297,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -305,7 +306,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -379,7 +380,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -388,7 +389,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $tpl->load_template('groups/addfeedback_pg.tpl');
@@ -411,7 +412,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -420,7 +421,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -458,7 +459,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -467,7 +468,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -497,7 +498,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -506,7 +507,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -525,7 +526,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -534,7 +535,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -570,7 +571,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -579,7 +580,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -629,7 +630,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -638,7 +639,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -691,7 +692,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -700,13 +701,13 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $new_admin_id = intval($_POST['new_admin_id']);
             $row = $db->super_query("SELECT tb1.user_id, tb2.user_photo, user_search_pref, user_sex FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$new_admin_id}' AND tb1.user_id = tb2.user_id AND tb1.subscriptions = 2");
             if($row AND $user_id != $new_admin_id){
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
 
                 if($row['user_photo']) $ava = "/uploads/users/{$new_admin_id}/100_{$row['user_photo']}";
                 else $ava = "/templates/{$config['temp']}/images/100_no_ava.png";
@@ -729,7 +730,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -738,7 +739,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -761,7 +762,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -770,7 +771,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -793,7 +794,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -810,7 +811,7 @@ class GroupsController extends Module{
             else
                 $page_cnt = 0;
 
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -1440,7 +1441,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1449,7 +1450,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -1542,7 +1543,7 @@ class GroupsController extends Module{
 
                 $tpl->load_template('groups/record.tpl');
                 //Сообственно выводим комменты
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
                 foreach($sql_comments as $row_comments){
                     $tpl->set('{public-id}', $public_id);
                     $tpl->set('{name}', $row_comments['user_search_pref']);
@@ -1620,7 +1621,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1629,7 +1630,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $rec_id = intval($_POST['rec_id']);
@@ -1682,7 +1683,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1691,7 +1692,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $rec_id = intval($_POST['rec_id']);
@@ -1704,7 +1705,7 @@ class GroupsController extends Module{
                 $sql_comments = $db->super_query("SELECT tb1.id, public_id, text, add_date, tb2.user_photo, user_search_pref FROM `communities_wall` tb1, `users` tb2 WHERE tb1.public_id = tb2.user_id AND tb1.fast_comm_id = '{$rec_id}' ORDER by `add_date` ASC", 1);
                 $tpl->load_template('groups/record.tpl');
                 //Сообственно выводим комменты
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
                 foreach($sql_comments as $row_comments){
                     $tpl->set('{public-id}', $public_id);
                     $tpl->set('{name}', $row_comments['user_search_pref']);
@@ -1783,7 +1784,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1792,7 +1793,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $public_id = intval($_POST['public_id']);
@@ -1851,7 +1852,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1860,7 +1861,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $video_id = intval($_POST['video_id']);
@@ -1884,7 +1885,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1893,7 +1894,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             //$limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $rec_id = intval($_POST['rec_id']);
@@ -1916,7 +1917,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1925,7 +1926,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $rec_id = intval($_POST['rec_id']);
@@ -1948,7 +1949,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1957,13 +1958,13 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $rec_id = intval($_POST['rec_id']);
             $sql_ = $db->super_query("SELECT tb1.user_id, tb2.user_photo FROM `communities_wall_like` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND tb1.rec_id = '{$rec_id}' ORDER by `date` DESC LIMIT 0, 7", 1);
             if($sql_){
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
                 foreach($sql_ as $row){
                     if($row['user_photo']) $ava = '/uploads/users/'.$row['user_id'].'/50_'.$row['user_photo'];
                     else $ava = '/templates/'.$config['temp'].'/images/no_ava_50.png';
@@ -1983,7 +1984,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1992,7 +1993,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $rid = intval($_POST['rid']);
@@ -2020,7 +2021,7 @@ class GroupsController extends Module{
                     $tpl->result['content'] = str_replace('Всего', '', $tpl->result['content']);
 
                     $tpl->load_template('profile_friends.tpl');
-                    $config = include __DIR__.'/../data/config.php';
+                    $config = Settings::loadsettings();
                     foreach($sql_ as $row){
                         if($row['user_photo'])
                             $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['user_id'].'/50_'.$row['user_photo']);
@@ -2053,7 +2054,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2062,7 +2063,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
             $rid = intval($_POST['rec_id']);
@@ -2113,7 +2114,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2122,7 +2123,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -2177,7 +2178,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2186,7 +2187,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
             $gcount = 20;
@@ -2240,7 +2241,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2249,7 +2250,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             $id = intval($_GET['id']);
             $pid = intval($_GET['pid']);
@@ -2298,7 +2299,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2307,7 +2308,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -2342,7 +2343,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2351,7 +2352,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -2383,7 +2384,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2392,7 +2393,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -2480,7 +2481,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2489,7 +2490,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -2517,7 +2518,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2526,7 +2527,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -2560,7 +2561,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2569,7 +2570,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -2588,7 +2589,7 @@ class GroupsController extends Module{
             if($sql_){
 
                 $tpl->load_template('groups/inviteuser.tpl');
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
                 foreach($sql_ as $row){
 
                     if($row['user_photo'])
@@ -2676,7 +2677,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2685,7 +2686,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -2770,7 +2771,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2779,7 +2780,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             //Если подгружаем
             if($page_cnt){
@@ -2884,7 +2885,7 @@ class GroupsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -2893,7 +2894,7 @@ class GroupsController extends Module{
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -2918,6 +2919,7 @@ class GroupsController extends Module{
 
     /**
      * Вывод всех сообществ
+     * @param $params
      */
     public function index($params){
         $tpl = Registry::get('tpl');
@@ -2927,19 +2929,23 @@ class GroupsController extends Module{
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
         if($logged){
-            $act = $_GET['act'];
+            //$act = $_GET['act'];
+            $act = '';
             $user_id = $user_info['user_id'];
 
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if(isset($_GET['page']) AND $_GET['page'] > 0)
+                $page = intval($_GET['page']);
+            else
+                $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $metatags['title'] = $lang['communities'];
+            $params['title'] = $lang['communities'].' | Sura';
 
             $owner = $db->super_query("SELECT user_public_num FROM `users` WHERE user_id = '{$user_id}'");
 
@@ -3009,5 +3015,9 @@ class GroupsController extends Module{
         }
 
         Registry::set('tpl', $tpl);
+
+        $params['tpl'] = $tpl;
+        Page::generate($params);
+        return true;
     }
 }

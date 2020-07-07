@@ -1,15 +1,16 @@
 [record]
+<div id="link_tag_{author-id}_{rec-id}"></div>
 <div class="card mt-3" id="wall_record_{rec-id}">
     <div class="card-body">
         <div class="mb-3">
             <div class="row align-items-center">
                 <div class="col-auto">
-                    <a href="/{link}{author-id}" class="avatar">
+                    <a href="/{link}{author-id}" class="avatar" onmouseover="wall.showTag({author-id}, {rec-id}, 1)" onmouseout="wall.hideTag({author-id}, {rec-id}, 1)">
                         <img src="{ava}" alt="..." class="avatar-img rounded-circle">
                     </a>
                 </div>
                 <div class="col ml-n2">
-                    <h4 class="mb-1">{author}</h4>
+                    <h4 class="mb-1"  onmouseover="wall.showTag({author-id}, {rec-id}, 1)" onmouseout="wall.hideTag({author-id}, {rec-id}, 1)">{author}</h4>
                     <p class="card-text small text-muted">
                         <span class="fe fe-clock"></span>{action-type} <time datetime="2018-05-24"> {date}</time>
                     </p>

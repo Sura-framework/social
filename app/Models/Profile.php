@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-use Sura\Classes\Db;
-use Sura\Libs\Registry;
+use Sura\Libs\Db;
 
 class Profile
 {

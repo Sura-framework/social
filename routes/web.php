@@ -42,6 +42,7 @@ $router->add([
     // Страница пользователя
     '/u:num'                                      => 'Profile@Index',
     '/u:num/after'                                => 'Profile@Index',
+    '/tags/'                                      => 'Tags@Index',
 
     '/status/'                                    => 'Status@Index',
     '/status/public/'                             => 'Status@Index',
@@ -127,11 +128,18 @@ $router->add([
     '/photo/del_comm/'                            => 'Photo@del_comm',
     '/photo/crop/'                                => 'Photo@crop',
 
+    '/stories/addbox/'                                => 'Stories@addbox',
+    '/stories/upload/'                                => 'Stories@upload',
+    '/stories/show/'                                => 'Stories@show',
+    '/stories/show/:num/:num/'                                => 'Stories@show_next',
+
+
     // Друзья
     '/friends/'                                   => 'Friends@Index',
+    '/friends/send/:num/'                         => 'Friends@send',
+    '/friends/send/:num'                         => 'Friends@send',
     '/friends/:num/'                              => 'Friends@Index',
     '/friends/:num/page/:num/'                    => 'Friends@Index',
-    '/friends/send_demand/:num/'                  => 'Friends@send_demand',
     '/friends/take/:num/'                         => 'Friends@take',
     '/friends/reject/:num/'                       => 'Friends@reject',
     '/friends/box/'                               => 'Friends@box',
@@ -189,7 +197,7 @@ $router->add([
     '/fast_search/'                               => 'Fast_search@Index',
 
     //Новости
-    '/news/'                                      => 'News@Index',
+    '/news/'                                      => 'Feed@Index',
     '/news/updates/'                              => 'News@Index',
     '/news/photos/'                               => 'News@Index',
     '/news/videos/'                               => 'News@Index',

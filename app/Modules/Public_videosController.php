@@ -5,6 +5,7 @@ namespace  App\Modules;
 use Sura\Libs\Cache;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -13,7 +14,7 @@ class Public_videosController extends Module{
 
     public function add($params){
         //$tpl = Registry::get('tpl');
-        $config = include __DIR__.'/../data/config.php';
+        $config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -70,7 +71,7 @@ class Public_videosController extends Module{
 
     public function del($params){
         //$tpl = Registry::get('tpl');
-        //$config = include __DIR__.'/../data/config.php';
+        //$config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -112,7 +113,7 @@ class Public_videosController extends Module{
 
     public function edit($params){
         $tpl = Registry::get('tpl');
-        //$config = include __DIR__.'/../data/config.php';
+        //$config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -151,7 +152,7 @@ class Public_videosController extends Module{
 
     public function edit_save($params){
         //$tpl = Registry::get('tpl');
-        //$config = include __DIR__.'/../data/config.php';
+        //$config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -190,7 +191,7 @@ class Public_videosController extends Module{
 
     public function search($params){
         $tpl = Registry::get('tpl');
-        $config = include __DIR__.'/../data/config.php';
+        $config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -288,7 +289,7 @@ class Public_videosController extends Module{
     public function index($params){
         $tpl = Registry::get('tpl');
 
-        //$config = include __DIR__.'/../data/config.php';
+        //$config = Settings::loadsettings();
 
         $db = $this->db();
         $user_info = $this->user_info();
@@ -299,7 +300,7 @@ class Public_videosController extends Module{
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            $metatags['title'] = 'Видеозаписи сообщества';
+            $params['title'] = 'Видеозаписи сообщества'.' | Sura';
 
             $pid = intval($_GET['pid']);
 

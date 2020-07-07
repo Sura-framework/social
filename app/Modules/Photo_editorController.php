@@ -3,10 +3,11 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Classes\Thumb;
+use Sura\Libs\Thumb;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 
 class Photo_editorController extends Module{
@@ -52,7 +53,7 @@ class Photo_editorController extends Module{
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             //Разришенные форматы
             $allowed_files = explode(', ', $config['photo_format']);

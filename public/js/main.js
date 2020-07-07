@@ -128,9 +128,9 @@ var Page = {
 		//   return false;
 		// }
 		//
-		// history.pushState({link:h}, null, h);
+		history.pushState({link:h}, null, h);
 
-		if(!pref) history.pushState({link:h}, null, h);
+		//if(!pref) history.pushState({link:h}, null, h);
 
 		$('.js_titleRemove, .vii_box').remove();
 
@@ -140,6 +140,9 @@ var Page = {
 		Page.Loading('start');
 		$.post(h, {ajax: 'yes'}, function(res){
 			d = JSON.parse(res);
+
+			document.title = d.title;
+
 			$('#page').html(d.content).css('min-height', '0px');
 
 			Page.Loading('stop');
@@ -409,7 +412,8 @@ var Box = {
 				top_pad = 100;
 			
 		if(overflow)
-			var overflow = 'overflow-y:scroll;';
+			//var overflow = 'overflow-y:scroll;';
+			var overflow = '';
 		else
 			var overflow = '';
 			
@@ -434,7 +438,13 @@ var Box = {
 		else
 			var sheight = '';
 
-		$('body').append('<div id="modal_box"><div id="box_'+name+'" class="box_pos"><div class="box_bg" style="width:'+width+'px;margin-top:'+top_pad+'px;"><div class="box_title" id="box_title_'+name+'">'+title+'<div class="box_close" onClick="Box.Close(\''+name+'\', '+cache+'); return false;"><span aria-hidden="true">&times;</span></div></div><div class="box_conetnt" id="box_content_'+name+'" style="'+sheight+';'+overflow+'">'+bg_show+content+'<div class="clear"></div></div>'+bg_show_bottom+'<div class="box_footer"><div id="box_bottom_left_text" class="fl_l">'+box_loading+'</div>'+close_but+func_but+'</div></div></div></div>');
+		var close_img = '<svg class="bi bi-x-circle" width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">\n' +
+			'  \n' +
+			'  <path fill-rule="evenodd" d="M11.854 4.146a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708-.708l7-7a.5.5 0 0 1 .708 0z"></path>\n' +
+			'  <path fill-rule="evenodd" d="M4.146 4.146a.5.5 0 0 0 0 .708l7 7a.5.5 0 0 0 .708-.708l-7-7a.5.5 0 0 0-.708 0z"></path>\n' +
+			'</svg>';
+
+		$('body').append('<div id="modal_box"><div id="box_'+name+'" class="box_pos"><div class="card box_bg" style="width:'+width+'px;margin: 0 auto; margin-top:'+top_pad+'px;"><div class="card-header" id="box_title_'+name+'">'+title+'<div class="box_close" onClick="Box.Close(\''+name+'\', '+cache+'); return false;">'+close_img+'</div></div><div class="card-body" id="box_content_'+name+'" style="'+sheight+';'+overflow+'">'+content+'<div class="clear"></div></div>'+bg_show_bottom+'<div class="box_footer"><div id="box_bottom_left_text" class="fl_l">'+box_loading+'</div>'+close_but+func_but+'</div></div></div></div>');
 		
 		$('#box_'+name).show();
 
@@ -3549,6 +3559,29 @@ function hideTopMenu(){
 	}, 400);
 }
 
+function openUserMenu(el){
+	removeTimer('hideusermenu');
+	if($(el).hasClass('active')){
+		$('.user_menu').removeClass('d-block');
+		$('#usermenubut').removeClass('active');
+		return;
+	}
+	var left = $(el).offset().left-5;
+	$(el).addClass('active');
+	$('.user_menu').addClass('d-block');
+	setTimeout(function(){
+		$('.user_menu').animate({top: 46}, 100);
+	});
+}
+function hideUserMenu(){
+	removeTimer('hideusermenu');
+	addTimer('hideusermenu', function(){
+		$('.user_menu').removeClass('d-block');
+		$('#usermenubut').removeClass('active');
+	}, 400);
+}
+
 function ads_close(){
 		$("#ads_view").fadeOut(400);
 }
+

@@ -2,11 +2,12 @@
 
 namespace App\Modules;
 
-use Sura\Classes\Public_wall;
+use Sura\Libs\Public_wall;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
@@ -18,9 +19,9 @@ class PublicController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
 
-        $config = include __DIR__.'/../data/config.php';
+        $config = Settings::loadsettings();
 
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
@@ -71,7 +72,7 @@ class PublicController extends Module{
                 $user_speedbar = 'Страница заблокирована';
                 msgbox('', '<br /><br />Сообщество заблокировано администрацией.<br /><br /><br />', 'info_2');
             } elseif($row){
-                $metatags['title'] = stripslashes($row['title']);
+                $params['title'] = stripslashes($row['title']).' | Sura';
                 $user_speedbar = $lang['public_spbar'];
 
                 if(stripos($row['admin'], "u{$user_id}|") !== false)

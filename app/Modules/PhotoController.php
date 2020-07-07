@@ -3,11 +3,12 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Classes\Thumb;
+use Sura\Libs\Thumb;
 use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
@@ -58,7 +59,7 @@ class PhotoController extends Module{
                 $tpl->set('{hash}', $hash);
                 $tpl->set('{id}', $id);
 
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
 
                 if($user_info['user_photo'])
                     $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$user_id.'/50_'.$user_info['user_photo']);
@@ -235,7 +236,7 @@ class PhotoController extends Module{
                 $sql_comm = $db->super_query("SELECT tb1.user_id,text,date,id,hash,pid, tb2.user_search_pref, user_photo, user_last_visit, user_logged_mobile FROM `photos_comments` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND tb1.pid = '{$pid}' ORDER by `date` ASC LIMIT 0, {$limit}", 1);
 
                 $tpl->load_template('photo_comment.tpl');
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
                 foreach($sql_comm as $row_comm){
                     $tpl->set('{comment}', stripslashes($row_comm['text']));
                     $tpl->set('{uid}', $row_comm['user_id']);
@@ -348,7 +349,7 @@ class PhotoController extends Module{
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
             Tools::NoAjaxQuery();
 
             $rating = intval($_POST['rating']);
@@ -567,7 +568,7 @@ class PhotoController extends Module{
             $fuser = intval($_POST['fuser']);
             $section = $_POST['section'];
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             //ЧС
             $CheckBlackList = CheckBlackList($uid);

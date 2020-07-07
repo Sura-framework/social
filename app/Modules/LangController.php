@@ -5,6 +5,7 @@ namespace App\Modules;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 
 class LangController extends Module{
@@ -14,7 +15,7 @@ class LangController extends Module{
         $tpl = Registry::get('tpl');
 
         $lang = langs::get_langs();
-        $config = include __DIR__.'/../data/config.php';
+        $config = Settings::loadsettings();
 //        $db = Registry::get('db');
 //        $logged = Registry::get('logged');
 //        $user_info = Registry::get('user_info');
@@ -56,8 +57,8 @@ class LangController extends Module{
 
         Tools::AjaxTpl($tpl);
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
+//        $params['tpl'] = $tpl;
+//        Page::generate($params);
         return true;
     }
 

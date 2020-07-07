@@ -2,11 +2,12 @@
 
 namespace App\Modules;
 
-use Sura\Classes\Thumb;
+use Sura\Libs\Thumb;
 use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Intervention\Image\Image;
@@ -111,7 +112,7 @@ class EditprofileController extends Module{
                         //Обновляем имя фотки в бд
                         $db->query("UPDATE `users` SET user_photo = '{$image_rename}{$res_type}', user_wall_id = '{$dbid}' WHERE user_id = '{$user_id}'");
 
-                        $config = include __DIR__.'/../data/config.php';
+                        $config = Settings::loadsettings();
 
                         echo $config['home_url'].'uploads/users/'.$user_id.'/'.$image_rename.$res_type;
 
@@ -137,12 +138,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             Tools::NoAjaxQuery();
             $user_id = $user_info['user_id'];
@@ -180,13 +181,13 @@ class EditprofileController extends Module{
         //$db = $this->db();
         //$user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
         if($logged){
             //$act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             //Tools::NoAjaxQuery();
             $tpl->load_template('load_photo.tpl');
@@ -194,8 +195,8 @@ class EditprofileController extends Module{
             Tools::AjaxTpl($tpl);
         }
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
+//        $params['tpl'] = $tpl;
+//        Page::generate($params);
         return true;
     }
 
@@ -208,12 +209,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -274,12 +275,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -317,12 +318,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -361,12 +362,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             $xfields = profileload();
 
@@ -434,12 +435,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             $user_speedbar = $lang['editmyprofile'].' &raquo; '.$lang['editmyprofile_contact'];
             $tpl->load_template('profile/editprofile.tpl');
@@ -475,12 +476,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             $user_speedbar = $lang['editmyprofile'].' &raquo; '.$lang['editmyprofile_interests'];
             $tpl->load_template('profile/editprofile.tpl');
@@ -517,12 +518,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             $user_speedbar = $lang['editmyprofile'].' &raquo; Другое';
             $tpl->load_template('profile/editprofile.tpl');
@@ -598,12 +599,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             $row = $db->super_query("SELECT user_photo FROM `users` WHERE user_id = '{$user_info['user_id']}'");
 
@@ -635,11 +636,11 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             $row = $db->super_query("SELECT user_photo FROM `users` WHERE user_id = '{$user_info['user_id']}'");
 
@@ -689,12 +690,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -766,12 +767,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -796,12 +797,12 @@ class EditprofileController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             Tools::NoAjaxQuery();
 
@@ -834,14 +835,14 @@ class EditprofileController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
         if($logged){
             $act = $_GET['act'];
 
-            $metatags['title'] = $lang['editmyprofile'];
+            $params['title'] = $lang['editmyprofile'].' | Sura';
 
             $user_speedbar = $lang['editmyprofile'].' &raquo; '.$lang['editmyprofile_genereal'];
 

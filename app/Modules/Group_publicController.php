@@ -5,6 +5,7 @@ namespace App\Modules;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
@@ -18,7 +19,7 @@ class Group_publicController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
@@ -62,7 +63,7 @@ class Group_publicController extends Module{
                 $user_speedbar = 'Страница заблокирована';
                 msgbox('', '<br /><br />Сообщество заблокировано администрацией.<br /><br /><br />', 'info_2');
             } elseif($row){
-                $metatags['title'] = stripslashes($row['title']);
+                $params['title'] = stripslashes($row['title']).' | Sura';
                 $user_speedbar = $lang['public_spbar'];
 
                 if(stripos($row['admin'], "u{$user_id}|") !== false)
@@ -97,7 +98,7 @@ class Group_publicController extends Module{
 
                 $tpl->set('{title}', stripslashes($row['title']));
 
-                $config = include __DIR__.'/../data/config.php';
+                $config = Settings::loadsettings();
 
                 if($row['photo']){
 

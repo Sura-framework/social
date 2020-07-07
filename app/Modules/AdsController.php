@@ -8,7 +8,7 @@ use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
-use Sura\Classes\Thumb;
+use Sura\Libs\Thumb;
 use Sura\Libs\Cache;
 
 class AdsController extends Module{
@@ -25,7 +25,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -74,7 +74,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -142,7 +142,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -252,7 +252,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -294,7 +294,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -363,7 +363,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -408,7 +408,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -475,7 +475,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -527,7 +527,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -574,7 +574,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -615,7 +615,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -688,7 +688,7 @@ class AdsController extends Module{
         if(isset($logged)){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug
@@ -785,7 +785,7 @@ class AdsController extends Module{
         if($logged){
             //$act = $_GET['act'];
             //$user_id = $user_info['user_id'];
-            $metatags['title'] = 'Реклама';
+            $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
             $c = null; //!NB bug

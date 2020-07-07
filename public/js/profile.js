@@ -101,6 +101,25 @@ var Albums = {
 	}
 }
 
+//Stories
+var Stories = {
+	CreatOpen: function() {
+		$('.js_titleRemove').remove();
+		viiBox.start();
+		$.post('/stories/addbox/', function(d){
+			viiBox.win('stories_box', d);
+		});
+	},
+	Show: function(user) {
+		$('.js_titleRemove').remove();
+		viiBox.start();
+		$.post('/stories/show/', {user: user}, function(d){
+			viiBox.win('stories_box', d);
+			move();
+		});
+	},
+}
+
 //PHOTOS
 var Photo = {
 	addrating: function(r, i, s){
@@ -400,7 +419,7 @@ var friends = {
 			else
 				name = $('title').text();
 			
-			$.get('/friedns/send_demand/'+for_id, function(data){
+			$.get('/friends/send/'+for_id+'/', function(data){
 				if(data == 'antispam_err'){
 				  AntiSpam('friends');
 				  return false;
@@ -423,7 +442,7 @@ var friends = {
 	},
 	take: function(take_user_id){
 		Page.Loading('start');
-		$.get('/friedns/take/'+take_user_id, function(data){
+		$.get('/friends/take/'+take_user_id+'/', function(data){
 			Page.Loading('stop');
 			$('#action_'+take_user_id).html(lang_take_ok).css('color', '#777');
 		});
@@ -1098,7 +1117,9 @@ var gSearch = {
 			$.post(lnk, {ajax: 'yes'}, function(data){
 				Page.Loading('stop');
 				history.pushState({link:lnk}, null, lnk);
-				$('#page').html(data);
+				d = JSON.parse(data);
+
+				$('#page').html(d.content);
 				//Прокручиваем страницу в самый верх
 				$('html, body').scrollTop(0);
 				//Удаляем кеш фоток и видео
@@ -1219,6 +1240,27 @@ var wall = {
 			$('#wall_text').val('');
 			$('#wall_text').focus();
 		}
+	},
+	showTag: function(id, rand, type){
+		//var top = $(window).height()/2-50;
+		var link_tag = $('#link_tag_'+id+'_'+rand);
+		var offset = link_tag.offset();
+		var top = offset.top-140;
+		var left = offset.left-13;
+		$.post('/tags/', {id: id, rand: rand, type: type}, function(data){
+			$('#tt_wind').html(data);
+			$('#tt_wind2')
+				.css("top", top+"px")
+				.css("left", left+"px")
+				.fadeIn('fast');
+		});
+	},
+	hideTag: function(id, rand, type){
+		//$('#tt_wind').html('');
+		removeTimer('hidetag');
+		addTimer('hidetag', function(){
+			$('#tt_wind').html('');
+		}, 600);
 	},
 	form_open: function(){
 		$('#wall_input').hide();

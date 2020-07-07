@@ -29,7 +29,7 @@
 					<div id="err2"></div>
 						<div class="form-group">
 							<label>Электронный адрес</label>
-							<input type="email" class="form-control" name="email" id="log_email" placeholder="name@address.com" maxlength="50">
+							<input type="email" class="form-control mt-3 mb-3" name="email" id="log_email" placeholder="name@address.com" maxlength="50">
 						</div>
 					<div class="form-group">
 						<div class="row">
@@ -40,13 +40,9 @@
 								</a>
 							</div>
 						</div>
-						<div class="input-group input-group-merge">
+						<div class="input-group input-group-merge  mt-3 mb-3">
 							<input type="password" class="form-control form-control-appended" name="password" id="log_password" placeholder="Enter your password" maxlength="50">
-							<div class="input-group-append">
-								<span class="input-group-text">
-									<i class="fe fe-eye"></i>
-								  </span>
-							</div>
+
 						</div>
 					</div>
 					<input type="text" class="d-none" name="log_in">

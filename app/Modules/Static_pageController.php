@@ -15,7 +15,7 @@ class Static_pageController extends Module{
         $logged = Registry::get('logged');
         // $user_info = Registry::get('user_info');
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 

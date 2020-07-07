@@ -2,7 +2,7 @@
 
 namespace App\Modules;
 
-use Sura\Classes\Db;
+use Sura\Libs\Db;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
@@ -24,14 +24,14 @@ class SupportController extends Module{
 //        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
         if($logged){
 //            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['support_title'];
+            $params['title'] = $lang['support_title'].' | Sura';
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
@@ -54,13 +54,13 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['support_title'];
+            $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
@@ -107,13 +107,13 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['support_title'];
+            $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
@@ -134,13 +134,13 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['support_title'];
+            $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
@@ -160,13 +160,13 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
 //            $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['support_title'];
+            $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
@@ -188,13 +188,13 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['support_title'];
+            $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
@@ -263,13 +263,13 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['support_title'];
+            $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
@@ -376,13 +376,13 @@ class SupportController extends Module{
 //        $logged = Registry::get('logged');
 //        $user_info = Registry::get('user_info');
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
         if($logged){
             $user_id = $user_info['user_id'];
-            $metatags['title'] = $lang['support_title'];
+            $params['title'] = $lang['support_title'].' | Sura';
 
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;

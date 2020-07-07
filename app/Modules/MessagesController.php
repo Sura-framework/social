@@ -6,6 +6,7 @@ use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -18,7 +19,7 @@ class MessagesController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -118,7 +119,7 @@ class MessagesController extends Module{
                         Cache::mozg_clear_cache_file('user_'.$for_user_id.'/im');
                         Cache::mozg_create_cache('user_'.$for_user_id.'/im_update', '1');
 
-                        $config = include __DIR__.'/../data/config.php';
+                        $config = Settings::loadsettings();
 
                         //Отправка уведомления на E-mail
                         if($config['news_mail_8'] == 'yes' AND $user_id != $for_user_id){
@@ -152,7 +153,7 @@ class MessagesController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -196,7 +197,7 @@ class MessagesController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -257,7 +258,7 @@ class MessagesController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -267,7 +268,7 @@ class MessagesController extends Module{
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $metatags['title'] = $lang['msg_view'];
+            $params['title'] = $lang['msg_view'].' | Sura';
             $user_speedbar = $lang['msg_view'];
 
             $mid = intval($_GET['mid']);
@@ -594,7 +595,7 @@ class MessagesController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -622,7 +623,7 @@ class MessagesController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -632,7 +633,7 @@ class MessagesController extends Module{
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $metatags['title'] = $lang['msg_outbox'];
+            $params['title'] = $lang['msg_outbox'].' | Sura';
             $user_speedbar = $lang['msg_outbox'];
 
             //Для поиска
@@ -754,7 +755,7 @@ class MessagesController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
@@ -772,7 +773,7 @@ class MessagesController extends Module{
             if($user_info['user_msg_type'] == 1 OR $config['temp'] == 'mobile'){
                 $spBar = false;
                 //################### Вывод всех диалогов ###################//
-                $metatags['title'] = 'Диалоги';
+                $params['title'] = 'Диалоги'.' | Sura';
                 $mobile_speedbar = '<a href="/messages">Диалоги</a>';
 
                 //Вывод диалогов
@@ -801,7 +802,7 @@ class MessagesController extends Module{
                 $tpl->set_block("'\\[review\\](.*?)\\[/review\\]'si","");
                 $tpl->compile('info');
             } else {
-                $metatags['title'] = $lang['msg_inbox'];
+                $params['title'] = $lang['msg_inbox'].' | Sura';
                 $user_speedbar = $lang['msg_inbox'];
 
                 //Вывод информации после отправки сообщения

@@ -3,7 +3,7 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Classes\Thumb;
+use Sura\Libs\Thumb;
 use Sura\Libs\Langs;
 use Sura\Libs\Registry;
 use Sura\Libs\Tools;

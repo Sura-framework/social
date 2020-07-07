@@ -7,6 +7,7 @@ use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Gramatic;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 
 class NotificationsController extends Module{
@@ -225,7 +226,7 @@ class NotificationsController extends Module{
         } else if(!$last_id && !$_POST['page_cnt']) msgbox('', 'Нет оповещений.', 'info_2');
 
         if($last_id){
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
             echo json_encode(array('content' => str_replace('{theme}', '/templates/'.$config['temp'], $tpl->result['content']), 'count' => $count['cnt']));
         } else Tools::AjaxTpl($tpl);
 

@@ -236,7 +236,7 @@ class DocController extends Module{
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            $metatags['title'] = 'Документы';
+            $params['title'] = 'Документы'.' | Sura';
 
             $sql_limit = 20;
 

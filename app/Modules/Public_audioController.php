@@ -5,13 +5,14 @@ namespace App\Modules;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Gramatic;
+use Sura\Libs\Settings;
 use Sura\Libs\Validation;
 
 class Public_audioController extends Module{
 
     public function upload_box($params){
         $tpl = Registry::get('tpl');
-        $config = include __DIR__.'/../data/config.php';
+        $config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -62,7 +63,7 @@ class Public_audioController extends Module{
 
     public function upload($params){
         $tpl = Registry::get('tpl');
-        $config = include __DIR__.'/../data/config.php';
+        $config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -131,7 +132,7 @@ class Public_audioController extends Module{
 
     public function add($params){
         $tpl = Registry::get('tpl');
-        $config = include __DIR__.'/../data/config.php';
+        $config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -159,7 +160,7 @@ class Public_audioController extends Module{
     public function index($params){
         $tpl = Registry::get('tpl');
 
-        $config = include __DIR__.'/../data/config.php';
+        $config = Settings::loadsettings();
 
         $db = $this->db();
         $user_info = $this->user_info();
@@ -174,7 +175,7 @@ class Public_audioController extends Module{
 
             $audios = array();
             $pid = intval($_GET['pid']);
-            $metatags['title'] = 'Аудиозаписи сообщества';
+            $params['title'] = 'Аудиозаписи сообщества'.' | Sura';
 
             $plname = 'publicaudios'.$pid;
 

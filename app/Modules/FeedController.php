@@ -14,40 +14,9 @@ use Sura\Libs\Gramatic;
 /**
  * Новости
  */
-class NewsController extends Module
+class FeedController extends Module
 {
 
-    function feed()
-    {
-        $friends = Auth::user()->friends();
-
-        $user_id = $user_info['user_id'];
-
-
-        $sql_where = "tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}') AND";
-        $db = $this->db();
-        $sql_ = $db->super_query("SELECT tb1.ac_id, ac_user_id, action_text, action_time, action_type, obj_id, answer_text, link FROM `news` tb1 
-WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.action_time DESC LIMIT {$page_cnt}, {$limit_news}", 1);
-
-
-        $feed = array();
-
-        foreach($friends as $friend):
-            foreach($friend->posts as $post):
-                array_push($feed, $post);
-            endforeach;
-        endforeach;
-
-        foreach(Auth::user()->posts as $post):
-            array_push($feed, $post);
-        endforeach;
-
-        usort($feed, function($p1, $p2){
-            return $p1->id < $p2->id;
-        });
-
-        return $feed;
-    }
 	public function index($params)
 	{
         //$tpl = Registry::get('tpl');
@@ -71,13 +40,14 @@ WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.act
 
 		if($logged){
 			$user_id = $user_info['user_id'];
+
+
+
+
 			$limit_news = 20;
 				
 					//################### Вывод новостей ###################//
 					//$type = $_GET['type']; #тип сортировки
-
-                    $path = explode('/', $_SERVER['REQUEST_URI']);
-                    $type = ($path['2']);	
 
 					//Если вызвана страница обновлений
 					// if($type == 'updates' OR $type == 'photos' OR $type == 'videos'){
@@ -86,62 +56,26 @@ WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.act
 					//     $for_new_sql = '';
      //                }
 
-        			$sql_where = "tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}') AND";
+        			//$sql_where = "tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}') AND";
 
 					//$sql_where = "tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}' {$for_new_sql}) AND";
 
 					//Если вызвана страница обновлений
-					if($type == 'updates'){
-                        $params['title'] = $lang['news_updates'].' | Sura';
-						$user_speedbar = $lang['news_speedbar'];
-						$sql_sort = '4,5';
-						$no_news = '<br />'.$lang['news_none_updates'].'<br />';
-					} 
-					//Если вызвана страница фотографий
-					else if($type == 'photos'){
-                        $params['title'] = $lang['news_photos'].' | Sura';
-						$user_speedbar = $lang['news_speedbar_photos'];
-						$sql_sort = '3';
-						$no_news = '<br />'.$lang['news_none_photos'].'<br />';
+            $params['title'] = $lang['news_title'].' | Sura';
+                    $user_speedbar = $lang['news_speedbar'];
+                    $mobile_speedbar = 'Последние новости';
+                    $sql_sort = '1,2,3,11';
+                    $no_news = '<br /><br />'.$lang['news_none'].'<br /><br /><br />';
+                    $type = '';
 
-					} 
-					//Если вызвана страница видео
-					else if($type == 'videos'){
-                        $params['title'] = $lang['news_videos'].' | Sura';
-						$user_speedbar = $lang['news_speedbar_videos'];
-						$sql_sort = '2';
-						$no_news = '<br />'.$lang['news_none_videos'].'<br />';
-					} 
-					//Если вызвана страница ответов
-					else if($type == 'notifications'){
-                        $params['title'] = $lang['news_notifications'].' | Sura';
-						$user_speedbar = $lang['news_speedbar_notifications'];
-						$mobile_speedbar = 'Последние ответы';
-						//$sql_sort = '6,7,8,9,10,12';
-						$sql_sort = '6,7,8,9,10';
-						$dop_sort = "AND tb1.for_user_id = '{$user_id}'";
-						$no_news = '<br />'.$lang['news_none_notifica'].'<br />';
-						$sql_where = '';
-						
-						//Обновляем счетчик новых новостей, ставим 0
-						$CacheNews = Cache::mozg_cache('user_'.$_SESSION['user_id'].'/new_news');
-						if($CacheNews)
-							Cache::mozg_create_cache('user_'.$user_id.'/new_news', '');
-					} else {
-                        $params['title'] = $lang['news_title'].' | Sura';
-						$user_speedbar = $lang['news_speedbar'];
-						$mobile_speedbar = 'Последние новости';
-						$sql_sort = '1,2,3,11';
-						$no_news = '<br /><br />'.$lang['news_none'].'<br /><br /><br />';
-						$type = '';
-						
-						$sql_where = "
-							tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}' AND tb1.action_type IN (1,2,3) AND subscriptions != 2) 
-						OR 
-							tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}' AND tb1.action_type = 11 AND subscriptions = 2) 
-						AND";
-					}
-					
+                    $sql_where = "
+                        tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}' AND tb1.action_type IN (1,2,3) AND subscriptions != 2) 
+                    OR 
+                        tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}' AND tb1.action_type = 11 AND subscriptions = 2) 
+                    AND";
+
+
+
 					if(isset($_POST['page_cnt']) AND $_POST['page_cnt'] > 0)
 						$page_cnt = intval($_POST['page_cnt'])*$limit_news;
 					else
@@ -158,13 +92,42 @@ WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.act
 
 					//Head
 					if(!isset($_POST['page_cnt'])){
-						$tpl->load_template('news/head.tpl');
+
+                        $server_time = intval($_SERVER['REQUEST_TIME']);
+                        $online_time = $server_time - 60;
+                        $stories_all = $db->super_query("SELECT tb1.user_id, url, add_date FROM `stories_feed` tb1, `friends` tb2 WHERE tb1.user_id = tb2.friend_id AND tb2.user_id = '{$user_id}' ORDER by add_date DESC LIMIT 0, 6", 1);
+                        $tpl->load_template('stories/all.tpl');
+                        foreach($stories_all as $row){
+                            $tpl->set('{url}', $row['url']);
+                            $tpl->set('{s_id}', $row['user_id']);
+                            $tpl->compile('all_stories');
+                        }
+
+                        $tpl->load_template('news/head.tpl');
+
+                        //Stories
+                        $stories = $db->super_query("SELECT * FROM `stories_feed` WHERE user_id = '{$user_id}' ORDER by `add_date` ");
+                        if (isset($stories['url'])){
+                            $tpl->set('{s_url}', $stories['url']);
+                        }else{
+                            $tpl->set('{s_url}', '');
+                        }
+                        $tpl->set('{stories}', $tpl->result['all_stories']);
 
                         $tpl->set('{my-page-link}', '/u'.$user_info['user_id']);
                         //Сообщения
-                        $tpl->set('{msg}', $params['user_pm_num']);
+                        if (isset($params['user_pm_num'])){
+                            $tpl->set('{msg}', $params['user_pm_num']);
+                        }else{
+                            $tpl->set('{msg}', '');
+                        }
                         //Заявки в друзья
-                        $tpl->set('{demands}', $params['demands']);
+                        if (isset($params['demands'])){
+                            $tpl->set('{demands}', $params['demands']);
+                        }else{
+                            $tpl->set('{demands}', '');
+                        }
+                        $params['requests_link'] = (isset($params['requests_link'])) ? $params['requests_link'] : '' ;
                         $tpl->set('{requests-link}', $params['requests_link']);
 
                         //Отметки на фото
@@ -172,19 +135,26 @@ WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.act
                             $tpl->set('{my-id}', 'newphotos');
                             $tpl->set('{new_photos}', $params['new_photos']);
                         } else{
-                            //$tpl->set('{my-id}', $user_info['user_id']);
+                            $tpl->set('{my-id}', $user_info['user_id']);
                             $tpl->set('{new_photos}', '');
                         }
                         //Приглашения в сообщества
+                        $params['new_groups_lnk'] = (isset($params['new_groups_lnk'])) ? $params['new_groups_lnk'] : '/groups' ;
                         $tpl->set('{groups-link}', $params['new_groups_lnk']);
+                        $params['new_groups'] = (isset($params['new_groups'])) ? $params['new_groups'] : '' ;
                         $tpl->set('{new_groups}', $params['new_groups']);
                         //Новости
+                        $params['new_news'] = (isset($params['new_news'])) ? $params['new_news'] : '' ;
                         $tpl->set('{new-news}', $params['new_news']);
+                        $params['news_link'] = (isset($params['news_link'])) ? $params['news_link'] : '' ;
                         $tpl->set('{news-link}', $params['news_link']);
                         //Поддержка
+                        $params['support'] = (isset($params['support'])) ? $params['support'] : '' ;
                         $tpl->set('{new-support}', $params['support']);
                         //UBM
+                        $params['new_ubm'] = (isset($params['new_ubm'])) ? $params['new_ubm'] : '' ;
                         $tpl->set('{new-ubm}', $params['new_ubm']);
+                        $params['gifts_link'] = (isset($params['gifts_link'])) ? $params['gifts_link'] : '' ;
                         $tpl->set('{ubm-link}', $params['gifts_link']);
 
 						$tpl->set('[news]', '');
@@ -196,7 +166,8 @@ WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.act
 					}
 					
 					//Запрос на вывод из БД tb1.action_type regexp '[[:<:]]({$sql_sort})[[:>:]]' 
-					$sql_ = $db->super_query("SELECT tb1.ac_id, ac_user_id, action_text, action_time, action_type, obj_id, answer_text, link FROM `news` tb1 WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.action_time DESC LIMIT {$page_cnt}, {$limit_news}", 1);
+					$sql_ = $db->super_query("SELECT tb1.ac_id, ac_user_id, action_text, action_time, action_type, obj_id, answer_text, link FROM `news` tb1 WHERE {$sql_where} tb1.action_type IN ({$sql_sort})	ORDER BY tb1.action_time DESC LIMIT {$page_cnt}, {$limit_news}", 1);
+
 
 					if($sql_){
 						$c = 0;
@@ -1055,7 +1026,7 @@ WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.act
 								
 								//Приватность
 								$user_privacy = xfieldsdataload($row['user_privacy']);
-								$check_friend = CheckFriends($row['ac_user_id']);
+								$check_friend = Tools::CheckFriends($row['ac_user_id']);
 								
 								//Выводим кол-во комментов, мне нравится, и список юзеров кто поставил лайки к записи если это не страница "ответов"
 								$rec_info = $db->super_query("SELECT fasts_num, likes_num, likes_users, tell_uid, tell_date, type, public, attach, tell_comm FROM `wall` WHERE id = '{$row['obj_id']}'");
@@ -1496,8 +1467,10 @@ WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.act
 									$tpl->result['content'] .= '</div>';
 								}
                                 $tpl->result['content'] .= '</div></div>';
+
 							    //====================================//
 							    //Если запись со стены сообщества
+
 							} else if($row['action_type'] == 11){
 
 								//Выводим кол-во комментов, мне нравится, и список юзеров кто поставил лайки к записи если это не страница "ответов"

@@ -3,11 +3,12 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Classes\Thumb;
+use Sura\Libs\Thumb;
 use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -24,7 +25,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -32,7 +33,7 @@ class VideosController extends Module{
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             $file_tmp = $_FILES['uploadfile']['tmp_name'];
             if (!file_exists($file_tmp)) {
@@ -108,7 +109,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -133,7 +134,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -157,7 +158,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -167,7 +168,7 @@ class VideosController extends Module{
 
             Tools::NoAjaxQuery();
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             if($config['video_mod_add'] == 'yes'){
                 $good_video_lnk = Validation::ajax_utf8(Validation::textFilter($_POST['good_video_lnk']));
@@ -273,7 +274,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -399,7 +400,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -451,7 +452,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -487,7 +488,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -524,7 +525,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
@@ -574,7 +575,7 @@ class VideosController extends Module{
                     $privacy = false;
 
                 if($privacy){
-                    $config = include __DIR__.'/../data/config.php';
+                    $config = Settings::loadsettings();
 
                     //Выводим комментарии если они есть
                     if($row['comm_num'] AND $config['video_mod_comm'] == 'yes'){
@@ -762,7 +763,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -772,7 +773,7 @@ class VideosController extends Module{
 
             Tools::NoAjaxQuery();
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             if($config['video_mod_comm'] == 'yes'){
                 $vid = intval($_POST['vid']);
@@ -874,7 +875,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -930,7 +931,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -984,7 +985,7 @@ class VideosController extends Module{
 
                         $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
 
-                    $config = include __DIR__.'/../data/config.php';
+                    $config = Settings::loadsettings();
 
                     if($row_comm['user_photo'])
                         $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comm['author_user_id'].'/50_'.$row_comm['user_photo']);
@@ -1010,7 +1011,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1085,7 +1086,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1158,7 +1159,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1235,7 +1236,7 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
@@ -1247,7 +1248,7 @@ class VideosController extends Module{
             $vid = intval($_POST['vid']);
             $row = $db->super_query("SELECT video, photo, title, descr FROM `videos` WHERE id = '{$vid}'");
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             if($row AND $config['video_mod_add_my'] == 'yes'){
                 //Директория загрузки фото
@@ -1284,7 +1285,7 @@ class VideosController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = $_POST['ajax'];
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
 
@@ -1311,7 +1312,7 @@ class VideosController extends Module{
                 $owner = $db->super_query("SELECT user_videos_num, user_search_pref FROM `users` WHERE user_id = '{$get_user_id}'");
                 if($owner){
                     $name_info = explode(' ', $owner['user_search_pref']);
-                    $metatags['title'] = $lang['videos'].' '.Gramatic::gramatikName($name_info[0]).' '.Gramatic::gramatikName($name_info[1]);
+                    $params['title'] = $lang['videos'].' '.Gramatic::gramatikName($name_info[0]).' '.Gramatic::gramatikName($name_info[1]).' | Sura';
 
                     $check_friend = null;
 
@@ -1362,7 +1363,7 @@ class VideosController extends Module{
                             $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
                         }
 
-                        $config = include __DIR__.'/../data/config.php';
+                        $config = Settings::loadsettings();
 
                         if($config['video_mod_add'] == 'yes'){
                             $tpl->set('[admin-video-add]', '');

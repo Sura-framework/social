@@ -24,7 +24,7 @@ $(document).ready(function(){
 <input type="hidden" id="typePlay" value="standart" />
 
 <div class="d-sm-flex justify-content-center">
-<div class="col-sm-4">
+<div class="col-sm-4 m-2">
 
 <div class="card">
 <div class="card-body">
@@ -44,29 +44,57 @@ $(document).ready(function(){
      </div></div>
    </div>
  [/owner]
- [not-owner][cover]<div class="cover_newava" {cover-param-7}>[/cover]<span id="ava"><img src="{ava}" alt="" title="" id="ava_{user-id}" /></span>[cover]</div>[/cover][/not-owner]
+ [not-owner]<div class="cover_newava" {cover-param-7}><span id="ava"><img class="w-100" src="{ava}" alt="" title="" id="ava_{user-id}" /></span></div>[/not-owner]
   <hr>
-  [not-owner][blacklist][privacy-msg]<a href="/" onClick="messages.new_({user-id}); return false"><img class="icon mail_ic" src="/images/spacer.gif" alt="" /><div>Отправить сообщение</div></a>[/privacy-msg][/blacklist]
-  <a href="/" onClick="gifts.box('{user-id}'); return false"><img class="icon new_gift" src="/images/spacer.gif" alt="" /><div>Отправить подарок</div></a>
-  [/not-owner]
+
   <div class="row">
    <div class="col-10">
-    <nav class="nav">
-     [owner]<a class="nav-link active w-100" href="/edit/" onClick="Page.Go(this.href); return false;"><img class="icon edit_ic" src="/images/spacer.gif" alt="" /><div>Редактировать</div></a>[/owner]
+    [not-owner] <div class="row">
+     [blacklist][privacy-msg]<a href="/" onClick="messages.new_({user-id}); return false">
+      <svg class="bi bi-envelope" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+       <path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>
+       <path d="M.05 3.555C.017 3.698 0 3.847 0 4v.697l5.803 3.546L0 11.801V12c0 .306.069.596.192.856l6.57-4.027L8 9.586l1.239-.757 6.57 4.027c.122-.26.191-.55.191-.856v-.2l-5.803-3.557L16 4.697V4c0-.153-.017-.302-.05-.445L8 8.414.05 3.555z"/>
+      </svg>
+      <span>Написать сообщение</span></a>[/privacy-msg][/blacklist]
+     <a href="/" onClick="gifts.box('{user-id}'); return false">
+      <svg class="bi bi-gift" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+       <path fill-rule="evenodd" d="M2 6v8.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5V6h1v8.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5V6h1zm8-5a1.5 1.5 0 0 0-1.5 1.5c0 .098.033.16.12.227.103.081.272.15.49.2A3.44 3.44 0 0 0 9.96 3h.015L10 2.999l.025.002h.014A2.569 2.569 0 0 0 10.293 3c.17-.006.387-.026.598-.073.217-.048.386-.118.49-.199.086-.066.119-.13.119-.227A1.5 1.5 0 0 0 10 1zm0 3h-.006a3.535 3.535 0 0 1-.326 0 4.435 4.435 0 0 1-.777-.097c-.283-.063-.614-.175-.885-.385A1.255 1.255 0 0 1 7.5 2.5a2.5 2.5 0 0 1 5 0c0 .454-.217.793-.506 1.017-.27.21-.602.322-.885.385a4.434 4.434 0 0 1-1.104.099H10z"/>
+       <path fill-rule="evenodd" d="M6 1a1.5 1.5 0 0 0-1.5 1.5c0 .098.033.16.12.227.103.081.272.15.49.2A3.44 3.44 0 0 0 5.96 3h.015L6 2.999l.025.002h.014l.053.001a3.869 3.869 0 0 0 .799-.076c.217-.048.386-.118.49-.199.086-.066.119-.13.119-.227A1.5 1.5 0 0 0 6 1zm0 3h-.006a3.535 3.535 0 0 1-.326 0 4.435 4.435 0 0 1-.777-.097c-.283-.063-.614-.175-.885-.385A1.255 1.255 0 0 1 3.5 2.5a2.5 2.5 0 0 1 5 0c0 .454-.217.793-.506 1.017-.27.21-.602.322-.885.385a4.435 4.435 0 0 1-1.103.099H6zm1.5 12V6h1v10h-1z"/>
+       <path fill-rule="evenodd" d="M15 4H1v1h14V4zM1 3a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H1z"/>
+      </svg>
+      <span>Отправить подарок</span></a>
+    </div>
+    [/not-owner]
+     [owner]<a class="nav-link active w-100" href="/edit/" onClick="Page.Go(this.href); return false;">
+      <svg class="bi bi-brush" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+       <path d="M15.213 1.018a.572.572 0 0 1 .756.05.57.57 0 0 1 .057.746C15.085 3.082 12.044 7.107 9.6 9.55c-.71.71-1.42 1.243-1.952 1.596-.508.339-1.167.234-1.599-.197-.416-.416-.53-1.047-.212-1.543.346-.542.887-1.273 1.642-1.977 2.521-2.35 6.476-5.44 7.734-6.411z"/>
+       <path d="M7 12a2 2 0 0 1-2 2c-1 0-2 0-3.5-.5s.5-1 1-1.5 1.395-2 2.5-2a2 2 0 0 1 2 2z"/>
+      </svg>
+      Редактировать</a>[/owner]
      [not-owner]
-     [no-friends][blacklist]<a class="nav-link active" href="/" onClick="friends.add({user-id}); return false"><img class="icon addfr_ic" src="/images/spacer.gif" alt="" /><div>Добавить в друзья</div></a>[/blacklist][/no-friends]
-     [yes-friends]<a class="nav-link active" href="/" onClick="friends.delet({user-id}, 1); return false"><img class="icon del_friends" src="/images/spacer.gif" alt="" /><div>Убрать из друзей</div></a>[/yes-friends]
-     [blacklist][no-subscription]<a class="nav-link active" href="/" onClick="subscriptions.add({user-id}); return false" id="lnk_unsubscription"><img class="icon subs_ic" src="/images/spacer.gif" alt="" /><div><span id="text_add_subscription">Подписаться на обновления</span> <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" /></div></a>[/no-subscription][/blacklist]
-     [yes-subscription]<a class="nav-link active" href="/" onClick="subscriptions.del({user-id}); return false" id="lnk_unsubscription"><img class="icon subs_ic" src="/images/spacer.gif" alt="" /><div><span id="text_add_subscription">Отписаться от обновлений</span> <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" /></div></a>[/yes-subscription]
+     [no-friends][blacklist]<a class="nav-link active" href="/" onClick="friends.add({user-id}); return false">
+      <svg class="bi bi-person-plus" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+       <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm4.5 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+       <path fill-rule="evenodd" d="M13 7.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>
+      </svg>
+      <span>Добавить</span></a>[/blacklist][/no-friends]
+     [yes-friends]<a class="nav-link active" href="/" onClick="friends.delet({user-id}, 1); return false">
+      <svg class="bi bi-person-dash" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+       <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
+      </svg>
+      <span>Убрать</span></a>[/yes-friends]
+     [blacklist][no-subscription]<a class="nav-link active" href="/" onClick="subscriptions.add({user-id}); return false" id="lnk_unsubscription"><div><span id="text_add_subscription">Подписаться на обновления</span> <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" /></div></a>[/no-subscription][/blacklist]
+     [yes-subscription]<a class="nav-link active" href="/" onClick="subscriptions.del({user-id}); return false" id="lnk_unsubscription"><div><span id="text_add_subscription">Отписаться от обновлений</span> <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" /></div></a>[/yes-subscription]
      [/not-owner]
-    </nav>
    </div>
     <div class="col-2">
  <div class="dropdown">
-  <a href="#" class="dropdown-ellipses dropdown-toggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-   <i class="fe fe-more-vertical"></i>
+  <a href="#" onclick="openUserMenu(this);" onmouseout="hideUserMenu()" onmouseover="removeTimer('hideusermenu')" id="usermenubut" class="dropdown-ellipses dropdown-toggle bg-secondary rounded text-white pl-1 pr-1" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-size: 2em">
+   <svg class="bi bi-chat-dots" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"></path>
+   </svg>
   </a>
-  <div class="dropdown-menu dropdown-menu-right">[owner]
+  <div class="dropdown-menu dropdown-menu-right user_menu" onmouseover="removeTimer('hideusermenu')" onmouseout="hideUserMenu()">[owner]
    <a href="/my_stats/" class="dropdown-item">Статистика страницы</a>
    <a href="/docs/" class="dropdown-item">Мои документы</a>
    <a href="/edit/" class="dropdown-item">Редактировать страницу</a>
@@ -75,11 +103,43 @@ $(document).ready(function(){
    <a href="#" onClick="Profile.DelPhoto(); return false;" id="del_pho_but" {display-ava} class="dropdown-item">Удалить миниатюру</a>
  [/owner]
  [not-owner]
- [no-fave]<a href="/" class="dropdown-item" onClick="fave.add({user-id}); return false" id="addfave_but"><img class="icon fav_ic" src="/images/spacer.gif" alt="" /><div><span id="text_add_fave">Добавить в закладки</span> <img src="/images/loading_mini.gif" alt="" id="addfave_load" class="no_display" /></div></a>[/no-fave]
- [yes-fave]<a href="/" class="dropdown-item" onClick="fave.delet({user-id}); return false" id="addfave_but"><img class="icon fav_ic" src="/images/spacer.gif" alt="" /><div><span id="text_add_fave">Удалить из закладок</span> <img src="/images/loading_mini.gif" alt="" id="addfave_load" class="no_display" /></div></a>[/yes-fave]
- [no-blacklist]<a href="/" class="dropdown-item" onClick="settings.addblacklist({user-id}); return false" id="addblacklist_but"><img class="icon compla_ic" src="/images/spacer.gif" alt="" /><div><span id="text_add_blacklist">Заблокировать</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></div></a>[/no-blacklist]
- [yes-blacklist]<a href="/" class="dropdown-item" onClick="settings.delblacklist({user-id}, 1); return false" id="addblacklist_but"><img class="icon compla_ic" src="/images/spacer.gif" alt="" /><div><span id="text_add_blacklist">Разблокировать</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></div></a>[/yes-blacklist]
- [/not-owner]
+ [no-fave]<a href="/" class="dropdown-item" onClick="fave.add({user-id}); return false" id="addfave_but">
+    <svg class="bi bi-star-fill" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+     <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.283.95l-3.523 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+    </svg>
+    <span><span id="text_add_fave">Добавить в закладки</span> <img src="/images/loading_mini.gif" alt="" id="addfave_load" class="no_display" /></span></a>[/no-fave]
+ [yes-fave]<a href="/" class="dropdown-item" onClick="fave.delet({user-id}); return false" id="addfave_but">
+    <svg class="bi bi-star" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+     <path fill-rule="evenodd" d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.523-3.356c.329-.314.158-.888-.283-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767l-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288l1.847-3.658 1.846 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.564.564 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+    </svg>
+    <div><span id="text_add_fave">Удалить из закладок</span> <img src="/images/loading_mini.gif" alt="" id="addfave_load" class="no_display" /></div></a>[/yes-fave]
+ [no-blacklist]<a href="/" class="dropdown-item" onClick="settings.addblacklist({user-id}); return false" id="addblacklist_but">
+    <svg class="bi bi-exclamation-circle-fill" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+     <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+    </svg>
+    <span><span id="text_add_blacklist">Заблокировать</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></span></a>[/no-blacklist]
+ [yes-blacklist]<a href="/" class="dropdown-item" onClick="settings.delblacklist({user-id}, 1); return false" id="addblacklist_but">
+    <svg class="bi bi-exclamation-circle" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+     <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+     <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+    </svg>
+    <span><span id="text_add_blacklist">Разблокировать</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></span></a>[/yes-blacklist]
+
+   [no-friends][blacklist]<a class="nav-link active" href="/" onClick="friends.add({user-id}); return false">
+    <svg class="bi bi-person-plus" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+     <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm4.5 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+     <path fill-rule="evenodd" d="M13 7.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>
+    </svg>
+    <span>Добавить</span></a>[/blacklist][/no-friends]
+   [yes-friends]<a class="nav-link active" href="/" onClick="friends.delet({user-id}, 1); return false">
+    <svg class="bi bi-person-dash" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+     <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
+    </svg>
+    <span>Убрать</span></a>[/yes-friends]
+   [blacklist][no-subscription]<a class="nav-link active" href="/" onClick="subscriptions.add({user-id}); return false" id="lnk_unsubscription"><div><span id="text_add_subscription">Подписаться на обновления</span> <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" /></div></a>[/no-subscription][/blacklist]
+   [yes-subscription]<a class="nav-link active" href="/" onClick="subscriptions.del({user-id}); return false" id="lnk_unsubscription"><div><span id="text_add_subscription">Отписаться от обновлений</span> <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" /></div></a>[/yes-subscription]
+
+   [/not-owner]
    </div>
   </div>
     </div>
@@ -88,10 +148,12 @@ $(document).ready(function(){
 </div>
 </div>
 </div>
- <div class="card mt-2">
-  <div class="card-body">
 
-[blacklist]<div class="leftcbor">
+
+[blacklist]
+   <div class="card mt-2">
+    <div class="card-body">
+   <div class="leftcbor">
  [owner][happy-friends]<div id="happyBLockSess"><div class="albtitle">Дни рожденья друзей <span>{happy-friends-num}</span><div class="profile_happy_hide"><img src="/images/hide_lef.gif" onMouseOver="myhtml.title('1', 'Скрыть', 'happy_block_')" id="happy_block_1" onClick="HappyFr.HideSess(); return false" /></div></div>
  <div class="newmesnobg profile_block_happy_friends" style="padding:0px;padding-top:10px;">{happy-friends}<div class="clear"></div></div>
  <div class="cursor_pointer no_display" onMouseDown="HappyFr.Show(); return false" id="happyAllLnk"><div class="public_wall_all_comm profile_block_happy_friends_lnk">Показать все</div></div></div>
@@ -116,17 +178,13 @@ $(document).ready(function(){
  </div>[/videos]
 <div class="clear"></div>
 <span id="fortoAutoSizeStyleProfile"></span>
-</div>[/blacklist]
 </div>
-
-
-
-
-
+  </div>
+ </div>
+   [/blacklist]
 
 </div>
-</div>
- <div class="col-sm-8">
+ <div class="col-sm-8 m-2">
 <div class="card">
  <div class="card-body">
  <div class="padcont2 mt-3 shadow2">
@@ -135,7 +193,7 @@ $(document).ready(function(){
   <input type="text" id="status_text" class="status_inp" value="{status-text}" style="width:500px;" maxlength="255" onKeyPress="if(event.keyCode == 13)gStatus.set()" />
   <div class="fl_l status_text"><span class="no_status_text [status]no_display[/status]">Введите здесь текст Вашего статуса.</span><a href="/" class="yes_status_text [no-status]no_display[/no-status]" onClick="gStatus.set(1); return false">Удалить статус</a></div>
   [status]<div class="button_div_gray fl_r status_but margin_left"><button>Отмена</button></div>[/status]
-  <div class="button_div fl_r status_but"><button id="status_but" onClick="gStatus.set()">Сохранить</button></div>
+  <div class="fl_r status_but"><button class="btn btn-secondary" id="status_but" onClick="gStatus.set()">Сохранить</button></div>
  </div>[/owner]
  <div class="titleu">{name} {lastname} <a class="fl_r color777" style="text-decoration:none"><b>{online}</b></a></div>
  <div class="status">
@@ -237,7 +295,7 @@ $(document).ready(function(){
    <div class="clear"></div>
    <input id="vaLattach_files" type="hidden" />
    <div class="clear"></div>
-   <div class="button_div fl_l margin_top_10"><button onClick="wall.send(); return false" id="wall_send">Отправить</button></div>
+   <div class=" fl_l margin_top_10"><button onClick="wall.send(); return false" id="wall_send" class="btn btn-secondary">Отправить</button></div>
    <div class="wall_attach fl_r" onClick="wall.attach_menu('open', this.id, 'wall_attach_menu')" onMouseOut="wall.attach_menu('close', this.id, 'wall_attach_menu')" id="wall_attach">Прикрепить</div>
    <div class="wall_attach_menu no_display" onMouseOver="wall.attach_menu('open', 'wall_attach', 'wall_attach_menu')" onMouseOut="wall.attach_menu('close', 'wall_attach', 'wall_attach_menu')" id="wall_attach_menu">
     <div class="wall_attach_icon_smile" id="wall_attach_link" onClick="wall.attach_addsmile()">Смайлик</div>

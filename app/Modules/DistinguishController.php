@@ -6,6 +6,7 @@ use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
@@ -141,7 +142,7 @@ class DistinguishController extends Module{
 
             }
 
-            $config = include __DIR__.'/../data/config.php';
+            $config = Settings::loadsettings();
 
             echo <<<HTML
                     <script type="text/javascript" src="/templates/{$config['temp']}/js/fave.filter.js"></script>
