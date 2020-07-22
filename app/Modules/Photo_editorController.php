@@ -16,8 +16,8 @@ class Photo_editorController extends Module{
      * Отмена редактирования
      */
     public function close($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -41,9 +41,9 @@ class Photo_editorController extends Module{
      * Сохранение отредактированой фотки
      */
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();

@@ -27,7 +27,7 @@ class FriendsController extends Module{
 
         //die();
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -112,7 +112,7 @@ class FriendsController extends Module{
      * @param $params
      */
     public function take($params){
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -217,8 +217,8 @@ class FriendsController extends Module{
      * Отклонение заявки на дружбу
      */
     public function reject($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -257,8 +257,8 @@ class FriendsController extends Module{
      * Удаления друга из списка друзей
      */
     public function delete($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -313,8 +313,8 @@ class FriendsController extends Module{
      * Удаления друга из списка друзей
      */
     public function requests($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -331,15 +331,15 @@ class FriendsController extends Module{
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $mobile_speedbar = 'Заявки в друзья';
+//            $mobile_speedbar = 'Заявки в друзья';
 
             $user_id = $user_info['user_id'];
 
             $titles = array('заявка в друзья', 'заявки в друзья', 'заявок в друзья');//friends_demands
-            if($user_info['user_friends_demands'])
-                $user_speedbar = $user_info['user_friends_demands'].' '.Gramatic::declOfNum($user_info['user_friends_demands'], $titles);
-            else
-                $user_speedbar = $lang['no_requests'];
+//            if($user_info['user_friends_demands'])
+//                $user_speedbar = $user_info['user_friends_demands'].' '.Gramatic::declOfNum($user_info['user_friends_demands'], $titles);
+//            else
+//                $user_speedbar = $lang['no_requests'];
 
             //Верх
             $tpl->load_template('friends/head.tpl');
@@ -407,8 +407,8 @@ class FriendsController extends Module{
      * Просмотр всех онлайн друзей
      */
     public function online($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -416,6 +416,7 @@ class FriendsController extends Module{
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
+
         if($logged){
             //$act = $_GET['act'];
             $params['title'] = $lang['friends'].' | Sura';
@@ -427,7 +428,7 @@ class FriendsController extends Module{
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $mobile_speedbar = 'Друзья на сайте';
+//            $mobile_speedbar = 'Друзья на сайте';
 
             //$get_user_id = intval($_GET['user_id']);
             if(!$get_user_id)
@@ -441,6 +442,9 @@ class FriendsController extends Module{
                     $sql_order = "ORDER by `views`";
                 else
                     $sql_order = "ORDER by `friends_date`";
+
+                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $online_time = $server_time - 60;
 
                 $sql_ = $db->super_query("SELECT tb1.user_id, user_country_city_name, user_search_pref, user_birthday, user_photo, user_logged_mobile FROM `users` tb1, `friends` tb2 WHERE tb1.user_id = tb2.friend_id AND tb2.user_id = '{$get_user_id}' AND tb1.user_last_visit >= '{$online_time}' AND tb2.subscriptions = 0 {$sql_order} DESC LIMIT {$limit_page}, {$gcount}", 1);
 
@@ -456,10 +460,10 @@ class FriendsController extends Module{
                     $online_friends = $db->super_query("SELECT COUNT(*) AS cnt FROM `users` tb1, `friends` tb2 WHERE tb1.user_id = tb2.friend_id AND tb2.user_id = '{$get_user_id}' AND tb1.user_last_visit >= '{$online_time}' AND tb2.subscriptions = 0");
 
                 $titles = array('друг на сайте', 'друга на сайте', 'друзей на сайте');//friends_online
-                if($online_friends['cnt'])
-                    $user_speedbar = 'У '.$gram_name.' '.$online_friends['cnt'].' '.Gramatic::declOfNum($online_friends['cnt'], $titles);
-                else
-                    $user_speedbar = $lang['no_requests_online'];
+//                if($online_friends['cnt'])
+//                    $user_speedbar = 'У '.$gram_name.' '.$online_friends['cnt'].' '.Gramatic::declOfNum($online_friends['cnt'], $titles);
+//                else
+//                    $user_speedbar = $lang['no_requests_online'];
 
                 //Верх
                 $tpl->load_template('friends/head.tpl');
@@ -533,7 +537,7 @@ class FriendsController extends Module{
                 } else
                     msgbox('', $lang['no_requests_online'], 'info_2');
             } else {
-                $user_speedbar = $lang['error'];
+                //$user_speedbar = $lang['error'];
                 msgbox('', $lang['no_notes'], 'info');
             }
 
@@ -549,8 +553,8 @@ class FriendsController extends Module{
      * @return bool
      */
     public function box($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -617,8 +621,8 @@ class FriendsController extends Module{
      * Общие друзья
      */
     public function common($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -634,7 +638,7 @@ class FriendsController extends Module{
             $limit_page = ($page-1)*$gcount;
 
             $params['title'] = 'Общие друзья'.' | Sura';
-            $user_speedbar = 'Общие друзья'.' | Sura';
+           // $user_speedbar = 'Общие друзья'.' | Sura';
 
             $uid = intval($_GET['uid']);
 
@@ -669,7 +673,7 @@ class FriendsController extends Module{
                 //Если есть на вывод
                 if($count_common['cnt']){
                     $titles = array('общий друг', 'общих друга', 'общих друзей');//friends_common
-                    $user_speedbar = $count_common['cnt'].' '.Gramatic::declOfNum($count_common['cnt'], $titles);
+//                    $user_speedbar = $count_common['cnt'].' '.Gramatic::declOfNum($count_common['cnt'], $titles);
 
                     //SQL запрос на вывод друзей, по дате новых 20
                     $sql_mutual = $db->super_query("SELECT tb1.friend_id, tb3.user_birthday, user_photo, user_search_pref, user_country_city_name, user_last_visit, user_logged_mobile FROM `users` tb3, `friends` tb1 INNER JOIN `friends` tb2 ON tb1.friend_id = tb2.user_id WHERE tb1.user_id = '{$user_info['user_id']}' AND tb2.friend_id = '{$uid}' AND tb1.subscriptions = 0 AND tb2.subscriptions = 0 AND tb1.friend_id = tb3.user_id ORDER by `friends_date` LIMIT {$limit_page}, {$gcount}", 1);
@@ -739,9 +743,9 @@ class FriendsController extends Module{
      * @return bool
      */
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -759,7 +763,7 @@ class FriendsController extends Module{
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $mobile_speedbar = 'Друзья';
+//            $mobile_speedbar = 'Друзья';
 
             $path = explode('/', $_SERVER['REQUEST_URI']);
             $get_user_id = intval($path['3']);
@@ -780,10 +784,10 @@ class FriendsController extends Module{
                     $gram_name = 'Вас';
 
                 $titles = array('друг', 'друга', 'друзей');//friends
-                if($friends_sql['user_friends_num'])
-                    $user_speedbar = 'У '.$gram_name.' <span id="friend_num">'.$friends_sql['user_friends_num'].'</span> '.Gramatic::declOfNum($friends_sql['user_friends_num'], $titles);
-                else
-                    $user_speedbar = $lang['no_requests'];
+//                if($friends_sql['user_friends_num'])
+//                    $user_speedbar = 'У '.$gram_name.' <span id="friend_num">'.$friends_sql['user_friends_num'].'</span> '.Gramatic::declOfNum($friends_sql['user_friends_num'], $titles);
+//                else
+//                    $user_speedbar = $lang['no_requests'];
 
                 //Верх
                 $tpl->load_template('friends/head.tpl');
@@ -883,13 +887,13 @@ class FriendsController extends Module{
                 } else
                     msgbox('', $lang['no_requests'], 'info_2');
             } else {
-                $user_speedbar = $lang['error'];
+//                $user_speedbar = $lang['error'];
                 msgbox('', $lang['no_notes'], 'info');
             }
             $db->free();
             $tpl->clear();
         } else {
-            $user_speedbar = 'Информация';
+//            $user_speedbar = 'Информация';
             msgbox('', $lang['not_logged'], 'info');
         }
 

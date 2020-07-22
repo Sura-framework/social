@@ -1,110 +1,175 @@
+const step1 = $('#step1');
+const step2 = $('#step2');
+const step3 = $('#step3');
+const name = $('#name');
+const lastname = $('#lastname');
+const email = $('#email');
+const new_pass = $('#new_pass');
+const new_pass2 = $('#new_pass2');
+const sex = $("#sex");
+const day = $("#day");
+const month = $("#month");
+const year = $("#year");
+const country = $("#country");
+const city = $("#select_city");
+const rndval = new Date().getTime();
+
 //REG
 var reg = {
 	step1: function(){
-		$('#step2').hide();
-		$('#step3').hide();
-		var name = $('#name').val();
-		var lastname = $('#lastname').val();
+		const step1 = $('#step1');
+		const step2 = $('#step2');
+		const step3 = $('#step3');
+
+		step2.hide();
+		step3.hide();
+
 		if(name !== 0){
-			if(isValidName(name)){
-				if(lastname !== 0){
-					if(isValidName(lastname)){
-						$('#step1').hide();
-						$('#step2').show();
-						$('#reg_lnk').attr('onClick', '');
-					} else {
-						setErrorInputMsg('lastname');
-						$('#err').show().html(lang_nosymbol);
-					}
-				} else {
-					setErrorInputMsg('lastname');
-					$('#err').show().html(lang_empty);
-				}
-			} else {
-				setErrorInputMsg('name');
-				$('#err').show().html(lang_nosymbol);
+			if(!isValidName(name.val())){
+				//is-invalid
+				// setErrorInputMsg('name');
+				name.addClass('is-invalid');
+				$('#err_name').show().html(lang_nosymbol);
 			}
 		} else {
-			setErrorInputMsg('name');
-			$('#err').show().html(lang_empty);
+			// setErrorInputMsg('name');
+			$('#err_name').show().html(lang_empty);
+		}
+
+		if(lastname.val() !== 0){
+			if(!isValidName(lastname.val())){
+				lastname.addClass('is-invalid');
+				$('#err_lastname').show().html(lang_nosymbol);
+				// setErrorInputMsg('lastname');
+				//$('#err').show().html(lang_nosymbol);
+			}
+		} else {
+			// setErrorInputMsg('lastname');
+			$('#err_lastname').show().html(lang_empty);
+		}
+
+		if(isValidName(lastname.val()) && isValidName(lastname.val())){
+			step1.hide();
+			step2.show();
+			$('#reg_lnk').attr('onClick', '');
 		}
 	},
 	step2: function(){
-		$('#step2').hide();
-		$('#step3').show();
-	},
-	finish: function(){
-		var email = $('#email').val();
-		var new_pass = $('#new_pass').val();
-		var new_pass2 = $('#new_pass2').val();
-		var rndval = new Date().getTime(); 
-		if(email !== 0 && isValidEmailAddress(email)){
-			if(new_pass !== 0 && new_pass.length >= 6){
-				if(new_pass === new_pass2){
-					Box.Show('sec_code', 280, 'Введите код с картинки:', '<div style="padding:20px;text-align:center"><div class="cursor_pointer" onClick="updateCode(); return false"><div id="sec_code"><img src="/antibot/?rndval=' + rndval + '" alt="" title="Показать другой код" width="120" height="50" /></div></div><div id="code_loading"><input type="text" id="val_sec_code" class="inpst" maxlength="6" style="margin-top:10px;width:110px" /></div></div>', lang_box_canсel, 'Отправить', 'checkCode(); return false;');
-					$('#val_sec_code').focus();
-				} else {
-					setErrorInputMsg('new_pass2');
-					$('#err2').show().html('Оба введенных пароля должны быть идентичны.');
-				}
-			} else {
-				setErrorInputMsg('new_pass');
-				$('#err2').show().html('Длина пароля должна быть не менее 6 символов.');
-			}
-		} else {
-			setErrorInputMsg('email');
-			$('#err2').show().html(lang_bad_email);
-		}
-	},
-	send: function(sec_code){
-		var email = $('#email').val();
-		var new_pass = $('#new_pass').val();
-		var new_pass2 = $('#new_pass2').val();
-		var name = $('#name').val();
-		var lastname = $('#lastname').val();
-		var val_sec_code = $("#val_sec_code").val();
+		const step2 = $('#step2');
+		const step3 = $('#step3');
+
+		//проверить данные
 		var sex = $("#sex").val();
 		var day = $("#day").val();
 		var month = $("#month").val();
 		var year = $("#year").val();
 		var country = $("#country").val();
 		var city = $("#select_city").val();
+
+		step2.hide();
+		step3.show();
+	},
+	finish: function(){
+		const rndval = new Date().getTime();
+		const email = $('#email');
+		const new_pass = $('#new_pass');
+		const new_pass2 = $('#new_pass2');
+
+		//isValidPass(new_pass.val()
+
+		if(email.val() == null || !isValidEmailAddress(email.val())){
+			// setErrorInputMsg('email');
+			email.addClass('is-invalid');
+			$('#err_email').show().html(lang_bad_email);
+		}else
+			email.addClass('is-valid');
+
+		if(isValidPass(new_pass.val())) {
+			if(new_pass.val() === new_pass2.val()){
+			}else{
+				new_pass.addClass('is-invalid');
+				new_pass2.addClass('is-invalid');
+				$('#err_new_pass2').show().html('Оба введенных пароля должны быть идентичны.');
+			}
+		}else{
+			// setErrorInputMsg('new_pass');
+			new_pass.addClass('is-invalid');
+			new_pass2.addClass('is-invalid');
+			$('#err_new_pass2').show().html('Длина пароля должна быть не менее 8 символов.');
+		}
+
+		if (isValidEmailAddress(email.val()) && isValidPass(new_pass.val()) && new_pass.val() === new_pass2.val()){
+			Box.Show('sec_code', 280, 'Введите код с картинки:', '<div style="padding:20px;text-align:center">' +
+				'<div class="cursor_pointer" onClick="updateCode(); return false"><div id="sec_code"><img src="/antibot/?rndval=' + rndval + '" alt="" title="Показать другой код" width="120" height="50" /></div>' +
+				'</div>' +
+				'<div id="code_loading"><input type="text" id="val_sec_code" class="inpst" maxlength="6" style="margin-top:10px;width:110px" /></div>' +
+				'</div>', lang_box_cancel, 'Отправить', 'checkCode(); return false;');
+			$('#val_sec_code').focus();
+		}
+	},
+	send: function(code){
+		// var email = $('#email').val();
+		// var new_pass = $('#new_pass').val();
+		// var new_pass2 = $('#new_pass2').val();
+		// var name = $('#name').val();
+		// var lastname = $('#lastname').val();
+
+		// var sex = $("#sex").val();
+		// var day = $("#day").val();
+		// var month = $("#month").val();
+		// var year = $("#year").val();
+		// var country = $("#country").val();
+		// var city = $("#select_city").val();
+
+		const name = $('#name');
+		const lastname = $('#lastname');
+		const email = $('#email');
+		const sex = $("#sex");
+		const day = $("#day");
+		const month = $("#month");
+		const year = $("#year");
+		const country = $("#country");
+		const city = $("#select_city");
+		const new_pass = $('#new_pass');
+		const new_pass2 = $('#new_pass2');
+		const token = $( "input[name='_mytoken']" );
 		$.post('/register/', {
-				name: name,
-				lastname: lastname,
-				email: email,
-				sex: sex,
-				day: day,
-				month: month,
-				year: year,
-				country: country,
-				city: city,
-				password_first: new_pass,
-				password_second: new_pass2,
-				sec_code: sec_code
+				name: name.val(),
+				lastname: lastname.val(),
+				email: email.val(),
+				sex: sex.val(),
+				day: day.val(),
+				month: month.val(),
+				year: year.val(),
+				country: country.val(),
+				city: city.val(),
+				password_first: new_pass.val(),
+				password_second: new_pass2.val(),
+				sec_code: code,
+				token: token.val(),
 			}, function(d){
 			var exp = d.split('|');
-			if(exp[0] == 'ok'){
+			if(exp[0] === 'ok'){
 				//window.location = '/u'+exp[1]+'after';
 				window.location = '/u'+exp[1];
 				//window.location = '/';
-			} else if(exp[0] == 'err_mail'){
+			} else if(exp[0] === 'err_mail'){
 				$('#err2').show().html('Пользователь с таким E-Mail адресом уже зарегистрирован.');
 				Box.Close('sec_code');
-			} else if(exp[0] == 'error' && exp['1'] == 'no_val'){
-				if (exp['2'] == 'mail'){
+			} else if(exp[0] === 'error' && exp['1'] === 'no_val'){
+				if (exp['2'] === 'mail'){
 					let err_name = 'Некоректный E-Mail.';
 					$('#err2').show().html(err_name);
 					Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else if (exp['2'] == 'name'){
+				}else if (exp['2'] === 'name'){
 					let err_name = 'Неправильно введено имя.';
 					$('#err2').show().html(err_name);
 					Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else if (exp['2'] == 'surname'){
+				}else if (exp['2'] === 'surname'){
 					let err_name = 'Неправильно введена фамилия.';
 					$('#err2').show().html(err_name);
 					Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else if (exp['2'] == 'password'){
+				}else if (exp['2'] === 'password'){
 					let err_name = 'Неправильно введен пароль.';
 					$('#err2').show().html(err_name);
 					Box.Info('boxerr', 'Ошибка', err_name, 300);
@@ -123,16 +188,20 @@ var reg = {
 //RESTORE
 var restore = {
 	next: function(){
-		var email = $('#email').val();
-		if(email != 0 && email != 'Ваш электронный адрес' && isValidEmailAddress(email)){
+		const step1 = $('#step1');
+		const step2 = $('#step2');
+		const email = $('#email');
+
+		//var email = $('#email').val();
+		if(email.val() !== 0 && email.val() !== 'Ваш электронный адрес' && isValidEmailAddress(email.val())){
 			butloading('send', '32', 'disabled', '');
-			$.post('/restore/next/', {email: email}, function(data){
-				if(data == 'no_user'){
-					$('#err').show().html('Пользователь <b>'+email+'</b> не найден.<br />Пожалуйста, убедитесь, что правильно ввели e-mail.');
+			$.post('/restore/next/', {email: email.val()}, function(data){
+				if(data === 'no_user'){
+					$('#err').show().html('Пользователь <b>'+email.val()+'</b> не найден.<br />Пожалуйста, убедитесь, что правильно ввели e-mail.');
 				} else {
-					var exp = data.split('|');
-					$('#step1').hide();
-					$('#step2').show();
+					const exp = data.split('|');
+					step1.hide();
+					step2.show();
 					$('#c_src').attr('src', exp[1]);
 					$('#c_name').html('<b>'+exp[0]+'</b>');
 				}
@@ -142,26 +211,35 @@ var restore = {
 			setErrorInputMsg('email');
 	},
 	send: function(){
-		var email = $('#email').val();
+		const step2 = $('#step2');
+		const step3 = $('#step3');
+		const email = $('#email');
+
+		//var email = $('#email').val();
 		butloading('send2', '129', 'disabled', '');
-		$.post('/restore/send/', {email: email}, function(d){
-			$('#step2').hide();
-			$('#step3').show();
+		$.post('/restore/send/', {email: email.val()}, function(d){
+			step2.hide();
+			step3.show();
 		});
 	},
 	finish: function(){
-		var new_pass = $('#new_pass').val();
-		var new_pass2 = $('#new_pass2').val();
-		var hash = $('#hash').val();
-		if(new_pass !== 0 && new_pass !== 'Новый пароль'){
-			if(new_pass2 !== 0 && new_pass2 !== 'Повторите еще раз новый пароль'){
-				if(new_pass === new_pass2){
-					if(new_pass.length >= 6){
+		const new_pass = $('#new_pass');
+		const new_pass2 = $('#new_pass2');
+		const step1 = $('#step1');
+		const step2 = $('#step2');
+
+		// var new_pass = $('#new_pass').val();
+		// var new_pass2 = $('#new_pass2').val();
+		const hash = $('#hash');
+		if(isValidPass(new_pass.val()) && new_pass.val() !== 'Новый пароль'){
+			if(isValidPass(new_pass.val()) && new_pass2.val() !== 'Повторите еще раз новый пароль'){
+				if(new_pass.val() === new_pass2.val()){
+					if(isValidPass(new_pass.val())){
 						$('#err').hide();
 						butloading('send', '43', 'disabled', '');
-						$.post('/restore/finish/', {new_pass: new_pass, new_pass2: new_pass2, hash: hash}, function(d){
-							$('#step1').hide();
-							$('#step2').show();
+						$.post('/restore/finish/', {new_pass: new_pass.val(), new_pass2: new_pass2.val(), hash: hash.val()}, function(d){
+							step1.hide();
+							step2.show();
 						});
 					} else
 						$('#err').show().html('Длина пароля должна быть не менее 6 символов.');
@@ -176,33 +254,36 @@ var restore = {
 //LOGIN
 var login = {
 	send: function(){
-		var email = $('#log_email').val();
-		var pass = $('#log_password').val();
+		const log_email = $('#log_email');
+		const log_password = $('#log_password');
+		const token = $( "input[name='_mytoken']" );
+
 		$.post('/login/', {
 			login: '',
-			email: email,
-			pass: pass,
+			email: log_email.val(),
+			pass: log_password.val(),
+			token: token.val(),
 		}, function(d){
 			console.log(d);
 			var exp = d.split('|');
-			if(exp[0] == 'ok'){
+			if(exp[0] === 'ok'){
 				// window.location = '/u'+exp[1]+'after';
 				window.location = '/u'+exp[1];
-			} else if(exp[0] == 'err_mail'){
+			} else if(exp[0] === 'err_mail'){
 				$('#err2').show().html('Пользователь с таким E-Mail адресом уже зарегистрирован.');
 				Box.Close('sec_code');
-			} else if(exp[0] == 'error' && exp['1'] == 'no_val'){
-				if (exp['2'] == 'mail'){
+			} else if(exp[0] === 'error' && exp['1'] === 'no_val'){
+				if (exp['2'] === 'mail'){
 					let err_name = '<div class="alert alert-danger" role="alert">' +
 						'Некоректный E-Mail.</div>';
 					$('#err2').show().html(err_name);
 					// Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else if (exp['2'] == 'password'){
+				}else if (exp['2'] === 'password'){
 					let err_name = '<div class="alert alert-danger" role="alert">' +
 						'<a href="/restore" onClick="Page.Go(this.href); return false">Забыли пароль?</a></div>';
 					$('#err2').show().html(err_name);
 					// Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else if (exp['2'] == 'no_user'){
+				}else if (exp['2'] === 'no_user'){
 					let err_name = '<div class="alert alert-danger" role="alert">' +
 						'<a href="/restore" onClick="Page.Go(this.href); return false">Забыли пароль?</a></div>';
 					$('#err2').show().html(err_name);
@@ -219,29 +300,129 @@ var login = {
 		});
 	}
 }
-function isValidName(xname){
-	var pattern = new RegExp(/^[a-zA-Zа-яА-Я]+$/);
- 	return pattern.test(xname);
+function isValidName(x_name){
+	const re = /^[a-zA-Zа-яА-Я]+$/;
+	return re.test(String(x_name).toLowerCase());
 }
+// function isValidEmailAddress(emailAddress) {
+//  	var pattern = new RegExp(/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?((25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.))((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i);
+//  	return pattern.test(emailAddress);
+// }
 function isValidEmailAddress(emailAddress) {
- 	var pattern = new RegExp(/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?((25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.))((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i);
- 	return pattern.test(emailAddress);
+	const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+	return re.test(String(emailAddress).toLowerCase());
+}
+function isValidPass(pass) {
+	const re = /^[A-Za-z]\w{7,14}$/;
+	//const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+	return re.test(String(pass).toLowerCase());
 }
 function updateCode(){
-	var rndval = new Date().getTime();
+	//var rndval = new Date().getTime();
+	const rndval = new Date().getTime();
 	$('#sec_code').html('<img src="/antibot/?rndval=' + rndval + '" alt="" title="Показать другой код" width="120" height="50" />');
 }
 function checkCode(){
 	var val_sec_code = $("#val_sec_code").val();
-	$('#code_loading').html('<img src="/images/loading_mini.gif" style="margin-top:21px" />');
+	$('#code_loading').html('<div class="spinner-border mt-2" role="status"><span class="sr-only">Loading...</span>\</div>');
 	$.get('/antibot/code/?user_code='+val_sec_code, function(data){
-		if(data == 'ok'){
+		//var val_sec_code = $('#val_sec_code');
+		if(data === 'ok'){
+			console.log('ok');
 			reg.send(val_sec_code);
 		} else {
 			updateCode();
 			$('#code_loading').html('<input type="text" id="val_sec_code" class="inpst" maxlength="6" style="margin-top:10px;width:110px" />');
-			$('#val_sec_code').val('');
-			$('#val_sec_code').focus();
+			$("#val_sec_code").val('').focus();
+			//$("#val_sec_code");
 		}
 	});
 }
+//Check inputs
+function input_email() {
+	const email = $('#email');
+	if(email.val() == null || !isValidEmailAddress(email.val())){
+		setErrorInputMsg('email');
+		email.addClass('is-invalid');
+		email.removeClass('is-valid');
+		$('#err_email').show().html(lang_bad_email);
+	}else{
+		//add defined/undefined email
+		// $.get('/user/check/?user_email='+email.val(), function(data){
+		// 	if(data === 'ok') {
+		// 		email.removeClass('is-invalid');
+		// 		email.addClass('is-valid');
+		// 		$('#err_email').show().html('такой email уже существует');
+		// 	}else{
+		// 		email.addClass('is-invalid');
+		// 		email.removeClass('is-valid');
+		// 	}
+		// }
+		email.removeClass('is-invalid');
+		email.addClass('is-valid');
+	}
+}
+
+function input_pass() {
+	const new_pass = $('#new_pass');
+	if (isValidPass(new_pass.val())){
+		new_pass.addClass('is-valid');
+		new_pass.removeClass('is-invalid');
+	}else{
+		new_pass.addClass('is-invalid');
+		new_pass.removeClass('is-valid');
+		$('#err_new_pass').show().html('Длина пароля должна быть не менее 8 символов.');
+	}
+}
+
+function input_pass2() {
+	const new_pass = $('#new_pass');
+	const new_pass2 = $('#new_pass2');
+	if (isValidPass(new_pass2.val())){
+		if(new_pass.val() === new_pass2.val()){
+			new_pass2.addClass('is-valid');
+			new_pass2.removeClass('is-invalid');
+		}else{
+			new_pass2.addClass('is-invalid');
+			new_pass2.removeClass('is-valid');
+			$('#err_new_pass2').show().html('Оба введенных пароля должны быть идентичны.');
+		}
+	}else{
+		new_pass2.addClass('is-invalid');
+		new_pass2.removeClass('is-valid');
+		$('#err_new_pass2').show().html('Длина пароля должна быть не менее 8 символов.');
+	}
+}
+
+function input_name() {
+	const name = $('#name');
+	if (name.val() !== null){
+		if(!isValidName(name.val())){
+			name.addClass('is-invalid');
+			name.removeClass('is-valid');
+			$('#err_name').show().html(lang_nosymbol);
+		}else{
+			name.removeClass('is-invalid');
+			name.addClass('is-valid');
+		}
+	}else{
+		$('#err_lastname').show().html(lang_empty);
+	}
+}
+
+function input_lastname() {
+	const lastname = $('#lastname');
+	if (lastname.val() !== null){
+		if(!isValidName(lastname.val())){
+			lastname.addClass('is-invalid');
+			lastname.removeClass('is-valid');
+			$('#err_lastname').show().html(lang_nosymbol);
+		}else{
+			lastname.removeClass('is-invalid');
+			lastname.addClass('is-valid');
+		}
+	}else{
+		$('#err_lastname').show().html(lang_empty);
+	}
+}
+

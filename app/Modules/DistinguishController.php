@@ -13,7 +13,7 @@ use Sura\Libs\Validation;
 class DistinguishController extends Module{
 
     public function mark($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $lang = langs::get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -57,8 +57,8 @@ class DistinguishController extends Module{
         }
     }
     public function mark_del($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -91,8 +91,8 @@ class DistinguishController extends Module{
         }
     }
     public function mark_ok($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -111,8 +111,8 @@ class DistinguishController extends Module{
         }
     }
     public function load_friends($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -158,9 +158,9 @@ class DistinguishController extends Module{
     }
 
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();

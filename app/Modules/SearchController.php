@@ -13,9 +13,9 @@ use Sura\Libs\Validation;
 class SearchController extends Module{
 
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -29,7 +29,7 @@ class SearchController extends Module{
         if($logged){
             $params['title'] = $lang['search'].' | Sura';
 
-            $mobile_speedbar = 'Поиск';
+//            $mobile_speedbar = 'Поиск';
 
             $_SERVER['QUERY_STRING'] = strip_tags($_SERVER['QUERY_STRING']);
             $query_string = preg_replace("/&page=[0-9]+/i", '', $_SERVER['QUERY_STRING']);
@@ -388,8 +388,9 @@ class SearchController extends Module{
             $tpl->clear();
             $db->free();
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         $params['tpl'] = $tpl;

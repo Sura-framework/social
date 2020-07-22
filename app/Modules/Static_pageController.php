@@ -9,7 +9,7 @@ use Sura\Libs\Gramatic;
 class Static_pageController extends Module{
 
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -34,9 +34,9 @@ class Static_pageController extends Module{
             $tpl->clear();
             $db->free();
         } else {
-            $lang = langs::get_langs();
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         Registry::set('tpl', $tpl);

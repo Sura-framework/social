@@ -2,9 +2,7 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Cache;
 use Sura\Libs\Page;
-use Sura\Libs\Registry;
 use App\Models\Admin;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 
@@ -60,13 +58,13 @@ class AdminController extends Module{
             //$clubs = $db->super_query("SELECT COUNT(*) AS cnt FROM `clubs`");
             $groups_wall = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_wall`");
             $invites = $db->super_query("SELECT COUNT(*) AS cnt FROM `invites`");
-            $notes = $db->super_query("SELECT COUNT(*) AS cnt FROM `notes`");
+//            $notes = $db->super_query("SELECT COUNT(*) AS cnt FROM `notes`");
             $videos = $db->super_query("SELECT COUNT(*) AS cnt FROM `videos`");
 
             //Баланс
             //SELECT user_id, SUM(user_balance) AS user_balance FROM `users` GROUP BY user_id
             $balance_full = $db->super_query("SELECT SUM(user_balance) AS user_balance FROM `users` ");
-//var_dump($balance_full);
+
             $tpl->load_template('admin/stats.tpl');
             //$tpl->set('{modules}', $tpl->result['modules']);
 

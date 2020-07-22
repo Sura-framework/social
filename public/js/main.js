@@ -139,7 +139,10 @@ var Page = {
 
 		Page.Loading('start');
 		$.post(h, {ajax: 'yes'}, function(res){
-			d = JSON.parse(res);
+			// var d = JSON.parse(res);
+			// console.log(res);
+
+			const d = res;
 
 			document.title = d.title;
 
@@ -514,7 +517,7 @@ function butloading(i, w, d, t){
 	}
 }
 function textLoad(i){
-	$('#'+i).html('<img src="/images/loading_mini.gif" alt="" />').attr('onClick', '').attr('href', '#');
+	$('#'+i).html('<div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div>').attr('onClick', '').attr('href', '#');
 }
 function updateNum(i, type){
 	if(type)
@@ -623,7 +626,7 @@ var cur = {
 };
 cur.langs = {};
 cur.Media = {};
-var kjTimers = {};
+var SuraTimers = {};
 
 function Scroller(id, opts) {
 	if (!opts) opts = {};
@@ -1241,6 +1244,7 @@ var kjSelectArea = {
 				$(window).bind('mousemove', moveCreat);
 				$(window).bind('mouseup', upCreat);
 			}).css('cursor', 'crosshair');
+
 			function moveCreat(e3) {
 				e3.preventDefault();
 				if (_s.data[id].onStart) _s.data[id].onStart();
@@ -1762,21 +1766,21 @@ $.extend(Selector.prototype, {
 
 
 function addTimer(name, callback, time) {
-	if (kjTimers[name]) removeTimer(name);
-	kjTimers[name] = setTimeout(function () {
+	if (SuraTimers[name]) removeTimer(name);
+	SuraTimers[name] = setTimeout(function () {
 		callback();
-		delete kjTimers[name];
+		delete SuraTimers[name];
 	}, time);
 }
 
 function removeTimer(name) {
-	if (!kjTimers[name]) return;
+	if (!SuraTimers[name]) return;
 	if (isArray(name)) {
 		for (var i = 0; i <= name.length; i++) removeTimer(name[i]);
 		return;
 	}
-	clearTimeout(kjTimers[name]);
-	delete kjTimers[name];
+	clearTimeout(SuraTimers[name]);
+	delete SuraTimers[name];
 }
 
 function declOfNum(number, titles) {

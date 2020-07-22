@@ -11,7 +11,7 @@ use Sura\Libs\Validation;
 class Public_audioController extends Module{
 
     public function upload_box($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -62,7 +62,7 @@ class Public_audioController extends Module{
     }
 
     public function upload($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -131,7 +131,7 @@ class Public_audioController extends Module{
     }
 
     public function add($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -158,7 +158,7 @@ class Public_audioController extends Module{
     }
 
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
         $config = Settings::loadsettings();
 
@@ -298,9 +298,9 @@ class Public_audioController extends Module{
             $db->free();
 
         } else {
-            include __DIR__.'/../lang/'.$checkLang.'/site.lng';
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         $params['tpl'] = $tpl;

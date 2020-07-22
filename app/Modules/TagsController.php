@@ -13,7 +13,7 @@ class TagsController  extends Module
 
         Tools::NoAjaxQuery();
 
-        //$lang = langs::get_langs();
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -41,7 +41,7 @@ class TagsController  extends Module
                 $check1 = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_info['user_id']}' AND friend_id = '{$id}' AND subscriptions = 0");
 
                 if($id == $user_info['user_id']){
-                    $button = '<button class="btn btn-secondary">Настройки</button><button class="btn btn-secondary ml-1">Редактировать профиль</button>';
+                    $button = '<a href="/settings/" class="btn btn-secondary" onclick="Page.Go(this.href); return false;">Настройки</a><button class="btn btn-secondary ml-1" onclick="Profile_edit.Open()">Редактировать профиль</button>';
                 } elseif($check1){
                     $button = '<button class="btn btn-secondary">У вас в друзьях</button>';
                 } elseif($check2){
@@ -75,8 +75,7 @@ class TagsController  extends Module
             if (empty($button)) $button = '';
 
             if($row){
-                $data = '
-<div class="tt_w tt_default mention_tt mention_has_actions tt_down"  onmouseover="removeTimer(\'hidetag\')" onmouseout="wall.hideTag('.$id.', '.$rand.', 1)" style="position: absolute; display: none; opacity: 1;" id="tt_wind2">
+                $data = '<div class="tt_w tt_default mention_tt mention_has_actions tt_down"  onmouseover="removeTimer(\'hidetag\')" onmouseout="wall.hideTag('.$id.', '.$rand.', 1)" style="position: absolute; display: none; opacity: 1;" id="tt_wind2">
 			<div class="wrapped card"><div class="card-body mention_tt_wrap ">
 			<a href="/'.$link.'" class="mention_tt_photo"><img class="mention_tt_img" src="'.$ava.'"></a>
 			<div class="mention_tt_data">

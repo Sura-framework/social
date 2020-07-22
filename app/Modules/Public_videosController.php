@@ -13,7 +13,7 @@ use Sura\Libs\Validation;
 class Public_videosController extends Module{
 
     public function add($params){
-        //$tpl = Registry::get('tpl');
+        //$tpl = $params['tpl'];
         $config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -70,7 +70,7 @@ class Public_videosController extends Module{
     }
 
     public function del($params){
-        //$tpl = Registry::get('tpl');
+        //$tpl = $params['tpl'];
         //$config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -112,7 +112,7 @@ class Public_videosController extends Module{
     }
 
     public function edit($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         //$config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -151,7 +151,7 @@ class Public_videosController extends Module{
     }
 
     public function edit_save($params){
-        //$tpl = Registry::get('tpl');
+        //$tpl = $params['tpl'];
         //$config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -190,7 +190,7 @@ class Public_videosController extends Module{
     }
 
     public function search($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $config = Settings::loadsettings();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -287,7 +287,7 @@ class Public_videosController extends Module{
     }
 
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
         //$config = Settings::loadsettings();
 

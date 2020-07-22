@@ -12,6 +12,7 @@ use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManager;
+use Sura\Libs\Validation;
 
 class EditprofileController extends Module{
 
@@ -19,8 +20,8 @@ class EditprofileController extends Module{
      * Загрузка фотографии
      */
     public function upload($params){
-        //$tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -133,8 +134,8 @@ class EditprofileController extends Module{
      * Удаление фотографии
      */
     public function del_photo($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -176,8 +177,8 @@ class EditprofileController extends Module{
      * Страница загрузки главной фотографии
      */
     public function load_photo($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         //$db = $this->db();
         //$user_info = $this->user_info();
         $logged = $this->logged();
@@ -204,8 +205,8 @@ class EditprofileController extends Module{
      * Сохранение основых данных
      */
     public function save_general($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -270,8 +271,8 @@ class EditprofileController extends Module{
      * Сохранение контактов
      */
     public function save_contact($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -313,8 +314,8 @@ class EditprofileController extends Module{
      * Сохранение интересов
      */
     public function save_interests($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -357,8 +358,8 @@ class EditprofileController extends Module{
      * Сохранение доп.полей
      */
     public function save_xfields($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -430,8 +431,8 @@ class EditprofileController extends Module{
      * Страница Редактирование контактов
      */
     public function contact($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -471,8 +472,8 @@ class EditprofileController extends Module{
      * Страница Редактирование интересов
      */
     public function interests($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -513,8 +514,8 @@ class EditprofileController extends Module{
      * Страница Редактирование доп.полей
      */
     public function all($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -594,8 +595,8 @@ class EditprofileController extends Module{
      * Страница миниатюры
      */
     public function miniature($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -632,7 +633,7 @@ class EditprofileController extends Module{
      * Сохранение миниатюры
      */
     public function miniature_save($params){
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -685,8 +686,8 @@ class EditprofileController extends Module{
      * Загрузка обложки
      */
     public function upload_cover($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -762,8 +763,8 @@ class EditprofileController extends Module{
      * Сохранение новой позиции обложки
      */
     public function savecoverpos($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -792,8 +793,8 @@ class EditprofileController extends Module{
      * Удаление обложки
      */
     public function delcover($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -828,9 +829,9 @@ class EditprofileController extends Module{
      * Страница Редактирование основное
      */
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -945,6 +946,150 @@ class EditprofileController extends Module{
 
         $params['tpl'] = $tpl;
         Page::generate($params);
+        return true;
+    }
+
+    /**
+     * Модальнок окно Редактирование основное
+     */
+    public function box($params){
+        $tpl = $params['tpl'];
+
+        $lang = $this->get_langs();
+        $db = $this->db();
+        $user_info = $this->user_info();
+        $logged = $this->logged();
+
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        if($ajax == 'yes')
+            Tools::NoAjaxQuery();
+
+        if($logged){
+            $params['title'] = $lang['editmyprofile'].' | Sura';
+
+            //$user_speedbar = $lang['editmyprofile'].' &raquo; '.$lang['editmyprofile_genereal'];
+
+            $tpl->load_template('profile/modal_editprofile.tpl');
+
+            $row = $db->super_query("SELECT user_name, user_lastname, user_sex, user_day, user_month, user_year, user_country, user_city, user_sp, user_xfields FROM `users` WHERE user_id = '{$user_info['user_id']}'");
+
+            $tpl->set('{name}', $row['user_name']);
+            $tpl->set('{lastname}', $row['user_lastname']);
+
+            $tpl->set('{sex}', installationSelected($row['user_sex'], '<option value="1">мужской</option><option value="2">женский</option>'));
+
+            $tpl->set('{user-day}', installationSelected($row['user_day'], '<option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option>'));
+
+            $tpl->set('{user-month}', installationSelected($row['user_month'], '<option value="1">Января</option><option value="2">Февраля</option><option value="3">Марта</option><option value="4">Апреля</option><option value="5">Мая</option><option value="6">Июня</option><option value="7">Июля</option><option value="8">Августа</option><option value="9">Сентября</option><option value="10">Октября</option><option value="11">Ноября</option><option value="12">Декабря</option>'));
+
+            $tpl->set('{user-year}', installationSelected($row['user_year'], '<option value="1930">1930</option><option value="1931">1931</option><option value="1932">1932</option><option value="1933">1933</option><option value="1934">1934</option><option value="1935">1935</option><option value="1936">1936</option><option value="1937">1937</option><option value="1938">1938</option><option value="1939">1939</option><option value="1940">1940</option><option value="1941">1941</option><option value="1942">1942</option><option value="1943">1943</option><option value="1944">1944</option><option value="1945">1945</option><option value="1946">1946</option><option value="1947">1947</option><option value="1948">1948</option><option value="1949">1949</option><option value="1950">1950</option><option value="1951">1951</option><option value="1952">1952</option><option value="1953">1953</option><option value="1954">1954</option><option value="1955">1955</option><option value="1956">1956</option><option value="1957">1957</option><option value="1958">1958</option><option value="1959">1959</option><option value="1960">1960</option><option value="1961">1961</option><option value="1962">1962</option><option value="1963">1963</option><option value="1964">1964</option><option value="1965">1965</option><option value="1966">1966</option><option value="1967">1967</option><option value="1968">1968</option><option value="1969">1969</option><option value="1970">1970</option><option value="1971">1971</option><option value="1972">1972</option><option value="1973">1973</option><option value="1974">1974</option><option value="1975">1975</option><option value="1976">1976</option><option value="1977">1977</option><option value="1978">1978</option><option value="1979">1979</option><option value="1980">1980</option><option value="1981">1981</option><option value="1982">1982</option><option value="1983">1983</option><option value="1984">1984</option><option value="1985">1985</option><option value="1986">1986</option><option value="1987">1987</option><option value="1988">1988</option><option value="1989">1989</option><option value="1990">1990</option><option value="1991">1991</option><option value="1992">1992</option><option value="1993">1993</option><option value="1994">1994</option><option value="1995">1995</option><option value="1996">1996</option><option value="1997">1997</option><option value="1998">1998</option><option value="1999">1999</option><option value="2000">2000</option><option value="2001">2001</option><option value="2002">2002</option><option value="2003">2003</option><option value="2004">2004</option><option value="2005">2005</option><option value="2006">2006</option><option value="2007">2007</option>'));
+
+
+            //################## Загружаем Страны ##################//
+            $sql_country = $db->super_query("SELECT * FROM `country` ORDER by `name` ASC", true, "country", true);
+            $all_country = '';
+            foreach($sql_country as $row_country)
+                $all_country .= '<option value="'.$row_country['id'].'">'.stripslashes($row_country['name']).'</option>';
+
+            $tpl->set('{country}', installationSelected($row['user_country'], $all_country));
+
+            //################## Загружаем Города ##################//
+            $sql_city = $db->super_query("SELECT id, name FROM `city` WHERE id_country = '{$row['user_country']}' ORDER by `name` ASC", true, "country_city_".$row['user_country'], true);
+            $all_city = '';
+            foreach($sql_city as $row2)
+                $all_city .= '<option value="'.$row2['id'].'">'.stripslashes($row2['name']).'</option>';
+
+            $tpl->set('{city}', installationSelected($row['user_city'], $all_city));
+
+            $user_sp = explode('|', $row['user_sp']);
+            if($user_sp[1]){
+                $rowSp = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '{$user_sp[1]}'");
+                $tpl->set('{sp-name}', $rowSp['user_search_pref']);
+                $tpl->set_block("'\\[sp\\](.*?)\\[/sp\\]'si","");
+
+                if($row['user_sex'] == 1){
+                    if($user_sp[0] == 2)
+                        $tpl->set('{sp-text}', 'Подруга:');
+                    elseif($user_sp[0] == 3)
+                        $tpl->set('{sp-text}', 'Невеста:');
+                    else if($user_sp[0] == 4)
+                        $tpl->set('{sp-text}', 'Жена:');
+                    else if($user_sp[0] == 5)
+                        $tpl->set('{sp-text}', 'Любимая:');
+                    else
+                        $tpl->set('{sp-text}', 'Партнёр:');
+                } else {
+                    if($user_sp[0] == 2)
+                        $tpl->set('{sp-text}', 'Друг:');
+                    elseif($user_sp[0] == 3)
+                        $tpl->set('{sp-text}', 'Жених:');
+                    else if($user_sp[0] == 4)
+                        $tpl->set('{sp-text}', 'Муж:');
+                    else if($user_sp[0] == 5)
+                        $tpl->set('{sp-text}', 'Любимый:');
+                    else
+                        $tpl->set('{sp-text}', 'Партнёр:');
+                }
+            } else {
+                $tpl->set('[sp]', '');
+                $tpl->set('[/sp]', '');
+            }
+
+            if($row['user_sex'] == 2){
+                $tpl->set('[user-m]', '');
+                $tpl->set('[/user-m]', '');
+                $tpl->set_block("'\\[user-w\\](.*?)\\[/user-w\\]'si","");
+            } elseif($row['user_sex'] == 1){
+                $tpl->set('[user-w]', '');
+                $tpl->set('[/user-w]', '');
+                $tpl->set_block("'\\[user-m\\](.*?)\\[/user-m\\]'si","");
+            } else {
+                $tpl->set('[sp-all]', '');
+                $tpl->set('[/sp-all]', '');
+                $tpl->set('[user-m]', '');
+                $tpl->set('[/user-m]', '');
+                $tpl->set('[user-w]', '');
+                $tpl->set('[/user-w]', '');
+            }
+
+            $tpl->copy_template = str_replace("[instSelect-sp-{$user_sp[0]}]", 'selected', $tpl->copy_template);
+            $tpl->set_block("'\\[instSelect-(.*?)\\]'si","");
+
+            //$row = $db->super_query("SELECT user_xfields FROM `users` WHERE user_id = '{$user_info['user_id']}'");
+            $xfields = xfieldsdataload($row['user_xfields']);
+
+//            $tpl->set('{vk}', stripslashes($xfields['vk']));
+//            $tpl->set('{od}', stripslashes($xfields['od']));
+//            $tpl->set('{fb}', stripslashes($xfields['fb']));
+//            $tpl->set('{skype}', stripslashes($xfields['skype']));
+//            $tpl->set('{icq}', stripslashes($xfields['icq']));
+            $tpl->set('{phone}', stripslashes($xfields['phone']));
+            $tpl->set('{site}', stripslashes($xfields['site']));
+
+            $tpl->set('{activity}', stripslashes($xfields['activity']));
+            $tpl->set('{interests}', stripslashes($xfields['interests']));
+            $tpl->set('{myinfo}', stripslashes($xfields['myinfo']));
+//            $tpl->set('{music}', stripslashes($xfields['music']));
+//            $tpl->set('{kino}', stripslashes($xfields['kino']));
+//            $tpl->set('{books}', stripslashes($xfields['books']));
+//            $tpl->set('{games}', stripslashes($xfields['games']));
+//            $tpl->set('{quote}', stripslashes($xfields['quote']));
+
+            $tpl->compile('content');
+            $tpl->clear();
+
+
+
+
+
+        } else {
+            $user_speedbar = 'Информация';
+            msgbox('', $lang['not_logged'], 'info');
+        }
+
+        $params['tpl'] = $tpl;
+        Tools::AjaxTpl($tpl);
         return true;
     }
 }

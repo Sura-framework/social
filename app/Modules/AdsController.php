@@ -23,8 +23,8 @@ class AdsController extends Module{
             Tools::NoAjaxQuery();
 
         if(isset($logged)){
-            $act = $_GET['act'];
-            $user_id = $user_info['user_id'];
+//            $act = $_GET['act'];
+//            $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
             $row = null; //!NB bug
@@ -132,7 +132,7 @@ class AdsController extends Module{
     }
 
     public function cabinet($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -242,7 +242,7 @@ class AdsController extends Module{
     }
 
     public function create($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -465,7 +465,7 @@ class AdsController extends Module{
     }
 
     public function nextcreate($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -564,7 +564,7 @@ class AdsController extends Module{
     }
 
     public function uploadimg($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -772,7 +772,7 @@ class AdsController extends Module{
 
     public function index($params)
     {
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
         $db = $this->db();
         //$user_info = $this->user_info();
@@ -828,7 +828,7 @@ class AdsController extends Module{
         //$ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         $db = $this->db();
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
         if($ajax == 'yes')
         Tools::NoAjaxQuery();

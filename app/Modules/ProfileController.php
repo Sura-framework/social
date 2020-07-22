@@ -2,9 +2,6 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Db;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Templates;
@@ -16,14 +13,9 @@ use App\Models\Profile;
 class ProfileController extends Module{
 
     public function index($params){
-        $tpl = Registry::get('tpl');
-
-        $lang = langs::get_langs();
-
-        $db = Db::getDB();
+        $lang = $this->get_langs();
+        $db = $this->db();
         $user_info = $this->user_info();
-
-
         $logged = $this->logged();
 
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
@@ -36,26 +28,21 @@ class ProfileController extends Module{
 
             $config = Settings::loadsettings();
 
+            /*
+             * ID user page
+             */
             $path = explode('/', $_SERVER['REQUEST_URI']);
             $id = str_replace('u', '', $path);
             $id = intval($id['1']);
 
-
-//            $id = intval($_GET['id']);
             $cache_folder = 'user_'.$id;
-
             //Читаем кеш
             $row = unserialize(Cache::mozg_cache($cache_folder.'/profile_'.$id));
 
-//            var_dump($row);
             //Проверяем на наличие кеша, если нету то выводи из БД и создаём его
             if(!$row){
                 $row = Profile::user_row($id);
-                //$row = $db->super_query("SELECT user_id, user_search_pref, user_country_city_name, user_birthday, user_xfields, user_xfields_all, user_city, user_country, user_photo, user_friends_num, user_notes_num, user_subscriptions_num, user_wall_num, user_albums_num, user_last_visit, user_videos_num, user_status, user_privacy, user_sp, user_sex, user_gifts, user_public_num, user_audio, user_delet, user_ban_date, xfields, user_logged_mobile , user_cover, user_cover_pos, user_rating FROM `users` WHERE user_id = '{$id}'");
                 if($row){
-
-
-
                     Cache::mozg_create_folder_cache($cache_folder);
                     Cache::mozg_create_cache($cache_folder.'/profile_'.$id, serialize($row));
                 }
@@ -67,8 +54,6 @@ class ProfileController extends Module{
 
             //Если есть такой, юзер то продолжаем выполнение скрипта
             if($row){
-                $mobile_speedbar = $row['user_search_pref'];
-                $user_speedbar = $row['user_search_pref'];
                 //Profile_ban = $row['user_search_pref'];
                 $params['title'] = $row['user_search_pref'].' | Sura';
 
@@ -76,78 +61,96 @@ class ProfileController extends Module{
 
                 //Если удалена
                 if($row['user_delet']){
-                    $tpl->load_template("/profile/profile_delete_all.tpl");
                     $user_name_lastname_exp = explode(' ', $row['user_search_pref']);
-                    $tpl->set('{name}', $user_name_lastname_exp[0]);
-                    $tpl->set('{lastname}', $user_name_lastname_exp[1]);
-                    $tpl->compile('content');
                     //Если заблокирована
                 } elseif($row['user_ban_date'] >= $server_time OR $row['user_ban_date'] == '0'){
-                    $tpl->load_template("/profile/profile_baned_all.tpl");
                     $user_name_lastname_exp = explode(' ', $row['user_search_pref']);
-                    $tpl->set('{name}', $user_name_lastname_exp[0]);
-                    $tpl->set('{lastname}', $user_name_lastname_exp[1]);
-                    $tpl->compile('content');
                     //Если все хорошо, то выводим дальше
                 } else {
-                    $CheckBlackList = Tools::CheckBlackList($id);
+
+
+                    if($user_id != $id){
+                        $CheckBlackList = Tools::CheckBlackList($row['user_id']);
+                        $CheckFriends = Tools::CheckFriends($row['user_id']);
+
+                    }else{
+                        $CheckBlackList = false;
+                        $CheckFriends = false;
+
+                    }
+
+
 
                     $user_privacy = xfieldsdataload($row['user_privacy']);
 
                     $user_name_lastname_exp = explode(' ', $row['user_search_pref']);
                     $user_country_city_name_exp = explode('|', $row['user_country_city_name']);
 
-                    //################### Друзья ###################//
-                    if($row['user_friends_num']){
-
+                    /**
+                     * Друзья
+                     */
+                    if($row['user_friends_num'] > 0 AND !$CheckBlackList){
                         $sql_friends = Profile::friends($id);
-
-                        foreach($sql_friends as $row_friends){
+                        foreach($sql_friends as $key => $row_friends){
                             $friend_info = explode(' ', $row_friends['user_search_pref']);
-                            $tpl->set('{user-id}', $row_friends['friend_id']);
-                            $tpl->set('{name}', $friend_info[0]);
-                            $tpl->set('{last-name}', $friend_info[1]);
-                            if($row_friends['user_photo'])
-                                $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_friends['friend_id'].'/50_'.$row_friends['user_photo']);
-                            else
-                                $tpl->set('{ava}', '/images/no_ava_50.png');
-                            $tpl->compile('all_friends');
+                            $sql_friends[$key]['user_id'] = $row_friends['friend_id'];
+                            $sql_friends[$key]['name'] = $friend_info['0'];
+                            $sql_friends[$key]['lastname'] = $friend_info['1'];
+                            if($row_friends['user_photo']){
+                                $sql_friends[$key]['ava'] = $config['home_url'].'uploads/users/'.$row_friends['friend_id'].'/50_'.$row_friends['user_photo'];
+                            }else{
+                                $sql_friends[$key]['ava'] =  '/images/no_ava_50.png';
+                            }
                         }
+                        $params['all_friends'] = $sql_friends;
+                        $params['all_friends_num'] = $row['user_friends_num'];
                     }
 
-                    //################### Друзья на сайте ###################//
-                    if($user_id != $id)
+
+                    /**
+                     * Друзья на сайте
+                     *
+                     * @var $sql_friends_online array()
+                     */
+
+
                         //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                         $check_friend = Tools::CheckFriends($row['user_id']);
 
+                    $online_time = $server_time - 60;
                     //Кол-во друзей в онлайне
-                    if($row['user_friends_num']){
+                    if($row['user_friends_num'] > 0 AND !$CheckBlackList ){
                         $online_friends = Profile::friends_online_cnt($id, $online_time);
-
                         //Если друзья на сайте есть то идем дальше
                         if($online_friends['cnt']){
                             $sql_friends_online = Profile::friends_online($id, $online_time);
-                            $tpl->load_template('/profile/profile_friends.tpl');
-                            foreach($sql_friends_online as $row_friends_online){
+                            foreach($sql_friends_online as $key => $row_friends_online){
                                 $friend_info_online = explode(' ', $row_friends_online['user_search_pref']);
-                                $tpl->set('{user-id}', $row_friends_online['user_id']);
-                                $tpl->set('{name}', $friend_info_online[0]);
-                                $tpl->set('{last-name}', $friend_info_online[1]);
-                                if($row_friends_online['user_photo'])
-                                    $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_friends_online['user_id'].'/50_'.$row_friends_online['user_photo']);
-                                else
-                                    $tpl->set('{ava}', '/images/no_ava_50.png');
-                                $tpl->compile('all_online_friends');
+                                $sql_friends_online[$key]['user_id'] = $row_friends_online['user_id'];
+                                $sql_friends_online[$key]['name'] = $friend_info_online[0];
+                                $sql_friends_online[$key]['lastname'] = $friend_info_online[1];
+                                if($row_friends_online['user_photo']){
+                                    $sql_friends_online[$key]['ava'] = $config['home_url'].'uploads/users/'.$row_friends_online['user_id'].'/50_'.$row_friends_online['user_photo'];
+                                }else{
+                                    $sql_friends_online[$key]['ava'] = '/images/no_ava_50.png';
+                                }
                             }
-                        }
-                    }
+                            $params['all_online_friends'] = $sql_friends_online;
+                            $params['all_online__friends_num'] = $online_friends['cnt'];
+                        }else
+                            $params['all_online_friends'] = false;
+                    }else
+                        $params['all_online_friends'] = false;
 
-                    //################### Видеозаписи ###################//
-                    if($row['user_videos_num']){
+                    /**
+                     * Видеозаписи
+                     */
+                    if($row['user_videos_num'] > 0 AND $config['video_mod'] == 'yes' AND !$CheckBlackList){
                         //Настройки приватности
-                        if($user_id == $id)
+                        if($user_id == $id){
                             $sql_privacy = "";
-                        elseif($check_friend){
+                            $cache_pref_videos = '';
+                        }elseif(isset($CheckFriends)){//bug: undefined
                             $sql_privacy = "AND privacy regexp '[[:<:]](1|2)[[:>:]]'";
                             $cache_pref_videos = "_friends";
                         } else {
@@ -156,162 +159,156 @@ class ProfileController extends Module{
                         }
 
                         //Если страницу смотрит другой юзер, то считаем кол-во видео
-                        if($user_id != $id){
-                            $video_cnt = Profile::videos_online_cnt($id, $sql_privacy, $cache_pref_videos);
-                            $row['user_videos_num'] = $video_cnt['cnt'];
-                        }
+//                        if($user_id != $id){
+//                            $row['user_videos_num'] = $video_cnt['cnt'];
+//                        }
+
+                        $video_cnt = Profile::videos_online_cnt($id, $sql_privacy, $cache_pref_videos);
+                        $row['user_videos_num'] = $video_cnt['cnt'];
 
                         $sql_videos = Profile::videos_online($id, $sql_privacy, $cache_pref_videos);
 
-                        $tpl->load_template('/profile/profile_video.tpl');
-                        foreach($sql_videos as $row_videos){
-                            $tpl->set('{photo}', $row_videos['photo']);
-                            $tpl->set('{id}', $row_videos['id']);
-                            $tpl->set('{user-id}', $id);
-                            $tpl->set('{title}', stripslashes($row_videos['title']));
+                        foreach($sql_videos as $key => $row_videos){
+                            $sql_videos[$key]['photo'] =  $row_videos['photo'];
+                            $sql_videos[$key]['user_id'] = $id;
+                            $sql_videos[$key]['title'] = stripslashes($row_videos['title']);
                             $titles = array('комментарий', 'комментария', 'комментариев');//comments
-                            $tpl->set('{comm-num}', $row_videos['comm_num'].' '.Gramatic::declOfNum($row_videos['comm_num'], $titles));
+                            $sql_videos[$key]['comm_num'] = $row_videos['comm_num'].' '.Gramatic::declOfNum($row_videos['comm_num'], $titles);
                             $date = megaDate(strtotime($row_videos['add_date']), '');
-                            $tpl->set('{date}', $date);
-                            $tpl->compile('videos');
+                            $sql_videos[$key]['date'] = $date;
                         }
-                    }
+                        $params['videos_num'] = $video_cnt['cnt'];
+                        $params['videos'] = $sql_videos;
+                    }else
+                        $params['videos'] = false;
 
-                    //################### Подписки ###################//
-                    if($row['user_subscriptions_num']){
-                        $tpl->result['subscriptions'] = Cache::mozg_cache('/subscr_user_'.$id);
-                        if(!$tpl->result['subscriptions']){
+                    /**
+                     * Подписки
+                     */
+                    if($row['user_subscriptions_num'] > 0 AND !$CheckBlackList){
+                        $subscriptions = Cache::mozg_cache('/subscr_user_'.$id);
+                        if(!isset($subscriptions)){
                             $sql_subscriptions = Profile::subscriptions($id);
-                            $tpl->load_template('/profile/profile_subscription.tpl');
-                            foreach($sql_subscriptions as $row_subscr){
-                                $tpl->set('{user-id}', $row_subscr['friend_id']);
-                                $tpl->set('{name}', $row_subscr['user_search_pref']);
-
-                                if($row_subscr['user_status'])
-                                    $tpl->set('{info}', stripslashes(iconv_substr($row_subscr['user_status'], 0, 24, 'utf-8')));
-                                else {
+                            foreach($sql_subscriptions as $key => $row_subscr){
+                                $sql_subscriptions[$key]['user_id'] = $row_subscr['friend_id'];
+                                $sql_subscriptions[$key]['name'] = $row_subscr['user_search_pref'];
+                                if($row_subscr['user_status']){
+                                    $sql_subscriptions[$key]['info'] = stripslashes(iconv_substr($row_subscr['user_status'], 0, 24, 'utf-8'));
+                                }else {
                                     $country_city = explode('|', $row_subscr['user_country_city_name']);
-                                    $tpl->set('{info}', $country_city[1]);
+                                    $sql_subscriptions[$key]['info'] = $country_city[1];
                                 }
-
-                                if($row_subscr['user_photo'])
-                                    $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_subscr['friend_id'].'/50_'.$row_subscr['user_photo']);
-                                else
-                                    $tpl->set('{ava}', '/images/no_ava_50.png');
-                                $tpl->compile('subscriptions');
+                                if($row_subscr['user_photo']){
+                                    $sql_subscriptions[$key]['ava'] = $config['home_url'].'uploads/users/'.$row_subscr['friend_id'].'/50_'.$row_subscr['user_photo'];
+                                }else{
+                                    $sql_subscriptions[$key]['ava'] = '/images/no_ava_50.png';
+                                }
                             }
-                            Cache::mozg_create_cache('/subscr_user_'.$id, $tpl->result['subscriptions']);
+                            $params['subscriptions'] = $sql_subscriptions;
+                            $params['subscriptions_num'] = $row['user_subscriptions_num'];
+//                            Cache::mozg_create_cache('/subscr_user_'.$id, $tpl->result['subscriptions']);
                         }
-                    }
+                    }else
+                        $params['subscriptions'] = false;
 
-                    //################### Музыка ###################//
-                    if($row['user_audio']){
+                    /**
+                     * Музыка
+                     */
+                    if($row['user_audio']  AND !$CheckBlackList AND $config['audio_mod'] == 'yes'){
                         $sql_audio = Profile::audio($id);
-                        foreach($sql_audio as $row_audio){
-                            $stime = gmdate("i:s", $row_audio['duration']);
+                        foreach($sql_audio as $key => $row_audio){
+                            $sql_audio[$key]['stime'] = gmdate("i:s", $row_audio['duration']);
                             if(!$row_audio['artist']) $row_audio['artist'] = 'Неизвестный исполнитель';
                             if(!$row_audio['title']) $row_audio['title'] = 'Без названия';
-                            $search_artist = urlencode($row_audio['artist']);
-                            $plname = 'audios'.$id;
-                            $tpl->result['audios'] .= <<<HTML
-                            <div class="audioPage audioElem" id="audio_{$row_audio['id']}_{$id}_{$plname}"
-                            onclick="playNewAudio('{$row_audio['id']}_{$id}_{$plname}', event);">
-                            <div class="area">
-                            <table cellspacing="0" cellpadding="0" width="100%">
-                            <tbody>
-                            <tr>
-                            <td>
-                            <div class="audioPlayBut new_play_btn"><div class="bl"><div class="figure"></div></div></div>
-                            <input type="hidden" value="{$row_audio['url']},{$row_audio['duration']},page"
-                            id="audio_url_{$row_audio['id']}_{$id}_{$plname}">
-                            </td>
-                            <td class="info">
-                            <div class="audioNames"><b class="author" onclick="Page.Go('/?go=search&query={$search_artist}&type=5&n=1'); return false;"
-                            id="artist">{$row_audio['artist']}</b> – <span class="name"
-                            id="name">{$row_audio['title']}</span> <div class="clear"></div></div>
-                            <div class="audioElTime" id="audio_time_{$row_audio['id']}_{$id}_{$plname}">{$stime}</div>
-                            </td>
-                            </tr>
-                            </tbody>
-                            </table>
-                            <div id="player{$row_audio['id']}_{$id}_{$plname}" class="audioPlayer" border="0"
-                            cellpadding="0">
-                            <table cellspacing="0" cellpadding="0" width="100%">
-                            <tbody>
-                            <tr>
-                            <td style="width: 100%;">
-                            <div class="progressBar fl_l" style="width: 100%;" onclick="cancelEvent(event);"
-                            onmousedown="audio_player.progressDown(event, this);" id="no_play"
-                            onmousemove="audio_player.playerPrMove(event, this)"
-                            onmouseout="audio_player.playerPrOut()">
-                            <div class="audioTimesAP" id="main_timeView"><div
-                            class="audioTAP_strlka">100%</div></div>
-                            <div class="audioBGProgress"></div>
-                            <div class="audioLoadProgress"></div>
-                            <div class="audioPlayProgress" id="playerPlayLine"><div class="audioSlider"></div></div>
-                            </div>
-                            </td>
-                            <td>
-                            <div class="audioVolumeBar fl_l ml-2" onclick="cancelEvent(event);"
-                            onmousedown="audio_player.volumeDown(event, this);" id="no_play">
-                            <div class="audioTimesAP"><div class="audioTAP_strlka">100%</div></div>
-                            <div class="audioBGProgress"></div>
-                            <div class="audioPlayProgress" id="playerVolumeBar"><div class="audioSlider"></div></div>
-                            </div>
-                            </td>
-                            </tr>
-                            </tbody>
-                            </table>
-                            </div>
-                            </div>
-                            </div>
-                            HTML;
+                            $sql_audio[$key]['search_artist'] = urlencode($row_audio['artist']);
+                            $sql_audio[$key]['plname'] = 'audios'.$id;
                         }
-                    }
+                        $params['audios_num'] = $row['user_audio'].' '.Gramatic::declOfNum($row['user_audio'], $titles);
+                        $params['audios'] = $sql_audio;
+                    }else
+                        $params['audios'] = false;
 
-                    //################### Праздники друзей ###################//
-                    if($user_id == $id AND !$_SESSION['happy_friends_block_hide']){
+                    /**
+                     * Праздники друзей
+                     */
+                    if($user_id == $id AND !$_SESSION['happy_friends_block_hide']  AND !$CheckBlackList){
                         $sql_happy_friends = Profile::happy_friends($id, $server_time);
-                        $tpl->load_template('/profile/profile_happy_friends.tpl');
+//                        $tpl->load_template('/profile/profile_happy_friends.tpl');
                         $cnt_happfr = 0;
-                        foreach($sql_happy_friends as $happy_row_friends){
+                        foreach($sql_happy_friends as $key => $happy_row_friends){
                             $cnt_happfr++;
-                            $tpl->set('{user-id}', $happy_row_friends['friend_id']);
-                            $tpl->set('{user-name}', $happy_row_friends['user_search_pref']);
+                            $sql_happy_friends[$key]['user_id'] = $happy_row_friends['friend_id'];
+                            $sql_happy_friends[$key]['name'] = $happy_row_friends['user_search_pref'];
                             $user_birthday = explode('-', $happy_row_friends['user_birthday']);
-                            $tpl->set('{user-age}', user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]));
-                            if($happy_row_friends['user_photo']) $tpl->set('{ava}', '/uploads/users/'.$happy_row_friends['friend_id'].'/100_'.$happy_row_friends['user_photo']);
-                            else $tpl->set('{ava}', '/images/100_no_ava.png');
-                            $tpl->compile('happy_all_friends');
+                            $sql_happy_friends[$key]['age'] = user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+                            if($happy_row_friends['user_photo']) {
+                                $sql_happy_friends[$key]['ava'] = '/uploads/users/'.$happy_row_friends['friend_id'].'/100_'.$happy_row_friends['user_photo'];
+                            }else{
+                                $sql_happy_friends[$key]['ava'] = '/images/100_no_ava.png';
+                            }
                         }
                     }
 
-                    $act = $_GET['act'];
-                    $user_id = $user_info['user_id'];
                     $limit_select = 10;
                     $limit_page = 0;
 
-                    //################### Загрузка стены ###################//
-                    if($row['user_wall_num']){
+                    /**
+                     * Стена
+                     */
+
+                    //Приватность стены
+                    //кто может писать на стене
+                    if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $CheckFriends OR $user_id == $id){
+//                        $tpl->set('[privacy-wall]', '');
+                        $params['privacy_wall_block'] = true;
+                    } elseif($user_privacy['val_wall2'] == 1 OR $user_privacy['val_wall2'] == 2 AND $CheckFriends OR $user_id == $id){
+//                        $tpl->set('[privacy-wall]', '');
+                        $params['privacy_wall_block'] = true;
+                    } else{
+//                        $tpl->set_block("'\\[privacy-wall\\](.*?)\\[/privacy-wall\\]'si","");
+                        $params['privacy_wall_block'] = false;
+                    }
+
+                    if($user_id != $id){
+                        if($user_privacy['val_wall1'] == 3 OR $user_privacy['val_wall1'] == 2 AND !$CheckFriends){
+                            $cnt_rec = Profile::cnt_rec($id);
+                            $row['user_wall_num'] = $cnt_rec['cnt'];
+                            $params['wall_rec_num'] = $row['user_wall_num'];
+                        }else
+                            $params['wall_rec_num'] = $row['user_wall_num'];
+                    }else
+                        $params['wall_rec_num'] = $row['user_wall_num'];
+
+                    $row['user_wall_num'] = $row['user_wall_num'] ? $row['user_wall_num'] : '';
+                    if($row['user_wall_num'] > 10){
+                        $params['wall_link_block'] = true;
+                    }else{
+                        $params['wall_link_block'] = true;
+                    }
+
+                    if($row['user_wall_num'] > 0){
+                        $params['wall_rec_num_block'] = true;
+                    }else {
+                        $params['wall_rec_num_block'] = false;
+                    }
+
+
+                    if($row['user_wall_num']  AND !$CheckBlackList){
                         //################### Показ последних 10 записей ###################//
 
                         //Если вызвана страница стены, не со страницы юзера
                         if(!$id){
                             $rid = intval($_GET['rid']);
-
                             $id = intval($_GET['uid']);
-                            if(!$id)
+                            if(empty($id))
                                 $id = $user_id;
 
                             $walluid = $id;
                             $params['title'] = $lang['wall_title'];
-                            $user_speedbar = 'На стене нет записей';
 
                             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
                             $gcount = 10;
                             $limit_page = ($page-1)*$gcount;
-
-                            //Выводим имя юзера и настройки приватности
                             //not used row_user['user_privacy']
                             //$row_user = $db->super_query("SELECT user_name, user_wall_num, user_privacy FROM `users` WHERE user_id = '{$id}'");
                             $user_privacy = xfieldsdataload($row['user_privacy']);
@@ -321,54 +318,65 @@ class ProfileController extends Module{
                                 $CheckBlackList = Tools::CheckBlackList($id);
                                 if(!$CheckBlackList){
                                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-                                    if($user_id != $id)
-                                        $check_friend = Tools::CheckFriends($id);
+                                    //$CheckFriends
+//                                    if($user_id != $id)
+//                                        $check_friend = Tools::CheckFriends($id);
 
-                                    if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $check_friend OR $user_id == $id)
+
+                                    if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $CheckFriends OR $user_id == $id)
                                         $cnt_rec['cnt'] = $row['user_wall_num'];
                                     else
-                                        $cnt_rec = $db->super_query("SELECT COUNT(*) AS cnt FROM `wall` WHERE for_user_id = '{$id}' AND author_user_id = '{$id}' AND fast_comm_id = 0");
+                                        $cnt_rec = Profile::cnt_rec($id);
 
+                                    /**
+                                     * record_tab
+                                     */
                                     if($_GET['type'] == 'own'){
-                                        $cnt_rec = $db->super_query("SELECT COUNT(*) AS cnt FROM `wall` WHERE for_user_id = '{$id}' AND author_user_id = '{$id}' AND fast_comm_id = 0");
+                                        $params['record_tab'] = false;
+                                        $cnt_rec = Profile::cnt_rec($id);
                                         $where_sql = "AND tb1.author_user_id = '{$id}'";
-                                        $tpl->set_block("'\\[record-tab\\](.*?)\\[/record-tab\\]'si","");
                                         $page_type = '/wall'.$id.'_sec=own&page=';
                                     } else if($_GET['type'] == 'record'){
+                                        $params['record_tab'] = true;
                                         $where_sql = "AND tb1.id = '{$rid}'";
-                                        $tpl->set('[record-tab]', '');
-                                        $tpl->set('[/record-tab]', '');
-                                        $wallAuthorId = $db->super_query("SELECT author_user_id FROM `wall` WHERE id = '{$rid}'");
+                                        $wallAuthorId = Profile::author_user_id($rid);
                                     } else {
+                                        $params['record_tab'] = false;
                                         $_GET['type'] = '';
                                         $where_sql = '';
-                                        $tpl->set_block("'\\[record-tab\\](.*?)\\[/record-tab\\]'si","");
+//                                        $tpl->set_block("'\\[record-tab\\](.*?)\\[/record-tab\\]'si","");
                                         $page_type = '/wall'.$id.'/page/';
                                     }
 
-                                    $titles = array('запись', 'записи', 'записей');//rec
-                                    if($cnt_rec['cnt'] > 0)
-                                        $user_speedbar = 'На стене '.$cnt_rec['cnt'].' '.Gramatic::declOfNum($cnt_rec['cnt'], $titles);
+                                    //$titles = array('запись', 'записи', 'записей');//rec
+//                                    if($cnt_rec['cnt'] > 0)
+//                                        $user_speedbar = 'На стене '.$cnt_rec['cnt'].' '.Gramatic::declOfNum($cnt_rec['cnt'], $titles);
 
-                                    $tpl->load_template('wall/head.tpl');
-                                    $tpl->set('{name}', Gramatic::gramatikName($row['user_name']));
-                                    $tpl->set('{uid}', $id);
-                                    $tpl->set('{rec-id}', $rid);
-                                    $tpl->set("{activetab-{$_GET['type']}}", 'activetab');
-                                    $tpl->compile('info');
+//                                    $tpl->load_template('wall/head.tpl');
+                                    $params['wall_head']['name'] = Gramatic::gramatikName($row['user_name']);
+                                    $params['wall_head']['uid'] = $id;
+                                    $params['wall_head']['rec_id'] = $rid;
+                                    $params['wall_head']['activetab_'.$_GET['type']] = 'activetab';
 
-                                    if($cnt_rec['cnt'] < 1)
-                                        msgbox('', $lang['wall_no_rec'], 'info_2');
+                                    if($cnt_rec['cnt'] < 1){
+                                       // msgbox('', $lang['wall_no_rec'], 'info_2');
+                                        $params['msg_box'] = $lang['wall_no_rec'];
+                                    }
+
                                 } else {
-                                    $user_speedbar = $lang['error'];
-                                    msgbox('', $lang['no_notes'], 'info');
+//                                    $user_speedbar = $lang['error'];
+                                    //msgbox('', $lang['no_notes'], 'info');
+                                    $params['msg_box'] = $lang['no_notes'];
                                 }
-                            } else
-                                msgbox('', $lang['wall_no_rec'], 'info_2');
+                            } else{
+                                //msgbox('', $lang['wall_no_rec'], 'info_2');
+                                $params['msg_box'] = $lang['wall_no_rec'];
+                            }
+
                         }
 
                         if(!$CheckBlackList){
-                            if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $check_friend OR $user_id == $id)
+                            if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $CheckFriends OR $user_id == $id)
                                 $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
                             elseif($wallAuthorId['author_user_id'] == $id)
                                 $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
@@ -382,27 +390,35 @@ class ProfileController extends Module{
                             if(!$Hacking){
                                 if($rid OR $walluid){
                                     //$tpl = $wall->template('wall/one_record.tpl', $tpl);
-                                    $tpl->load_template('wall/one_record.tpl');
+//                                    $tpl->load_template('wall/one_record.tpl');
                                     //$wall->compile('content');
                                     $compile = 'content';
+                                    $params['compile'] = 'content';
                                     //$wall->select();
 
-                                    if($cnt_rec['cnt'] > $gcount AND $_GET['type'] == '' OR $_GET['type'] == 'own')
-                                        navigation($gcount, $cnt_rec['cnt'], $page_type);
+                                    if($cnt_rec['cnt'] > $gcount AND $_GET['type'] == '' OR $_GET['type'] == 'own'){
+                                        //$tpl = Tools::navigation($gcount, $cnt_rec['cnt'], $page_type, $tpl);
+                                        //bug !!!
+                                    }
                                 } else {
                                     //$wall->template('wall/record.tpl', $tpl);
-                                    $tpl->load_template('wall/one_record.tpl');
+//                                    $tpl->load_template('wall/one_record.tpl');
                                     //$wall->compile('wall');
                                     $compile = 'wall';
+                                    $params['compile'] = 'wall';
                                     //$wall->select();
                                 }
 
                                 $server_time = intval($_SERVER['REQUEST_TIME']);
-                                $config = include __DIR__.'/../../config/config.php';
+                                $config = Settings::loadsettings();
 
-                                //$this->template;
-                                foreach($query as $row_wall){
-                                    $tpl->set('{rec-id}', $row_wall['id']);
+                                /**
+                                 * wall records
+                                 *
+                                 * @var $query array
+                                 */
+                                foreach($query as $key => $row_wall){
+                                    $query[$key]['rec_id'] = $row_wall['id']; //!
 
                                     //КНопка Показать полностью..
                                     $expBR = explode('<br />', $row_wall['text']);
@@ -416,7 +432,7 @@ class ProfileController extends Module{
                                         $attach_arr = explode('||', $row_wall['attach']);
                                         $cnt_attach = 1;
                                         $cnt_attach_link = 1;
-                                        $jid = 0;
+//                                        $jid = 0;
                                         $attach_result = '';
                                         $attach_result .= '<div class="clear"></div>';
                                         foreach($attach_arr as $attach_file){
@@ -476,7 +492,7 @@ class ProfileController extends Module{
 
                                                     $video_id = intval($attach_type[2]);
 
-                                                    $row_video = row_video($video_id);
+                                                    $row_video = Profile::row_video($video_id);
                                                     $row_video['title'] = stripslashes($row_video['title']);
                                                     $row_video['video'] = stripslashes($row_video['video']);
                                                     $row_video['video'] = strtr($row_video['video'], array('width="770"' => 'width="390"', 'height="420"' => 'height="310"'));
@@ -493,14 +509,12 @@ class ProfileController extends Module{
 
 
                                                 } else {
-                                                    if ($row_video['download'] == '1') {
+
+                                                    if ($row_video['download'] == '1') {//bug: undefined
                                                         $attach_result .= "<div class=\"fl_l\"><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><div class=\"video_inline_icon video_inline_icon2\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"width: 175px;height: 131px;margin-top:3px;margin-right:3px\" align=\"left\" /></a></div>";
                                                     }else{
                                                         $attach_result .= "<div class=\"fl_l\"><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><div class=\"video_inline_icon video_inline_icon2\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"width: 175px;height: 131px;margin-top:3px;margin-right:3px\" align=\"left\" /></a></div>";
-
                                                     }
-
-
                                                 }
 
                                                 $resLinkTitle = '';
@@ -563,7 +577,7 @@ class ProfileController extends Module{
 
                                                 //Если ссылка
                                             } elseif($attach_type[0] == 'link' AND preg_match('/http:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1 AND stripos(str_replace('http://www.', 'http://', $attach_type[1]), $config['home_url']) === false){
-                                                $count_num = count($attach_type);
+//                                                $count_num = count($attach_type);
                                                 $domain_url_name = explode('/', $attach_type[1]);
                                                 $rdomain_url_name = str_replace('http://', '', $domain_url_name[2]);
 
@@ -616,11 +630,11 @@ class ProfileController extends Module{
 
                                                 $vote_id = intval($attach_type[1]);
 
-                                                $row_vote = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false, "votes/vote_{$vote_id}");
+                                                $row_vote = Profile::row_vote($vote_id);
 
                                                 if($vote_id){
 
-                                                    $checkMyVote = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$vote_id}'", false, "votes/check{$user_id}_{$vote_id}");
+                                                    $checkMyVote = Profile::vote_check($vote_id, $user_id);
 
                                                     $row_vote['title'] = stripslashes($row_vote['title']);
 
@@ -630,12 +644,10 @@ class ProfileController extends Module{
                                                     $arr_answe_list = explode('|', stripslashes($row_vote['answers']));
                                                     $max = $row_vote['answer_num'];
 
-                                                    $sql_answer = $db->super_query("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$vote_id}' GROUP BY answer", 1, "votes/vote_answer_cnt_{$vote_id}");
+                                                    $sql_answer = Profile::vote_answer($vote_id);
                                                     $answer = array();
                                                     foreach($sql_answer as $row_answer){
-
                                                         $answer[$row_answer['answer']]['cnt'] = $row_answer['cnt'];
-
                                                     }
 
                                                     $attach_result .= "<div class=\"clear\" style=\"height:10px\"></div><div id=\"result_vote_block{$vote_id}\"><div class=\"wall_vote_title\">{$row_vote['title']}</div>";
@@ -695,9 +707,9 @@ class ProfileController extends Module{
                                     //Если это запись с "рассказать друзьям"
                                     if($row_wall['tell_uid']){
                                         if($row_wall['public'])
-                                            $rowUserTell = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$row_wall['tell_uid']}'", false, "wall/group{$row_wall['tell_uid']}");
+                                            $rowUserTell = Profile::user_tell_info($row_wall['tell_uid'], 2);
                                         else
-                                            $rowUserTell = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$row_wall['tell_uid']}'");
+                                            $rowUserTell = Profile::user_tell_info($row_wall['tell_uid'], 1);
 
                                         if(date('Y-m-d', $row_wall['tell_date']) == date('Y-m-d', $server_time))
                                             $dateTell = langdate('сегодня в H:i', $row_wall['tell_date']);
@@ -732,101 +744,100 @@ class ProfileController extends Module{
                                         HTML;
                                     }
 
-                                    $tpl->set('{text}', stripslashes($row_wall['text']));
-
-                                    $tpl->set('{name}', $row_wall['user_search_pref']);
-                                    $tpl->set('{user-id}', $row_wall['author_user_id']);
-
+                                    $query[$key]['text'] = stripslashes($row_wall['text']);
+                                    $query[$key]['name'] = $row_wall['user_search_pref'];
+                                    $query[$key]['user_id'] = $row_wall['author_user_id'];
                                     $online = Online($row_wall['user_last_visit'], $row_wall['user_logged_mobile']);
-                                    $tpl->set('{online}', $online);
+                                    $query[$key]['online'] = $online;
                                     $date = megaDate($row_wall['add_date']);
-                                    $tpl->set('{date}', $date);
+                                    $query[$key]['date'] = $date;
 
-                                    if($row_wall['user_photo'])
-                                        $tpl->set('{ava}', '/uploads/users/'.$row_wall['author_user_id'].'/50_'.$row_wall['user_photo']);
-                                    else
-                                        $tpl->set('{ava}', '/images/no_ava_50.png');
+                                    if($row_wall['user_photo']){
+                                        $query[$key]['ava'] = '/uploads/users/'.$row_wall['author_user_id'].'/50_'.$row_wall['user_photo'];
+                                    }
+                                    else{
+                                        $query[$key]['ava'] = '/images/no_ava_50.png';
+                                    }
 
                                     //Мне нравится
                                     if(stripos($row_wall['likes_users'], "u{$user_id}|") !== false){
-                                        $tpl->set('{yes-like}', 'public_wall_like_yes');
-                                        $tpl->set('{yes-like-color}', 'public_wall_like_yes_color');
-                                        $tpl->set('{like-js-function}', 'groups.wall_remove_like('.$row_wall['id'].', '.$user_id.', \'uPages\')');
+                                        $query[$key]['yes_like'] = 'public_wall_like_yes';
+                                        $query[$key]['yes_like_color'] = 'public_wall_like_yes_color';
+                                        $query[$key]['like_js_function'] = 'groups.wall_remove_like('.$row_wall['id'].', '.$user_id.', \'uPages\')';
                                     } else {
-                                        $tpl->set('{yes-like}', '');
-                                        $tpl->set('{yes-like-color}', '');
-                                        $tpl->set('{like-js-function}', 'groups.wall_add_like('.$row_wall['id'].', '.$user_id.', \'uPages\')');
+                                        $query[$key]['yes_like'] = '';
+                                        $query[$key]['yes_like_color'] = '';
+                                        $query[$key]['like_js_function'] = 'groups.wall_add_like('.$row_wall['id'].', '.$user_id.', \'uPages\')';
                                     }
 
                                     if($row_wall['likes_num']){
-                                        $tpl->set('{likes}', $row_wall['likes_num']);
+                                        $query[$key]['likes'] = $row_wall['likes_num'];
                                         $titles = array('человеку', 'людям', 'людям');//like
-                                        $tpl->set('{likes-text}', '<span id="like_text_num'.$row_wall['id'].'">'.$row_wall['likes_num'].'</span> '.Gramatic::declOfNum($row_wall['likes_num'], $titles));
+                                        $query[$key]['likes_text'] = '<span id="like_text_num'.$row_wall['id'].'">'.$row_wall['likes_num'].'</span> '.Gramatic::declOfNum($row_wall['likes_num'], $titles);
                                     } else {
-                                        $tpl->set('{likes}', '');
-                                        $tpl->set('{likes-text}', '<span id="like_text_num'.$row_wall['id'].'">0</span> человеку');
+                                        $query[$key]['likes'] = '';
+                                        $query[$key]['likes_text'] = '<span id="like_text_num'.$row_wall['id'].'">0</span> человеку';
                                     }
 
                                     //Выводим информцию о том кто смотрит страницу для себя
-                                    $tpl->set('{viewer-id}', $user_id);
-                                    if($user_info['user_photo'])
-                                        $tpl->set('{viewer-ava}', '/uploads/users/'.$user_id.'/50_'.$user_info['user_photo']);
-                                    else
-                                        $tpl->set('{viewer-ava}', '/images/no_ava_50.png');
+                                    $query[$key]['viewer_id'] = $user_id;
+                                    if($user_info['user_photo']){
+                                        $query[$key]['viewer_ava'] = '/uploads/users/'.$user_id.'/50_'.$user_info['user_photo'];
+                                    }else{
+                                        $query[$key]['viewer_ava'] = '/images/no_ava_50.png';
+                                    }
 
-                                    if($row_wall['type'])
-                                        $tpl->set('{type}', $row_wall['type']);
-                                    else
-                                        $tpl->set('{type}', '');
+                                    if($row_wall['type']){
+                                        $query[$key]['type'] = $row_wall['type'];
+                                    }else{
+                                        $query[$key]['type'] = '';
+                                    }
+
+                                    //времменно
+                                    if (!isset($for_user_id))
+                                        $for_user_id = null;
 
                                     if(!$id)
-                                        $id = $for_user_id;
+                                        $id = $for_user_id;//bug: undefined
 
                                     //Тег Owner означает показ записей только для владельца страницы или для того кто оставил запись
                                     if($user_id == $row_wall['author_user_id'] OR $user_id == $id){
-                                        $tpl->set('[owner]', '');
-                                        $tpl->set('[/owner]', '');
-                                    } else
-                                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                                        $query[$key]['owner'] = true;
+                                    } else{
+                                        $query[$key]['owner'] = false;
+                                    }
 
                                     //Показа кнопки "Рассказать др" только если это записи владельца стр.
                                     if($row_wall['author_user_id'] == $id AND $user_id != $id){
-                                        $tpl->set('[owner-record]', '');
-                                        $tpl->set('[/owner-record]', '');
-                                    } else
-                                        $tpl->set_block("'\\[owner-record\\](.*?)\\[/owner-record\\]'si","");
+                                        $query[$key]['author_user_id'] = true;
+                                    } else{
+                                        $query[$key]['author_user_id'] = false;
+                                    }
 
                                     //Если есть комменты к записи, то выполняем след. действия / Приватность
                                     if($row_wall['fasts_num']){
-                                        $tpl->set('[if-comments]', '');
-                                        $tpl->set('[/if-comments]', '');
-                                        $tpl->set_block("'\\[comments-link\\](.*?)\\[/comments-link\\]'si","");
+                                        $query[$key]['if_comments'] = false;
                                     } else {
-                                        $tpl->set('[comments-link]', '');
-                                        $tpl->set('[/comments-link]', '');
-                                        $tpl->set_block("'\\[if-comments\\](.*?)\\[/if-comments\\]'si","");
+                                        $query[$key]['if_comments'] = true;
                                     }
 
                                     //Приватность комментирования записей
-                                    if($user_privacy['val_wall3'] == 1 OR $user_privacy['val_wall3'] == 2 AND $check_friend OR $user_id == $id){
-                                        $tpl->set('[privacy-comment]', '');
-                                        $tpl->set('[/privacy-comment]', '');
-                                    } else
-                                        $tpl->set_block("'\\[privacy-comment\\](.*?)\\[/privacy-comment\\]'si","");
+                                    if($user_privacy['val_wall3'] == 1 OR $user_privacy['val_wall3'] == 2 AND $CheckFriends OR $user_id == $id){
+                                        $query[$key]['privacy_comment'] = true;
+                                    } else{
+                                        $query[$key]['privacy_comment'] = false;
+                                    }
 
-                                    $tpl->set('[record]', '');
-                                    $tpl->set('[/record]', '');
-                                    $tpl->set('{author-id}', $id);
-                                    $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-                                    $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-                                    $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                                    $tpl->compile($compile);
+                                    $query[$key]['record'] = true;
+                                    $query[$key]['comment'] = false;
+                                    $query[$key]['comment_form'] = false;
+                                    $query[$key]['all_comm'] = false;
 
                                     //Помещаем все комменты в id wall_fast_block_{id} это для JS
-                                    $tpl->result[$compile] .= '<div id="wall_fast_block_'.$row_wall['id'].'">';
+//                                    $tpl->result[$compile] .= '<div id="wall_fast_block_'.$row_wall['id'].'">';
 
                                     //Если есть комменты к записи, то открываем форму ответа уже в развернутом виде и выводим комменты к записи
-                                    if($user_privacy['val_wall3'] == 1 OR $user_privacy['val_wall3'] == 2 AND $check_friend OR $user_id == $id){
+                                    if($user_privacy['val_wall3'] == 1 OR $user_privacy['val_wall3'] == 2 AND $CheckFriends OR $user_id == $id){
                                         if($row_wall['fasts_num']){
 
                                             if($row_wall['fasts_num'] > 3)
@@ -834,36 +845,36 @@ class ProfileController extends Module{
                                             else
                                                 $comments_limit = 0;
 
-                                            $sql_comments = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, tb2.user_photo, user_search_pref FROM `wall` tb1, `users` tb2 WHERE tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = '{$row_wall['id']}' ORDER by `add_date` ASC LIMIT {$comments_limit}, 3", 1);
+                                            $sql_comments = Profile::comments($row_wall['id'], $comments_limit);
 
                                             //Загружаем кнопку "Показать N запсии"
                                             $titles1 = array('предыдущий', 'предыдущие', 'предыдущие');//prev
                                             $titles2 = array('комментарий', 'комментария', 'комментариев');//comments
-                                            $tpl->set('{gram-record-all-comm}', Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles1).' '.($row_wall['fasts_num']-3).' '.Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles2));
-                                            if($row_wall['fasts_num'] < 4)
-                                                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                                            else {
-                                                $tpl->set('{rec-id}', $row_wall['id']);
-                                                $tpl->set('[all-comm]', '');
-                                                $tpl->set('[/all-comm]', '');
+                                            $query[$key]['gram_record_all_comm'] = Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles1).' '.($row_wall['fasts_num']-3).' '.Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles2);
+
+                                            if($row_wall['fasts_num'] < 4){
+                                                $query[$key]['all_comm_block'] = false;
+                                            }else {
+                                                $query[$key]['rec_id'] = $row_wall['id'];
                                             }
-                                            $tpl->set('{author-id}', $id);
-                                            $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                                            $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-                                            $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-                                            $tpl->compile($compile);
+                                            $query[$key]['author_id'] = $id;
+
+                                            $query[$key]['record_block'] = false;
+                                            $query[$key]['comment_form_block'] = false;
+                                            $query[$key]['comment_block'] = false;
 
                                             //Сообственно выводим комменты
-                                            foreach($sql_comments as $row_comments){
-                                                $tpl->set('{name}', $row_comments['user_search_pref']);
-                                                if($row_comments['user_photo'])
-                                                    $tpl->set('{ava}', '/uploads/users/'.$row_comments['author_user_id'].'/50_'.$row_comments['user_photo']);
-                                                else
-                                                    $tpl->set('{ava}', '/images/no_ava_50.png');
+                                            foreach($sql_comments as $key => $row_comments){
+                                                $sql_comments[$key]['name'] = $row_comments['user_search_pref'];
+                                                if($row_comments['user_photo']){
+                                                    $sql_comments[$key]['ava'] = '/uploads/users/'.$row_comments['author_user_id'].'/50_'.$row_comments['user_photo'];
+                                                }else{
+                                                    $sql_comments[$key]['ava'] = '/images/no_ava_50.png';
+                                                }
 
-                                                $tpl->set('{rec-id}', $row_wall['id']);
-                                                $tpl->set('{comm-id}', $row_comments['id']);
-                                                $tpl->set('{user-id}', $row_comments['author_user_id']);
+                                                $sql_comments[$key]['rec_id'] = $row_wall['id'];
+                                                $sql_comments[$key]['comm_id'] = $row_comments['id'];
+                                                $sql_comments[$key]['user_id'] = $row_comments['author_user_id'];
 
                                                 $expBR2 = explode('<br />', $row_comments['text']);
                                                 $textLength2 = count($expBR2);
@@ -874,221 +885,232 @@ class ProfileController extends Module{
                                                 //Обрабатываем ссылки
                                                 $row_comments['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_comments['text']);
 
-                                                $tpl->set('{text}', stripslashes($row_comments['text']));
+                                                $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
 
                                                 $date = megaDate($row_comments['add_date']);
-                                                $tpl->set('{date}', $date);
+                                                $sql_comments[$key]['date'] = $date;
                                                 if($user_id == $row_comments['author_user_id'] || $user_id == $id){
-                                                    $tpl->set('[owner]', '');
-                                                    $tpl->set('[/owner]', '');
-                                                } else
-                                                    $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
-
-                                                if($user_id == $row_comments['author_user_id'])
-
-                                                    $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
-
-                                                else {
-
-                                                    $tpl->set('[not-owner]', '');
-                                                    $tpl->set('[/not-owner]', '');
-
+                                                    $sql_comments[$key]['owner_block'] = true;
+                                                } else{
+                                                    $sql_comments[$key]['owner_block'] = false;
                                                 }
 
-                                                $tpl->set('[comment]', '');
-                                                $tpl->set('[/comment]', '');
-                                                $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                                                $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-                                                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                                                $tpl->compile($compile);
+                                                if($user_id == $row_comments['author_user_id']){
+                                                    $sql_comments[$key]['not_owner'] = false;
+                                                }else {
+                                                    $sql_comments[$key]['not_owner_block'] = true;
+                                                }
+
+                                                $sql_comments[$key]['comment_block'] = true;
+                                                $sql_comments[$key]['record_block'] = false;
+                                                $sql_comments[$key]['comment_form_block'] = false;
+                                                $sql_comments[$key]['all_comm_block'] = false;
                                             }
 
                                             //Загружаем форму ответа
-                                            $tpl->set('{rec-id}', $row_wall['id']);
-                                            $tpl->set('{author-id}', $id);
-                                            $tpl->set('[comment-form]', '');
-                                            $tpl->set('[/comment-form]', '');
-                                            $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                                            $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-                                            $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                                            $tpl->compile($compile);
+                                            $query[$key]['rec_id'] = $row_wall['id'];
+                                            $query[$key]['author_id'] = $id;
+                                            $query[$key]['comment_form_block'] = true;
+                                            $query[$key]['record_block'] = false;
+                                            $query[$key]['comment_block'] = false;
+                                            $query[$key]['all-comm_block'] = false;
                                         }
                                     }
 
                                     //Закрываем блок для JS
-                                    $tpl->result[$compile] .= '</div>';
-
+//                                    $tpl->result[$compile] .= '</div>';
+                                    $params['wall_records'] = $query;
                                 }
+                            }else{
+                                $params['wall_records'] = false;
                             }
                         }
                     }
 
                     //Общие друзья
-                    if($row['user_friends_num'] AND $id != $user_info['user_id']){
-
-                        $count_common = $db->super_query("SELECT COUNT(*) AS cnt FROM `friends` tb1 INNER JOIN `friends` tb2 ON tb1.friend_id = tb2.user_id WHERE tb1.user_id = '{$user_info['user_id']}' AND tb2.friend_id = '{$id}' AND tb1.subscriptions = 0 AND tb2.subscriptions = 0");
-
+                    if($row['user_friends_num'] AND $id != $user_info['user_id']  AND !$CheckBlackList){
+                        $count_common = Profile::count_common($id, $user_info['user_id']);
                         if($count_common['cnt']){
-
-                            $sql_mutual = $db->super_query("SELECT tb1.friend_id, tb3.user_photo, user_search_pref FROM `users` tb3, `friends` tb1 INNER JOIN `friends` tb2 ON tb1.friend_id = tb2.user_id WHERE tb1.user_id = '{$user_info['user_id']}' AND tb2.friend_id = '{$id}' AND tb1.subscriptions = 0 AND tb2.subscriptions = 0 AND tb1.friend_id = tb3.user_id ORDER by rand() LIMIT 0, 3", 1);
-
-                            $tpl->load_template('/profile/profile_friends.tpl');
-
-                            foreach($sql_mutual as $row_mutual){
-
+                            $sql_mutual = Profile::mutual($id, $user_info['user_id']);
+                            foreach($sql_mutual as $key => $row_mutual){
                                 $friend_info_mutual = explode(' ', $row_mutual['user_search_pref']);
-
-                                $tpl->set('{user-id}', $row_mutual['friend_id']);
-                                $tpl->set('{name}', $friend_info_mutual[0]);
-                                $tpl->set('{last-name}', $friend_info_mutual[1]);
-
-                                if($row_mutual['user_photo'])
-                                    $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_mutual['friend_id'].'/50_'.$row_mutual['user_photo']);
-                                else
-                                    $tpl->set('{ava}', '/images/no_ava_50.png');
-
-                                $tpl->compile('mutual_friends');
+                                $sql_mutual[$key]['user_id'] = $row_mutual['friend_id'];
+                                $sql_mutual[$key]['name'] = $friend_info_mutual[0];
+                                $sql_mutual[$key]['last_name'] = $friend_info_mutual[1];
+                                if($row_mutual['user_photo']){
+                                    $sql_mutual[$key]['ava'] = $config['home_url'].'uploads/users/'.$row_mutual['friend_id'].'/50_'.$row_mutual['user_photo'];
+                                }else{
+                                    $sql_mutual[$key]['ava'] = '/images/no_ava_50.png';
+                                }
                             }
-                        }
+                            $params['mutual_friends'] = $sql_mutual;
+                        }else
+                            $params['mutual_friends'] = false;
+                        $params['mutual_num'] = $count_common['cnt'];
+                    }else{
+                        $params['mutual_friends'] = false;
                     }
 
-                    //################### Загрузка самого профиля ###################//
-                    $tpl->load_template('/profile/profile.tpl');
+                    /**
+                     * Загрузка самого профиля
+                     */
+//                    $tpl->load_template('/profile/profile.tpl');
 
-                    if($count_common['cnt']){
-                        $tpl->set('{mutual_friends}', $tpl->result['mutual_friends']);
-                        $tpl->set('{mutual-num}', $count_common['cnt']);
-                        $tpl->set('[common-friends]', '');
-                        $tpl->set('[/common-friends]', '');
-                    } else
-                        $tpl->set_block("'\\[common-friends\\](.*?)\\[/common-friends\\]'si","");
-
-                    $tpl->set('{user-id}', $row['user_id']);
+                    $params['user_id'] = $row['user_id'];
 
                     //Страна и город
-                    $tpl->set('{country}', $user_country_city_name_exp[0]);
-                    $tpl->set('{country-id}', $row['user_country']);
-                    $tpl->set('{city}', $user_country_city_name_exp[1]);
-                    $tpl->set('{city-id}', $row['user_city']);
+                    if($row['user_city'] AND $row['user_country']){
+                        $params['city'] =$user_country_city_name_exp[1];
+                        $params['city_id'] = $row['user_city'];
+                        $params['not_all_city_block'] = true;
+                    } else{
+                        $params['not_all_city_block'] = false;
+                    }
+
+                    if($row['user_country']){
+                        $params['country'] = $user_country_city_name_exp[0];
+                        $params['country_id'] =$row['user_country'];
+                        $params['not_all_country_block'] = true;
+                    } else{
+                        $params['not_all_country_block'] = false;
+                    }
 
                     //Если человек сидит с мобильнйо версии
-                    if($row_online['user_logged_mobile']) $mobile_icon = '<img src="/images/spacer.gif" class="mobile_online" />';
-                    else $mobile_icon = '';
+                    if($row_online['user_logged_mobile'])
+                        $mobile_icon = '<img src="/images/spacer.gif" class="mobile_online"  alt=\"\" />';
+                    else
+                        $mobile_icon = '';
 
-                    if($row_online['user_last_visit'] >= $online_time)
-                        $tpl->set('{online}', $lang['online'].$mobile_icon);
-                    else {
+                    if($row_online['user_last_visit'] >= $online_time){
+                        $params['online'] = $lang['online'].$mobile_icon;
+                    }else {
                         if(date('Y-m-d', $row_online['user_last_visit']) == date('Y-m-d', $server_time))
                             $dateTell = langdate('сегодня в H:i', $row_online['user_last_visit']);
                         elseif(date('Y-m-d', $row_online['user_last_visit']) == date('Y-m-d', ($server_time-84600)))
                             $dateTell = langdate('вчера в H:i', $row_online['user_last_visit']);
                         else
                             $dateTell = langdate('j F Y в H:i', $row_online['user_last_visit']);
-                        if($row['user_sex'] == 2)
-                            $tpl->set('{online}', 'последний раз была '.$dateTell.$mobile_icon);
-                        else
-                            $tpl->set('{online}', 'последний раз был '.$dateTell.$mobile_icon);
+                        if($row['user_sex'] == 2){
+//                            $tpl->set('{online}', 'последний раз была '.$dateTell.$mobile_icon);
+                            $params['online'] = 'последний раз была '.$dateTell.$mobile_icon;
+                        }else{
+//                            $tpl->set('{online}', 'последний раз был '.$dateTell.$mobile_icon);
+                            $params['online'] = 'последний раз был '.$dateTell.$mobile_icon;
+                        }
                     }
-
-                    if($row['user_city'] AND $row['user_country']){
-                        $tpl->set('[not-all-city]','');
-                        $tpl->set('[/not-all-city]','');
-                    } else
-                        $tpl->set_block("'\\[not-all-city\\](.*?)\\[/not-all-city\\]'si","");
-
-                    if($row['user_country']){
-                        $tpl->set('[not-all-country]','');
-                        $tpl->set('[/not-all-country]','');
-                    } else
-                        $tpl->set_block("'\\[not-all-country\\](.*?)\\[/not-all-country\\]'si","");
 
                     //Конакты
                     $xfields = xfieldsdataload($row['user_xfields']);
                     $preg_safq_name_exp = explode(', ', 'phone, vk, od, skype, fb, icq, site');
                     foreach($preg_safq_name_exp as $preg_safq_name){
                         if($xfields[$preg_safq_name]){
-                            $tpl->set("[not-contact-{$preg_safq_name}]", '');
-                            $tpl->set("[/not-contact-{$preg_safq_name}]", '');
-                        } else
-                            $tpl->set_block("'\\[not-contact-{$preg_safq_name}\\](.*?)\\[/not-contact-{$preg_safq_name}\\]'si","");
+                            $params['not_contact'.$preg_safq_name.'_block'] = true;
+                        } else{
+                            $params['not_contact'.$preg_safq_name.'_block'] = false;
+                        }
                     }
-                    $tpl->set('{vk}', '<a href="'.stripslashes($xfields['vk']).'" target="_blank">'.stripslashes($xfields['vk']).'</a>');
-                    $tpl->set('{od}', '<a href="'.stripslashes($xfields['od']).'" target="_blank">'.stripslashes($xfields['od']).'</a>');
-                    $tpl->set('{fb}', '<a href="'.stripslashes($xfields['fb']).'" target="_blank">'.stripslashes($xfields['fb']).'</a>');
-                    $tpl->set('{skype}', stripslashes($xfields['skype']));
-                    $tpl->set('{icq}', stripslashes($xfields['icq']));
-                    $tpl->set('{phone}', stripslashes($xfields['phone']));
+                    $params['vk'] = '<a href="'.stripslashes($xfields['vk']).'" target="_blank">'.stripslashes($xfields['vk']).'</a>';
+                    $params['od'] = '<a href="'.stripslashes($xfields['od']).'" target="_blank">'.stripslashes($xfields['od']).'</a>';
+                    $params['fb'] = '<a href="'.stripslashes($xfields['fb']).'" target="_blank">'.stripslashes($xfields['fb']).'</a>';
+                    $params['skype'] = stripslashes($xfields['skype']);
+                    $params['icq'] = stripslashes($xfields['icq']);
+                    $params['phone'] = stripslashes($xfields['phone']);
 
-                    if(preg_match('/http:\/\//i', $xfields['site']))
-                        if(preg_match('/\.ru|\.com|\.net|\.su|\.in\.ua|\.ua/i', $xfields['site']))
-                            $tpl->set('{site}', '<a href="'.stripslashes($xfields['site']).'" target="_blank">'.stripslashes($xfields['site']).'</a>');
-                        else
-                            $tpl->set('{site}', stripslashes($xfields['site']));
-                    else
-                        $tpl->set('{site}', 'http://'.stripslashes($xfields['site']));
+                    if (!empty($xfields['site'])){
+                        if(preg_match('/https:\/\//i', $xfields['site'])) {
+                            if (preg_match('/\.ru|\.com|\.net|\.su|\.in\.ua|\.ua/i', $xfields['site'])) {
+//                                $tpl->set('{site}', '<a href="' . stripslashes($xfields['site']) . '" target="_blank">' . stripslashes($xfields['site']) . '</a>');
+                                $params['phone'] = '<a href="' . stripslashes($xfields['site']) . '" target="_blank">' . stripslashes($xfields['site']) . '</a>';
+                            } else {
+//                                $tpl->set('{site}', stripslashes($xfields['site']));
+                                $params['site'] = stripslashes($xfields['site']);
+                            }
+                        }else{
+//                            $tpl->set('{site}', 'https://'.stripslashes($xfields['site']));
+                            $params['site'] = 'https://'.stripslashes($xfields['site']);
+                        }
+                    }else{
+//                        $tpl->set('{site}', '');
+                        $params['site'] = '';
+                    }
 
-                    if(!$xfields['vk'] && !$xfields['od'] && !$xfields['fb'] && !$xfields['skype'] && !$xfields['icq'] && !$xfields['phone'] && !$xfields['site'])
-                        $tpl->set_block("'\\[not-block-contact\\](.*?)\\[/not-block-contact\\]'si","");
-                    else {
-                        $tpl->set('[not-block-contact]', '');
-                        $tpl->set('[/not-block-contact]', '');
+                    if(empty($xfields['vk']) && empty($xfields['od']) && empty($xfields['fb'])
+                        && empty($xfields['skype']) && empty($xfields['icq'])
+                        && empty($xfields['phone']) && empty($xfields['site'])){
+                        $params['not_block_contact'] = false;
+                    }else {
+                        $params['not_block_contact'] = true;
                     }
 
                     //Интересы
                     $xfields_all = xfieldsdataload($row['user_xfields_all']);
                     $preg_safq_name_exp = explode(', ', 'activity, interests, myinfo, music, kino, books, games, quote');
 
-                    if(!$xfields_all['activity'] AND !$xfields_all['interests'] AND !$xfields_all['myinfo'] AND !$xfields_all['music'] AND !$xfields_all['kino'] AND !$xfields_all['books'] AND !$xfields_all['games'] AND !$xfields_all['quote'])
-                        $tpl->set('{not-block-info}', '<div align="center" style="color:#999;">Информация отсутствует.</div>');
-                    else
-                        $tpl->set('{not-block-info}', '');
-
-                    foreach($preg_safq_name_exp as $preg_safq_name){
-                        if($xfields_all[$preg_safq_name]){
-                            $tpl->set("[not-info-{$preg_safq_name}]", '');
-                            $tpl->set("[/not-info-{$preg_safq_name}]", '');
-                        } else
-                            $tpl->set_block("'\\[not-info-{$preg_safq_name}\\](.*?)\\[/not-info-{$preg_safq_name}\\]'si","");
+                    if(empty($xfields_all['activity']) AND empty($xfields_all['interests'])
+                        AND empty($xfields_all['myinfo']) AND empty($xfields_all['music'])
+                        AND empty($xfields_all['kino']) AND empty($xfields_all['books'])
+                        AND empty($xfields_all['games']) AND empty($xfields_all['quote'])){
+                        $params['not_block_info'] = '<div style="color:#999;">Информация отсутствует.</div>';
+                    }else{
+                        $params['not_block_info'] = '';
                     }
 
-                    $tpl->set('{activity}', nl2br(stripslashes($xfields_all['activity'])));
+                    foreach($preg_safq_name_exp as $preg_safq_name){
+                        if(!empty($xfields_all[$preg_safq_name])){
+//                            $tpl->set("[not-info-{$preg_safq_name}]", '');
+//                            $tpl->set("[/not-info-{$preg_safq_name}]", '');
+                            $params['not_info_'.$preg_safq_name.'_block'] = true;
+                        } else{
+//                            $tpl->set_block("'\\[not-info-{$preg_safq_name}\\](.*?)\\[/not-info-{$preg_safq_name}\\]'si","");
+                            $params['not_info_'.$preg_safq_name.'_block'] = false;
+                        }
+                    }
+
+//                    $tpl->set('{activity}', nl2br(stripslashes($xfields_all['activity'])));
+//                    $params['activity'] = nl2br(stripslashes($xfields_all['activity']));
 //                    $tpl->set('{interests}', nl2br(stripslashes($xfields_all['interests'])));
-                    $tpl->set('{myinfo}', nl2br(stripslashes($xfields_all['myinfo'])));
+                    if (!empty($xfields_all['myinfo'])){
+//                        $tpl->set('{myinfo}', nl2br(stripslashes($xfields_all['myinfo'])));
+                        $params['myinfo'] = nl2br(stripslashes($xfields_all['myinfo']));
+                    }else{
+//                        $tpl->set('{myinfo}', '');
+                        $params['myinfo'] = '';
+                    }
 //                    $tpl->set('{music}', nl2br(stripslashes($xfields_all['music'])));
 //                    $tpl->set('{kino}', nl2br(stripslashes($xfields_all['kino'])));
 //                    $tpl->set('{books}', nl2br(stripslashes($xfields_all['books'])));
 //                    $tpl->set('{games}', nl2br(stripslashes($xfields_all['games'])));
-                    $tpl->set('{quote}', nl2br(stripslashes($xfields_all['quote'])));
-                    $tpl->set('{name}', $user_name_lastname_exp[0]);
-                    $tpl->set('{lastname}', $user_name_lastname_exp[1]);
+//                    $tpl->set('{quote}', nl2br(stripslashes($xfields_all['quote'])));
+//                    $params['quote'] = nl2br(stripslashes($xfields_all['quote']));
+//                    $tpl->set('{name}', $user_name_lastname_exp[0]);
+                    $params['name'] = $user_name_lastname_exp[0];
+//                    $tpl->set('{lastname}', $user_name_lastname_exp[1]);
+                    $params['lastname'] = $user_name_lastname_exp[1];
 
                     //День рождение
                     $user_birthday = explode('-', $row['user_birthday']);
                     $row['user_day'] = $user_birthday[2];
                     $row['user_month'] = $user_birthday[1];
                     $row['user_year'] = $user_birthday[0];
-
                     if($row['user_day'] > 0 && $row['user_day'] <= 31 && $row['user_month'] > 0 && $row['user_month'] < 13){
-                        $tpl->set('[not-all-birthday]', '');
-                        $tpl->set('[/not-all-birthday]', '');
-
-                        if($row['user_day'] && $row['user_month'] && $row['user_year'] > 1929 && $row['user_year'] < 2012)
-                            $tpl->set('{birth-day}', '<a href="/?go=search&day='.$row['user_day'].'&month='.$row['user_month'].'&year='.$row['user_year'].'" onClick="Page.Go(this.href); return false">'.langdate('j F Y', strtotime($row['user_year'].'-'.$row['user_month'].'-'.$row['user_day'])).' г.</a>');
-                        else
-                            $tpl->set('{birth-day}', '<a href="/?go=search&day='.$row['user_day'].'&month='.$row['user_month'].'" onClick="Page.Go(this.href); return false">'.langdate('j F', strtotime($row['user_year'].'-'.$row['user_month'].'-'.$row['user_day'])).'</a>');
+                        $params['not_all_birthday_block_block'] = true;
+                        if($row['user_day'] && $row['user_month'] && $row['user_year'] > 1929 && $row['user_year'] < 2012 ){
+//                            $tpl->set('{birth-day}', '<a href="/?go=search&day='.$row['user_day'].'&month='.$row['user_month'].'&year='.$row['user_year'].'" onClick="Page.Go(this.href); return false">'.langdate('j F Y', strtotime($row['user_year'].'-'.$row['user_month'].'-'.$row['user_day'])).' г.</a>');
+                            $params['birth_day'] = '<a href="/?go=search&day='.$row['user_day'].'&month='.$row['user_month'].'&year='.$row['user_year'].'" onClick="Page.Go(this.href); return false">'.langdate('j F Y', strtotime($row['user_year'].'-'.$row['user_month'].'-'.$row['user_day'])).' г.</a>';
+                        }else{
+                            $params['birth_day'] = '<a href="/?go=search&day='.$row['user_day'].'&month='.$row['user_month'].'" onClick="Page.Go(this.href); return false">'.langdate('j F', strtotime($row['user_year'].'-'.$row['user_month'].'-'.$row['user_day'])).'</a>';
+                        }
                     } else {
-                        $tpl->set_block("'\\[not-all-birthday\\](.*?)\\[/not-all-birthday\\]'si","");
+                        $params['not_all_birthday_block'] = false;
                     }
 
                     //Показ скрытых текста только для владельца страницы
                     if($user_info['user_id'] == $row['user_id']){
-                        $tpl->set('[owner]', '');
-                        $tpl->set('[/owner]', '');
-                        $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+                        $params['owner'] = true;
+                        $params['not_owner'] = false;
                     } else {
-                        $tpl->set('[not-owner]', '');
-                        $tpl->set('[/not-owner]', '');
-                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                        $params['owner'] = false;
+                        $params['not_owner'] = true;
                     }
 
                     // FOR MOBILE VERSION 1.0
@@ -1100,150 +1122,106 @@ class ProfileController extends Module{
                         $noAvaPrf = 'no_ava.gif';
                     }
 
-                    //Аватарка
+                    /**
+                     * Аватарка
+                     */
                     if($row['user_photo']){
-                        $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['user_id'].'/'.$avaPREFver.$row['user_photo']);
-                        $tpl->set('{display-ava}', 'style="display:block;"');
+//                        $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['user_id'].'/'.$avaPREFver.$row['user_photo']);
+                        $params['ava'] = $config['home_url'].'uploads/users/'.$row['user_id'].'/'.$avaPREFver.$row['user_photo'];
+//                        $tpl->set('{display-ava}', 'style="display:block;"');
+                        $params['display_ava'] = 'style="display:block;"';
                     } else {
-                        $tpl->set('{ava}', '/images/'.$noAvaPrf);
-                        $tpl->set('{display-ava}', 'style="display:none;"');
+//                        $tpl->set('{ava}', '/images/'.$noAvaPrf);
+                        $params['ava'] = '/images/'.$noAvaPrf;
+//                        $tpl->set('{display-ava}', 'style="display:none;"');
+                        $params['display_ava'] = 'style="display:none;"';
                     }
 
-                    //################### Альбомы ###################//
+                    /**
+                     * Альбомы
+                     */
                     if($user_id == $id){
                         $albums_privacy = false;
                         $albums_count['cnt'] = $row['user_albums_num'];
-                    } else if($check_friend){
+                    } else if($CheckFriends){
                         $albums_privacy = "AND SUBSTRING(privacy, 1, 1) regexp '[[:<:]](1|2)[[:>:]]'";
-                        $albums_count = $db->super_query("SELECT COUNT(*) AS cnt FROM `albums` WHERE user_id = '{$id}' {$albums_privacy}", false, "user_{$id}/albums_cnt_friends");
+                        $albums_count = Profile::albums_count($id, $albums_privacy, 1);
                         $cache_pref = "_friends";
                     } else {
                         $albums_privacy = "AND SUBSTRING(privacy, 1, 1) = 1";
-                        $albums_count = $db->super_query("SELECT COUNT(*) AS cnt FROM `albums` WHERE user_id = '{$id}' {$albums_privacy}", false, "user_{$id}/albums_cnt_all");
+                        $albums_count = Profile::albums_count($id, $albums_privacy, 2);
                         $cache_pref = "_all";
                     }
-                    $sql_albums = $db->super_query("SELECT aid, name, adate, photo_num, cover FROM `albums` WHERE user_id = '{$id}' {$albums_privacy} ORDER by `position` ASC LIMIT 0, 4", 1, "user_{$id}/albums{$cache_pref}");
-                    if($sql_albums){
-                        foreach($sql_albums as $row_albums){
-                            $row_albums['name'] = stripslashes($row_albums['name']);
-                            $album_date = megaDate($row_albums['adate']);
+
+                    if (!isset($cache_pref))
+                        $cache_pref = null;
+
+                    $sql_albums = Profile::row_albums($id, $albums_privacy, $cache_pref);//cache_pref undefined
+                    if($sql_albums AND $config['album_mod'] == 'yes'){
+                        foreach($sql_albums as $key => $row_albums){
+                            $sql_albums[$key]['name'] = stripslashes($row_albums['name']);
+                            $sql_albums[$key]['date'] = megaDate($row_albums['adate']);
                             $titles = array('фотография', 'фотографии', 'фотографий');//photos
-                            $albums_photonums = Gramatic::declOfNum($row_albums['photo_num'], $titles);
+                            $sql_albums[$key]['albums_photonums'] = Gramatic::declOfNum($row_albums['photo_num'], $titles);
                             if($row_albums['cover'])
-                                $album_cover = "/uploads/users/{$id}/albums/{$row_albums['aid']}/c_{$row_albums['cover']}";
+                                $sql_albums[$key]['album_cover'] = "/uploads/users/{$id}/albums/{$row_albums['aid']}/c_{$row_albums['cover']}";
                             else
-                                $album_cover = '/images/no_cover.png';
-                            $albums .= "<a href=\"/albums/view/{$row_albums['aid']}\" onClick=\"Page.Go(this.href); return false\" style=\"text-decoration:none\"><div class=\"profile_albums\"><img src=\"{$album_cover}\" /><div class=\"profile_title_album\">{$row_albums['name']}</div>{$row_albums['photo_num']} {$albums_photonums}<br />Обновлён {$album_date}<div class=\"clear\"></div></div></a>";
+                                $sql_albums[$key]['album_cover'] = '/images/no_cover.png';
                         }
-                    }
-                    $tpl->set('{albums}', $albums);
-                    $tpl->set('{albums-num}', $albums_count['cnt']);
-                    if($albums_count['cnt'] AND $config['album_mod'] == 'yes'){
-                        $tpl->set('[albums]', '');
-                        $tpl->set('[/albums]', '');
-                    } else
-                        $tpl->set_block("'\\[albums\\](.*?)\\[/albums\\]'si","");
+                        $params['albums_num'] = $albums_count['cnt'];
+                        $params['albums'] = $sql_albums;
+                    }else
+                        $params['albums'] = false;
+
+
 
                     //Делаем проверки на существования запрашиваемого юзера у себя в друзьяз, заклаках, в подписка, делаем всё это если страницу смотрет другой человек
                     if($user_id != $id){
 
                         //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-                        if($check_friend){
-                            $tpl->set('[yes-friends]', '');
-                            $tpl->set('[/yes-friends]', '');
-                            $tpl->set_block("'\\[no-friends\\](.*?)\\[/no-friends\\]'si","");
+                        if($CheckFriends == true){
+                            $params['yes_friends_block'] = true;
+                            $params['no_friends_block'] = false;
                         } else {
-                            $tpl->set('[no-friends]', '');
-                            $tpl->set('[/no-friends]', '');
-                            $tpl->set_block("'\\[yes-friends\\](.*?)\\[/yes-friends\\]'si","");
+                            $params['yes_friends_block'] = false;
+                            $params['no_friends_block'] = true;
                         }
 
                         //Проверка естьли запрашиваемый юзер в закладках у юзера который смотрит стр
                         $check_fave = Profile::check_fave($id, $user_info['user_id']);
                         if($check_fave){
-                            $tpl->set('[yes-fave]', '');
-                            $tpl->set('[/yes-fave]', '');
-                            $tpl->set_block("'\\[no-fave\\](.*?)\\[/no-fave\\]'si","");
+                            $params['yes_fave_block'] = true;
+                            $params['no_fave_block'] = false;
                         } else {
-                            $tpl->set('[no-fave]', '');
-                            $tpl->set('[/no-fave]', '');
-                            $tpl->set_block("'\\[yes-fave\\](.*?)\\[/yes-fave\\]'si","");
+                            $params['yes_fave_block'] = false;
+                            $params['no_fave_block'] = true;
                         }
 
                         //Проверка естьли запрашиваемый юзер в подписках у юзера который смотрит стр
                         $check_subscr = Profile::check_subscr($id, $user_info['user_id']);
                         if($check_subscr){
-                            $tpl->set('[yes-subscription]', '');
-                            $tpl->set('[/yes-subscription]', '');
-                            $tpl->set_block("'\\[no-subscription\\](.*?)\\[/no-subscription\\]'si","");
+                            $params['yes_subscription_block'] = false;
+                            $params['no_subscription_block'] = true;
                         } else {
-                            $tpl->set('[no-subscription]', '');
-                            $tpl->set('[/no-subscription]', '');
-                            $tpl->set_block("'\\[yes-subscription\\](.*?)\\[/yes-subscription\\]'si","");
+                            $params['yes_subscription_block'] = true;
+                            $params['no_subscription_block'] = false;
                         }
 
                         //Проверка естьли запрашиваемый юзер в черном списке
                         $MyCheckBlackList = Tools::MyCheckBlackList($id);
                         if($MyCheckBlackList){
-                            $tpl->set('[yes-blacklist]', '');
-                            $tpl->set('[/yes-blacklist]', '');
-                            $tpl->set_block("'\\[no-blacklist\\](.*?)\\[/no-blacklist\\]'si","");
+                            $params['yes_blacklist_block'] = true;
+                            $params['no_blacklist_block'] = false;
                         } else {
-                            $tpl->set('[no-blacklist]', '');
-                            $tpl->set('[/no-blacklist]', '');
-                            $tpl->set_block("'\\[yes-blacklist\\](.*?)\\[/yes-blacklist\\]'si","");
+                            $params['yes-blacklist_block'] = false;
+                            $params['no_blacklist_block'] = true;
                         }
 
                     }
 
                     $author_info = explode(' ', $row['user_search_pref']);
-                    $tpl->set('{gram-name}', Gramatic::gramatikName($author_info[0]));
+                    $params['gram_name'] = Gramatic::gramatikName($author_info[0]);
 
-                    $tpl->set('{friends-num}', $row['user_friends_num']);
-                    $tpl->set('{online-friends-num}', $online_friends['cnt']);
-                    $tpl->set('{notes-num}', $row['user_notes_num']);
-                    $tpl->set('{subscriptions-num}', $row['user_subscriptions_num']);
-                    $tpl->set('{videos-num}', $row['user_videos_num']);
-
-                    //Если есть заметки то выводим
-                    if($row['user_notes_num']){
-                        $tpl->set('[notes]', '');
-                        $tpl->set('[/notes]', '');
-                        $tpl->set('{notes}', $tpl->result['notes']);
-                    } else
-                        $tpl->set_block("'\\[notes\\](.*?)\\[/notes\\]'si","");
-
-                    //Если есть видео то выводим
-                    if($row['user_videos_num'] AND $config['video_mod'] == 'yes'){
-                        $tpl->set('[videos]', '');
-                        $tpl->set('[/videos]', '');
-                        $tpl->set('{videos}', $tpl->result['videos']);
-                    } else
-                        $tpl->set_block("'\\[videos\\](.*?)\\[/videos\\]'si","");
-
-                    //Если есть друзья, то выводим
-                    if($row['user_friends_num']){
-                        $tpl->set('[friends]', '');
-                        $tpl->set('[/friends]', '');
-                        $tpl->set('{friends}', $tpl->result['all_friends']);
-                    } else
-                        $tpl->set_block("'\\[friends\\](.*?)\\[/friends\\]'si","");
-
-                    //Кол-во подписок и Если есть друзья, то выводим
-                    if($row['user_subscriptions_num']){
-                        $tpl->set('[subscriptions]', '');
-                        $tpl->set('[/subscriptions]', '');
-                        $tpl->set('{subscriptions}', $tpl->result['subscriptions']);
-                    } else
-                        $tpl->set_block("'\\[subscriptions\\](.*?)\\[/subscriptions\\]'si","");
-
-                    //Если есть друзья на сайте, то выводим
-                    if($online_friends['cnt']){
-                        $tpl->set('[online-friends]', '');
-                        $tpl->set('[/online-friends]', '');
-                        $tpl->set('{online-friends}', $tpl->result['all_online_friends']);
-                    } else
-                        $tpl->set_block("'\\[online-friends\\](.*?)\\[/online-friends\\]'si","");
 
                     //Если человек пришел после реги, то открываем ему окно загрузи фотографии
 //                    if(intval($_GET['after'])){
@@ -1253,75 +1231,48 @@ class ProfileController extends Module{
 //                        $tpl->set_block("'\\[after-reg\\](.*?)\\[/after-reg\\]'si","");
 
                     //Стена
-                    $tpl->set('{records}', $tpl->result['wall']);
+//                    $tpl->set('{records}', $tpl->result['wall']);
+//                    $params['records'] = $tpl->result['wall'];
 
-                    if($user_id != $id){
-                        if($user_privacy['val_wall1'] == 3 OR $user_privacy['val_wall1'] == 2 AND !$check_friend){
-                            $cnt_rec = Profile::cnt_rec($id);
-                            $row['user_wall_num'] = $cnt_rec['cnt'];
-                        }
-                    }
-
-                    $row['user_wall_num'] = $row['user_wall_num'] ? $row['user_wall_num'] : '';
-                    if($row['user_wall_num'] > 10){
-                        $tpl->set('[wall-link]', '');
-                        $tpl->set('[/wall-link]', '');
-                    } else
-                        $tpl->set_block("'\\[wall-link\\](.*?)\\[/wall-link\\]'si","");
-
-                    $tpl->set('{wall-rec-num}', $row['user_wall_num']);
-
-                    if($row['user_wall_num'])
-                        $tpl->set_block("'\\[no-records\\](.*?)\\[/no-records\\]'si","");
-                    else {
-                        $tpl->set('[no-records]', '');
-                        $tpl->set('[/no-records]', '');
-                    }
 
                     //Статус
-                    $tpl->set('{status-text}', stripslashes($row['user_status']));
+//                    $tpl->set('{status-text}', stripslashes($row['user_status']));
 
-                    if($row['user_status']){
-                        $tpl->set('[status]', '');
-                        $tpl->set('[/status]', '');
-                        $tpl->set_block("'\\[no-status\\](.*?)\\[/no-status\\]'si","");
-                    } else {
-                        $tpl->set_block("'\\[status\\](.*?)\\[/status\\]'si","");
-                        $tpl->set('[no-status]', '');
-                        $tpl->set('[/no-status]', '');
+                    if (!$CheckBlackList AND $params['not_owner']){
+                        $params['status_text'] = stripslashes($row['user_status']);
+
+                    }elseif($params['owner']){
+                        $params['status_text'] = '<div><a href="/" id="new_status" onClick="gStatus.open(); return false">'.stripslashes($row['user_status'].'</a></div>');
+
                     }
 
+                    if($row['user_status']){
+                        $params['status_block'] = 'class="no_display"';
+                        $params['status_block2'] = '<div class="button_div_gray fl_r status_but margin_left"><button>Отмена</button></div>';
+                    }
                     //Приватность сообщений
-                    if($user_privacy['val_msg'] == 1 OR $user_privacy['val_msg'] == 2 AND $check_friend){
-                        $tpl->set('[privacy-msg]', '');
-                        $tpl->set('[/privacy-msg]', '');
-                    } else
-                        $tpl->set_block("'\\[privacy-msg\\](.*?)\\[/privacy-msg\\]'si","");
-
-                    //Приватность стены
-                    if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $check_friend OR $user_id == $id){
-                        $tpl->set('[privacy-wall]', '');
-                        $tpl->set('[/privacy-wall]', '');
-                    } else
-                        $tpl->set_block("'\\[privacy-wall\\](.*?)\\[/privacy-wall\\]'si","");
-
-                    if($user_privacy['val_wall2'] == 1 OR $user_privacy['val_wall2'] == 2 AND $check_friend OR $user_id == $id){
-                        $tpl->set('[privacy-wall]', '');
-                        $tpl->set('[/privacy-wall]', '');
-                    } else
-                        $tpl->set_block("'\\[privacy-wall\\](.*?)\\[/privacy-wall\\]'si","");
+                    if($user_privacy['val_msg'] == 1 OR $user_privacy['val_msg'] == 2 AND $CheckFriends AND !$CheckBlackList){
+                        $params['privacy_msg'] = '<a href="/" onClick="messages.new_({user-id}); return false">
+                                        <svg class="bi bi-envelope" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                            <path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>
+                                            <path d="M.05 3.555C.017 3.698 0 3.847 0 4v.697l5.803 3.546L0 11.801V12c0 .306.069.596.192.856l6.57-4.027L8 9.586l1.239-.757 6.57 4.027c.122-.26.191-.55.191-.856v-.2l-5.803-3.557L16 4.697V4c0-.153-.017-.302-.05-.445L8 8.414.05 3.555z"/>
+                                        </svg>
+                                        <span>Написать сообщение</span></a>';
+                    } else{
+                        $params['privacy_msg'] = '';
+                    }
 
                     //Приватность информации
-                    if($user_privacy['val_info'] == 1 OR $user_privacy['val_info'] == 2 AND $check_friend OR $user_id == $id){
-                        $tpl->set('[privacy-info]', '');
-                        $tpl->set('[/privacy-info]', '');
-                    } else
-                        $tpl->set_block("'\\[privacy-info\\](.*?)\\[/privacy-info\\]'si","");
+                    if($user_privacy['val_info'] == 1 OR $user_privacy['val_info'] == 2 AND $CheckFriends OR $user_id == $id){
+                        $params['privacy_info_block'] = true;
+                    } else{
+                        $params['privacy_info_block'] = false;
+                    }
 
                     //Семейное положение
                     $user_sp = explode('|', $row['user_sp']);
-                    if($user_sp[1]){
-                        $rowSpUserName = Profile::user_sp($user_sp[1]);
+                    if(isset($user_sp['1'])){
+                        $rowSpUserName = Profile::user_sp($user_sp['1']);
                         if($row['user_sex'] == 1) $check_sex = 2;
                         if($row['user_sex'] == 2) $check_sex = 1;
                         if($rowSpUserName['user_sp'] == $user_sp[0].'|'.$id OR $user_sp[0] == 5 AND $rowSpUserName['user_sex'] == $check_sex){
@@ -1351,154 +1302,181 @@ class ProfileController extends Module{
                         $sp5 = "любимый <a href=\"/u{$user_sp[1]}\" onClick=\"Page.Go(this.href); return false\">{$spUserName}</a>";
                         $sp5_5 = '<a href="/search/?sp=5" onClick="Page.Go(this.href); return false">влюблена</a>';
                     }
-                    $sp6 = "партнёр <a href=\"/u{$user_sp[1]}\" onClick=\"Page.Go(this.href); return false\">{$spUserName}</a>";
+                    if ( !isset($spUserName) )
+                        $spUserName = 'erorr';//bug
+
+                    if (!isset($user_sp['1']))
+                        $user_sp['1'] = null; //bug: undefined
+
+                    $sp6 = "партнёр <a href=\"/u".$user_sp['1']."\" onClick=\"Page.Go(this.href); return false\">".$spUserName."</a>";
                     $sp6_6 = '<a href="/search/?sp=6" onClick="Page.Go(this.href); return false">всё сложно</a>';
-                    $tpl->set('[sp]', '');
-                    $tpl->set('[/sp]', '');
-                    if($user_sp[0] == 1)
-                        $tpl->set('{sp}', $sp1);
+
+                    if($user_sp[0] == 1){
+//                        $tpl->set('{sp}', $sp1);
+                        $params['sp'] = $sp1;
+                    }
                     else if($user_sp[0] == 2)
-                        if($spUserName) $tpl->set('{sp}', $sp2);
-                        else $tpl->set('{sp}', $sp2_2);
+                        if($spUserName){
+//                            $tpl->set('{sp}', $sp2);
+                            $params['sp'] = $sp2;
+                        }else{
+//                            $tpl->set('{sp}', $sp2_2);
+                            $params['sp'] = $sp2_2;
+                        }
                     else if($user_sp[0] == 3)
-                        if($spUserName) $tpl->set('{sp}', $sp3);
-                        else $tpl->set('{sp}', $sp3_3);
+                        if($spUserName){
+//                            $tpl->set('{sp}', $sp3);
+                            $params['sp'] = $sp3;
+                        }else{
+//                            $tpl->set('{sp}', $sp3_3);
+                            $params['sp'] = $sp3_3;
+                        }
                     else if($user_sp[0] == 4)
-                        if($spUserName) $tpl->set('{sp}', $sp4);
-                        else $tpl->set('{sp}', $sp4_4);
+                        if($spUserName){
+//                            $tpl->set('{sp}', $sp4);
+                            $params['sp'] = $sp4;
+                        }else{
+//                            $tpl->set('{sp}', $sp4_4);
+                            $params['sp'] = $sp4_4;
+                        }
                     else if($user_sp[0] == 5)
-                        if($spUserName) $tpl->set('{sp}', $sp5);
-                        else $tpl->set('{sp}', $sp5_5);
+                        if($spUserName){
+//                            $tpl->set('{sp}', $sp5);
+                            $params['sp'] = $sp5;
+                        }else {
+//                            $tpl->set('{sp}', $sp5_5);
+                            $params['sp'] = $sp5_5;
+                        }
                     else if($user_sp[0] == 6)
-                        if($spUserName) $tpl->set('{sp}', $sp6);
-                        else $tpl->set('{sp}', $sp6_6);
-                    else if($user_sp[0] == 7)
-                        $tpl->set('{sp}', '<a href="/search/?sp=7" onClick="Page.Go(this.href); return false">в активном поиске</a>');
-                    else
-                        $tpl->set_block("'\\[sp\\](.*?)\\[/sp\\]'si","");
+                        if($spUserName) {
+//                            $tpl->set('{sp}', $sp6);
+                            $params['sp'] = $sp6;
+                        }else{
+//                            $tpl->set('{sp}', $sp6_6);
+                            $params['sp'] = $sp6_6;
+                        }
+                    else if($user_sp[0] == 7){
+//                        $tpl->set('{sp}', '<a href="/search/?sp=7" onClick="Page.Go(this.href); return false">в активном поиске</a>');
+                        $params['sp'] = '<a href="/search/?sp=7" onClick="Page.Go(this.href); return false">в активном поиске</a>';
+                    }else{
+                        $params['sp'] = false;
+                    }
 
                     //ЧС
                     if(!$CheckBlackList){
-                        $tpl->set('[blacklist]', '');
-                        $tpl->set('[/blacklist]', '');
-                        $tpl->set_block("'\\[not-blacklist\\](.*?)\\[/not-blacklist\\]'si","");
+                        $params['blacklist_block'] = true;
+                        $params['not-blacklist_block'] = false;
                     } else {
-                        $tpl->set('[not-blacklist]', '');
-                        $tpl->set('[/not-blacklist]', '');
-                        $tpl->set_block("'\\[blacklist\\](.*?)\\[/blacklist\\]'si","");
+                        $params['blacklist_block'] = false;
+                        $params['not_blacklist_block'] = true;
                     }
 
                     //################### Подарки ###################//
-                    if($row['user_gifts']){
+                    if($row['user_gifts'] > 0 AND !$CheckBlackList){
                         $sql_gifts = Profile::gifts($id);
-                        foreach($sql_gifts as $row_gift){
-                            $gifts .= "<img src=\"/uploads/gifts/{$row_gift['gift']}.png\" class=\"gift_onepage\" />";
-                        }
-                        $tpl->set('[gifts]', '');
-                        $tpl->set('[/gifts]', '');
-                        $tpl->set('{gifts}', $gifts);
                         $titles = array('подарок', 'подарка', 'подарков');//gifts
-                        $tpl->set('{gifts-text}', $row['user_gifts'].' '.Gramatic::declOfNum($row['user_gifts'], $titles));
-                    } else
-                        $tpl->set_block("'\\[gifts\\](.*?)\\[/gifts\\]'si","");
+                        $params['gifts_num'] = $row['user_gifts'].' '.Gramatic::declOfNum($row['user_gifts'], $titles);
+                        $params['gifts'] = $sql_gifts;
+                    } else{
+                        $params['gifts'] = false;
+                    }
 
-                    //################### Интересные страницы ###################//
-                    if($row['user_public_num']){
-                        $groups = '';
+                    /**
+                     * Сообщества
+                     */
+                    if($row['user_public_num'] > 0  AND !$CheckBlackList){
                         $sql_groups = Profile::groups($id);
                         foreach($sql_groups as $row_groups){
-                            if($row_groups['adres']) $adres = $row_groups['adres'];
-                            else $adres = 'public'.$row_groups['id'];
-                            if($row_groups['photo']) $ava_groups = "/uploads/groups/{$row_groups['id']}/50_{$row_groups['photo']}";
-                            else $ava_groups = "/images/no_ava_50.png";
-                            $row_groups['status_text'] = iconv_substr($row_groups['status_text'], 0, 24, 'utf-8');
-                            $groups .= '<div class="onesubscription onesubscriptio2n cursor_pointer" onClick="Page.Go(\'/'.$adres.'\')"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false"><img src="'.$ava_groups.'" /></a><div class="onesubscriptiontitle"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false">'.stripslashes($row_groups['title']).'</a></div><span class="color777 size10">'.stripslashes($row_groups['status_text']).'</span></div>';
+                            if($row_groups['adres']) {
+//                                $adres = $row_groups['adres'];
+                                $sql_groups['adres'] = $row_groups['adres'];
+                            }else{
+//                                $adres = 'public'.$row_groups['id'];
+                                $sql_groups['adres'] = 'public'.$row_groups['id'];
+                            }
+                            if($row_groups['photo']){
+                                $ava_groups = "/uploads/groups/{$row_groups['id']}/50_{$row_groups['photo']}";
+                                $sql_groups['ava'] = "/uploads/groups/{$row_groups['id']}/50_{$row_groups['photo']}";
+                            }else{
+                                $ava_groups = "/images/no_ava_50.png";
+                                $sql_groups['ava'] = "/images/no_ava_50.png";
+                            }
+                            $row_groups['info'] = iconv_substr($row_groups['status_text'], 0, 24, 'utf-8');
+//                            $groups .= '<div class="onesubscription onesubscriptio2n cursor_pointer" onClick="Page.Go(\'/'.$adres.'\')"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false"><img src="'.$ava_groups.'" /></a><div class="onesubscriptiontitle"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false">'.stripslashes($row_groups['title']).'</a></div><span class="color777 size10">'.stripslashes($row_groups['status_text']).'</span></div>';
                         }
-                        $tpl->set('[groups]', '');
-                        $tpl->set('[/groups]', '');
-                        $tpl->set('{groups}', $groups);
-                        $tpl->set('{groups-num}', $row['user_public_num']);
-                    } else
-                        $tpl->set_block("'\\[groups\\](.*?)\\[/groups\\]'si","");
+                        $params['groups'] = $sql_groups;
+                        $params['groups_num'] = $row['user_public_num'];
+                    } else{
+                        $params['groups'] = false;
+                    }
 
-                    //################### Музыка ###################//
-                    if($row['user_audio'] AND $config['audio_mod'] == 'yes'){
-                        $tpl->set('[audios]', '');
-                        $tpl->set('[/audios]', '');
-                        $tpl->set('{audios}', $tpl->result['audios']);
-                        $titles = array('песня', 'песни', 'песен');//audio
-                        $tpl->set('{audios-num}', $row['user_audio'].' '.Gramatic::declOfNum($row['user_audio'], $titles));
-                    } else
-                        $tpl->set_block("'\\[audios\\](.*?)\\[/audios\\]'si","");
+                    /**
+                     * Праздники друзей
+                     */
+                    if (!isset($cnt_happfr))
+                        $cnt_happfr = null;
 
-                    //################### Праздники друзей ###################//
-                    if($cnt_happfr){
-                        $tpl->set('{happy-friends}', $tpl->result['happy_all_friends']);
-                        $tpl->set('{happy-friends-num}', $cnt_happfr);
-                        $tpl->set('[happy-friends]', '');
-                        $tpl->set('[/happy-friends]', '');
-                    } else
-                        $tpl->set_block("'\\[happy-friends\\](.*?)\\[/happy-friends\\]'si","");
+                    if($cnt_happfr AND $params['owner'] == true){
+                        $params['happy-friends'] = $tpl->result['happy_all_friends'];
+                        $params['happy-friends-num'] = $cnt_happfr;
+                        $params['happy_friends_block'] = true;
+                    } else{
+                        $params['happy_friends_block'] = false;
+                    }
 
                     //################### Обработка дополнительных полей ###################//
                     $xfieldsdata = xfieldsdataload($row['xfields']);
                     $xfields = profileload();
 
                     foreach($xfields as $value){
-
                         $preg_safe_name = preg_quote($value[0], "'");
-
                         if(empty($xfieldsdata[$value[0]])){
-
-                            $tpl->copy_template = preg_replace("'\\[xfgiven_{$preg_safe_name}\\](.*?)\\[/xfgiven_{$preg_safe_name}\\]'is", "", $tpl->copy_template);
-
+                            $tpl->copy_template = preg_replace("'\\[xfgiven_{$preg_safe_name}](.*?)\\[/xfgiven_{$preg_safe_name}]'is", "", $tpl->copy_template);
                         } else {
-
                             $tpl->copy_template = str_replace("[xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
                             $tpl->copy_template = str_replace("[/xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
-
                         }
-
-                        $tpl->copy_template = preg_replace( "'\\[xfvalue_{$preg_safe_name}\\]'i", stripslashes($xfieldsdata[$value[0]]), $tpl->copy_template);
-
+                        $tpl->copy_template = preg_replace( "'\\[xfvalue_{$preg_safe_name}]'i", stripslashes($xfieldsdata[$value[0]]), $tpl->copy_template);
                     }
 
                     //what? (deprecated)
-                    //if($id == 7) $tpl->set('{group}', '<font color="#f87d7d">Модератор</font>');
+//                    if($id == 7) $tpl->set('{group}', '<font color="#f87d7d">Модератор</font>');
                     //else $tpl->set('{group}', '');
 
                     //Rating
                     if($row['user_rating'] > 1000){
-                        $tpl->set('{rating-class-left}', 'profile_rate_1000_left');
-                        $tpl->set('{rating-class-right}', 'profile_rate_1000_right');
-                        $tpl->set('{rating-class-head}', 'profile_rate_1000_head');
+                        $params['rating_class_left'] = 'profile_rate_1000_left';
+                        $params['rating_class_right'] = 'profile_rate_1000_right';
+                        $params['rating_class_head'] = 'profile_rate_1000_head';
                     } elseif($row['user_rating'] > 500){
-                        $tpl->set('{rating-class-left}', 'profile_rate_500_left');
-                        $tpl->set('{rating-class-right}', 'profile_rate_500_right');
-                        $tpl->set('{rating-class-head}', 'profile_rate_500_head');
+                        $params['rating_class_left'] = 'profile_rate_500_left';
+                        $params['rating_class_right'] = 'profile_rate_500_right';
+                        $params['rating_class_head'] = 'profile_rate_500_head';
                     } else {
-                        $tpl->set('{rating-class-left}', '');
-                        $tpl->set('{rating-class-right}', '');
-                        $tpl->set('{rating-class-head}', '');
+                        $params['rating_class_left'] = '';
+                        $params['rating_class_right'] = '';
+                        $params['rating_class_head'] = '';
                     }
 
-                    if(!$row['user_rating']) $row['user_rating'] = 0;
-                    $tpl->set('{rating}', $row['user_rating']);
+                    if(!$row['user_rating'])
+                        $row['user_rating'] = 0;
 
-                    $tpl->compile('content');
+//                    $tpl->set('{rating}', $row['user_rating']);
+                    $params['rating'] = $row['user_rating'];
+//                    $tpl->compile('content');
 
                     //Обновляем кол-во посищений на страницу, если юзер есть у меня в друзьях
-                    if($check_friend)
-                        $db->query("UPDATE LOW_PRIORITY `friends` SET views = views+1 WHERE user_id = '{$user_info['user_id']}' AND friend_id = '{$id}' AND subscriptions = 0");
+                    if($CheckFriends == true)
+                        Profile::friend_visit($id, $user_info['user_id']);
 
                     //Вставляем в статистику
                     //!NB optimize generate users stat
                     if($user_info['user_id'] != $id){
 
-
-                        //StatsUser::add($id, $user_info['user_id']);
-                        //Cron Generate stats
-
+                        /**
+                         * StatsUser::add($id, $user_info['user_id']);
+                         * Cron Generate stats
+                         */
 
                         //start old
                         $stat_date = date('Ymd', $server_time);
@@ -1519,23 +1497,20 @@ class ProfileController extends Module{
                         //end old
                     }
 
-
+                    return view('profile.profile', $params);
                 }
-            } else {
-                $user_speedbar = $lang['no_infooo'];
-                msgbox('', $lang['no_upage'], 'info'); //Страница удалена, либо еще не создана.
-            }
 
-            $tpl->clear();
-            $db->free();
+            } else {
+                $params['title'] = $lang['no_infooo'];
+                $params['info'] = $lang['no_upage'];
+                return view('info.info', $params);
+            }
         } else {
-            $user_speedbar = 'Информация';
-            msgbox('', $lang['not_logged'], 'info');//not_logged
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
     }
 
     /**
@@ -1549,14 +1524,14 @@ class ProfileController extends Module{
 
         $user_info = Registry::get('user_info');
         if($user_info['user_group'] != '1'){
-            $tpl->load_template('profile/profile_baned.tpl');
-            if($user_info['user_ban_date'])
-                $tpl->set('{date}', langdate('j F Y в H:i', $user_info['user_ban_date']));
-            else
-                $tpl->set('{date}', 'Неограниченно');
-            $tpl->compile('main');
-            //echo str_replace('{theme}', '/templates/'.$config['temp'], $tpl->result['main']);
-            echo $tpl->result['main'];
+//            $tpl->load_template('profile/profile_baned.tpl');
+            if($user_info['user_ban_date']){
+//                $tpl->set('{date}', langdate('j F Y в H:i', $user_info['user_ban_date']));
+            }else{
+//                $tpl->set('{date}', 'Неограниченно');
+            }
+//            $tpl->compile('main');
+//            echo $tpl->result['main'];
         }
 
         return die();
@@ -1571,14 +1546,12 @@ class ProfileController extends Module{
         $config = Settings::loadsettings();
         $tpl->dir = __DIR__.'/../templates/'.$config['temp'];
 
-        $config = Settings::loadsettings();
-
         $user_info = Registry::get('user_info');
         if($user_info['user_group'] != '1'){
-            $tpl->load_template('profile_deleted.tpl');
-            $tpl->compile('main');
+//            $tpl->load_template('profile_deleted.tpl');
+//            $tpl->compile('main');
             //echo str_replace('{theme}', '/templates/'.$config['temp'], $tpl->result['main']);
-            echo $tpl->result['main'];
+//            echo $tpl->result['main'];
         }
 
         return die();

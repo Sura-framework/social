@@ -20,9 +20,9 @@ class StoriesController  extends Module
      *
      * @return bool
      */
-    public function addbox()
+    public function addbox($params)
     {
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
         Tools::NoAjaxQuery();
 
@@ -38,8 +38,8 @@ class StoriesController  extends Module
 
     public function upload($params)
     {
-        //$tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -138,7 +138,7 @@ class StoriesController  extends Module
     public function show($params)
     {
         $db = $this->db();
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         //$user_info = $params['user']['user_info'];
         //$user_id = $user_info['user_id'];
 
@@ -194,7 +194,7 @@ class StoriesController  extends Module
     public function show_next($params)
     {
         $db = $this->db();
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $user_info = $params['user']['user_info'];
         //$user_id = $user_info['user_id'];
 

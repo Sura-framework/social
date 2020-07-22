@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use Sura\Libs\Auth;
 use Sura\Libs\Db;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
@@ -20,18 +21,16 @@ class NewsController extends Module
     function feed()
     {
         $friends = Auth::user()->friends();
-
+        $user_info = $this->user_info();
         $user_id = $user_info['user_id'];
 
 
         $sql_where = "tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 WHERE user_id = '{$user_id}') AND";
         $db = $this->db();
-        $sql_ = $db->super_query("SELECT tb1.ac_id, ac_user_id, action_text, action_time, action_type, obj_id, answer_text, link FROM `news` tb1 
-WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.action_time DESC LIMIT {$page_cnt}, {$limit_news}", 1);
+        //$sql_ = $db->super_query("SELECT tb1.ac_id, ac_user_id, action_text, action_time, action_type, obj_id, answer_text, link FROM `news` tb1 WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.action_time DESC LIMIT {$page_cnt}, {$limit_news}", 1);
 
 
         $feed = array();
-
         foreach($friends as $friend):
             foreach($friend->posts as $post):
                 array_push($feed, $post);
@@ -50,7 +49,7 @@ WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.act
     }
 	public function index($params)
 	{
-        //$tpl = Registry::get('tpl');
+        //$tpl = $params['tpl'];
         $tpl = $params['tpl'];
 
         //$checkLang = Langs::checkLang();
@@ -2070,8 +2069,9 @@ WHERE {$sql_where} tb1.action_type IN ({$sql_sort}) {$dop_sort}	ORDER BY tb1.act
             $db->free();
 
 		} else {
-			$user_speedbar = $lang['no_infooo'];
-			msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
 		}
 
         $params['tpl'] = $tpl;

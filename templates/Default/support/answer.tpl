@@ -1,3 +1,4 @@
+
 <div class="note_text support_answer" id="asnwe_{id}">
 <div class="ava_mini" style="float:width:60px">[no-agent]<a href="/u{uid}" onClick="Page.Go(this.href); return false">[/no-agent]<img src="{ava}" alt="" title="" />[no-agent]</a>[/no-agent]</div>
 <div class="wallauthor support_anser_nam" style="padding-left:0px">[no-agent]<a href="/u{uid}" onClick="Page.Go(this.href); return false">[/no-agent]{name}[no-agent]</a>[/no-agent]</div>

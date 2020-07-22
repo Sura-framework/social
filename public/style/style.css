@@ -1448,11 +1448,12 @@ transparent;position:absolute;bottom:-13px}
 .scroller .scroller_panel:hover .slider {width:8px}
 .scroller .scroller_panel .slider:hover {background:#BEC8D3}
 
-.nav-item > .icon-music-2{font-size: 20px;color: #e8eff7;}
-.nav-item > .icon-cog-4{font-size: 20px;color: #e8eff7;}
-.nav-item > .icon-down-dir{font-size: 20px;color: #e8eff7;-webkit-text-stroke: thick;}
-.nav-item > .icon-bell{font-size: 20px;color: #e8eff7;}
-.nav-item > .icon-users-3{font-size: 20px;color: #e8eff7;}
+/*.nav-item > .icon-music-2{font-size: 20px;color: #e8eff7;}*/
+/*.nav-item > .icon-cog-4{font-size: 20px;color: #e8eff7;}*/
+/*.nav-item > .icon-down-dir{font-size: 20px;color: #e8eff7;-webkit-text-stroke: thick;}*/
+/*.nav-item > .icon-bell{font-size: 20px;color: #e8eff7;}*/
+/*.nav-item > .icon-users-3{font-size: 20px;color: #e8eff7;}*/
+.nav-item > .nav-link{font-size: 20px;color: #e8eff7;}
 
 .kj_head_menu {position: fixed;min-width: 160px;border: 1;top: 110%;right: 0;}
 .kj_head_menu_arrow {position: relative;background: #fff;list-style: none;padding: 5px 0;box-shadow: 0 1px 3px rgba(48,96,144,.31);border-radius: 2px;border-color: transparent;}
@@ -1524,7 +1525,7 @@ div#qnotifications_settings_content .html_checkbox{float:right;padding:0;margin-
 .owner_photo_bubble {color: #fff;opacity: 0;background-color: #000;background-color: rgba(29,32,34,0.7);width: 290px;margin-top: 0;transition: all 200ms ease-in-out;border-radius: 0 0 2px 2px;padding: 5px 0;}
 .owner_photo_bubble_action {font-size: 13px;padding: 5px 10px;height: 35px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;cursor: pointer;outline: none;}
 .owner_photo_bubble_action_in {
-    background: url(https://vk.com/images/icons/edit_photo_icons_white.png?2) no-repeat left 1px;
+    background: url('/images/icons/edit_photo_icons_white.png?2') no-repeat left 1px;
     transition: all 100ms ease-out;padding: 0 0 1px 24px;opacity: 0.8;}
 .owner_photo_bubble_action_crop .owner_photo_bubble_action_in {background-position: left -16px;}
 .owner_photo_wrap:hover .owner_photo_bubble {opacity: 1;margin-top: 0;}

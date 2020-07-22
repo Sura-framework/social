@@ -20,8 +20,8 @@ use FFMpeg\Coordinate\TimeCode;
 class VideosController extends Module{
 
     public function upload($params){
-        //$tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -104,8 +104,8 @@ class VideosController extends Module{
     }
 
     public function add($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -129,8 +129,8 @@ class VideosController extends Module{
     }
 
     public function upload_add($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -153,8 +153,8 @@ class VideosController extends Module{
     }
 
     public function send($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -269,8 +269,8 @@ class VideosController extends Module{
     }
 
     public function load($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -395,8 +395,8 @@ class VideosController extends Module{
     }
 
     public function delet($params){
-        //$tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -447,8 +447,8 @@ class VideosController extends Module{
     }
 
     public function edit($params){
-        $tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -483,8 +483,8 @@ class VideosController extends Module{
     }
 
     public function editsave($params){
-        //$tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -520,8 +520,8 @@ class VideosController extends Module{
     }
 
     public function view($params){
-        $tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -758,8 +758,8 @@ class VideosController extends Module{
     }
 
     public function addcomment($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -870,8 +870,8 @@ class VideosController extends Module{
     }
 
     public function delcomment($params){
-        //$tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -926,8 +926,8 @@ class VideosController extends Module{
     }
 
     public function all_comm($params){
-        $tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1006,8 +1006,8 @@ class VideosController extends Module{
     }
 
     public function all_videos($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1081,8 +1081,8 @@ class VideosController extends Module{
     }
 
     public function all_videos_public($params){
-        $tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1154,8 +1154,8 @@ class VideosController extends Module{
     }
 
     public function page($params){
-        $tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1231,8 +1231,8 @@ class VideosController extends Module{
     }
 
     public function addmylist($params){
-        //$tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1278,9 +1278,9 @@ class VideosController extends Module{
     }
 
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1417,8 +1417,9 @@ class VideosController extends Module{
             $tpl->clear();
             $db->free();
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         $params['tpl'] = $tpl;

@@ -13,11 +13,10 @@ $(document).click(function(event){
 });
 </script>
 <style>.newcolor000{color:#000}</style>
-<div class="">
 <div class="d-flex justify-content-between">
 
 
-  <div class="col-2 d-none d-sm-none d-md-none d-lg-flex flex-column align-content-between justify-content-between">
+<div class="col-2 d-none d-sm-none d-md-none d-lg-flex flex-column align-content-between justify-content-between">
     [news]
       <div class="d-flex flex-column align-content-between justify-content-between nav_menu">
 
@@ -73,7 +72,7 @@ $(document).click(function(event){
                         </svg>
                         <span class="left_label inl_bl ">Музыка</span>
                     </a>
-                    <a href="{groups-link}/" onclick="Page.Go(this.href); return false;" class="left_row"  id="new_groups_lnk">
+                    <a href="{groups-link}" onclick="Page.Go(this.href); return false;" class="left_row"  id="new_groups_lnk">
                         <svg class="bi bi-flag" width="32" height="32" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                             <path fill-rule="evenodd" d="M3.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
                             <path fill-rule="evenodd" d="M3.762 2.558C4.735 1.909 5.348 1.5 6.5 1.5c.653 0 1.139.325 1.495.562l.032.022c.391.26.646.416.973.416.168 0 .356-.042.587-.126a8.89 8.89 0 0 0 .593-.25c.058-.027.117-.053.18-.08.57-.255 1.278-.544 2.14-.544a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5c-.638 0-1.18.21-1.734.457l-.159.07c-.22.1-.453.205-.678.287A2.719 2.719 0 0 1 9 9.5c-.653 0-1.139-.325-1.495-.562l-.032-.022c-.391-.26-.646-.416-.973-.416-.833 0-1.218.246-2.223.916a.5.5 0 1 1-.515-.858C4.735 7.909 5.348 7.5 6.5 7.5c.653 0 1.139.325 1.495.562l.032.022c.391.26.646.416.973.416.168 0 .356-.042.587-.126.187-.068.376-.153.593-.25.058-.027.117-.053.18-.08.456-.204 1-.43 1.64-.512V2.543c-.433.074-.83.234-1.234.414l-.159.07c-.22.1-.453.205-.678.287A2.719 2.719 0 0 1 9 3.5c-.653 0-1.139-.325-1.495-.562l-.032-.022c-.391-.26-.646-.416-.973-.416-.833 0-1.218.246-2.223.916a.5.5 0 0 1-.554-.832l.04-.026z"/>
@@ -145,7 +144,7 @@ $(document).click(function(event){
 
     [/news]
   </div>
- <div class="col-12 col-sm-12 col-md-8 col-lg-4 ">
+<div class="col-12 col-sm-12 col-md-8 col-lg-4 ">
      <div class="col-12 mb-3">
          <div class="card" >
              <div class="card-body">
@@ -161,7 +160,7 @@ $(document).click(function(event){
 
 
                  <div class="p-3" style="margin-top: 120px;background-color: whitesmoke;width: 157.5%;margin-left: -20px;height: 68px;border-bottom-left-radius: 6%;border-bottom-right-radius: 6%;">
-                     <div class="rounded-circle p-2" style="background-color: cornflowerblue;width: 42px;height: 42px;color: white;position: absolute;margin-top: -39px;margin-left: 30px;border: 4px solid whitesmoke;">
+                     <div class="rounded-circle p-2" style="background-color: cornflowerblue;width: 42px;height: 42px;color: white;position: absolute;margin-top: -39px;margin-left: 26px;border: 4px solid whitesmoke;">
                          <svg width="2.2em" height="2.2em" viewBox="0 0 16 16" class="bi bi-plus" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                              <path fill-rule="evenodd" d="M8 3.5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5H4a.5.5 0 0 1 0-1h3.5V4a.5.5 0 0 1 .5-.5z"></path>
                              <path fill-rule="evenodd" d="M7.5 8a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H8.5V12a.5.5 0 0 1-1 0V8z"></path>
@@ -220,21 +219,17 @@ $(document).click(function(event){
 
   <div class="card">
    <div class="card-body">
-
     <div class="bg_block" >
      <div class="newmes mb-2" id="wall_tab">
-<textarea id="wall_text"  onblur="if(this.value=='') this.value='Что у Вас нового?';this.style.color = '#909090';$('#wall_text').css('height', '33px');" onfocus="if(this.value=='Что у Вас нового?')this.value='';this.style.color = '#000000';$('#wall_text').css('height', '50px');" class="wall_inpst wall_fast_opened_texta"  style="width: 100%;
-resize: none;
-overflow-y: hidden;
-border-bottom: 1px solid #E4E4E4;
-margin-top: -5px;
-color: #909090;
-font-weight: 500;" onkeyup="wall.CheckLinkText(this.value)" onblur="wall.CheckLinkText(this.value, 1)">Что у Вас нового?</textarea>
+         <label for="wall_text"></label>
+         <textarea id="wall_text" onblur="if(this.value=='') this.value='Что у Вас нового?';this.style.color = '#909090';$('#wall_text').css('height', '33px');" onfocus="if(this.value=='Что у Вас нового?')this.value='';this.style.color = '#000000';$('#wall_text').css('height', '50px');" class="wall_inpst wall_fast_opened_texta"
+           style="width: 100%;resize: none;overflow-y: hidden;border-bottom: 1px solid #E4E4E4;margin-top: -5px;color: #909090;font-weight: 500;"
+           onkeyup="wall.CheckLinkText(this.value)" onblur="wall.CheckLinkText(this.value, 1)">Что у Вас нового?</textarea>
       <div id="attach_files" class="margin_top_10 no_display"></div>
       <div id="attach_block_lnk" class="no_display clear">
        <div class="attach_link_bg">
-        <div align="center" id="loading_att_lnk"><img src="/images/loading_mini.gif" style="margin-bottom:-2px"></div>
-        <img src="" align="left" id="attatch_link_img" class="no_display cursor_pointer" onclick="wall.UrlNextImg()">
+        <div class="text-center" id="loading_att_lnk"><img src="/images/loading_mini.gif" style="margin-bottom:-2px" alt=""></div>
+        <img src="" id="attatch_link_img" class="no_display cursor_pointer text-left" onclick="wall.UrlNextImg()" alt="">
         <div id="attatch_link_title"></div>
         <div id="attatch_link_descr"></div>
         <div class="clear"></div>
@@ -248,14 +243,21 @@ font-weight: 500;" onkeyup="wall.CheckLinkText(this.value)" onblur="wall.CheckLi
       <div class="clear"></div>
       <div id="attach_block_vote" class="no_display">
        <div class="attach_link_bg">
-        <div class="texta">Тема опроса:</div><input type="text" id="vote_title" class="inpst" maxlength="80" value="" style="width:355px;margin-left:5px" onkeyup="$('#attatch_vote_title').text(this.value)"><div class="mgclr"></div>
+        <div class="texta">Тема опроса:</div>
+           <label for="vote_title"></label>
+           <input type="text" id="vote_title" class="inpst" maxlength="80" value="" style="width:355px;margin-left:5px" onkeyup="$('#attatch_vote_title').text(this.value)"><div class="mgclr"></div>
         <div class="texta">Варианты ответа:<br><small><span id="addNewAnswer"><a class="cursor_pointer" onclick="Votes.AddInp()">добавить</a></span> | <span id="addDelAnswer">удалить</span></small></div><input type="text" id="vote_answer_1" class="inpst" maxlength="80" value="" style="width:355px;margin-left:5px"><div class="mgclr"></div>
-        <div class="texta">&nbsp;</div><input type="text" id="vote_answer_2" class="inpst" maxlength="80" value="" style="width:355px;margin-left:5px"><div class="mgclr"></div>
+        <div class="texta">&nbsp;</div>
+           <label for="vote_answer_2"></label>
+           <input type="text" id="vote_answer_2" class="inpst" maxlength="80" value="" style="width:355px;margin-left:5px">
+           <div class="mgclr"></div>
         <div id="addAnswerInp"></div>
         <div class="clear"></div>
        </div>
        <div class="attach_toolip_but"></div>
-       <div class="attach_link_block_ic fl_l"></div><div class="attach_link_block_te"><div class="fl_l">Опрос: <a id="attatch_vote_title" style="text-decoration:none;cursor:default"></a></div><img class="fl_l cursor_pointer" style="margin-top:2px;margin-left:5px" src="/images/close_a.png" onmouseover="myhtml.title('1', 'Не прикреплять', 'attach_vote_')" id="attach_vote_1" onclick="Votes.RemoveForAttach()"></div>
+       <div class="attach_link_block_ic fl_l"></div><div class="attach_link_block_te"><div class="fl_l">Опрос: <a id="attatch_vote_title" style="text-decoration:none;cursor:default"></a></div>
+              <img class="fl_l cursor_pointer" style="margin-top:2px;margin-left:5px" src="/images/close_a.png" onmouseover="myhtml.title('1', 'Не прикреплять', 'attach_vote_')" id="attach_vote_1" onclick="Votes.RemoveForAttach()" alt="">
+          </div>
        <input type="hidden" id="answerNum" value="2">
       </div>
       <div class="clear"></div>
@@ -305,5 +307,8 @@ font-weight: 500;" onkeyup="wall.CheckLinkText(this.value)" onblur="wall.CheckLi
 
 [bottom]
  <span id="news"></span>
-<div onClick="news.page()" id="wall_l_href_news" class="cursor_pointer"><div class="photo_all_comm_bg wall_upgwi" id="loading_news" style="width:750px">Показать предыдущие новости</div></div>[/bottom]
+<div onClick="news.page()" id="wall_l_href_news" class="cursor_pointer">
+    <div class="photo_all_comm_bg wall_upgwi" id="loading_news" style="width:750px">Показать предыдущие новости</div>
+</div>
+     [/bottom]
 

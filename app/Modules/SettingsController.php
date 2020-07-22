@@ -15,8 +15,8 @@ use Sura\Libs\Validation;
 class SettingsController extends Module{
 
     public function newpass($params){
-        //$tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -53,8 +53,8 @@ class SettingsController extends Module{
     }
 
     public function newname($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -109,8 +109,8 @@ class SettingsController extends Module{
     }
 
     public function saveprivacy($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -147,17 +147,18 @@ class SettingsController extends Module{
     }
 
     public function privacy($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        //if($ajax == 'yes')
+            //Tools::NoAjaxQuery();
+
         if($logged){
             $user_id = $user_info['user_id'];
-            $act = $_GET['act'];
+            //$act = $_GET['act'];
             $params['title'] = $lang['settings'].' | Sura';
 
             $sql_ = $db->super_query("SELECT user_privacy FROM `users` WHERE user_id = '{$user_id}'");
@@ -175,11 +176,14 @@ class SettingsController extends Module{
             $tpl->set('{val_info_text}', strtr($row['val_info'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я')));
             $tpl->compile('info');
         }
+        $params['tpl'] = $tpl;
+        Page::generate($params);
+        return true;
     }
 
     public function addblacklist($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -239,8 +243,8 @@ class SettingsController extends Module{
     }
 
     public function delblacklist($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -275,57 +279,73 @@ class SettingsController extends Module{
     }
 
     public function blacklist($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
-        $user_info = $this->user_info();
-        $logged = $this->logged();
+
+
+
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
-        if($logged){
-            $user_id = $user_info['user_id'];
-            $act = $_GET['act'];
+
+        if($params['user']['logged']){
             $params['title'] = $lang['settings'].' | Sura';
-
-            $row = $db->super_query("SELECT user_blacklist, user_blacklist_num FROM `users` WHERE user_id = '{$user_id}'");
-
-            $tpl->load_template('settings/blacklist.tpl');
-            $titles = array('человек', 'человека', 'человек');//fave
-            $tpl->set('{cnt}', '<span id="badlistnum">'.$row['user_blacklist_num'].'</span> '.Gramatic::declOfNum($row['user_blacklist_num'], $titles));
-            if($row['user_blacklist_num']){
-                $tpl->set('[yes-users]', '');
-                $tpl->set('[/yes-users]', '');
-            } else
-                $tpl->set_block("'\\[yes-users\\](.*?)\\[/yes-users\\]'si","");
-            $tpl->compile('info');
-
-            if($row['user_blacklist_num'] AND $row['user_blacklist_num'] <= 100){
-                $tpl->load_template('settings/baduser.tpl');
+            $row = $db->super_query("SELECT user_blacklist, user_blacklist_num FROM `users` WHERE user_id = '{$params['user']['user_id']}'");
+            if($row['user_blacklist_num'] > 0 AND $row['user_blacklist_num'] <= 100){
                 $array_blacklist = explode('|', $row['user_blacklist']);
                 foreach($array_blacklist as $user){
                     if($user){
                         $infoUser = $db->super_query("SELECT user_photo, user_search_pref FROM `users` WHERE user_id = '{$user}'");
 
+                        $params['user_blacklist']['$user'] = array();
+
                         if($infoUser['user_photo'])
-                            $tpl->set('{ava}', '/uploads/users/'.$user.'/50_'.$infoUser['user_photo']);
+                            $params['user_blacklist']['$user']['ava'] = '/uploads/users/'.$user.'/50_'.$infoUser['user_photo'];
                         else
-                            $tpl->set('{ava}', '/images/no_ava_50.png');
+                            $params['user_blacklist']['$user']['ava'] = '/images/no_ava_50.png';
 
-                        $tpl->set('{name}', $infoUser['user_search_pref']);
-                        $tpl->set('{user-id}', $user);
-
-                        $tpl->compile('content');
+                        $params['user_blacklist']['$user']['name'] = $infoUser['user_search_pref'];
+                        $params['user_blacklist']['$user']['user-id'] = $user;//=)
                     }
                 }
-            } else
-                msgbox('', $lang['settings_nobaduser'], 'info_2');
+            } else{
+                $params['user_blacklist_info'] = $lang['settings_nobaduser'];
+//                $tpl->compile('info');
+//                $tpl->result['alert_info'] = msg_box($lang['settings_nobaduser'], 'info_2');
+
+//                $tpl->result['alert_info'] = '<div class="info_center"><br><br>Ни чего не найдено<br><br></div>';
+
+            }
+
+//            $tpl->load_template('settings/blacklist.tpl');
+
+//            $tpl->set('{cnt}', '<span id="badlistnum">'.$row['user_blacklist_num'].'</span> '.Gramatic::declOfNum($row['user_blacklist_num'], $titles));
+            $params['user_blacklist_num'] = $row['user_blacklist_num'];
+            if ($params['user_blacklist_num']) {
+                $titles = array('человек', 'человека', 'человек');//fave
+                $params['cnt'] = '<span id="badlistnum">' . $row['user_blacklist_num'] . '</span> ' . Gramatic::declOfNum($row['user_blacklist_num'], $titles);
+            }
+//            if($row['user_blacklist_num']){
+//                $tpl->set('[yes-users]', '');
+//                $tpl->set('[/yes-users]', '');
+//            } else
+//                $tpl->set_block("'\\[yes-users\\](.*?)\\[/yes-users\\]'si","");
+
+//            $tpl->set('{bad_user}', $tpl->result['alert_info']);
+//            $tpl->compile('content');
         }
+
+        return view('settings.blacklist', $params);
+
+//        $params['tpl'] = $tpl;
+//        Page::generate($params);
+//        return true;
     }
 
     public function change_mail($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -359,6 +379,7 @@ class SettingsController extends Module{
                 $db->query("DELETE FROM `restore` WHERE email = '{$email}'");
 
                 $salt = "abchefghjkmnpqrstuvwxyz0123456789";
+                $rand_lost = '';
                 for($i = 0; $i < 15; $i++){
                     $rand_lost .= $salt[rand(0, 33)];
                 }
@@ -381,6 +402,9 @@ class SettingsController extends Module{
                         Администрация {$config['home_url']}
                         HTML;
                 $mail->send($row['user_email'], 'Изменение почтового адреса', $message);
+
+                if (!isset($_IP))
+                    $_IP = NULL;
 
                 //Вставляем в БД код 1
                 $db->query("INSERT INTO `restore` SET email = '{$email}', hash = '{$hash}', ip = '{$_IP}'");
@@ -419,34 +443,24 @@ class SettingsController extends Module{
     }
 
     public function general($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
-        $user_info = $this->user_info();
-        $logged = $this->logged();
 
         if(isset($_POST['ajax']) AND $_POST['ajax'] == 'yes')
             Tools::NoAjaxQuery();
 
-        if($logged){
-            $user_id = $user_info['user_id'];
-            //$act = $_GET['act'];
+        if($params['user']['logged']){
             $params['title'] = $lang['settings'].' | Sura';
-
-            $mobile_speedbar = 'Общие настройки';
-            $row = $db->super_query("SELECT user_name, user_lastname, user_email, user_timezona FROM `users` WHERE user_id = '{$user_id}'");
 
             //Загружаем вверх
             $tpl->load_template('settings/general.tpl');
-            $tpl->set('{name}', $row['user_name']);
-            $tpl->set('{lastname}', $row['user_lastname']);
-            $tpl->set('{id}', $user_id);
 
             //Завершении смены E-mail
-            $tpl->set('{code-1}', 'no_display');
-            $tpl->set('{code-2}', 'no_display');
-            $tpl->set('{code-3}', 'no_display');
+            $params['code_1'] = 'no_display';
+            $params['code_2'] = 'no_display';
+            $params['code_3'] = 'no_display';
 
             if(isset($_GET['code1'])){
                 $code1 = Validation::strip_data($_GET['code1']);
@@ -455,66 +469,47 @@ class SettingsController extends Module{
                 if(strlen($code1) == 32){
                     $_IP = null;
                     $code2 = '';
-
                     $check_code1 = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$code1}' AND ip = '{$_IP}'");
-
                     if($check_code1['email']){
-
                         $check_code2 = $db->super_query("SELECT COUNT(*) AS cnt FROM `restore` WHERE hash != '{$code1}' AND email = '{$check_code1['email']}' AND ip = '{$_IP}'");
-
                         if($check_code2['cnt'])
-                            $tpl->set('{code-1}', '');
+                            $params['code_1'] = '';
                         else {
-                            $tpl->set('{code-1}', 'no_display');
-                            $tpl->set('{code-3}', '');
-
+                            $params['code_1'] = 'no_display';
+                            $params['code_3'] = '';
                             //Меняем
-                            $db->query("UPDATE `users` SET user_email = '{$check_code1['email']}' WHERE user_id = '{$user_id}'");
-                            $row['user_email'] = $check_code1['email'];
-
+                            $db->query("UPDATE `users` SET user_email = '{$check_code1['email']}' WHERE user_id = '{$params['user']['user_id']}'");
+                            $params['user']['user_email'] = $check_code1['email'];
                         }
-
                         $db->query("DELETE FROM `restore` WHERE hash = '{$code1}' AND ip = '{$_IP}'");
-
                     }
-
                 }
 
                 if(strlen($code2) == 32){
-
                     $check_code2 = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$code2}' AND ip = '{$_IP}'");
-
                     if($check_code2['email']){
-
                         $check_code1 = $db->super_query("SELECT COUNT(*) AS cnt FROM `restore` WHERE hash != '{$code2}' AND email = '{$check_code2['email']}' AND ip = '{$_IP}'");
-
                         if($check_code1['cnt'])
-                            $tpl->set('{code-2}', '');
+                            $params['code_2'] = '';
                         else {
-                            $tpl->set('{code-2}', 'no_display');
-                            $tpl->set('{code-3}', '');
+                            $params['code_2'] = 'no_display';
+                            $params['code_3'] = '';
 
                             //Меняем
-                            $db->query("UPDATE `users` SET user_email = '{$check_code2['email']}'  WHERE user_id = '{$user_id}'");
-                            $row['user_email'] = $check_code2['email'];
-
+                            $db->query("UPDATE `users` SET user_email = '{$check_code2['email']}'  WHERE user_id = '{$params['user']['user_id']}'");
+                            $params['user']['user_email'] = $check_code2['email'];
                         }
-
                         $db->query("DELETE FROM `restore` WHERE hash = '{$code2}' AND ip = '{$_IP}'");
-
                     }
-
                 }
-
             }
 
             //Email
-            $substre = substr($row['user_email'], 0, 1);
-            $epx1 = explode('@', $row['user_email']);
-            $tpl->set('{email}', $substre.'*******@'.$epx1[1]);
+            $substre = substr($params['user']['user_email'], 0, 1);
+            $epx1 = explode('@', $params['user']['user_email']);
+            $params['email'] = $substre.'*******@'.$epx1[1];
 
-
-            $tpl->set('{timezs}', installationSelected($row['user_timezona'], ' <option value="1">GMT-11 "Samoa"</option> 
+            $params['timezs'] = installationSelected($params['user']['user_timezona'], ' <option value="1">GMT-11 "Samoa"</option> 
  <option value="2">GMT-10 "Hawaii"</option>
  <option value="3">GMT-9 "Alaska"</option> 
  <option value="4">GMT-8 "Los Angeles"</option>  
@@ -537,62 +532,26 @@ class SettingsController extends Module{
   <option value="21">GMT 9 "Tokyo"</option> 
   <option value="22">GMT 10 "Vladivostok"</option> 
  <option value="23">GMT 11 "Sydney"</option>
- <option value="24">GMT 12 "Kamchatka"</option> '));
+ <option value="24">GMT 12 "Kamchatka"</option> ');
 
-            $tpl->compile('info');
 
-            $tpl->clear();
-            $db->free();
+            return view('settings.general', $params);
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
-
-        Registry::set('tpl', $tpl);
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
     }
 
     public function index($params){
-        $tpl = Registry::get('tpl');
-
-        $lang = langs::get_langs();
-        $db = $this->db();
-        $user_info = $this->user_info();
-        $logged = $this->logged();
-
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-
-        if($logged){
-            $user_id = $user_info['user_id'];
-            //$act = $_GET['act'];
+        $lang = $this->get_langs();
+        if($params['user']['logged']){
             $params['title'] = $lang['settings'].' | Sura';
-
-            $mobile_speedbar = 'Общие настройки';
-            $row = $db->super_query("SELECT user_name, user_lastname, user_email FROM `users` WHERE user_id = '{$user_id}'");
-
-            //Загружаем вверх
-            $tpl->load_template('settings/settings.tpl');
-            $tpl->set('{name}', $row['user_name']);
-            $tpl->set('{lastname}', $row['user_lastname']);
-            $tpl->set('{id}', $user_id);
-
-
-            $tpl->compile('info');
-
-            $tpl->clear();
-            $db->free();
+            return view('settings.settings', $params);
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
-
-        Registry::set('tpl', $tpl);
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
     }
 }

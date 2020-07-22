@@ -15,8 +15,8 @@ use Sura\Libs\Gramatic;
 class PhotoController extends Module{
 
     public function addcomm($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -122,8 +122,8 @@ class PhotoController extends Module{
     }
 
     public function del_comm($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -148,8 +148,8 @@ class PhotoController extends Module{
     }
 
     public function crop($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -219,8 +219,8 @@ class PhotoController extends Module{
     }
 
     public function all_comm($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -274,8 +274,8 @@ class PhotoController extends Module{
     }
 
     public function profile($params){
-        $tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         //$db = $this->db();
         //$user_info = $this->user_info();
         $logged = $this->logged();
@@ -305,8 +305,8 @@ class PhotoController extends Module{
     }
 
     public function rotation($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -340,8 +340,8 @@ class PhotoController extends Module{
     }
 
     public function addrating($params){
-//        $tpl = Registry::get('tpl');
-//        $lang = langs::get_langs();
+//        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -429,8 +429,8 @@ class PhotoController extends Module{
     }
 
     public function view_rating($params){
-        $tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -514,8 +514,8 @@ class PhotoController extends Module{
     }
 
     public function del_rate($params){
-        //$tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -550,9 +550,9 @@ class PhotoController extends Module{
     }
 
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        //$lang = langs::get_langs();
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();

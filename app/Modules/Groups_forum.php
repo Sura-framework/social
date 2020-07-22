@@ -16,8 +16,8 @@ class Groups_forum extends Module{
      * Отправка темы в БД
      */
     public function new_send($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -59,8 +59,8 @@ class Groups_forum extends Module{
      * Страница создания новой темы
      */
     public function new($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -92,8 +92,8 @@ class Groups_forum extends Module{
      * Добавления сообщения к теме
      */
     public function add_msg($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -205,8 +205,8 @@ class Groups_forum extends Module{
      * Показах предыдущих сообщений
      */
     public function prev_msg($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -302,8 +302,8 @@ class Groups_forum extends Module{
      * Сохранение отред. данных темы
      */
     public function saveedit($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -341,8 +341,8 @@ class Groups_forum extends Module{
      * Сохранение отред. названия
      */
     public function savetitle($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -380,8 +380,8 @@ class Groups_forum extends Module{
      * Фиксирование темы . закрипление
      */
     public function fix($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -421,8 +421,8 @@ class Groups_forum extends Module{
      * Открытие - закрытие тему
      */
     public function status($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -460,8 +460,8 @@ class Groups_forum extends Module{
      *  Уадаление темы
      */
     public function del($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -503,8 +503,8 @@ class Groups_forum extends Module{
      * Уадаление опроса
      */
     public function delvote($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -543,8 +543,8 @@ class Groups_forum extends Module{
      * Уадаление сообщения
      */
     public function delmsg($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -586,8 +586,8 @@ class Groups_forum extends Module{
      * Прикрипление опроса
      */
     public function createvote($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -647,8 +647,8 @@ class Groups_forum extends Module{
      * Просмотр темы
      */
     public function view($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -965,16 +965,17 @@ class Groups_forum extends Module{
      */
     public function index($params)
     {
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
         if($logged){
-            $act = $_GET['act'];
+            //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             //Если вызвана Forum.Page()
@@ -1074,8 +1075,9 @@ class Groups_forum extends Module{
             $db->free();
 
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         $params['tpl'] = $tpl;

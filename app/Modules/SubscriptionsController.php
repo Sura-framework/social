@@ -12,7 +12,7 @@ use Sura\Libs\Gramatic;
 class SubscriptionsController extends Module{
 
     public function add($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -63,7 +63,7 @@ class SubscriptionsController extends Module{
     }
 
     public function del($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -88,7 +88,7 @@ class SubscriptionsController extends Module{
     }
 
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
         $db = $this->db();
         $user_info = $this->user_info();

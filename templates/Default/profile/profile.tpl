@@ -65,7 +65,10 @@ $(document).ready(function(){
       <span>Отправить подарок</span></a>
     </div>
     [/not-owner]
-     [owner]<a class="nav-link active w-100" href="/edit/" onClick="Page.Go(this.href); return false;">
+     [owner]
+
+    <!--<a class="nav-link active w-100" href="/edit/" onClick="Page.Go(this.href); return false;"> -->
+     <a class="nav-link active w-100"  onClick="Profile_edit.Open()">
       <svg class="bi bi-brush" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
        <path d="M15.213 1.018a.572.572 0 0 1 .756.05.57.57 0 0 1 .057.746C15.085 3.082 12.044 7.107 9.6 9.55c-.71.71-1.42 1.243-1.952 1.596-.508.339-1.167.234-1.599-.197-.416-.416-.53-1.047-.212-1.543.346-.542.887-1.273 1.642-1.977 2.521-2.35 6.476-5.44 7.734-6.411z"/>
        <path d="M7 12a2 2 0 0 1-2 2c-1 0-2 0-3.5-.5s.5-1 1-1.5 1.395-2 2.5-2a2 2 0 0 1 2 2z"/>
@@ -164,7 +167,7 @@ $(document).ready(function(){
  [friends]<a href="/friends/{user-id}/" onClick="Page.Go(this.href); return false" style="text-decoration:none"><div class="albtitle">Друзья <span>{friends-num}</span></div></a>
  <div class="newmesnobg" style="padding:0px;padding-top:10px;">{friends}<div class="clear"></div>
  </div>[/friends]
- [online-friends]<a href="/friends/online/{user-id}/" style="text-decoration:none" onClick="Page.Go(this.href); return false"><div class="albtitle">Друзья на сайте <span>{online-friends-num}</span></div></a>
+ [online-friends]<a href="/friends/online/{user-id}/" style="text-decoration:none" onClick="Page.Go(this.href); return false"><div class="albtitle">Друзья онлайн <span>{online-friends-num}</span></div></a>
  <div class="newmesnobg" style="padding:0px;padding-top:10px;">{online-friends}<div class="clear"></div>
  </div>[/online-friends]
  [subscriptions]<a href="/" onClick="subscriptions.all({user-id}, '', {subscriptions-num}); return false" style="text-decoration:none"><div class="albtitle">Подписки <span>{subscriptions-num}</span></div></a>

@@ -15,8 +15,8 @@ class DocController extends Module{
      * Загрузка файла
      */
     public function upload($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -107,8 +107,8 @@ class DocController extends Module{
      * Удаление документа
      */
     public function del($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -145,8 +145,8 @@ class DocController extends Module{
      * Сохранение отред.данных
      */
     public function editsave($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -181,8 +181,8 @@ class DocController extends Module{
      * Скачивание документа с сервера
      */
     public function download($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -227,8 +227,8 @@ class DocController extends Module{
      * Страница всех загруженных документов
      */
     public function list($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -295,11 +295,11 @@ class DocController extends Module{
     /**
      * Страница всех загруженных документов для прикрипления BOX
      */
-    public function index()
+    public function index($params)
     {
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();

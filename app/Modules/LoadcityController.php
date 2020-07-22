@@ -10,7 +10,7 @@ class LoadcityController extends Module{
 
     public function index($params)
     {
-        $lang = langs::get_langs();
+        //$lang = langs::get_langs();
         $db = $this->db();
 
         Tools::NoAjaxQuery();
@@ -19,8 +19,11 @@ class LoadcityController extends Module{
 
         echo '<option value="0">- Выбрать -</option>';
 
-        if($country_id){
-            $sql_ = $db->super_query("SELECT id, name FROM `city` WHERE id_country = '{$country_id}' ORDER by `name` ASC", true, "country_city_".$country_id, true);
+        if($country_id > 0){
+            //$sql_ = $db->super_query("SELECT id, name FROM `city` WHERE id_country = '{$country_id}' ORDER by `name` ASC", true, "country_city_".$country_id, true);
+
+
+            $sql_ = $db->super_query("SELECT id, name FROM `city` WHERE id_country = '{$country_id}' ORDER by `name` ASC", 1);
             foreach($sql_ as $row2)
                 echo '<option value="'.$row2['id'].'">'.stripslashes($row2['name']).'</option>';
         }

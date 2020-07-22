@@ -15,7 +15,7 @@ class Audio_player extends Module{
      */
     public function index($params)
     {
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
 //        include __DIR__.'/../lang/'.$checkLang.'/site.lng';
         $db = $this->db();

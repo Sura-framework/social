@@ -9,7 +9,7 @@ use Sura\Libs\Tools;
 class Stats_groupsController extends Module{
 
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
         $db = $this->db();
         $user_info = $this->user_info();
@@ -157,9 +157,9 @@ class Stats_groupsController extends Module{
             $db->free();
 
         } else {
-            include __DIR__.'/../lang/'.$checkLang.'/site.lng';
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
 
         }
 

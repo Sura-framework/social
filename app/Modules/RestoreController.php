@@ -12,8 +12,8 @@ use Sura\Libs\Validation;
 class RestoreController extends Module{
 
     public function send($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
@@ -65,8 +65,8 @@ class RestoreController extends Module{
     }
 
     public function prefinish($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
@@ -107,8 +107,8 @@ class RestoreController extends Module{
     }
 
     public function finish($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
@@ -140,8 +140,8 @@ class RestoreController extends Module{
 
     public function index($params)
     {
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
 //        $user_info = Registry::get('user_info');
@@ -159,8 +159,9 @@ class RestoreController extends Module{
             $tpl->clear();
             $db->free();
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         //Registry::set('tpl', $tpl);
@@ -171,8 +172,8 @@ class RestoreController extends Module{
     }
 
     public function next($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
 //        $user_info = Registry::get('user_info');

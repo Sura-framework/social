@@ -78,6 +78,7 @@ if ($user['logged'] == true) {
 $app = new Application();
 
 $tpl = $app->view();
+//$tpl = null;
 $params['tpl'] = $tpl;
 
 $app->user_online($params);

@@ -14,8 +14,8 @@ use Sura\Libs\Validation;
 class PublicController extends Module{
 
     public function index($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1008,15 +1008,17 @@ class PublicController extends Module{
 
                 $tpl->compile('content');
             } else {
-                $user_speedbar = $lang['no_infooo'];
-                msgbox('', $lang['no_upage'], 'info');
+                $params['title'] = $lang['no_infooo'];
+                $params['info'] = $lang['not_logged'];
+                return view('info.info', $params);
             }
 
             $tpl->clear();
             $db->free();
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         $params['tpl'] = $tpl;

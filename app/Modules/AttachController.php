@@ -13,7 +13,7 @@ class AttachController extends Module{
 
     public function index($params)
     {
-//        $lang = langs::get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();

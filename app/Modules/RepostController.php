@@ -12,7 +12,7 @@ use Sura\Libs\Validation;
 class RepostController extends Module{
 
     public function for_wall($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -71,7 +71,7 @@ class RepostController extends Module{
     }
 
     public function groups($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -127,7 +127,7 @@ class RepostController extends Module{
     }
 
     public function groups_2($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -183,7 +183,7 @@ class RepostController extends Module{
     }
 
     public function message($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -316,7 +316,7 @@ class RepostController extends Module{
 
     public function index($params)
     {
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
         $db = $this->db();
         $user_info = $this->user_info();

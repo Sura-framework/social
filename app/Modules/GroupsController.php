@@ -19,8 +19,8 @@ class GroupsController extends Module{
      * Отправка сообщества БД
      */
     public function send($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -67,8 +67,8 @@ class GroupsController extends Module{
      *  Выход из сообщества
      */
     public function exit($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -127,8 +127,8 @@ class GroupsController extends Module{
      * Страница загрузки главного фото сообщества
      */
     public function loadphoto_page($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -159,8 +159,8 @@ class GroupsController extends Module{
      * Загрузка и изминение главного фото сообщества
      */
     public function loadphoto($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -252,8 +252,8 @@ class GroupsController extends Module{
      * Удаление фото сообщества
      */
     public function delphoto($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -292,8 +292,8 @@ class GroupsController extends Module{
      * Вступление в сообщество
      */
     public function login($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -375,8 +375,8 @@ class GroupsController extends Module{
      * Страница добавления контактов
      */
     public function addfeedback_pg($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -407,8 +407,8 @@ class GroupsController extends Module{
      * Добавления контакт в БД
      */
     public function addfeedback_db($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -454,8 +454,8 @@ class GroupsController extends Module{
      * Удаление контакта из БД
      */
     public function delfeedback($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -493,8 +493,8 @@ class GroupsController extends Module{
      * Выводим фотографию юзера при указании ИД страницы
      */
     public function checkFeedUser($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -521,8 +521,8 @@ class GroupsController extends Module{
      * Сохранение отредактированых данных контакт в БД
      */
     public function editfeeddave($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -566,8 +566,8 @@ class GroupsController extends Module{
      * Все контакты (БОКС)
      */
     public function allfeedbacklist($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -625,8 +625,8 @@ class GroupsController extends Module{
      * Сохранение отредактированых данных группы
      */
     public function saveinfo($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -687,8 +687,8 @@ class GroupsController extends Module{
      * Выводим информацию о пользователе которого будем делать админом
      */
     public function new_admin($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -725,8 +725,8 @@ class GroupsController extends Module{
      * Запись нового админа в БД
      */
     public function send_new_admin($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -757,8 +757,8 @@ class GroupsController extends Module{
      * Удаление админа из БД
      */
     public function deladmin($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -789,8 +789,8 @@ class GroupsController extends Module{
      * Добавление записи на стену
      */
     public function wall_send($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -1436,8 +1436,8 @@ class GroupsController extends Module{
      * Добавление комментария к записи
      */
     public function wall_send_comm($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -1616,8 +1616,8 @@ class GroupsController extends Module{
      * Удаление записи
      */
     public function wall_del($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -1678,8 +1678,8 @@ class GroupsController extends Module{
      * Показ всех комментариев к записи
      */
     public function all_comm($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -1779,8 +1779,8 @@ class GroupsController extends Module{
      * Страница загрузки фото в сообщество
      */
     public function photos($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -1847,8 +1847,8 @@ class GroupsController extends Module{
      * Выводим инфу о видео при прикриплении видео на стену
      */
     public function select_video_info($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -1880,8 +1880,8 @@ class GroupsController extends Module{
      * Ставим мне нравится
      */
     public function wall_like_yes($params){
-        //$tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -1912,8 +1912,8 @@ class GroupsController extends Module{
      * Убераем мне нравится
      */
     public function wall_like_remove($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -1944,8 +1944,8 @@ class GroupsController extends Module{
      * Выводим последних 7 юзеров кто поставил "Мне нравится"
      */
     public function wall_like_users_five($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -1979,8 +1979,8 @@ class GroupsController extends Module{
      * Выводим всех юзеров которые поставили "мне нравится"
      */
     public function all_liked_users($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2049,8 +2049,8 @@ class GroupsController extends Module{
      * Рассказать друзьям "Мне нравится"
      */
     public function wall_tell($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2109,8 +2109,8 @@ class GroupsController extends Module{
      * Показ всех подпискок
      */
     public function all_people($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2173,8 +2173,8 @@ class GroupsController extends Module{
      * Показ всех сообщества юзера на которые он подписан (BOX)
      */
     public function all_groups_user($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2236,8 +2236,8 @@ class GroupsController extends Module{
      * Одна запись со стены
      */
     public function wallgroups($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2294,8 +2294,8 @@ class GroupsController extends Module{
      * Закрипление записи
      */
     public function fasten($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2338,8 +2338,8 @@ class GroupsController extends Module{
      * Убераем фиксацию
      */
     public function unfasten($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2379,8 +2379,8 @@ class GroupsController extends Module{
      * Загрузка обложки
      */
     public function upload_cover($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2476,8 +2476,8 @@ class GroupsController extends Module{
      * Сохранение новой позиции обложки
      */
     public function savecoverpos($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2513,8 +2513,8 @@ class GroupsController extends Module{
     }
 
     public function delcover($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2556,8 +2556,8 @@ class GroupsController extends Module{
     }
 
     public function invitebox($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2672,8 +2672,8 @@ class GroupsController extends Module{
     }
 
     public function invitesend($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2766,8 +2766,8 @@ class GroupsController extends Module{
     }
 
     public function invites($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2880,8 +2880,8 @@ class GroupsController extends Module{
     }
 
     public function invite_no($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2922,9 +2922,9 @@ class GroupsController extends Module{
      * @param $params
      */
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -3010,8 +3010,110 @@ class GroupsController extends Module{
             $tpl->clear();
             $db->free();
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
+        }
+
+        Registry::set('tpl', $tpl);
+
+        $params['tpl'] = $tpl;
+        Page::generate($params);
+        return true;
+    }
+
+    /**
+     * Вывод всех сообществ
+     * @param $params
+     */
+    public function admin($params){
+        $tpl = $params['tpl'];
+
+        $lang = $this->get_langs();
+        $db = $this->db();
+        $logged = Registry::get('logged');
+        $user_info = Registry::get('user_info');
+
+        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        if($ajax == 'yes')
+            Tools::NoAjaxQuery();
+
+        if($logged){
+            //$act = $_GET['act'];
+            $act = '';
+            $user_id = $user_info['user_id'];
+
+            if(isset($_GET['page']) AND $_GET['page'] > 0)
+                $page = intval($_GET['page']);
+            else
+                $page = 1;
+            $gcount = 20;
+            $limit_page = ($page-1)*$gcount;
+
+            $params['title'] = $lang['communities'].' | Sura';
+
+            $owner = $db->super_query("SELECT user_public_num FROM `users` WHERE user_id = '{$user_id}'");
+
+            //$mobile_speedbar = 'Ваши сообщества';
+            $tpl->load_template('groups/head_admin.tpl');
+            $sql_sort = "SELECT id, title, photo, traf, adres FROM `communities` WHERE admin regexp '[[:<:]](u{$user_id})[[:>:]]' ORDER by `traf` DESC LIMIT {$limit_page}, {$gcount}";
+            $sql_count = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities` WHERE admin regexp '[[:<:]](u{$user_id})[[:>:]]'");
+            $owner['user_public_num'] = $sql_count['cnt'];
+
+
+            if($owner['user_public_num']){
+                $titles = array('сообществе', 'сообществах', 'сообществах');//groups
+                $tpl->set('{num}', $owner['user_public_num'].' '.Gramatic::declOfNum($owner['user_public_num'], $titles));
+                $tpl->set('[yes]', '');
+                $tpl->set('[/yes]', '');
+                $tpl->set_block("'\\[no\\](.*?)\\[/no\\]'si","");
+            } else {
+                $tpl->set('[no]', '');
+                $tpl->set('[/no]', '');
+                $tpl->set_block("'\\[yes\\](.*?)\\[/yes\\]'si","");
+            }
+            $tpl->compile('info');
+
+            if($owner['user_public_num']){
+
+                $sql_ = $db->super_query($sql_sort, 1);
+
+                $tpl->load_template('groups/group.tpl');
+                foreach($sql_ as $row){
+                    $tpl->set('{id}', $row['id']);
+                    if($row['adres']) $tpl->set('{adres}', $row['adres']);
+                    else $tpl->set('{adres}', 'public'.$row['id']);
+
+                    $tpl->set('{name}', stripslashes($row['title']));
+                    $titles = array('участник', 'участника', 'участников');//groups_users
+                    $tpl->set('{traf}', $row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles));
+
+                    if($act != 'admin'){
+                        $tpl->set('[admin]', '');
+                        $tpl->set('[/admin]', '');
+                    } else
+                        $tpl->set_block("'\\[admin\\](.*?)\\[/admin\\]'si","");
+
+                    if($row['photo'])
+                        $tpl->set('{photo}', "/uploads/groups/{$row['id']}/100_{$row['photo']}");
+                    else
+                        $tpl->set('{photo}', "/images/no_ava_groups_100.gif");
+
+                    $tpl->compile('content');
+                }
+
+                if($act == 'admin') $admn_act = 'act=admin&';
+
+                $tpl = Tools::navigation($gcount, $owner['user_public_num'], 'groups?'.$admn_act.'page=', $tpl);
+
+            }
+            $tpl->clear();
+            $db->free();
+        } else {
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         Registry::set('tpl', $tpl);

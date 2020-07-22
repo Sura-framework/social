@@ -83,9 +83,9 @@ class AntibotController extends Module{
 //        if(clean_url($_SERVER['HTTP_REFERER']) != clean_url($_SERVER['HTTP_HOST']))
 //            die("Hacking attempt!");
 
-        $user_code = $_GET['user_code'];
+        //$user_code = $_GET['user_code'];
 
-        if($user_code == $_SESSION['sec_code']){
+        if($_GET['user_code'] == $_SESSION['sec_code']){
             echo 'ok';
         } else {
             echo 'no';

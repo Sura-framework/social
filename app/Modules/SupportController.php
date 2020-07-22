@@ -10,17 +10,11 @@ use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 
-use Sura\Modules\Module;
-
 class SupportController extends Module{
 
-    function __construct() {
-//        parent::__construct();
-    }
-
     public function new($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
 //        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -49,8 +43,8 @@ class SupportController extends Module{
     }
 
     public function send($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -103,7 +97,7 @@ class SupportController extends Module{
     }
 
     public function delet($params){
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -130,7 +124,7 @@ class SupportController extends Module{
     }
 
     public function delet_answer($params){
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -156,7 +150,7 @@ class SupportController extends Module{
     }
 
     public function close($params){
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -183,8 +177,8 @@ class SupportController extends Module{
     }
 
     public function answer($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -258,8 +252,8 @@ class SupportController extends Module{
     }
 
     public function show($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -368,9 +362,9 @@ class SupportController extends Module{
 //        var_dump($tr);
 //        unlink($tr);
 
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
 //        $db = $this->db();
         $db = Db::getDB();
 //        $logged = Registry::get('logged');
@@ -406,17 +400,7 @@ class SupportController extends Module{
             if($sql_)
                 $count = $db->super_query("SELECT COUNT(*) AS cnt FROM `support` {$sql_where_cnt}");
 
-            $tpl->load_template('support/head.tpl');
-            if($sql_){
-                $titles = array('вопрос', 'вопроса', 'вопросов');//questions
-                if($user_info['user_group'] == 4)
-                    $tpl->set('{cnt}', $count['cnt'].' '.Gramatic::declOfNum($count['cnt'], $titles));
-                else
-                    $tpl->set('{cnt}', 'Вы задали '.$count['cnt'].' '.Gramatic::declOfNum($count['cnt'], $titles));
-            }else
-                $tpl->set('{cnt}', '');
 
-            $tpl->compile('info');
 
             if($sql_){
                 $tpl->load_template('support/question.tpl');
@@ -442,22 +426,36 @@ class SupportController extends Module{
                         $tpl->set('{answer}', 'ответил');
                     }
                     $tpl->set('{qid}', $row['id']);
-                    $tpl->compile('content');
+                    $tpl->compile('alert_info');
                 }
                 Registry::set('tpl', $tpl);
                 $tpl = Tools::navigation($gcount, $count['cnt'], '/support?page=', $tpl);
-//                $tpl = Registry::get('tpl');
+                        $tpl = $params['tpl'];
             } else
                 if($user_info['user_group'] == 4)
-                    msgbox('', $lang['support_no_quest3'], 'info_2');
+                    $tpl->result['alert_info'] = msg_box($lang['support_no_quest3'], 'info_2');
                 else
-                    msgbox('', $lang['support_no_quest2'], 'info_2');
+                    $tpl->result['alert_info'] = msg_box($lang['support_no_quest2'], 'info_2');
             $tpl->clear();
             $db->free();
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
+
+        $tpl->load_template('support/head.tpl');
+        if($sql_){
+            $titles = array('вопрос', 'вопроса', 'вопросов');//questions
+            if($user_info['user_group'] == 4)
+                $tpl->set('{cnt}', $count['cnt'].' '.Gramatic::declOfNum($count['cnt'], $titles));
+            else
+                $tpl->set('{cnt}', 'Вы задали '.$count['cnt'].' '.Gramatic::declOfNum($count['cnt'], $titles));
+        }else
+            $tpl->set('{cnt}', '');
+
+        $tpl->set('{content_info}', $tpl->result['alert_info']);
+        $tpl->compile('content');
 
         $params['tpl'] = $tpl;
         Page::generate($params);

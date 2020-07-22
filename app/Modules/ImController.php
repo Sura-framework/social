@@ -14,8 +14,8 @@ use Sura\Libs\Validation;
 class ImController extends Module{
 
     public function send($params){
-        $tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -257,8 +257,8 @@ class ImController extends Module{
     }
 
     public function settTypeMsg($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -282,8 +282,8 @@ class ImController extends Module{
     }
 
     public function read($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -314,9 +314,9 @@ class ImController extends Module{
     }
 
     public function typograf($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
-        $db = $this->db();
+        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
+//        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
@@ -343,8 +343,8 @@ class ImController extends Module{
     }
 
     public function update($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -694,8 +694,8 @@ class ImController extends Module{
     }
 
     public function history($params){
-        $tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1111,8 +1111,8 @@ class ImController extends Module{
     }
 
     public function upDialogs($params){
-        //$tpl = Registry::get('tpl');
-        //$lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1153,8 +1153,8 @@ class ImController extends Module{
     }
 
     public function del($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1197,9 +1197,9 @@ class ImController extends Module{
     }
 
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1245,8 +1245,9 @@ class ImController extends Module{
             $tpl->clear();
             $db->free();
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         $params['tpl'] = $tpl;

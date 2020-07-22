@@ -12,9 +12,9 @@ class LangController extends Module{
 
     public static function index($params)
     {
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        //$lang = $this->get_langs();
         $config = Settings::loadsettings();
 //        $db = Registry::get('db');
 //        $logged = Registry::get('logged');

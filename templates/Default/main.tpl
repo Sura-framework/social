@@ -81,7 +81,7 @@
         </div>
     </a>
     <div class="explode"></div>
-    <a href="/edit/" onclick="Page.Go(this.href); return false;"><div class="icon-edit">Редактировать страницу</div></a>
+    [group=0]<a href="/edit/" onclick="Page.Go(this.href); return false;"><div class="icon-edit">Редактировать страницу</div></a>[/group]
     <a href="/settings/" onclick="Page.Go(this.href); return false;"><div class="icon-cog-4">Настройки</div></a>
     <div class="explode"></div>
     <a href="/balance/" onclick="Page.Go(this.href); return false;" id="ubm_link"><div class="icon-money">Баланс <span id="new_ubm" class="drop-nemu_new"></span></div></a>

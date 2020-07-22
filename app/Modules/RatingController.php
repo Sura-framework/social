@@ -10,7 +10,7 @@ use Sura\Libs\Tools;
 class RatingController extends Module{
 
     public function view($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -80,7 +80,7 @@ class RatingController extends Module{
         }
     }
     public function add($params){
-//        $tpl = Registry::get('tpl');
+//        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -128,7 +128,7 @@ class RatingController extends Module{
     }
 
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
         $db = $this->db();
         $user_info = $this->user_info();

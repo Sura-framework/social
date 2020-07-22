@@ -14,7 +14,7 @@ use Sura\Libs\Validation;
 class AudioController extends Module{
 
     public function upload_box($params){
-        //$tpl = Registry::get('tpl');
+        //$tpl = $params['tpl'];
         $lang = langs::get_langs();
         //$db = $this->db();
         //$user_info = $this->user_info();
@@ -67,8 +67,8 @@ class AudioController extends Module{
         }
     }
     public function loadFriends($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -96,8 +96,8 @@ class AudioController extends Module{
         }
     }
     public function del_audio($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -123,8 +123,8 @@ class AudioController extends Module{
         }
     }
     public function add($params){
-        //$tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -149,8 +149,8 @@ class AudioController extends Module{
         }
     }
     public function allMyAudiosBox($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -249,8 +249,8 @@ class AudioController extends Module{
         }
     }
     public function save_edit($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -278,8 +278,8 @@ class AudioController extends Module{
         }
     }
     public function upload($params){
-        //$tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        //$tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -337,8 +337,8 @@ class AudioController extends Module{
         }
     }
     public function search_all($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -414,8 +414,8 @@ class AudioController extends Module{
         }
     }
     public function load_all($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -441,8 +441,8 @@ class AudioController extends Module{
         }
     }
     public function load_play_list($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -483,8 +483,8 @@ class AudioController extends Module{
         }
     }
     public function get_text($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -503,8 +503,8 @@ class AudioController extends Module{
         }
     }
     public function get_info($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -526,9 +526,9 @@ class AudioController extends Module{
 
     public function index($params)
     {
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -667,8 +667,9 @@ class AudioController extends Module{
             $tpl->clear();
             $db->free();
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         $params['tpl'] = $tpl;

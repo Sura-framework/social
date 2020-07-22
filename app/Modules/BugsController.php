@@ -16,8 +16,8 @@ class BugsController extends Module
 {
 
     function add_box($params){
-        $tpl = Registry::get('tpl');
-        $db = Db::getDB();
+        $tpl = $params['tpl'];
+        $db = $this->db();
 
         Tools::NoAjaxQuery();
         $tpl->load_template('bugs/add.tpl');
@@ -29,7 +29,7 @@ class BugsController extends Module
         return true;
     }
     function create($params){
-        $db = Db::getDB();
+        $db = $this->db();
 
         Tools::NoAjaxQuery();
 //        Tools::AntiSpam('bugs');
@@ -109,7 +109,7 @@ class BugsController extends Module
         die();
     }
     function delete($params){
-        $db = Db::getDB();
+        $db = $this->db();
 
         Tools::NoAjaxQuery();
         $id = intval($_POST['id']);
@@ -134,8 +134,8 @@ class BugsController extends Module
         die();
     }
     function open($params){
-        $tpl = Registry::get('tpl');
-        $db = Db::getDB();
+        $tpl = $params['tpl'];
+        $db = $this->db();
 
         $limit_num = 10;
         if($_GET['page_cnt'] > 0) $page_cnt = intval($_GET['page_cnt']) * $limit_num;
@@ -211,8 +211,8 @@ class BugsController extends Module
         return true;
     }
     function complete($params){
-        $tpl = Registry::get('tpl');
-        $db = Db::getDB();
+        $tpl = $params['tpl'];
+        $db = $this->db();
 
         $limit_num = 10;
         if($_GET['page_cnt'] > 0) $page_cnt = intval($_GET['page_cnt']) * $limit_num;
@@ -288,8 +288,8 @@ class BugsController extends Module
         return true;
     }
     function close($params){
-        $tpl = Registry::get('tpl');
-        $db = Db::getDB();
+        $tpl = $params['tpl'];
+        $db = $this->db();
 
         $limit_num = 10;
         if($_GET['page_cnt'] > 0) $page_cnt = intval($_GET['page_cnt']) * $limit_num;
@@ -365,8 +365,8 @@ class BugsController extends Module
         return true;
     }
     function my($params){
-        $tpl = Registry::get('tpl');
-        $db = Db::getDB();
+        $tpl = $params['tpl'];
+        $db = $this->db();
 
         $limit_num = 10;
         if($_GET['page_cnt'] > 0) $page_cnt = intval($_GET['page_cnt']) * $limit_num;
@@ -446,8 +446,8 @@ class BugsController extends Module
     }
 
     function view($params){
-        $tpl = Registry::get('tpl');
-        $db = Db::getDB();
+        $tpl = $params['tpl'];
+        $db = $this->db();
 
         Tools::NoAjaxQuery();
 
@@ -526,8 +526,8 @@ class BugsController extends Module
     }
 
     function index($params){
-        $tpl = Registry::get('tpl');
-        $db = Db::getDB();
+        $tpl = $params['tpl'];
+        $db = $this->db();
 
         $limit_num = 10;
         if($_GET['page_cnt'] > 0) $page_cnt = intval($_GET['page_cnt']) * $limit_num;

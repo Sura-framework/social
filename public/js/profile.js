@@ -120,6 +120,170 @@ var Stories = {
 	},
 }
 
+var Profile_edit ={
+	Open: function () {
+		$('.js_titleRemove').remove();
+		viiBox.start();
+		$.post('/edit/box/', function(d){
+			viiBox.win('edit_box', d);
+		});
+	},
+	Interests: function () {
+		//Сохранение интересов
+		var activity = $("#activity").val();
+		var interests = $("#interests").val();
+		var myinfo = $("#myinfo").val();
+		var music = $("#music").val();
+		var kino = $("#kino").val();
+		var books = $("#books").val();
+		var games = $("#games").val();
+		var quote = $("#quote").val();
+		$('#saveform_interests_load').show();
+		// butloading('saveform_interests_load', '55', 'disabled', '');
+		$.post('/edit/save_interests/', {activity: activity, interests: interests, myinfo: myinfo, music: music, kino: kino, books: books, games: games, quote: quote}, function(data){
+
+			$('#info_interests_save').hide();
+			if(data == 'ok'){
+				$('#info_interests_save').show();
+				$('#info_interests_save').html(lang_infosave);
+			} else {
+				$('#info_interests_save').show();
+				$('#info_interests_save').html(data);
+			}
+			$('#saveform_interests_load').hide();
+			// butloading('saveform_interests_load', '55', 'enabled', lang_box_save);
+		});
+	},
+	General: function () {
+		//Сохранение основной информации
+		var sex = $("#sex").val();
+		var day = $("#day").val();
+		var year = $("#year").val();
+		var month = $("#month").val();
+		var country = $("#country").val();
+		var city = $("#select_city").val();
+		var sex = $('#sex').val();
+		if(sex == 1)
+			var sp = $('#sp').val();
+		else
+			var sp = $('#sp_w').val();
+		var sp_val = $("#sp_val").val();
+
+		$('#saveform_general_load').show();
+		// butloading('saveform', '55', 'disabled', '');
+		$.post('/edit/save_general/', {sex: sex, day: day, month: month, year: year, country: country, city: city, sp: sp, sp_val: sp_val}, function(data){
+			$('#saveform_general').hide();
+			if(data == 'ok'){
+				$('#saveform_general').show();
+				$('#saveform_general').html(lang_infosave);
+			} else {
+				$('#saveform_general').show();
+				$('#saveform_general').html(data);
+			}
+			$('#saveform_general_load').hide();
+			// butloading('saveform', '55', 'enabled', lang_box_save);
+		});
+	},
+	Contacts: function () {
+		//Сохранение контактов
+			var vk = $("#vk").val();
+			var od = $("#od").val();
+			var fb = $("#fb").val();
+			var icq = $("#icq").val();
+			var phone = $("#phone").val();
+			var skype = $("#skype").val();
+			var site = $("#site").val();
+
+			//Проверка VK
+			if(vk != 0){
+				if(isValidVk(vk)){
+					$("#vk").css('background', '#fff');
+					$("#validVk").html('');
+					var errors_vk = 0;
+				} else {
+					$("#vk").css('background', '#ffefef');
+					$("#validVk").html('<span class="form_error">'+lang_no_vk+'</span>');
+					var errors_vk = 1;
+				}
+			} else {
+				$("#vk").css('background', '#fff');
+				$("#validVk").html('');
+				var errors_vk = 0;
+			}
+
+			//Проверка OD
+			if(od != 0){
+				if(isValidOd(od)){
+					$("#od").css('background', '#fff');
+					$("#validOd").html('');
+					var errors_od = 0;
+				} else {
+					$("#od").css('background', '#ffefef');
+					$("#validOd").html('<span class="form_error">'+lang_no_od+'</span>');
+					var errors_od = 1;
+				}
+			} else {
+				$("#od").css('background', '#fff');
+				$("#validOd").html('');
+				var errors_od = 0;
+			}
+
+			//Проверка FB
+			if(fb != 0){
+				if(isValidFb(fb)){
+					$("#fb").css('background', '#fff');
+					$("#validFb").html('');
+					var errors_fb = 0;
+				} else {
+					$("#fb").css('background', '#ffefef');
+					$("#validFb").html('<span class="form_error">'+lang_no_fb+'</span>');
+					var errors_fb = 1;
+				}
+			} else {
+				$("#fb").css('background', '#fff');
+				$("#validFb").html('');
+				var errors_fb = 0;
+			}
+
+			//Проверка ICQ
+			if(icq != 0){
+				if(isValidICQ(icq)){
+					$("#icq").css('background', '#fff');
+					$("#validIcq").html('');
+					var errors_icq = 0;
+				} else {
+					$("#icq").css('background', '#ffefef');
+					$("#validIcq").html('<span class="form_error">'+lang_no_icq+'</span>');
+					var errors_icq = 1;
+				}
+			} else {
+				$("#icq").css('background', '#fff');
+				$("#validIcq").html('');
+				var errors_icq = 0;
+			}
+
+			//Проверям, если есть ошибки то делаем СТОП а если нет, то пропускаем
+			if(errors_vk == 1 || errors_od == 1 || errors_fb == 1 || errors_icq == 1){
+				return false;
+			} else {
+				$('#saveform_contact_load').show();
+				//butloading('saveform_contact', '55', 'disabled', '');
+				$.post('/edit/save_contact/', {phone: phone, vk: vk, od: od, skype: skype, fb: fb, icq: icq, site: site}, function(data){
+					$('#saveform_contact').hide();
+					if(data == 'ok'){
+						$('#saveform_contact').show();
+						$('#saveform_contact').html(lang_infosave);
+					} else {
+						$('#saveform_contact').show();
+						$('#saveform_contact').html(data);
+					}
+					$('#saveform_contact_load').hide();
+					//butloading('saveform_contact', '55', 'enabled', lang_box_save);
+				});
+			}
+	}
+}
+
 //PHOTOS
 var Photo = {
 	addrating: function(r, i, s){
@@ -1296,7 +1460,7 @@ var wall = {
 		wall_text = $('#wall_text').val();
 		
 		attach_files = $('#vaLattach_files').val();
-		for_user_id = location.href.split('https://'+location.host+'/u');
+		for_user_id = location.href.split(location.protocol+'://'+location.host+'/u');
 		
 		rec_num = parseInt($('#wall_rec_num').text())+1;
 		if(!rec_num)
@@ -1925,12 +2089,14 @@ var gStatus = {
 //NEWS
 var news = {
 	page: function(){
-		var type = $('#type').val();
+		const type = $('#type').val();
 		$('#wall_l_href_news').attr('onClick', '');
 		if($('#loading_news').text() == 'Показать предыдущие новости'){
 			textLoad('loading_news');
-			$.post('/news/'+type, {page: 1, page_cnt: page_cnt}, function(d){
-				if(d != 'no_news'){
+			$.post('/news/next/'+type, {page: 1, page_cnt: page_cnt}, function(d){
+				// var d = JSON.parse(d);
+				console.log(d.content);
+				if(d.content != 'no_news'){
 					$('#news').append(d);
 					$('#wall_l_href_news').attr('onClick', 'news.page(\''+type+'\')');
 					$('#loading_news').html('Показать предыдущие новости');

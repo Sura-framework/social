@@ -21,7 +21,8 @@ class RegisterController extends Module{
 //            Tools::NoAjaxQuery();
 
         //Проверяем была ли нажата кнопка, если нет, то делаем редирект на главную
-        if(!$logged) {
+        $token = $_POST['token'].'|'.$_SERVER['REMOTE_ADDR'];
+        if(!$logged AND $token == $_SESSION['_mytoken']) {
             //Код безопасности
             $session_sec_code = $_SESSION['sec_code'];
             $sec_code = $_POST['sec_code'];
@@ -129,14 +130,13 @@ class RegisterController extends Module{
                         //Создаём папку юзера в кеше
                         Cache::mozg_create_folder_cache("user_{$id}");
 
-                        //Лишнее
                         //Директория юзеров
-//                        $uploaddir = __DIR__ . '/../../public/uploads/users/';
-//
-//                        mkdir($uploaddir . $id, 0777);
-//                        chmod($uploaddir . $id, 0777);
-//                        mkdir($uploaddir . $id . '/albums', 0777);
-//                        chmod($uploaddir . $id . '/albums', 0777);
+                        $uploaddir = __DIR__ . '/../../public/uploads/users/';
+
+                        mkdir($uploaddir . $id, 0777);
+                        chmod($uploaddir . $id, 0777);
+                        mkdir($uploaddir . $id . '/albums', 0777);
+                        chmod($uploaddir . $id . '/albums', 0777);
 
                         //Если юзер регался по реф ссылки, то начисляем рефералу 10 убм
                         if ($_SESSION['ref_id']) {
@@ -158,7 +158,9 @@ class RegisterController extends Module{
                         //Вставляем лог в бд
                         $db->query("INSERT INTO `log` SET uid = '{$id}', browser = '{$_BROWSER}', ip = '{$_IP}'");
 
-                        echo 'ok|' . $id;
+                        echo 'ok|' . $id.'|';
+                        return true;
+
                     } else {
                         echo 'err_mail|';
                     }
@@ -169,19 +171,40 @@ class RegisterController extends Module{
             } else {
                 echo 'error';
             }
-        }
+        }echo 'error|no_val|not token';
         die();
     }
 
     public function Signup($params)
     {
-        $tpl = $params['tpl'];
+       // $tpl = $params['tpl'];
 
-        $tpl->load_template('sign_up.tpl');
-        $tpl->compile('content');
+        ################## Загружаем Страны ##################//
+            try {
+                $sql_country_serialize = Cache::system_cache('all_country');
+                $sql_country = unserialize($sql_country_serialize);
+            }catch (\Exception $e){
+                $db = $this->db();
+                $sql_country = $db->super_query("SELECT * FROM `country` ORDER by `name` ASC", true, "country", true);
+                $sql_country_serialize = serialize($sql_country);
+                Cache::creat_system_cache('all_country', $sql_country_serialize);
+                $db->free();
+            }
+            $all_country = '';
+            foreach($sql_country as $row_country)
+                $all_country .= '<option value="'.$row_country['id'].'">'.stripslashes($row_country['name']).'</option>';
 
-        $tpl->clear();
-        $params['tpl'] = $tpl;
-        Page::generate($params);
+//        $tpl->load_template('sign_up.tpl');
+//        $tpl->set('{country}', $all_country);
+//        $tpl->compile('content');
+//
+//        $tpl->clear();
+//        $params['tpl'] = $tpl;
+//        Page::generate($params);
+
+
+        $data  = array();
+        $data['title'] = 'Регистрация | Sura';
+        return view('sign_up', array("title"=>$data['title'],"country" => $all_country));
     }
 }

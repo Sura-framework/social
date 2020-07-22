@@ -12,19 +12,20 @@ use Sura\Libs\Tools;
 class BalanceController extends Module{
 
     public function code($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         $ajax = $_POST['ajax'];
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
+
         if($logged){
-            $act = $_GET['act'];
+            //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
-            $mobile_speedbar = $lang['balance'];
+            //$mobile_speedbar = $lang['balance'];
 
             Tools::NoAjaxQuery();
 
@@ -44,8 +45,8 @@ class BalanceController extends Module{
         }
     }
     public function invite($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -68,23 +69,25 @@ class BalanceController extends Module{
         }
     }
     public function invited($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
+
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
             $mobile_speedbar = $lang['balance'];
 
-            $tpl->load_template('balance/invited.tpl');
-            $tpl->compile('info');
             $sql_ = $db->super_query("SELECT tb1.ruid, tb2.user_name, user_search_pref, user_birthday, user_last_visit, user_photo, user_logged_mobile FROM `invites` tb1, `users` tb2 WHERE tb1.uid = '{$user_id}' AND tb1.ruid = tb2.user_id", 1);
+
+
+
             if($sql_){
                 $tpl->load_template('balance/invitedUser.tpl');
                 foreach($sql_ as $row){
@@ -111,10 +114,15 @@ class BalanceController extends Module{
                     $online = Online($row['user_last_visit'], $row['user_logged_mobile']);
                     $tpl->set('{online}', $online);
 
-                    $tpl->compile('content');
+                    $tpl->compile('info');
                 }
-            } else
-                msgbox('', '<br /><br />Вы еще никого не приглашали.<br /><br /><br />', 'info_2');
+            } else{
+                $tpl->result['alert_info'] = msg_box('Вы еще никого не приглашали.', 'info_2');
+            }
+
+            $tpl->load_template('balance/invited.tpl');
+            $tpl->set('{invited}', $tpl->result['alert_info']);
+            $tpl->compile('content');
         }
 
         $params['tpl'] = $tpl;
@@ -122,8 +130,8 @@ class BalanceController extends Module{
         return true;
     }
     public function payment($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -163,8 +171,8 @@ class BalanceController extends Module{
         }
     }
     public function payment_2($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -201,8 +209,8 @@ class BalanceController extends Module{
         }
     }
     public function ok_payment($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -243,9 +251,9 @@ class BalanceController extends Module{
      */
     public function index($params)
     {
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -272,8 +280,9 @@ class BalanceController extends Module{
             $tpl->clear();
             $db->free();
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         $params['tpl'] = $tpl;

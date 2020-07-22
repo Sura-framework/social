@@ -14,7 +14,7 @@ class Attach_commController extends Module{
      * Удаление комментария
      */
     public function delcomm($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         $lang = langs::get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -74,7 +74,7 @@ class Attach_commController extends Module{
      * Добавления комментария
      */
     public function addcomm($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         include __DIR__ . '/../lang/' . $checkLang . '/site.lng';
         $db = $this->db();
         $user_info = $this->user_info();
@@ -152,7 +152,7 @@ class Attach_commController extends Module{
      */
     public function prevcomm($params)
     {
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
         include __DIR__ . '/../lang/' . $checkLang . '/site.lng';
         $db = $this->db();
         $user_info = $this->user_info();
@@ -237,7 +237,7 @@ class Attach_commController extends Module{
 
     public function index($params)
     {
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
         //$lang = $this->get_langs();
         $db = $this->db();

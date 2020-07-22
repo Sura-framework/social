@@ -249,6 +249,7 @@ $(document).ready(function(){
 		butloading('saveform_interests', '55', 'disabled', '');
 		$.post('/editprofile/save_interests/', {activity: activity, interests: interests, myinfo: myinfo, music: music, kino: kino, books: books, games: games, quote: quote}, function(data){
 			$('#info_save').hide();
+
 			if(data == 'ok'){
 				$('#info_save').show();
 				$('#info_save').html(lang_infosave);

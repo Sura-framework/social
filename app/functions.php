@@ -1,8 +1,11 @@
 <?php
 
+use Sura\View\Blade;
 use Sura\Libs\Db;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Langs;
+use Sura\Libs\Registry;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 
 if (!function_exists('GetVar')) {
@@ -15,6 +18,13 @@ if (!function_exists('GetVar')) {
 }
 
 if (!function_exists('msgbox')) {
+    /**
+     * alert html box (old)
+     * @param $title
+     * @param $text
+     * @param $tpl_name
+     * @return string|null
+     */
     function msgbox($title, $text, $tpl_name)
     {
         global $tpl;
@@ -34,6 +44,35 @@ if (!function_exists('msgbox')) {
             $result = '<div class="err_yellow"><ul class="listing">' . $text . '</ul></div>';
         }
         $tpl->result['info'] .= $result;
+        return $result;
+    }
+}
+
+if (!function_exists('msg_box')) {
+    /**
+     * alert html box
+     * @param $title
+     * @param $text
+     * @param $tpl_name
+     * @return string|null
+     */
+    function msg_box($text, $tpl_name)
+    {
+        $result = '';
+        if ($tpl_name == 'info') {
+            $result .= '<div class="err_yellow">' . $text . '</div>';
+        } elseif ($tpl_name == 'info_red') {
+            $result .= '<div class="err_red">' . $text . '</div>';
+        } elseif ($tpl_name == 'info_2') {
+            $result .= '<div class="info_center">' . $text . '</div>';
+        } elseif ($tpl_name == 'info_box') {
+            $result .= '<div class="msg_none">' . $text . '</div>';
+        } elseif ($tpl_name == 'info_search') {
+            $result .= '<div class="margin_top_10"></div><div class="search_result_title" style="border-bottom:1px solid #e4e7eb">Ничего не найдено</div>
+    <div class="info_center" style="width:630px;padding-top:140px;padding-bottom:154px">Ваш запрос не дал результатов</div>';
+        } elseif ($tpl_name == 'info_yellow') {
+            $result .= '<div class="err_yellow"><ul class="listing">' . $text . '</ul></div>';
+        }
         return $result;
     }
 }
@@ -60,11 +99,16 @@ if (!function_exists('installationSelected')) {
 }
 
 if (!function_exists('xfieldsdataload')) {
-    function xfieldsdataload($id)
+    function xfieldsdataload($string)
     {
-        $xfieldsdata = explode("||", $id);
+
+        $xfieldsdata = explode("||", $string);
+        $xfieldsdata = array_trim_end($xfieldsdata);
+
+
         $data = [];
         foreach ($xfieldsdata as $xfielddata) {
+
             list ($xfielddataname, $xfielddatavalue) = explode("|", $xfielddata);
             $xfielddataname = str_replace("&#124;", "|", $xfielddataname);
             $xfielddataname = str_replace("__NEWL__", "\r\n", $xfielddataname);
@@ -74,6 +118,16 @@ if (!function_exists('xfieldsdataload')) {
         }
         return $data;
     }
+}
+
+function array_trim_end($array){
+
+    $num=count($array);
+    $num=$num-1;
+    if (empty($array[$num]))
+        unset($array[$num]);
+
+    return $array;
 }
 
 if (!function_exists('profileload')) {
@@ -375,5 +429,50 @@ if (!function_exists('AntiSpamLogInsert')) {
         }
 
     }
+
+    /**
+     * Run the blade engine. It returns the result of the code.
+     *
+     * @param string|null $view The name of the cache. Ex: "folder.folder.view" ("/folder/folder/view.blade")
+     * @param array $variables An associative arrays with the values to display.
+     * @return string
+     * @throws Exception
+     */
+    function view($view, $variables = [])
+    {
+        $views = __DIR__ . '/views';
+        $cache = __DIR__ . '/cache/views';
+        $blade = new Blade($views,$cache,Blade::MODE_AUTO); // MODE_DEBUG allows to pinpoint troubles.
+        $blade->csrfIsValid(true, '_mytoken');
+        $logged = Registry::get('logged');
+        if (!empty($logged)){
+            $blade->setAuth('johndoe','user');
+        }
+        try {
+            if (Request::ajax()){
+                $json_content = $blade->run($view, $variables);
+//                echo $blade->run($name, $data);
+               // $title = 'Sura';
+                $title = $variables['title'];
+                if (!empty($logged)){
+                    $result_ajax = array(
+                        'title' => $title,
+                        'new_notifications' => $params['notify_count'],
+                        'content' => $json_content
+                    );
+                }else{
+                    $result_ajax = array(
+                        'title' => $title,
+                        'content' => $json_content
+                    );
+                }
+                header('Content-Type: application/json');
+                echo json_encode($result_ajax);
+//                echo $blade->run("app.json", ['json' => $json]);
+            }else
+                echo $blade->run($view, $variables);
+        } catch (Exception $e) {
+            echo "error found ".$e->getMessage()."<br>".$e->getTraceAsString();
+        }
+    }
 }
-?>

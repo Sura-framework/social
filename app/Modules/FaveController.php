@@ -15,8 +15,8 @@ class FaveController extends Module{
      * Добвление юзера в закладки
      */
     public function add($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -55,8 +55,8 @@ class FaveController extends Module{
      * Удаление юзера из закладок
      */
     public function delet($params){
-        $tpl = Registry::get('tpl');
-        $lang = langs::get_langs();
+        $tpl = $params['tpl'];
+        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -90,9 +90,9 @@ class FaveController extends Module{
      * Вывод людей которые есть в закладках
      */
     public function index($params){
-        $tpl = Registry::get('tpl');
+        $tpl = $params['tpl'];
 
-        $lang = langs::get_langs();
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -155,8 +155,9 @@ class FaveController extends Module{
             $tpl->clear();
             $db->free();
         } else {
-            $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
         $params['tpl'] = $tpl;
