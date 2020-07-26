@@ -18,11 +18,12 @@ class Public_videosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-
-            Tools::NoAjaxQuery();
 
             $pid = intval($_POST['pid']);
             $id = intval($_POST['id']);
@@ -75,11 +76,12 @@ class Public_videosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-
-            Tools::NoAjaxQuery();
 
             $pid = intval($_POST['pid']);
             $id = intval($_POST['id']);
@@ -117,11 +119,12 @@ class Public_videosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-
-            Tools::NoAjaxQuery();
 
             $pid = intval($_POST['pid']);
             $id = intval($_POST['id']);
@@ -156,11 +159,12 @@ class Public_videosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-
-            Tools::NoAjaxQuery();
 
             $pid = intval($_POST['pid']);
             $id = intval($_POST['id']);
@@ -195,11 +199,12 @@ class Public_videosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-
-            Tools::NoAjaxQuery();
 
             $sql_limit = 20;
 
@@ -297,7 +302,6 @@ class Public_videosController extends Module{
 
         if($logged){
 
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $params['title'] = 'Видеозаписи сообщества'.' | Sura';
@@ -310,7 +314,8 @@ class Public_videosController extends Module{
             else $page_cnt = 0;
 
             if($page_cnt)
-                Tools::NoAjaxQuery();
+                Tools::NoAjaxRedirect();
+
 
             $infoGroup = $db->super_query("SELECT videos_num, adres, admin FROM `communities` WHERE id = '{$pid}'");
 

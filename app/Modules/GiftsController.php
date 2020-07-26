@@ -22,14 +22,13 @@ class GiftsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             $for_user_id = intval($_POST['user_id']);
 
             $sql_ = $db->super_query("SELECT gid, img, price FROM `gifts_list` ORDER by `gid` DESC", 1);
@@ -65,14 +64,13 @@ class GiftsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             $for_user_id = intval($_POST['for_user_id']);
             $gift = intval($_POST['gift']);
             $privacy = intval($_POST['privacy']);
@@ -172,14 +170,13 @@ class GiftsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             $gid = intval($_POST['gid']);
             $row = $db->super_query("SELECT uid FROM `gifts` WHERE gid = '{$gid}'");
             if($user_id == $row['uid']){
@@ -202,12 +199,9 @@ class GiftsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $params['title'] = $lang['gifts'].' | Sura';

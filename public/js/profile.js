@@ -579,9 +579,9 @@ var friends = {
 			Page.Loading('start');
 			
 			if(user_name)
-				name = user_name;
+				var name = user_name;
 			else
-				name = $('title').text();
+				var name = $('title').text();
 			
 			$.get('/friends/send/'+for_id+'/', function(data){
 				if(data == 'antispam_err'){
@@ -691,35 +691,35 @@ var fave = {
 var messages = {
 	new_: function(user_id){
 		var content = '<div style="padding:20px">'+
-		'<div class="texta" style="width:100px">Тема:</div><input type="text" id="theme" class="inpst" maxlength="255" style="width:300px" /><div class="mgclr"></div>'+
+		'<div class="texta d-none" style="width:100px">Тема:</div><input type="text" id="theme" class="inpst" maxlength="255" style="width:300px" /><div class="mgclr"></div>'+
 		'<div class="texta" style="width:100px">Сообщение:</div><textarea id="msg" class="inpst" style="width:300px;height:120px;"></textarea><div class="mgclr"></div>'+
 		'</div>';
-		Box.Show('new_msg', 460, lang_new_msg, content, lang_box_canсel, lang_new_msg_send, 'messages.send('+user_id+'); return false');
+		Box.Show('new_msg', 460, lang_new_msg, content, lang_msg_close, lang_new_msg_send, 'messages.send('+user_id+'); return false');
 		$('#msg').focus();
 	},
 	send: function(for_user_id){
 		var theme = $('#theme').val();
-		var msg = $('#msg').val();
-		if(msg != 0){
+		const msg = $('#msg').val();
+		if(msg !== 0){
 			$('#box_loading').show();
 			$.post('/messages/send/', {for_user_id: for_user_id, theme: theme, msg: msg}, function(data){
 				Box.Close('new_msg');
-				if(data == 'antispam_err'){
+				if(data === 'antispam_err'){
 			      AntiSpam('messages');
 			      return false;
 			    }
-				if(data == 'max_strlen')
+				if(data === 'max_strlen')
 					Box.Info('msg_info', lang_dd2f_no, lang_msg_max_strlen, 300);
-				else if(data == 'no_user')
+				else if(data === 'no_user')
 					Box.Info('msg_info', lang_dd2f_no, lang_no_user_fave, 300);
-				else if(data == 'err_privacy')
+				else if(data === 'err_privacy')
 					Box.Info('msg_info', lang_pr_no_title, lang_pr_no_msg, 400, 4000);
-				else
+
+				if(data === 'ok')
 					Box.Info('msg_info', lang_msg_ok_title, lang_msg_ok_text, 300);
 			});
 		} else {
-			$('#msg').val('');
-			$('#msg').focus();
+			$('#msg').val('').focus();
 		}
 	},
 	search: function(folder){
@@ -1401,8 +1401,7 @@ var wall = {
 				butloading('wall_send', 56, 'enabled', lang_box_send);
 			});
 		} else {
-			$('#wall_text').val('');
-			$('#wall_text').focus();
+			$('#wall_text').val('').focus();
 		}
 	},
 	showTag: function(id, rand, type){
@@ -1412,7 +1411,7 @@ var wall = {
 		var top = offset.top-140;
 		var left = offset.left-13;
 		$.post('/tags/', {id: id, rand: rand, type: type}, function(data){
-			$('#tt_wind').html(data);
+			$('#tt_wind').html(data.data);
 			$('#tt_wind2')
 				.css("top", top+"px")
 				.css("left", left+"px")
@@ -1429,8 +1428,7 @@ var wall = {
 	form_open: function(){
 		$('#wall_input').hide();
 		$('#wall_textarea').show();
-		$('#wall_text').val('');
-		$('#wall_text').focus();
+		$('#wall_text').val('').focus();
 	},
 	form_close: function(){
 		wall_text = $('#wall_text').val();
@@ -2095,7 +2093,7 @@ var news = {
 			textLoad('loading_news');
 			$.post('/news/next/'+type, {page: 1, page_cnt: page_cnt}, function(d){
 				// var d = JSON.parse(d);
-				console.log(d.content);
+				console.log(d.content);showTag
 				if(d.content != 'no_news'){
 					$('#news').append(d);
 					$('#wall_l_href_news').attr('onClick', 'news.page(\''+type+'\')');
@@ -3071,6 +3069,30 @@ var im = {
 			}, 3000));
 		}
 	},
+	resize: function(){
+		const h = window.innerHeight - 40;
+		$('#im_left_bl, #imViewMsg').css('height', h+'px');
+
+		// var tabs = $('im_tabs').scrollHeight, search = $('im_search').scrollHeight;
+		// $('#im_dialogs_cont').css('height', (h-(tabs+search))+'px');
+		// var history = $('im_history').scrollHeight, footer = $('im_footer').scrollHeight;
+		// var history_h = h-40-footer, mtop = history_h > history ? (history_h-history)-2 : 0;
+		// $('.im_messages_res').css('padding-bottom', footer+'px');
+		// $('#im_history').css('margin-top', mtop+'px');
+	},
+	im_footer_resize: function(){
+		const w = $('#imViewMsg').innerWidth();
+		const h = $('#imViewMsg').innerHeight();
+		$('#im_footer').css('width', w+'px');
+		$('#im_history').css('height', (h-137)+'px');
+
+		// var tabs = $('im_tabs').scrollHeight, search = $('im_search').scrollHeight;
+		// $('#im_dialogs_cont').css('height', (h-(tabs+search))+'px');
+		// var history = $('im_history').scrollHeight, footer = $('im_footer').scrollHeight;
+		// var history_h = h-40-footer, mtop = history_h > history ? (history_h-history)-2 : 0;
+		// $('.im_messages_res').css('padding-bottom', footer+'px');
+		// $('#im_history').css('margin-top', mtop+'px');
+	},
 	settTypeMsg: function(){
 		Page.Loading('start');
 		$.post('/messages/settTypeMsg/', function(d){
@@ -3080,7 +3102,7 @@ var im = {
 	open: function(uid){
 		$('.im_oneusr').removeClass('im_usactive');
 		$('#dialog'+uid).addClass('im_usactive');
-		$('#imViewMsg').html('<img src="/images/loading_im.gif" style="margin-left:225px;margin-top:220px" />');
+		$('#imViewMsg').html('<div class="spinner-border" role="status"  style="margin-left:225px;margin-top:220px"><span class="sr-only">Loading...</span></div>');
 		$.post('/im/history/', {for_user_id: uid}, function(d){
 			$('#imViewMsg').html(d);
 			
@@ -3093,7 +3115,7 @@ var im = {
 		});
 	},
 	read: function(msg_id, auth_id, my_id){
-		if(auth_id != my_id && imrearstart){
+		if(auth_id !== my_id && imrearstart){
 			imrearstart = 0;
 			var msg_num = parseInt($('#new_msg').text().replace(')', '').replace('(', ''))-1;
 			$.post('/im/read/', {msg_id: msg_id}, function(){
@@ -3131,7 +3153,10 @@ var im = {
 					$('#attach_files').html('');
 					$('#msg_text').focus();
 					$('#status_sending').val('1');
-					butloading('sending', 56, 'enabled', 'Отправить');
+					let send_text = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">\n' +
+						'<path d="m4.7 15.8c-.7 1.9-1.1 3.2-1.3 3.9-.6 2.4-1 2.9 1.1 1.8s12-6.7 14.3-7.9c2.9-1.6 2.9-1.5-.2-3.2-2.3-1.4-12.2-6.8-14-7.9s-1.7-.6-1.2 1.8c.2.8.6 2.1 1.3 3.9.5 1.3 1.6 2.3 3 2.5l5.8 1.1c.1 0 .1.1.1.1s0 .1-.1.1l-5.8 1.1c-1.3.4-2.5 1.3-3 2.7z" fill="#fff"/>\n' +
+						'</svg>';
+					butloading('sending', 56, 'enabled', send_text);
 				}
 			});
 		} else

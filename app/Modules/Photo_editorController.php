@@ -14,15 +14,16 @@ class Photo_editorController extends Module{
 
     /**
      * Отмена редактирования
+     * @param $params
+     * @return bool
      */
     public function close($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $tpl->load_template('photos/editor_close.tpl');
@@ -39,6 +40,8 @@ class Photo_editorController extends Module{
 
     /**
      * Сохранение отредактированой фотки
+     * @param $params
+     * @return bool
      */
     public function index($params){
         $tpl = $params['tpl'];
@@ -50,7 +53,6 @@ class Photo_editorController extends Module{
 
         if($logged){
 
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $config = Settings::loadsettings();
@@ -59,7 +61,8 @@ class Photo_editorController extends Module{
             $allowed_files = explode(', ', $config['photo_format']);
 
             $res_image = $_GET['image'];
-            $format = end(explode('.', $res_image));
+            $array = explode('.', $res_image);
+            $format = end($array);
             $pid = $_GET['pid'];
 
             if(stripos($_SERVER['HTTP_REFERER'], 'pixlr.com') !== false AND $pid AND $format){

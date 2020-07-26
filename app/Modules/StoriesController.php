@@ -24,7 +24,7 @@ class StoriesController  extends Module
     {
         $tpl = $params['tpl'];
 
-        Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         $tpl->load_template('stories/main.tpl');
 
@@ -43,14 +43,12 @@ class StoriesController  extends Module
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $params['title'] = $lang['editmyprofile'].' | Sura';
-
-            Tools::NoAjaxQuery();
 
             $user_id = $user_info['user_id'];
             $upload_dir = __DIR__.'/../../public/uploads/users/';
@@ -146,7 +144,7 @@ class StoriesController  extends Module
             $user_id = $_POST['user'];
         }
 
-        Tools::NoAjaxQuery('/news/');
+        Tools::NoAjaxRedirect('/news/');
 
         $tpl->load_template('stories/show.tpl');
 

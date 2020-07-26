@@ -396,21 +396,24 @@ var Box = {
 		//overflow - постоянный скролл
 		//bg_show - тень внтури окна сверху
 		//bg_show_bottom - тень внтури внтури снизу
-		//cache - "1" - кешировоть, "0" - не кешировать
-		
-		if(func_text)
-			var func_but = '<div class="button_div fl_r" style="margin-right:10px;" id="box_but"><button onClick="'+func+'" id="box_butt_create">'+func_text+'</button></div>';
-		else
-			var func_but = '';
+		let func_but;
+//cache - "1" - кешировоть, "0" - не кешировать
+		let top_pad = $(window).height() / 2 - 50;
 
-		var close_but = '<div class="button_div_gray fl_r"><button onClick="Box.Close(\''+name+'\', '+cache+'); return false;">'+close_text+'</button></div>';
+		if(func_text){
+			func_but = '<div class="button_div fl_r" style="margin-right:10px;" id="box_but"><button onClick="'+func+'" id="box_butt_create">'+func_text+'</button></div>';
+		}else{
+			func_but = '';
+		}
 
-		var box_loading = '<img id="box_loading" style="display:none;padding-top:8px;padding-left:5px;" src="/images/loading_mini.gif" alt="" />';
-		var box_loading = '<img id="box_loading" style="display:none;padding-top:8px;padding-left:5px;" src="/images/loading_mini.gif" alt="" />';
-		var box_loading = '<img id="box_loading" style="display:none;padding-top:8px;padding-left:5px;" src="/images/loading_mini.gif" alt="" />';
+		const close_but = '<div class="button_div_gray fl_r"><button onClick="Box.Close(\'' + name + '\', ' + cache + '); return false;">' + close_text + '</button></div>';
+
+		const box_loading = '<div class="spinner-border" id="box_loading" style="display:none;" role="status"><span class="sr-only">Loading...</span></div>';
 
 		if(height)
-			var top_pad = ($(window).height()-150-height)/2;
+			{
+				top_pad = ($(window).height() - 150 - height) / 2;
+			}
 			if(top_pad < 0)
 				top_pad = 100;
 			
@@ -442,7 +445,6 @@ var Box = {
 			var sheight = '';
 
 		var close_img = '<svg class="bi bi-x-circle" width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">\n' +
-			'  \n' +
 			'  <path fill-rule="evenodd" d="M11.854 4.146a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708-.708l7-7a.5.5 0 0 1 .708 0z"></path>\n' +
 			'  <path fill-rule="evenodd" d="M4.146 4.146a.5.5 0 0 0 0 .708l7 7a.5.5 0 0 0 .708-.708l-7-7a.5.5 0 0 0-.708 0z"></path>\n' +
 			'</svg>';

@@ -20,15 +20,15 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             $user_id = $user_info['user_id'];
             //$act = $_GET['act'];
             $params['title'] = $lang['settings'].' | Sura';
 
-            Tools::NoAjaxQuery();
+            Tools::NoAjaxRedirect();
 
             $_POST['old_pass'] = Validation::ajax_utf8($_POST['old_pass']);
             $_POST['new_pass'] = Validation::ajax_utf8($_POST['new_pass']);
@@ -58,15 +58,13 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             $user_id = $user_info['user_id'];
-            $act = $_GET['act'];
             $params['title'] = $lang['settings'].' | Sura';
 
-            Tools::NoAjaxQuery();
             $user_name = Validation::ajax_utf8(Validation::textFilter($_POST['name']));
             $user_lastname = Validation::ajax_utf8(Validation::textFilter(ucfirst($_POST['lastname'])));
 
@@ -114,15 +112,13 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             $user_id = $user_info['user_id'];
-            $act = $_GET['act'];
-            $params['title'] = $lang['settings'].' | Sura';
 
-            Tools::NoAjaxQuery();
+            $params['title'] = $lang['settings'].' | Sura';
 
             $val_msg = intval($_POST['val_msg']);
             $val_wall1 = intval($_POST['val_wall1']);
@@ -147,38 +143,42 @@ class SettingsController extends Module{
     }
 
     public function privacy($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        //if($ajax == 'yes')
-            //Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
 
         if($logged){
             $user_id = $user_info['user_id'];
-            //$act = $_GET['act'];
             $params['title'] = $lang['settings'].' | Sura';
 
             $sql_ = $db->super_query("SELECT user_privacy FROM `users` WHERE user_id = '{$user_id}'");
             $row = xfieldsdataload($sql_['user_privacy']);
-            $tpl->load_template('settings/privacy.tpl');
-            $tpl->set('{val_msg}', $row['val_msg']);
-            $tpl->set('{val_msg_text}', strtr($row['val_msg'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Никто')));
-            $tpl->set('{val_wall1}', $row['val_wall1']);
-            $tpl->set('{val_wall1_text}', strtr($row['val_wall1'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я')));
-            $tpl->set('{val_wall2}', $row['val_wall2']);
-            $tpl->set('{val_wall2_text}', strtr($row['val_wall2'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я')));
-            $tpl->set('{val_wall3}', $row['val_wall3']);
-            $tpl->set('{val_wall3_text}', strtr($row['val_wall3'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я')));
-            $tpl->set('{val_info}', $row['val_info']);
-            $tpl->set('{val_info_text}', strtr($row['val_info'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я')));
-            $tpl->compile('info');
+//            $tpl->load_template('settings/privacy.tpl');
+//            $tpl->set('{val_msg}', $row['val_msg']);
+            $params['val_msg'] = $row['val_msg'];
+//            $tpl->set('{val_msg_text}', );
+            $params['val_msg_text'] = strtr($row['val_msg'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Никто'));
+//            $tpl->set('{val_wall1}', );
+            $params['val_wall1'] = $row['val_wall1'];
+//            $tpl->set('{val_wall1_text}', );
+            $params['val_wall1_text'] = strtr($row['val_wall1'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я'));
+//            $tpl->set('{val_wall2}', );
+            $params['val_wall2'] = $row['val_wall2'];
+//            $tpl->set('{val_wall2_text}', );
+            $params['val_wall2_text'] = strtr($row['val_wall2'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я'));
+//            $tpl->set('{val_wall3}', );
+            $params['val_wall3'] = $row['val_wall3'];
+//            $tpl->set('{val_wall3_text}', );
+            $params['val_wall3_text'] = strtr($row['val_wall3'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я'));
+//            $tpl->set('{val_info}', );
+            $params['val_info'] = $row['val_info'];
+//            $tpl->set('{val_info_text}', );
+            $params['val_info_text'] = strtr($row['val_info'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я'));
         }
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
+        return view('settings.privacy', $params);
     }
 
     public function addblacklist($params){
@@ -187,15 +187,14 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             $user_id = $user_info['user_id'];
-            $act = $_GET['act'];
+
             $params['title'] = $lang['settings'].' | Sura';
 
-            Tools::NoAjaxQuery();
             $bad_user_id = intval($_POST['bad_user_id']);
 
             //Проверяем на существование юзера
@@ -248,15 +247,13 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             $user_id = $user_info['user_id'];
-            $act = $_GET['act'];
             $params['title'] = $lang['settings'].' | Sura';
 
-            Tools::NoAjaxQuery();
             $bad_user_id = intval($_POST['bad_user_id']);
 
             //Проверяем на существование юзера
@@ -279,15 +276,11 @@ class SettingsController extends Module{
     }
 
     public function blacklist($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
 
-
-
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($params['user']['logged']){
             $params['title'] = $lang['settings'].' | Sura';
@@ -349,12 +342,11 @@ class SettingsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             $user_id = $user_info['user_id'];
-            $act = $_GET['act'];
             $params['title'] = $lang['settings'].' | Sura';
 
             $config = Settings::loadsettings();
@@ -443,19 +435,16 @@ class SettingsController extends Module{
     }
 
     public function general($params){
-        $tpl = $params['tpl'];
-
         $lang = $this->get_langs();
         $db = $this->db();
 
-        if(isset($_POST['ajax']) AND $_POST['ajax'] == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($params['user']['logged']){
             $params['title'] = $lang['settings'].' | Sura';
 
             //Загружаем вверх
-            $tpl->load_template('settings/general.tpl');
+//            $tpl->load_template('settings/general.tpl');
 
             //Завершении смены E-mail
             $params['code_1'] = 'no_display';

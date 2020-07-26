@@ -20,7 +20,7 @@ class LangController extends Module{
 //        $logged = Registry::get('logged');
 //        $user_info = Registry::get('user_info');
 
-        Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         $tpl->load_template('lang/main.tpl');
 
@@ -66,7 +66,7 @@ class LangController extends Module{
         //Смена языка
 //        if($_GET['act'] == 'chage_lang'){
         $langId = intval($_GET['id']);
-        $config = include __DIR__.'/data/config.php';
+        $config = Settings::loadsettings();
         $config['lang_list'] = nl2br($config['lang_list']);
         $expLangList = explode('<br />', $config['lang_list']);
         $numLangs = count($expLangList);

@@ -18,12 +18,10 @@ class SupportController extends Module{
 //        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
 
         if($logged){
-//            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
@@ -48,19 +46,17 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            Tools::NoAjaxQuery();
-            $title = Validation::ajax_utf8(Validation::textFilter($_POST['title']), false, true);
+              $title = Validation::ajax_utf8(Validation::textFilter($_POST['title']), false, true);
             $question = Validation::ajax_utf8(Validation::textFilter($_POST['question']));
             $server_time = intval($_SERVER['REQUEST_TIME']);
             $limitTime = $server_time-3600;
@@ -101,18 +97,16 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            Tools::NoAjaxQuery();
             $qid = intval($_POST['qid']);
             $row = $db->super_query("SELECT suser_id FROM `support` WHERE id = '{$qid}'");
             if($row['suser_id'] == $user_id OR $user_info['user_group'] == 4){
@@ -128,18 +122,16 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
             $row = $db->super_query("SELECT auser_id FROM `support_answers` WHERE id = '{$id}'");
             if($row['auser_id'] == $user_id OR $user_info['user_group'] == 4)
@@ -154,18 +146,16 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
 //            $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            Tools::NoAjaxQuery();
             $qid = intval($_POST['qid']);
             if($user_info['user_group'] == 4){
                 $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `support` WHERE id = '{$qid}'");
@@ -182,18 +172,16 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            Tools::NoAjaxQuery();
             $qid = intval($_POST['qid']);
             $answer = Validation::ajax_utf8(Validation::textFilter($_POST['answer']));
             $check = $db->super_query("SELECT suser_id FROM `support` WHERE id = '{$qid}'");
@@ -257,11 +245,10 @@ class SupportController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
@@ -352,27 +339,17 @@ class SupportController extends Module{
     }
 
     public function index($params){
-//        $bar = new SupportController();
-//        $tr = (new Module)->user_info();
-//        $tr = (new SupportController())->user_info();
-//        $tr = Module::user_info2();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
-//        var_dump($tr);
-//        unlink($tr);
 
         $tpl = $params['tpl'];
 
         $lang = $this->get_langs();
-//        $db = $this->db();
-        $db = Db::getDB();
-//        $logged = Registry::get('logged');
-//        $user_info = Registry::get('user_info');
+        $db = $this->db();
+//        $db = Db::getDB();
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
 
         if($logged){
             $user_id = $user_info['user_id'];

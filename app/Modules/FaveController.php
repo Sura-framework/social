@@ -20,18 +20,17 @@ class FaveController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 70;
             $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['fave'].' | Sura';
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             $fave_id = intval($_POST['fave_id']);
             //Проверяем на факт существования юзера которого добавляем в закладки
             $row = $db->super_query("SELECT `user_id` FROM `users` WHERE user_id = '{$fave_id}'");
@@ -60,18 +59,17 @@ class FaveController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 70;
             $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['fave'].' | Sura';
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             $fave_id = intval($_POST['fave_id']);
 
             //Проверям на факт существование этого юзера в закладках, если есть то пропускаем
@@ -97,12 +95,9 @@ class FaveController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;

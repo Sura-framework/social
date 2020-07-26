@@ -50,7 +50,7 @@ class WallController extends Module{
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if($user_privacy['val_wall2'] == 2 OR $user_privacy['val_wall1'] == 2 OR $user_privacy['val_wall3'] == 2 AND $user_id != $for_user_id)
-                        $check_friend = CheckFriends($for_user_id);
+                        $check_friend = Tools::CheckFriends($for_user_id);
 
                     if(!$fast_comm_id){
                         if($user_privacy['val_wall2'] == 1 OR $user_privacy['val_wall2'] == 2 AND $check_friend OR $user_id == $for_user_id)
@@ -251,10 +251,6 @@ class WallController extends Module{
                             else
                                 $db->query("UPDATE `users` SET user_wall_num = user_wall_num+1 WHERE user_id = '{$for_user_id}'");
 
-                            //Подгружаем и объявляем класс для стены
-//                            include __DIR__.'/../Classes/wall.php';
-//                            $wall = new \wall();
-
                             //Если добавлена просто запись, то сразу обновляем все записи на стене
                             AntiSpamLogInsert('wall');
                             if(!$fast_comm_id){
@@ -266,7 +262,7 @@ class WallController extends Module{
                                     $compile = 'content';
 
                                     $server_time = intval($_SERVER['REQUEST_TIME']);
-                                    $config = include __DIR__.'/data/config.php';
+                                    $config = Settings::loadsettings();
 
                                     //$this->template;
                                     foreach($query as $row_wall){
@@ -858,13 +854,14 @@ class WallController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        Tools::NoAjaxQuery();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_select = 10;
             $limit_page = 0;
 
-            Tools::NoAjaxQuery();
+
             $rid = intval($_POST['rid']);
             //Проверка на существование записи и выводим ID владельца записи и кому предназначена запись
             $row = $db->super_query("SELECT author_user_id, for_user_id, fast_comm_id, add_date, attach FROM `wall` WHERE id = '{$rid}'");
@@ -917,7 +914,7 @@ class WallController extends Module{
                 $db->query("DELETE FROM `news` WHERE obj_id = '{$rid}' AND action_time = '{$row['add_date']}' AND action_type = {$action_type}");
             }
 
-            die();
+//            die();
         }
     }
 
@@ -928,7 +925,6 @@ class WallController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_select = 10;
             $limit_page = 0;
@@ -996,7 +992,6 @@ class WallController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_select = 10;
             $limit_page = 0;
@@ -1034,7 +1029,6 @@ class WallController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_select = 10;
             $limit_page = 0;
@@ -1060,7 +1054,6 @@ class WallController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_select = 10;
             $limit_page = 0;
@@ -1125,7 +1118,6 @@ class WallController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_select = 10;
             $limit_page = 0;
@@ -1180,7 +1172,6 @@ class WallController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_select = 10;
             $limit_page = 0;
@@ -1233,7 +1224,6 @@ class WallController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_select = 10;
             $limit_page = 0;
@@ -1284,7 +1274,6 @@ class WallController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_select = 10;
             $limit_page = 0;
@@ -1303,27 +1292,27 @@ class WallController extends Module{
                 if(stripos(strtolower($open_lnk), 'charset=KOI8-R'))
                     $open_lnk = iconv('KOI8-R', 'utf-8', $open_lnk);
 
-                preg_match("/<meta property=(\"|')og:title(\"|') content=(\"|')(.*?)(\"|')(.*?)>/is", $open_lnk, $parse_title);
+                preg_match("/<meta property=([\"'])og:title([\"']) content=([\"'])(.*?)([\"'])(.*?)>/is", $open_lnk, $parse_title);
                 if(!$parse_title[4])
-                    preg_match("/<meta name=(\"|')title(\"|') content=(\"|')(.*?)(\"|')(.*?)>/is", $open_lnk, $parse_title);
+                    preg_match("/<meta name=([\"'])title([\"']) content=([\"'])(.*?)([\"'])(.*?)>/is", $open_lnk, $parse_title);
 
                 $res_title = $parse_title[4];
 
                 if(!$res_title){
-                    preg_match_all('`(<title>[^\[]+\</title>)`si', $open_lnk, $parse);
+                    preg_match_all('`(<title>[^\[]+</title>)`si', $open_lnk, $parse);
                     $res_title = str_replace(array('<title>', '</title>'), '', $parse[1][0]);
                 }
 
-                preg_match("/<meta property=(\"|')og:description(\"|') content=(\"|')(.*?)(\"|')(.*?)>/is", $open_lnk, $parse_descr);
+                preg_match("/<meta property=([\"'])og:description([\"']) content=([\"'])(.*?)([\"'])(.*?)>/is", $open_lnk, $parse_descr);
                 if(!$parse_descr[4])
-                    preg_match("/<meta name=(\"|')description(\"|') content=(\"|')(.*?)(\"|')(.*?)>/is", $open_lnk, $parse_descr);
+                    preg_match("/<meta name=([\"'])description([\"']) content=([\"'])(.*?)([\"'])(.*?)>/is", $open_lnk, $parse_descr);
 
                 $res_descr = strip_tags($parse_descr[4]);
                 $res_title = strip_tags($res_title);
 
                 $open_lnk = preg_replace('`(<!--noindex-->|<noindex>).+?(<!--/noindex-->|</noindex>)`si', '', $open_lnk);
 
-                preg_match("/<meta property=(\"|')og:image(\"|') content=(\"|')(.*?)(\"|')(.*?)>/is", $open_lnk, $parse_img);
+                preg_match("/<meta property=([\"'])og:image([\"']) content=([\"'])(.*?)([\"'])(.*?)>/is", $open_lnk, $parse_img);
                 if(!$parse_img[4])
                     preg_match_all('/<img(.*?)src=\"(.*?)\"/', $open_lnk, $array);
                 else
@@ -1344,11 +1333,12 @@ class WallController extends Module{
 
                         $exp1 = explode('src="', $img);
 
-                        $exp2 = explode('/>', $exp1[1]);
+                        $exp2 = explode('/>', $exp1['1']);
 
-                        $exp3 = explode('"', $exp2[0]);
+                        $exp3 = explode('"', $exp2['0']);
 
-                        $expFormat = end(explode('.', $exp3[0]));
+                        $array1 = explode('.', $exp3['0']);
+                        $expFormat = end($array1);
 
                         if(in_array(strtolower($expFormat), $allowed_files)){
 
@@ -1357,14 +1347,11 @@ class WallController extends Module{
                             $domain_url_name = explode('/', $lnk);
                             $rdomain_url_name = str_replace('http://', '', $domain_url_name[2]);
 
+                            $new_imgs = '';
                             if(stripos(strtolower($exp3[0]), 'http://') === false)
-
                                 $new_imgs .= 'http://'.$rdomain_url_name.'/'.$exp3[0].'|';
-
                             else
-
                                 $new_imgs .= $exp3[0].'|';
-
                             if($i == 1)
                                 $img_link = str_replace('|', '', $new_imgs);
                         }

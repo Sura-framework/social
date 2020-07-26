@@ -21,12 +21,14 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $public_id = intval($_POST['public_id']);
             $title = Validation::ajax_utf8(Validation::textFilter($_POST['title'], false, true));
@@ -66,7 +68,6 @@ class Groups_forum extends Module{
         $logged = $this->logged();
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $public_id = intval($_GET['public_id']);
@@ -97,12 +98,13 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $fid = intval($_POST['fid']);
             $answer_id = intval($_POST['answer_id']);
@@ -210,12 +212,13 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $id = intval($_POST['fid']);
             $pid = intval($_POST['pid']);
@@ -307,12 +310,13 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $fid = intval($_POST['fid']);
             $text = Validation::ajax_utf8(Validation::textFilter($_POST['text']));
@@ -346,12 +350,13 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $fid = intval($_POST['fid']);
             $title = Validation::ajax_utf8(Validation::textFilter($_POST['title'], false, true));
@@ -385,12 +390,13 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $fid = intval($_POST['fid']);
 
@@ -426,12 +432,13 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $fid = intval($_POST['fid']);
 
@@ -465,12 +472,13 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $fid = intval($_POST['fid']);
 
@@ -508,12 +516,13 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $fid = intval($_POST['fid']);
 
@@ -548,12 +557,13 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $mid = intval($_POST['mid']);
 
@@ -591,12 +601,13 @@ class Groups_forum extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $fid = intval($_POST['fid']);
 
@@ -654,7 +665,6 @@ class Groups_forum extends Module{
         $logged = $this->logged();
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $public_id = intval($_GET['public_id']);
@@ -972,7 +982,7 @@ class Groups_forum extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+        Tools::NoAjaxRedirect();
 
         if($logged){
             //$act = $_GET['act'];

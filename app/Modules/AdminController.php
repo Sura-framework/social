@@ -8,6 +8,10 @@ use thiagoalessio\TesseractOCR\TesseractOCR;
 
 class AdminController extends Module{
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function main($params)
     {
         $logged = $params['user']['logged'];
@@ -41,6 +45,10 @@ class AdminController extends Module{
         return true;
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function stats($params)
     {
         $logged = $params['user']['logged'];

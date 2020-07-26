@@ -21,10 +21,10 @@ class PhotoController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+            Tools::NoAjaxRedirect();
+
             $pid = intval($_POST['pid']);
             $comment = ajax_utf8(textFilter($_POST['comment']));
             $server_time = intval($_SERVER['REQUEST_TIME']);
@@ -128,10 +128,10 @@ class PhotoController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+            Tools::NoAjaxRedirect();
+
             $hash = $db->safesql(substr($_POST['hash'], 0, 32));
             $check_comment = $db->super_query("SELECT id, pid, album_id, owner_id FROM `photos_comments` WHERE hash = '{$hash}'");
             if($check_comment){
@@ -154,10 +154,10 @@ class PhotoController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+            Tools::NoAjaxRedirect();
+
             $pid = intval($_POST['pid']);
             $i_left = intval($_POST['i_left']);
             $i_top = intval($_POST['i_top']);
@@ -225,10 +225,10 @@ class PhotoController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+            Tools::NoAjaxRedirect();
+
             $pid = intval($_POST['pid']);
             $num = intval($_POST['num']);
             if($num > 7){
@@ -311,7 +311,6 @@ class PhotoController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $id = intval($_POST['id']);
@@ -346,11 +345,11 @@ class PhotoController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $config = Settings::loadsettings();
-            Tools::NoAjaxQuery();
+
+            Tools::NoAjaxRedirect();
 
             $rating = intval($_POST['rating']);
             if($rating <= 0 OR $rating > 6) $rating = 5;
@@ -438,7 +437,7 @@ class PhotoController extends Module{
             //$act = $_GET['act'];
             //$user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+            Tools::NoAjaxRedirect();
 
             $pid = intval($_POST['pid']);
             $lid = intval($_POST['lid']);
@@ -523,7 +522,7 @@ class PhotoController extends Module{
             //$act = $_GET['act'];
             //$user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+            Tools::NoAjaxRedirect();
 
             $id = intval($_POST['id']);
 
@@ -562,7 +561,9 @@ class PhotoController extends Module{
             //$user_id = $user_info['user_id'];
 
             //################### Просмотр фотографии ###################//
-            Tools::NoAjaxQuery();
+
+            Tools::NoAjaxRedirect();
+
             $uid = intval($_POST['uid']);
             $photo_id = intval($_POST['pid']);
             $fuser = intval($_POST['fuser']);

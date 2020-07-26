@@ -16,7 +16,9 @@ class RepostController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -75,9 +77,10 @@ class RepostController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             Tools::NoAjaxQuery();
@@ -131,9 +134,11 @@ class RepostController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
+
             $user_id = $user_info['user_id'];
 
             Tools::NoAjaxQuery();
@@ -187,9 +192,10 @@ class RepostController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             Tools::NoAjaxQuery();
@@ -322,7 +328,7 @@ class RepostController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
 

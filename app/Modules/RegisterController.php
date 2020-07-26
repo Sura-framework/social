@@ -16,9 +16,7 @@ class RegisterController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
 
-//        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-//        if($ajax == 'yes')
-//            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         //Проверяем была ли нажата кнопка, если нет, то делаем редирект на главную
         $token = $_POST['token'].'|'.$_SERVER['REMOTE_ADDR'];

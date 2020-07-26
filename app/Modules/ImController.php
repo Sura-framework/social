@@ -14,18 +14,17 @@ use Sura\Libs\Validation;
 class ImController extends Module{
 
     public function send($params){
-        $tpl = $params['tpl'];
         //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
 //            AntiSpam('messages');
 
@@ -107,15 +106,17 @@ class ImController extends Module{
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$for_user_id}', from_user_id = '{$user_id}', type = '8', date = '{$server_time}', text = '{$msg}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '{$msg_lnk}'");
 
-                            Cache::mozg_create_cache("user_{$for_user_id}/updates", 1);
-
+//                            Cache::mozg_create_cache("user_{$for_user_id}/updates", 1);
                         }
 
                         //Ответ скрипта
-                        $tpl->load_template('im/msg.tpl');
-                        $tpl->set('{ava}', $my_ava);
-                        $tpl->set('{name}', $my_name);
-                        $tpl->set('{user-id}', $user_id);
+//                        $tpl->load_template('im/msg.tpl');
+//                        $tpl->set('{ava}', );
+                        $params['ava'] = $my_ava;
+//                        $tpl->set('{name}', );
+                        $params['name'] = $my_name;
+//                        $tpl->set('{user-id}', );
+                        $params['user_id'] = $user_id;
 
                         //Прикрипленные файлы
                         if($attach_files){
@@ -149,12 +150,13 @@ class ImController extends Module{
                                     }
 
                                     //Видео
-                                } elseif($attach_type[0] == 'video' AND file_exists(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}"))
+                                }
+                                elseif($attach_type[0] == 'video' AND file_exists(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}")){
                                     $attach_result .= "<div><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" align=\"left\" /></a></div>";
 
+                                }
                                 //Музыка
-
-                            elseif($attach_type[0] == 'audio'){
+                                elseif($attach_type[0] == 'audio'){
                                     $audioId = intval($data[0]);
                                     $row_audio = $db->super_query("SELECT id, oid, artist, title, url, duration FROM `audio` WHERE id = '{$audioId}'");
                                     if($row_audio){
@@ -202,11 +204,12 @@ class ImController extends Module{
                                     $resLinkTitle = '';
 
                                     //Смайлик
-                                } elseif($attach_type[0] == 'smile' AND file_exists(__DIR__."/../../public/uploads/smiles/{$attach_type[1]}")){
+                                }
+                                elseif($attach_type[0] == 'smile' AND file_exists(__DIR__."/../../public/uploads/smiles/{$attach_type[1]}")){
                                     $attach_result .= '<img src=\"/uploads/smiles/'.$attach_type[1].'\" style="margin-right:5px" />';
-
                                     //Если документ
-                                } elseif($attach_type[0] == 'doc'){
+                                }
+                                elseif($attach_type[0] == 'doc'){
 
                                     $doc_id = intval($attach_type[1]);
 
@@ -225,26 +228,32 @@ class ImController extends Module{
                             }
                             if($attach_result)
                                 $msg = '<div style="width:442px;overflow:hidden">'.preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $msg).$attach_result.'</div><div class="clear"></div>';
-                        } else
-                            $msg = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $msg).$attach_result;
+                        } else{
+                            $attach_result = '';
+                            $msg = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $msg).$attach_result;
+                        }
 
-                        $tpl->set('{text}', stripslashes($msg));
+//                        $tpl->set('{text}', );
+                        $params['text'] = stripslashes($msg);
 
-                        $tpl->set('{msg-id}', $dbid);
-                        $tpl->set('{new}', 'im_class_new');
-                        $tpl->set('{date}', langdate('H:i:s', $server_time));
-                        $tpl->compile('content');
+//                        $tpl->set('{msg-id}', );
+                        $params['msg_id'] = $dbid;
+//                        $tpl->set('{new}', );
+                        $params['new'] = 'im_class_new';
+//                        $tpl->set('{date}', );
+                        $params['date'] = langdate('H:i:s', $server_time);
+//                        $tpl->compile('content');
 
                         //Читисм кеш обновлений
-                        Cache::mozg_clear_cache_file('user_'.$for_user_id.'/im');
-                        Cache::mozg_create_cache('user_'.$for_user_id.'/im_update', '1');
-                        Cache::mozg_create_cache("user_{$for_user_id}/typograf{$user_id}", "");
+//                        Cache::mozg_clear_cache_file('user_'.$for_user_id.'/im');
+//                        Cache::mozg_create_cache('user_'.$for_user_id.'/im_update', '1');
+//                        Cache::mozg_create_cache("user_{$for_user_id}/typograf{$user_id}", "");
 
-                        Tools::AjaxTpl($tpl);
+//                        Tools::AjaxTpl($tpl);
 
                         //$params['tpl'] = $tpl;
                         //Page::generate($params);
-                        return true;
+                        return view('im.msg', $params);
                     } else
                         echo 'err_privacy';
                 } else
@@ -252,7 +261,6 @@ class ImController extends Module{
             } else
                 echo 'max_strlen';
 
-            die();
         }
     }
 
@@ -262,14 +270,13 @@ class ImController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             if($user_info['user_msg_type'] == 0)
                 $db->query("UPDATE `users` SET user_msg_type = 1 WHERE user_id = '".$user_info['user_id']."'");
@@ -282,19 +289,18 @@ class ImController extends Module{
     }
 
     public function read($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             $msg_id = intval($_POST['msg_id']);
 
             $check = $db->super_query("SELECT from_user_id FROM `messages` WHERE id = '".$msg_id."' AND folder = 'inbox' AND pm_read = 'no'");
@@ -309,36 +315,29 @@ class ImController extends Module{
                 Cache::mozg_clear_cache_file('user_'.$check['from_user_id'].'/im');
             }
 
-            die();
+//            die();
         }
     }
 
     public function typograf($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
 //        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-
-            Tools::NoAjaxQuery();
-
+//            Tools::NoAjaxQuery();
             $for_user_id = intval($_POST['for_user_id']);
-
-            if($_GET['stop'] == 1)
-
-                Cache::mozg_create_cache("user_{$for_user_id}/typograf{$user_id}", "");
-
-            else
-
-                Cache::mozg_create_cache("user_{$for_user_id}/typograf{$user_id}", 1);
-
-            exit();
+//            if(isset($_GET['stop'] ) AND $_GET['stop'] == 1){
+//                Cache::mozg_create_cache("user_{$for_user_id}/typograf{$user_id}", "");
+//            }
+//            else{
+//                Cache::mozg_create_cache("user_{$for_user_id}/typograf{$user_id}", 1);
+//            }
         }
     }
 
@@ -348,14 +347,13 @@ class ImController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             $for_user_id = intval($_POST['for_user_id']);
             $last_id = intval($_POST['last_id']);
             $sess_last_id = Cache::mozg_cache('user_'.$user_id.'/im');
@@ -694,63 +692,46 @@ class ImController extends Module{
     }
 
     public function history($params){
-        $tpl = $params['tpl'];
         //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
             $for_user_id = intval($_POST['for_user_id']);
             $first_id = intval($_POST['first_id']);
 
             Cache::mozg_create_cache("user_{$for_user_id}/typograf{$user_id}", "");
 
-            $config = include __DIR__.'/data/config.php';
+            $config = Settings::loadsettings();
 
             //FOR MOBILE VERSION 1.0
             if($config['temp'] == 'mobile'){
-
                 $sqlNEW = $db->super_query("SELECT id FROM `messages` WHERE history_user_id = '{$for_user_id}' AND for_user_id = '{$user_id}' AND pm_read = 'no'", 1);
-
                 if($sqlNEW){
-
                     $newMSGnum = 0;
-
                     foreach($sqlNEW as $rowNEW){
-
                         $newMSGnum++;
-
                         //Обновляем кол-во сообщений
                         $db->query("UPDATE `messages` SET pm_read = 'yes' WHERE id = '".$rowNEW['id']."'");
                         $db->query("UPDATE `messages` SET pm_read = 'yes' WHERE id = '".($rowNEW['id']+1)."'");
-
                     }
-
                     $db->query("UPDATE `im` SET msg_num = msg_num-{$newMSGnum} WHERE iuser_id = '".$user_id."' AND im_user_id = '".$for_user_id."'");
                     $db->query("UPDATE `users` SET user_pm_num = user_pm_num-{$newMSGnum} WHERE user_id = '".$user_id."'");
-
                     //Читисм кеш обновлений
                     Cache::mozg_clear_cache_file('user_'.$for_user_id.'/im');
-
                 }
-
                 $limit_msg = 5;
-
-            } else
-
+            } else {
                 $limit_msg = 20;
-
+            }
             if($first_id > 0){
                 $count = $db->super_query("SELECT COUNT(*) AS all_msg_num FROM `messages` WHERE from_user_id = '".$for_user_id."' AND for_user_id = '".$user_id."' AND id < ".$first_id);
                 $sql_sort = "AND id < ".$first_id;
-
                 if($count['all_msg_num'] > $limit_msg)
                     $limit = $count['all_msg_num']-$limit_msg;
                 else
@@ -764,10 +745,10 @@ class ImController extends Module{
             }
 
             $sql_ = $db->super_query("SELECT tb1.id, text, date, pm_read, folder, history_user_id, from_user_id, attach, tell_uid, tell_date, public, tell_comm, tb2.user_name, user_photo FROM `messages` tb1, `users` tb2 WHERE tb1.for_user_id = '".$user_id."' AND tb1.from_user_id = '".$for_user_id."' AND tb1.history_user_id = tb2.user_id {$sql_sort} ORDER by `date` DESC LIMIT ".$limit.", ".$limit_msg, 1);
-            $tpl->load_template('im/msg.tpl');
+//            $tpl->load_template('im/msg.tpl');
 
             if(!$first_id){
-                $tpl->result['content'] .= '<div class="im_scroll">';
+//                $tpl->result['content'] .= '<div class="im_scroll">';
 
                 // FOR MOBILE
                 if($config['temp'] == 'mobile')
@@ -775,32 +756,52 @@ class ImController extends Module{
                 else
                     $stylesMOB = 'width:520px';
 
-                if($count['all_msg_num'] > $limit_msg)
-                    $tpl->result['content'] .= '<div class="cursor_pointer" onClick="im.page('.$for_user_id.'); return false" id="wall_all_records" style="'.$stylesMOB.'"><div class="public_wall_all_comm" id="load_wall_all_records" style="margin-left:0px">Показать предыдущие сообщения</div></div><div id="prevMsg"></div>';
+                if($count['all_msg_num'] > $limit_msg){
+//                    $tpl->result['content'] .= '<div class="cursor_pointer" onClick="im.page('.$for_user_id.'); return false" id="wall_all_records" style="'.$stylesMOB.'"><div class="public_wall_all_comm" id="load_wall_all_records" style="margin-left:0px">Показать предыдущие сообщения</div></div><div id="prevMsg"></div>';
 
-                $tpl->result['content'] .= '<div id="im_scroll">';
+                }
 
-                if(!$sql_)
-                    $tpl->result['content'] .= '<div class="info_center"><div style="padding-top:210px">Здесь будет выводиться история переписки.</div></div>';
+//                $tpl->result['content'] .= '<div id="im_scroll">';
+
+
             }
 
             if($sql_){
-                foreach($sql_ as $row){
-                    $tpl->set('{name}', $row['user_name']);
-                    $tpl->set('{folder}', $row['folder']);
-                    $tpl->set('{user-id}', $row['history_user_id']);
-                    $tpl->set('{msg-id}', $row['id']);
+                foreach($sql_ as $key => $row){
+//                    $tpl->set('{name}', );
+                    $sql_[$key]['name'] = $row['user_name'];
+//                    $tpl->set('{folder}', );
+                    $sql_[$key]['folder'] = $row['folder'];
+//                    $tpl->set('{user-id}', );
+                    $sql_[$key]['user-id'] = $row['history_user_id'];
+//                    $tpl->set('{msg-id}', );
+                    $sql_[$key]['msg-id'] = $row['id'];
                     $server_time = intval($_SERVER['REQUEST_TIME']);
-                    if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time)) $tpl->set('{date}', langdate('H:i:s', $row['date']));
-                    else $tpl->set('{date}', langdate('d.m.y', $row['date']));
-                    if($row['user_photo']) $tpl->set('{ava}', '/uploads/users/'.$row['history_user_id'].'/50_'.$row['user_photo']);
-                    else $tpl->set('{ava}', '/images/no_ava_50.png');
+                    if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time)) {
+//                        $tpl->set('{date}', );
+                        $sql_[$key]['date'] = langdate('H:i:s', $row['date']);
+                    }
+                    else{
+                        // $tpl->set('{date}', );
+                        $sql_[$key]['date'] = langdate('d.m.y', $row['date']);
+                    }
+                    if($row['user_photo']){
+//                        $tpl->set('{ava}', );
+                        $sql_[$key]['ava'] = '/uploads/users/'.$row['history_user_id'].'/50_'.$row['user_photo'];
+                    }else{
+//                        $tpl->set('{ava}', );
+                        $sql_[$key]['ava'] = '/images/no_ava_50.png';
+                    }
                     if($row['pm_read'] == 'no'){
-                        $tpl->set('{new}', 'im_class_new');
-                        $tpl->set('{read-js-func}', 'onMouseOver="im.read(\''.$row['id'].'\', '.$row['history_user_id'].', '.$user_id.')"');
+//                        $tpl->set('{new}', );
+                        $sql_[$key]['new'] = 'im_class_new';
+//                        $tpl->set('{read-js-func}', 'onMouseOver="im.read(\''.$row['id'].'\', '.$row['history_user_id'].', '.$user_id.')"');
+                        $sql_[$key]['read_js_func'] = 'onMouseOver="im.read(\''.$row['id'].'\', '.$row['history_user_id'].', '.$user_id.')"';
                     } else {
-                        $tpl->set('{new}', '');
-                        $tpl->set('{read-js-func}', '');
+//                        $tpl->set('{new}', );
+                        $sql_[$key]['new'] = '';
+//                        $tpl->set('{read-js-func}', '');
+                        $sql_[$key]['read_js_func'] =  '';
                     }
 
                     //Прикрипленные файлы
@@ -825,7 +826,8 @@ class ImController extends Module{
                                 $resLinkTitle = '';
 
                                 //Фото со стены юзера
-                            } elseif($attach_type[0] == 'photo_u'){
+                            }
+                            elseif($attach_type[0] == 'photo_u'){
                                 if($row['tell_uid']) $attauthor_user_id = $row['tell_uid'];
                                 elseif($row['history_user_id'] == $user_id) $attauthor_user_id = $user_id;
                                 else $attauthor_user_id = $row['from_user_id'];
@@ -850,7 +852,8 @@ class ImController extends Module{
                                 $resLinkTitle = '';
 
                                 //Видео
-                            } elseif($attach_type[0] == 'video' AND file_exists(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}")){
+                            }
+                            elseif($attach_type[0] == 'video' AND file_exists(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}")){
 
                                 $size = getimagesize(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}");
 
@@ -859,7 +862,10 @@ class ImController extends Module{
                                 $resLinkTitle = '';
 
                                 //Музыка
-                            } elseif($attach_type[0] == 'audio'){
+                            }
+                            elseif($attach_type[0] == 'audio'){
+                                if (!isset($audioId))
+                                    $audioId = null;//bug:undefined
                                 $row_audio = $db->super_query("SELECT id, oid, artist, title, url, duration FROM `audio` WHERE id = '{$audioId}'");
                                 if($row_audio){
                                     $stime = gmdate("i:s", $row_audio['duration']);
@@ -907,12 +913,14 @@ class ImController extends Module{
                                 $resLinkTitle = '';
 
                                 //Смайлик
-                            } elseif($attach_type[0] == 'smile' AND file_exists(__DIR__."/../../public/uploads/smiles/{$attach_type[1]}")){
+                            }
+                            elseif($attach_type[0] == 'smile' AND file_exists(__DIR__."/../../public/uploads/smiles/{$attach_type[1]}")){
                                 $attach_result .= '<img src=\"/uploads/smiles/'.$attach_type[1].'\" style="margin-right:5px" />';
 
                                 $resLinkTitle = '';
                                 //Если ссылка
-                            } elseif($attach_type[0] == 'link' AND preg_match('/http:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1 AND stripos(str_replace('http://www.', 'http://', $attach_type[1]), $config['home_url']) === false){
+                            }
+                            elseif($attach_type[0] == 'link' AND preg_match('/http:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1 AND stripos(str_replace('http://www.', 'http://', $attach_type[1]), $config['home_url']) === false){
                                 $count_num = count($attach_type);
                                 $domain_url_name = explode('/', $attach_type[1]);
                                 $rdomain_url_name = str_replace('http://', '', $domain_url_name[2]);
@@ -947,7 +955,8 @@ class ImController extends Module{
                                 $cnt_attach_link++;
 
                                 //Если документ
-                            } elseif($attach_type[0] == 'doc'){
+                            }
+                            elseif($attach_type[0] == 'doc'){
 
                                 $doc_id = intval($attach_type[1]);
 
@@ -961,7 +970,8 @@ class ImController extends Module{
                                 }
 
                                 //Если опрос
-                            } elseif($attach_type[0] == 'vote'){
+                            }
+                            elseif($attach_type[0] == 'vote'){
 
                                 $vote_id = intval($attach_type[1]);
 
@@ -1024,21 +1034,21 @@ class ImController extends Module{
 
                                 }
 
-                            } else
-
+                            }
+                            else
                                 $attach_result .= '';
-
                         }
 
                         if($resLinkTitle AND $row['text'] == $resLinkUrl OR !$row['text'])
                             $row['text'] = $resLinkTitle.'<div class="clear"></div>'.$attach_result;
                         else if($attach_result)
-                            $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']).$attach_result;
+                            $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']).$attach_result;
                         else
-                            $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']);
+                            $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']);
 
-                    } else
-                        $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']);
+                    } else{
+                        $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']);
+                    }
 
                     $resLinkTitle = '';
 
@@ -1080,33 +1090,46 @@ class ImController extends Module{
                                 ";
                     }
 
-                    $tpl->set('{text}', stripslashes($row['text']));
-
-                    $tpl->compile('content');
+//                    $tpl->set('{text}', stripslashes($row['text']));
+//                    $tpl->compile('content');
                 }
-            }
+            }else{
+//                    $tpl->result['content'] .= '<div class="info_center"><div style="padding-top:210px">Здесь будет выводиться история переписки.</div></div>';
 
-            if(!$first_id)
-                $tpl->result['content'] .= '</div></div>';
+            }
+            $params['im'] = $sql_;
+
 
             if(!$first_id){
-                $tpl->load_template('im/form.tpl');
-                $tpl->set('{for_user_id}', $for_user_id);
+                $params['first_id'] = false;
+//                $tpl->result['content'] .= '</div></div>';
+
+//                $tpl->load_template('im/form.tpl');
+//                $tpl->set('{for_user_id}', $for_user_id);
+                $params['for_user_id'] = $for_user_id;
                 //Выводим информцию о том кто смотрит страницу для себя
                 $myInfo = $db->super_query("SELECT user_name FROM `users` WHERE user_id = '".$user_id."'");
-                $tpl->set('{myuser-id}', $user_id);
-                $tpl->set('{my-name}', $myInfo['user_name']);
-                if($user_info['user_photo'])
-                    $tpl->set('{my-ava}', '/uploads/users/'.$user_id.'/50_'.$user_info['user_photo']);
-                else
-                    $tpl->set('{my-ava}', '/images/no_ava_50.png');
-                $tpl->compile('content');
+//                $tpl->set('{myuser-id}', $user_id);
+                $params['myuser_id'] = $user_id;
+//                $tpl->set('{my-name}', $myInfo['user_name']);
+                $params['my_name'] = $myInfo['user_name'];
+                if($user_info['user_photo']){
+//                    $tpl->set('{my-ava}', '/uploads/users/'.$user_id.'/50_'.$user_info['user_photo']);
+                    $params['my_ava'] = '/uploads/users/'.$user_id.'/50_'.$user_info['user_photo'];
+                }
+                else{
+//                    $tpl->set('{my-ava}', '/images/no_ava_50.png');
+                    $params['my_ava'] = '/images/no_ava_50.png';
+                }
+//                $tpl->compile('content');
+            }else{
+                $params['first_id'] = true;
             }
 
-            Tools::AjaxTpl($tpl);
+//            Tools::AjaxTpl($tpl);
 
 
-            return true;
+            return view('im.history', $params);
         }
     }
 
@@ -1116,14 +1139,14 @@ class ImController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             $update = Cache::mozg_cache('user_'.$user_id.'/im_update');
 
             if($update){
@@ -1158,11 +1181,10 @@ class ImController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $im_user_id = intval($_POST['im_user_id']);
@@ -1197,61 +1219,75 @@ class ImController extends Module{
     }
 
     public function index($params){
-        $tpl = $params['tpl'];
-
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             //################### Вывод всех диалогов ###################//
             $params['title'] = 'Диалоги'.' | Sura';
-            $mobile_speedbar = '<a href="/messages">Диалоги</a>';
 
             //Вывод диалогов
             $sql_ = $db->super_query("SELECT tb1.msg_num, im_user_id, tb2.user_search_pref, user_photo FROM `im` tb1, `users` tb2 WHERE tb1.iuser_id = '".$user_id."' AND tb1.im_user_id = tb2.user_id ORDER by `idate` DESC LIMIT 0, 50", 1);
-            $tpl->load_template('im/dialog.tpl');
-            foreach($sql_ as $row){
-                $tpl->set('{name}', $row['user_search_pref']);
-                $tpl->set('{uid}', $row['im_user_id']);
-                if($row['user_photo'])
-                    $tpl->set('{ava}', '/uploads/users/'.$row['im_user_id'].'/50_'.$row['user_photo']);
-                else
-                    $tpl->set('{ava}', '/images/no_ava_50.png');
-                if($row['msg_num'])
-                    $tpl->set('{msg_num}', '<div class="im_new fl_l" id="msg_num'.$row['im_user_id'].'">'.$row['msg_num'].'</div>');
-                else
-                    $tpl->set('{msg_num}', '');
-                $tpl->compile('dialog');
+//            $tpl->load_template('im/dialog.tpl');
+            foreach($sql_ as $key => $row){
+//                $tpl->set('{name}', $row['user_search_pref']);
+                $sql_[$key]['name'] = $row['user_search_pref'];
+
+//                $tpl->set('{uid}', $row['im_user_id']);
+                $sql_[$key]['uid'] = $row['im_user_id'];
+
+                if($row['user_photo']){
+//                    $tpl->set('{ava}', '/uploads/users/'.$row['im_user_id'].'/50_'.$row['user_photo']);
+                    $sql_[$key]['ava'] = '/uploads/users/'.$row['im_user_id'].'/50_'.$row['user_photo'];
+
+                }else{
+//                    $tpl->set('{ava}', '/images/no_ava_50.png');
+                    $sql_[$key]['ava'] = '/images/no_ava_50.png';
+
+                }
+                if($row['msg_num']){
+//                    $tpl->set('{msg_num}', '<div class="im_new fl_l" id="msg_num'.$row['im_user_id'].'">'.$row['msg_num'].'</div>');
+                    $sql_[$key]['msg_num'] = '<div class="im_new fl_l" id="msg_num'.$row['im_user_id'].'">'.$row['msg_num'].'</div>';
+                }else{
+//                    $tpl->set('{msg_num}', '');
+                    $sql_[$key]['msg_num'] = '';
+
+                }
+//                $tpl->compile('dialog');
             }
 
-            //header сообщений
-            $tpl->load_template('im/head.tpl');
-            $tpl->set('{dialogs}', $tpl->result['dialog']);
-            $tpl->set('[inbox]', '');
-            $tpl->set('[/inbox]', '');
-            $tpl->set_block("'\\[outbox\\](.*?)\\[/outbox\\]'si","");
-            $tpl->set_block("'\\[review\\](.*?)\\[/review\\]'si","");
-            $tpl->compile('info');
+            $params['dialog'] = $sql_;
 
-            $tpl->clear();
-            $db->free();
+            //header сообщений
+//            $tpl->load_template('im/head.tpl');
+//            $tpl->set('{dialogs}', $tpl->result['dialog']);
+//            $tpl->set('[inbox]', '');
+//            $tpl->set('[/inbox]', '');
+            $params['inbox'] = '';
+
+//            $tpl->set_block("'\\[outbox\\](.*?)\\[/outbox\\]'si","");
+            $params['outbox'] = false;
+//            $tpl->set_block("'\\[review\\](.*?)\\[/review\\]'si","");
+            $params['review'] = false;
+//            $tpl->compile('info');
+//
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('im.im', $params);
         } else {
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
         }
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
+//        $params['tpl'] = $tpl;
+//        Page::generate($params);
+//        return true;
     }
 }

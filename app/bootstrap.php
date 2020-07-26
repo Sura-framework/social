@@ -19,13 +19,12 @@ session_start();
 ob_start();
 ob_implicit_flush(0);
 
-
 $config = Settings::loadsettings();
 
 $params['config'] = $config;
 
-if(!$config['home_url']) die("Vii Engine not installed. Please run install.php");
-include __DIR__.'/functions.php';
+if(!$config['home_url']) die("Sura not installed. Please run install.php");
+//include __DIR__.'/functions.php';
 
 //FOR MOBILE VERSION 1.0
 //if($_GET['act'] == 'change_mobile')
@@ -77,9 +76,9 @@ if ($user['logged'] == true) {
 
 $app = new Application();
 
-$tpl = $app->view();
+//$tpl = $app->view();
 //$tpl = null;
-$params['tpl'] = $tpl;
+//$params['tpl'] = $tpl;
 
 $app->user_online($params);
 $params = array($params);

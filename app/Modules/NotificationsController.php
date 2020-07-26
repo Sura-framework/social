@@ -19,7 +19,7 @@ class NotificationsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_POST['act'];
+//            $act = $_POST['act'];
 
             if(stripos($user_info['notifications_list'], "settings_likes_posts|") === false) $settings_likes_posts = 'html_checked';
             else $settings_likes_posts = '';
@@ -81,7 +81,7 @@ class NotificationsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_POST['act'];
+//            $act = $_POST['act'];
 
             $id = intval($_POST['id']);
             if($id){

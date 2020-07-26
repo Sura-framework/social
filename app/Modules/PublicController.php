@@ -24,7 +24,7 @@ class PublicController extends Module{
         $config = Settings::loadsettings();
 
         if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+            Tools::NoAjaxRedirect();
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -617,7 +617,7 @@ class PublicController extends Module{
 
                 $tpl->set('{title}', stripslashes($row['title']));
 
-                $config = include __DIR__.'/data/config.php';
+                $config = Settings::loadsettings();
 
                 if($row['photo']){
 

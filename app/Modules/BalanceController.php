@@ -17,17 +17,14 @@ class BalanceController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = $_POST['ajax'];
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
 
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
             //$mobile_speedbar = $lang['balance'];
-
-            Tools::NoAjaxQuery();
 
             $code=$_POST['code'];
             $res = $db->super_query("SELECT COUNT(*) FROM `codes` WHERE code = '{$code}' LIMIT 1");
@@ -45,89 +42,81 @@ class BalanceController extends Module{
         }
     }
     public function invite($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
-        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
-            $mobile_speedbar = $lang['balance'];
+            $params['uid'] = $user_id;
 
-            $tpl->load_template('balance/invite.tpl');
-            $tpl->set('{uid}', $user_id);
-            $tpl->compile('content');
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+            return view('balance.invite', $params);
         }
     }
     public function invited($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
 
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
-            $mobile_speedbar = $lang['balance'];
 
             $sql_ = $db->super_query("SELECT tb1.ruid, tb2.user_name, user_search_pref, user_birthday, user_last_visit, user_photo, user_logged_mobile FROM `invites` tb1, `users` tb2 WHERE tb1.uid = '{$user_id}' AND tb1.ruid = tb2.user_id", 1);
 
-
-
             if($sql_){
-                $tpl->load_template('balance/invitedUser.tpl');
+//                $tpl->load_template('balance/invitedUser.tpl');
                 foreach($sql_ as $row){
                     $user_country_city_name = explode('|', $row['user_country_city_name']);
-                    $tpl->set('{country}', $user_country_city_name[0]);
+//                    $tpl->set('{country}', );
+                    $row['country'] = $user_country_city_name[0];
+                    if($user_country_city_name[1]){
+//                        $tpl->set('{city}', ', );
+                        $row['city'] = '.$user_country_city_name[1]';
+                    }
+                    else{
+//                       $tpl->set('{city}', '');
+                        $row['city'] = '';
+                    }
 
-                    if($user_country_city_name[1])
-                        $tpl->set('{city}', ', '.$user_country_city_name[1]);
-                    else
-                        $tpl->set('{city}', '');
+//                    $tpl->set('{user-id}', );
+                    $row['user_id'] = $row['ruid'];
+//                        $tpl->set('{name}', );
+                    $row['name'] = $row['user_search_pref'];
 
-                    $tpl->set('{user-id}', $row['ruid']);
-                    $tpl->set('{name}', $row['user_search_pref']);
-
-                    if($row['user_photo'])
-                        $tpl->set('{ava}', '/uploads/users/'.$row['ruid'].'/100_'.$row['user_photo']);
-                    else
-                        $tpl->set('{ava}', '/images/100_no_ava.png');
+                    if($row['user_photo']){
+//                        $tpl->set('{ava}', );
+                        $row['ava'] = '/uploads/users/'.$row['ruid'].'/100_'.$row['user_photo'];
+                    }
+                    else{
+//                        $tpl->set('{ava}', ;
+                        $row['ava'] = '/images/100_no_ava.png';
+                    }
 
                     //Возраст юзера
                     $user_birthday = explode('-', $row['user_birthday']);
-                    $tpl->set('{age}', user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]));
+//                    $tpl->set('{age}', );
+                    $row['age'] = user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
 
                     $online = Online($row['user_last_visit'], $row['user_logged_mobile']);
-                    $tpl->set('{online}', $online);
+//                    $tpl->set('{online}', );
+                    $row['online'] = $online;
 
-                    $tpl->compile('info');
+//                    $tpl->compile('info');
                 }
+                $params['invited'] = $sql_;
             } else{
-                $tpl->result['alert_info'] = msg_box('Вы еще никого не приглашали.', 'info_2');
+                $params['invited'] = false;
             }
-
-            $tpl->load_template('balance/invited.tpl');
-            $tpl->set('{invited}', $tpl->result['alert_info']);
-            $tpl->compile('content');
         }
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
+        return view('balance.invited', $params);
     }
     public function payment($params){
         $tpl = $params['tpl'];
@@ -135,16 +124,14 @@ class BalanceController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
             $mobile_speedbar = $lang['balance'];
 
-            NoAjaxQuery();
 
             $owner = $db->super_query("SELECT balance_rub FROM `users` WHERE user_id = '{$user_id}'");
 
@@ -176,16 +163,14 @@ class BalanceController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
             $mobile_speedbar = $lang['balance'];
 
-            NoAjaxQuery();
             $config = Settings::loadsettings();
 
             $owner = $db->super_query("SELECT user_balance, balance_rub FROM `users` WHERE user_id = '{$user_id}'");
@@ -214,16 +199,13 @@ class BalanceController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
             $mobile_speedbar = $lang['balance'];
-
-            NoAjaxQuery();
 
             $num = intval($_POST['num']);
             if($num <= 0) $num = 0;
@@ -251,42 +233,36 @@ class BalanceController extends Module{
      */
     public function index($params)
     {
-        $tpl = $params['tpl'];
-
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
-            $mobile_speedbar = $lang['balance'];
 
             $owner = $db->super_query("SELECT user_balance, balance_rub FROM `users` WHERE user_id = '{$user_id}'");
 
-            $tpl->load_template('balance/main.tpl');
+//            $tpl->load_template('balance/main.tpl');
 
-            $tpl->set('{ubm}', $owner['user_balance']);
-            $tpl->set('{rub}', $owner['balance_rub']);
-            $tpl->set('{text-rub}', Gramatic::declOfNum($owner['balance_rub'], array('рубль', 'рубля', 'рублей')));
+//            $tpl->set('{ubm}', );
+            $params['ubm'] = $owner['user_balance'];
+//            $tpl->set('{rub}', );
+            $params['rub'] = $owner['balance_rub'];
+//            $tpl->set('{text-rub}', );
+            $params['text_rub'] = Gramatic::declOfNum($owner['balance_rub'], array('рубль', 'рубля', 'рублей'));
 
-            $tpl->compile('content');
-            $tpl->clear();
-            $db->free();
+//            $tpl->compile('content');
+//            $tpl->clear();
+//            $db->free();
+            return view('balance.main', $params);
         } else {
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
         }
-
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
     }
 }

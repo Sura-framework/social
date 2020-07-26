@@ -284,7 +284,7 @@
                                                     <img src="{{ $row['photo'] }}" alt="" />
                                                 </a>
                                                 <div class="video_profile_title">
-                                                    <a href="/video/{{ $row['user_id'] }}/{id}/wall/{{ $row['user_id'] }}/" onClick="videos.show({id}, this.href, '/u{user-id}'); return false">{{ $row['title'] }}</a>
+                                                    <a href="/video/{{ $row['user_id'] }}/{id}/wall/{{ $row['user_id'] }}/" onClick="videos.show({id}, this.href, '/u{{ $row['user_id']}}'); return false">{{ $row['title'] }}</a>
                                                 </div>
                                                 <div class="nesubscriptstatus">{{ $row['date'] }} | <a href="/video/{{ $row['user_id'] }}/{id}/wall/{{ $row['user_id'] }}/" onClick="videos.show({id}, this.href, '/u{{ $row['user_id'] }}'); return false">{{ $row['comm_num'] }}</a>
                                                 </div>

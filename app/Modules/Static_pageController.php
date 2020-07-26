@@ -15,9 +15,7 @@ class Static_pageController extends Module{
         $logged = Registry::get('logged');
         // $user_info = Registry::get('user_info');
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
             $alt_name = $db->safesql(Gramatic::totranslit($_GET['page']));

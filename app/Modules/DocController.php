@@ -21,7 +21,6 @@ class DocController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             Tools::NoAjaxQuery();
@@ -113,7 +112,6 @@ class DocController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
 
@@ -151,7 +149,6 @@ class DocController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             Tools::NoAjaxQuery();
@@ -187,7 +184,6 @@ class DocController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             Tools::NoAjaxQuery();
@@ -233,7 +229,6 @@ class DocController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $params['title'] = 'Документы'.' | Sura';
@@ -305,7 +300,6 @@ class DocController extends Module{
         $logged = $this->logged();
 
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             Tools::NoAjaxQuery();

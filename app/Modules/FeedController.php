@@ -30,8 +30,7 @@ class FeedController extends Module
         $logged = $params['user']['logged'];
         $user_info = $params['user']['user_info'];
 
-        if (isset($_POST['ajax']) AND $_POST['ajax'] == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
             //Если вызваны предыдущие новости
@@ -76,8 +75,7 @@ class FeedController extends Module
         $logged = $params['user']['logged'];
         $user_info = $params['user']['user_info'];
 
-        if (isset($_POST['ajax']) AND $_POST['ajax'] == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
 		if($logged){
 

@@ -11,19 +11,23 @@ use Sura\Libs\Gramatic;
 use Sura\Libs\Thumb;
 use Sura\Libs\Cache;
 
+/**
+ * Class AdsController
+ * @package App\Modules
+ */
 class AdsController extends Module{
 
+    /**
+     * @param $params
+     */
     public function clickgo($params){
         $user_info = Registry::get('user_info');
         $db = $this->db();
         $logged = Registry::get('logged');
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
 
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if(isset($logged)){
-//            $act = $_GET['act'];
 //            $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -59,20 +63,21 @@ class AdsController extends Module{
                 }
                 echo $ads['link'];
             }
-            die();
-
         }
     }
 
+    /**
+     * @param $params
+     */
     public function status_ad($params){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if(isset($logged)){
-            $act = $_GET['act'];
+
             $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -126,21 +131,22 @@ class AdsController extends Module{
                 $result = 'Ошибка';
             }
             echo $result;
-            die();
-
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function cabinet($params){
         $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if(isset($logged)){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -241,16 +247,19 @@ class AdsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function create($params){
         $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if(isset($logged)){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -284,15 +293,17 @@ class AdsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function optionad($params){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if(isset($logged)){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -353,15 +364,17 @@ class AdsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function checkurl($params){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if(isset($logged)){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -398,15 +411,17 @@ class AdsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function bigtype($params){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if(isset($logged)){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -464,16 +479,18 @@ class AdsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function nextcreate($params){
         $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if(isset($logged)){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -497,7 +514,7 @@ class AdsController extends Module{
                 $countrysl .= Tools::InstallationSelectedNew($row['user_countrysl'],'<li onmousemove="Select.itemMouseMove(1, '.$sql1['id'].')" val="'.$sql1['id'].'" class="">'.$sql1['name'].'</li>');
             }
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             $type = $_POST['type'];
             if($type == 'url' || $type == 'app' || $type = 'pub'){
                 $tpl->load_template('ads/create/'.$type.'.tpl');
@@ -517,15 +534,17 @@ class AdsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function loadage($params){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if(isset($logged)){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -563,16 +582,18 @@ class AdsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function uploadimg($params){
         $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if(isset($logged)){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -596,7 +617,7 @@ class AdsController extends Module{
                 $countrysl .= Tools::InstallationSelectedNew($row['user_countrysl'],'<li onmousemove="Select.itemMouseMove(1, '.$sql1['id'].')" val="'.$sql1['id'].'" class="">'.$sql1['name'].'</li>');
             }
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             $tpl->load_template('ads/uploadimg.tpl');
             $tpl->compile('content');
             Tools::AjaxTpl($tpl);
@@ -605,15 +626,17 @@ class AdsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function upload($params){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if(isset($logged)){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -637,7 +660,7 @@ class AdsController extends Module{
                 $countrysl .= Tools::InstallationSelectedNew($row['user_countrysl'],'<li onmousemove="Select.itemMouseMove(1, '.$sql1['id'].')" val="'.$sql1['id'].'" class="">'.$sql1['name'].'</li>');
             }
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             //Разришенные форматы
             $allowed_files = array('jpg', 'jpeg', 'jpe', 'png', 'gif');
 
@@ -647,7 +670,8 @@ class AdsController extends Module{
             $server_time = intval($_SERVER['REQUEST_TIME']);
             $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
-            $type = end(explode(".", $image_name)); // формат файла
+            $array = explode(".", $image_name);
+            $type = end($array); // формат файла
 
             //Проверям если, формат верный то пропускаем
             if(in_array(strtolower($type), $allowed_files)){
@@ -678,15 +702,17 @@ class AdsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function createad($params){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if(isset($logged)){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = 'Реклама';
 
@@ -770,6 +796,10 @@ class AdsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function index($params)
     {
         $tpl = $params['tpl'];
@@ -778,9 +808,8 @@ class AdsController extends Module{
         //$user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
 
         if($logged){
             //$act = $_GET['act'];
@@ -822,16 +851,16 @@ class AdsController extends Module{
         return true;
     }
 
+    /**
+     * @param $params
+     */
     public function view_ajax($params){
         $user_info = $this->user_info();
         $logged = $this->logged();
-        //$ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         $db = $this->db();
         $tpl = $params['tpl'];
 
-        if($ajax == 'yes')
-        Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if(isset($logged)){
 

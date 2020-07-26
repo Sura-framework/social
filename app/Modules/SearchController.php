@@ -13,16 +13,14 @@ use Sura\Libs\Validation;
 class SearchController extends Module{
 
     public function index($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
 
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         $config = Settings::loadsettings();
 

@@ -14,7 +14,7 @@ class VotesController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
 

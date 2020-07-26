@@ -25,9 +25,9 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -109,15 +109,13 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_vieos = 20;
 
-            Tools::NoAjaxQuery();
             $tpl->load_template('videos/add.tpl');
             $tpl->compile('content');
             Tools::AjaxTpl($tpl);
@@ -134,11 +132,10 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_vieos = 20;
 
@@ -158,15 +155,12 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_vieos = 20;
-
-            Tools::NoAjaxQuery();
 
             $config = Settings::loadsettings();
 
@@ -274,15 +268,12 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_vieos = 20;
-
-            Tools::NoAjaxQuery();
 
             $video_lnk = $_POST['video_lnk'];
 
@@ -400,15 +391,14 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
 
-            Tools::NoAjaxQuery();
             $vid = intval($_POST['vid']);
 
             if($vid){
@@ -452,15 +442,14 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
 
-            Tools::NoAjaxQuery();
             $vid = intval($_POST['vid']);
             if($vid){
                 $row = $db->super_query("SELECT title, descr, privacy FROM `videos` WHERE id = '{$vid}' AND owner_user_id = '{$user_id}'");
@@ -488,15 +477,14 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
 
-            Tools::NoAjaxQuery();
             $vid = intval($_POST['vid']);
 
             if($vid){
@@ -525,17 +513,13 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
 
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
-
-            //Tools::NoAjaxQuery();
-
 
             //$db = $this->db();
             // $logged = Registry::get('logged');
@@ -763,15 +747,12 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_vieos = 20;
-
-            Tools::NoAjaxQuery();
 
             $config = Settings::loadsettings();
 
@@ -875,15 +856,14 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
 
-            Tools::NoAjaxQuery();
             $comm_id = intval($_POST['comm_id']);
 
             //Проверка на существования комментария, и выводим ИД владельца видео
@@ -931,15 +911,14 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
 
-            Tools::NoAjaxQuery();
             $vid = intval($_POST['vid']);
             $comm_num = intval($_POST['num']);
             $owner_id = intval($_POST['owner_id']);
@@ -1011,15 +990,14 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
 
-            Tools::NoAjaxQuery();
             $notes = intval($_POST['notes']);
 
             //Для навигатор
@@ -1086,15 +1064,13 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
-
-            Tools::NoAjaxQuery();
 
             $pid = intval($_POST['pid']);
 
@@ -1159,15 +1135,13 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_vieos = 20;
-
-            Tools::NoAjaxQuery();
 
             $get_user_id = intval($_POST['get_user_id']);
             $last_id = intval($_POST['last_id']);
@@ -1236,15 +1210,14 @@ class VideosController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
 
-            Tools::NoAjaxQuery();
             $vid = intval($_POST['vid']);
             $row = $db->super_query("SELECT video, photo, title, descr FROM `videos` WHERE id = '{$vid}'");
 
@@ -1285,9 +1258,7 @@ class VideosController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
             //$act = $_GET['act'];

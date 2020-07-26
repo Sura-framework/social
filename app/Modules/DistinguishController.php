@@ -20,7 +20,6 @@ class DistinguishController extends Module{
         $logged = $this->logged();
         Tools::NoAjaxQuery();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $i_left = intval($_POST['i_left']); if($i_left < 0) $i_left = 0;
@@ -64,7 +63,6 @@ class DistinguishController extends Module{
         $logged = $this->logged();
         Tools::NoAjaxQuery();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $photo_id = intval($_POST['photo_id']);
@@ -98,7 +96,6 @@ class DistinguishController extends Module{
         $logged = $this->logged();
         Tools::NoAjaxQuery();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $photo_id = intval($_POST['photo_id']);
@@ -118,7 +115,6 @@ class DistinguishController extends Module{
         $logged = $this->logged();
         Tools::NoAjaxQuery();
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $photo_id = intval($_POST['photo_id']);
@@ -168,7 +164,6 @@ class DistinguishController extends Module{
         Tools::NoAjaxQuery();
 
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $tpl->clear();
             $db->free();

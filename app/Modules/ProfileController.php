@@ -18,9 +18,7 @@ class ProfileController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         $user_id = $user_info['user_id'];
 
@@ -1252,7 +1250,7 @@ class ProfileController extends Module{
                     }
                     //Приватность сообщений
                     if($user_privacy['val_msg'] == 1 OR $user_privacy['val_msg'] == 2 AND $CheckFriends AND !$CheckBlackList){
-                        $params['privacy_msg'] = '<a href="/" onClick="messages.new_({user-id}); return false">
+                        $params['privacy_msg'] = '<a href="#" onClick="messages.new_('.$params['user_id'].'); return false">
                                         <svg class="bi bi-envelope" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                             <path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>
                                             <path d="M.05 3.555C.017 3.698 0 3.847 0 4v.697l5.803 3.546L0 11.801V12c0 .306.069.596.192.856l6.57-4.027L8 9.586l1.239-.757 6.57 4.027c.122-.26.191-.55.191-.856v-.2l-5.803-3.557L16 4.697V4c0-.153-.017-.302-.05-.445L8 8.414.05 3.555z"/>

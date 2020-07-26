@@ -24,11 +24,10 @@ class AlbumsController extends Module{
         //$user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
 
         }
     }
@@ -41,14 +40,10 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
-
-            Tools::NoAjaxQuery();
-
             $name = Validation::ajax_utf8(Validation::textFilter($_POST['name'], false, true));
             $descr = Validation::ajax_utf8(Validation::textFilter($_POST['descr']));
             $privacy = intval($_POST['privacy']);
@@ -96,12 +91,10 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
+        Tools::NoAjaxRedirect();
+
+        if($logged){
             $path = explode('/', $_SERVER['REQUEST_URI']);
             $aid = intval($path['3']);
 
@@ -136,12 +129,10 @@ class AlbumsController extends Module{
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
 
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
+
+        if($logged){
 
             $path = explode('/', $_SERVER['REQUEST_URI']);
             $aid = intval($path['3']);
@@ -281,13 +272,10 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
+
+        if($logged){
             $id = intval($_GET['id']);
             $user_id = $user_info['user_id'];
 
@@ -353,13 +341,10 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
+
+        if($logged){
             $id = intval($_GET['id']);
             $user_id = $user_info['user_id'];
 
@@ -385,13 +370,11 @@ class AlbumsController extends Module{
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
+
+        if($logged){
+
             $id = intval($_POST['id']);
             $user_id = $user_info['user_id'];
             $descr = Validation::ajax_utf8(Validation::textFilter($_POST['descr']));
@@ -417,13 +400,10 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
+
+        if($logged){
             $id = intval($_GET['id']);
             $user_id = $user_info['user_id'];
             $row = $db->super_query("SELECT descr FROM `photos` WHERE id = '{$id}' AND user_id = '{$user_id}'");
@@ -442,13 +422,11 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
+
+        if($logged){
+
             $array = $_POST['album'];
             $count = 1;
 
@@ -479,13 +457,11 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
+
+        if($logged){
+
             $array	= $_POST['photo'];
             $count = 1;
 
@@ -519,13 +495,11 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
+
+        if($logged){
+
             $user_id = $user_info['user_id'];
             $id = $db->safesql(intval($_POST['id']));
             $row = $db->super_query("SELECT aid, name, descr, privacy FROM `albums` WHERE aid = '{$id}' AND user_id = '{$user_id}'");
@@ -559,13 +533,11 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
+
+        if($logged){
+
             $id = intval($_POST['id']);
             $user_id = $user_info['user_id'];
             $name = Validation::ajax_utf8(Validation::textFilter($_POST['name'], false, true));
@@ -601,15 +573,13 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
 
             $checkLang = '';
             include __DIR__.'/../lang/'.$checkLang.'/site.lng';
-            Tools::NoAjaxQuery();
 
             $user_id = $user_info['user_id'];
             $id = intval($_POST['id']);
@@ -680,13 +650,11 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
-            //Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
+
+        if($logged){
+
             $user_id = $user_info['user_id'];
             $notes = intval($_POST['notes']);
 
@@ -789,13 +757,11 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
+
+        if($logged){
+
             $hash = $db->safesql(substr($_POST['hash'], 0, 32));
             $row = $db->super_query("SELECT aid, user_id, photo_num FROM `albums` WHERE ahash = '{$hash}'");
 
@@ -846,13 +812,13 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
 
-            $mobile_speedbar = 'Комментарии';
+//            $mobile_speedbar = 'Комментарии';
 
             $user_id = $user_info['user_id'];
             $uid = intval($_GET['uid']);
@@ -1055,12 +1021,10 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
 
+        Tools::NoAjaxRedirect();
+
+        if($logged){
             //include __DIR__.'/../lang/'.$checkLang.'/site.lng';
             $user_id = $user_info['user_id'];
             //$aid = intval($_GET['aid']);
@@ -1145,9 +1109,9 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
 
         if($logged){
             //$act = $_GET['act'];
@@ -1283,11 +1247,10 @@ class AlbumsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
 
         }
     }
@@ -1307,13 +1270,9 @@ class AlbumsController extends Module{
 
 //        $lang = $this->get_langs();
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
-            $act = $_GET['act'];
-
         $mobile_speedbar = 'Альбомы';
         $uid = intval($_GET['uid']);
 

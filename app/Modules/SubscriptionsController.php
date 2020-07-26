@@ -16,9 +16,10 @@ class SubscriptionsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $for_user_id = intval($_POST['for_user_id']);
@@ -67,9 +68,10 @@ class SubscriptionsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $del_user_id = intval($_POST['del_user_id']);
@@ -94,10 +96,9 @@ class SubscriptionsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             //################### Показ всех подпискок юзера ###################//

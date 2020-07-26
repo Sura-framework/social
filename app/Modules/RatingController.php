@@ -14,7 +14,9 @@ class RatingController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             $user_id = $user_info['user_id'];
             //$act = $_GET['act'];
@@ -84,11 +86,11 @@ class RatingController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             $user_id = $user_info['user_id'];
-            $act = $_GET['act'];
-
             $for_user_id = intval($_POST['for_user_id']);
             $num = intval($_POST['num']);
             if($num < 0) $num = 0;
@@ -134,13 +136,11 @@ class RatingController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
 
             $user_id = $user_info['user_id'];
-            $act = $_GET['act'];
-
             //Выводим текущий баланс свой
             $row = $db->super_query("SELECT user_balance FROM `users` WHERE user_id = '{$user_id}'");
 

@@ -12,10 +12,6 @@ $router->add([
     '/signup/'                                  => 'Register@Signup',
     '/login/'                                  => 'Home@Login',
 
-    '/test/'                                       => 'Home@test',
-    '/test2/'                                       => 'Home@test2',
-    '/test3/'                                       => 'Home@test3',
-
     // Уведомления
     '/notifications/'                             => 'Notifications@Index',
     '/notifications/settings/'                             => 'Notifications@settings',
@@ -51,7 +47,8 @@ $router->add([
     '/my_stats/'                                  => 'My_stats@Index',
 
     // Редактирование страницы
-    '/edit/'                                      => 'Editprofile@Index',
+//    '/edit/'                                      => 'Editprofile@Index',
+    '/edit/box/'                                      => 'Editprofile@box',
     '/edit/contact/'                              => 'Editprofile@contact',
     '/edit/interests/'                            => 'Editprofile@interests',
     '/edit/all/'                                  => 'Editprofile@all',
@@ -77,7 +74,7 @@ $router->add([
     '/rating/view/'                               => 'Rating@view',
 
     // other
-    '/loadcity/'                                  => 'None@Index',
+    '/loadcity/'                                  => 'Loadcity@Index',
 
     '/antibot/'                                  => 'Antibot@index',
     '/antibot/code/'                                  => 'Antibot@code',
@@ -145,6 +142,7 @@ $router->add([
     '/friends/box/'                               => 'Friends@box',
     '/friends/delete/'                            => 'Friends@delete',
     '/friends/online/:num/'                       => 'Friends@online',
+    '/friends/common/'                       => 'Friends@common',
     '/friends/common/:num/'                       => 'Friends@common',
     '/friends/requests/'                          => 'Friends@requests',
     '/friends/requests/page/:num/'                => 'Friends@requests',
@@ -197,11 +195,12 @@ $router->add([
     '/fast_search/'                               => 'Fast_search@Index',
 
     //Новости
-    '/news/'                                      => 'Feed@Index',
+    '/news/'                                      => 'Feed@feed',
     '/news/updates/'                              => 'News@Index',
     '/news/photos/'                               => 'News@Index',
     '/news/videos/'                               => 'News@Index',
     '/news/notifications/'                        => 'News@Index',
+    '/news/next/'                                 => 'Feed@Next',
 
     //Сообщения
     '/messages/'                                  => 'Messages@Index',
@@ -297,6 +296,7 @@ $router->add([
 
     //Сообщества
     '/groups/'                                    => 'Groups@Index',
+    '/groups/admin/'                              => 'Groups@admin',
     '/groups/send/'                               => 'Groups@send',
     '/groups/exit/'                               => 'Groups@exit',
     '/groups/login/'                              => 'Groups@login',

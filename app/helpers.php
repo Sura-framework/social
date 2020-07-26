@@ -1,12 +1,12 @@
 <?php
 
-use Sura\View\Blade;
 use Sura\Libs\Db;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Langs;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\View\Blade;
 
 if (!function_exists('GetVar')) {
     function GetVar(string $v):string
@@ -457,7 +457,7 @@ if (!function_exists('AntiSpamLogInsert')) {
                 if (!empty($logged)){
                     $result_ajax = array(
                         'title' => $title,
-                        'new_notifications' => $params['notify_count'],
+//                        'new_notifications' => $params['notify_count'],
                         'content' => $json_content
                     );
                 }else{

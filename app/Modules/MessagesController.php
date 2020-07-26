@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use Sura\Libs\Cache;
 use Sura\Libs\Langs;
+use Sura\Libs\Mail;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
@@ -14,36 +15,33 @@ use Sura\Libs\Validation;
 class MessagesController extends Module{
 
     public function send($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
 
-            Tools::NoAjaxQuery();
-
-            AntiSpam('messages');
+//            AntiSpam('messages');
 
             $for_user_id = intval($_POST['for_user_id']);
             $theme = Validation::ajax_utf8(strip_tags($_POST['theme']));
             $msg = Validation::ajax_utf8($_POST['msg']);
-            $attach_files = Validation::ajax_utf8($_POST['attach_files']);
+            if (isset($_POST['attach_files'])){
+                $attach_files = Validation::ajax_utf8($_POST['attach_files']);
+                $attach_files = str_replace('vote|', 'hack|', $attach_files);
+            }else{
+                $attach_files = null;
+            }
 
-            $attach_files = str_replace('vote|', 'hack|', $attach_files);
 
-            if(!$theme)
+            if(empty($theme))
                 $theme = '...';
 
-            AntiSpam('identical', $msg.$attach_files);
+//            AntiSpam('identical', $msg.$attach_files);
 
             if(isset($msg) AND !empty($msg) OR isset($attach_files) OR !empty($attach_files)){
 
@@ -125,8 +123,7 @@ class MessagesController extends Module{
                         if($config['news_mail_8'] == 'yes' AND $user_id != $for_user_id){
                             $rowUserEmail = $db->super_query("SELECT user_name, user_email FROM `users` WHERE user_id = '".$for_user_id."'");
                             if($rowUserEmail['user_email']){
-                                include_once __DIR__.'/../Classes/mail.php';
-                                $mail = new \dle_mail($config);
+                                $mail = new Mail($config);
                                 $rowMyInfo = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '".$user_id."'");
                                 $rowEmailTpl = $db->super_query("SELECT text FROM `mail_tpl` WHERE id = '8'");
                                 $rowEmailTpl['text'] = str_replace('{%user%}', $rowUserEmail['user_name'], $rowEmailTpl['text']);
@@ -135,7 +132,7 @@ class MessagesController extends Module{
                                 $mail->send($rowUserEmail['user_email'], 'Новое персональное сообщение', $rowEmailTpl['text']);
                             }
                         }
-
+                        echo 'ok';
                     } else
                         echo 'err_privacy';
                 } else
@@ -143,7 +140,6 @@ class MessagesController extends Module{
             } else
                 echo 'max_strlen';
 
-            die();
         }
     }
 
@@ -153,17 +149,16 @@ class MessagesController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             $mid = intval($_POST['mid']);
             $folder = $db->safesql($_POST['folder']);
@@ -197,9 +192,9 @@ class MessagesController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
@@ -207,7 +202,7 @@ class MessagesController extends Module{
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
             $for_user_id = intval($_POST['for_user_id']);
 
             if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
@@ -258,11 +253,10 @@ class MessagesController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
@@ -595,17 +589,16 @@ class MessagesController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            Tools::NoAjaxQuery();
+//            Tools::NoAjaxQuery();
 
             if($user_info['user_msg_type'] == 0)
                 $db->query("UPDATE `users` SET user_msg_type = 1 WHERE user_id = '".$user_info['user_id']."'");
@@ -623,11 +616,10 @@ class MessagesController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
@@ -748,19 +740,14 @@ class MessagesController extends Module{
      * Вывод всех полученных сообщений
      */
     public function index($params){
-        $tpl = $params['tpl'];
-
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
@@ -768,46 +755,56 @@ class MessagesController extends Module{
             $limit_page = ($page-1)*$gcount;
 
             $user_info['user_msg_type']=1;
-            $config = include __DIR__.'/data/config.php';
+            $config = Settings::loadsettings();
 
             if($user_info['user_msg_type'] == 1 OR $config['temp'] == 'mobile'){
-                $spBar = false;
+
                 //################### Вывод всех диалогов ###################//
                 $params['title'] = 'Диалоги'.' | Sura';
-                $mobile_speedbar = '<a href="/messages">Диалоги</a>';
 
                 //Вывод диалогов
                 $sql_ = $db->super_query("SELECT tb1.msg_num, im_user_id, tb2.user_search_pref, user_photo FROM `im` tb1, `users` tb2 WHERE tb1.iuser_id = '".$user_id."' AND tb1.im_user_id = tb2.user_id ORDER by `idate` DESC LIMIT 0, 50", 1);
-                $tpl->load_template('im/dialog.tpl');
+//                $tpl->load_template('im/dialog.tpl');
                 foreach($sql_ as $row){
-                    $tpl->set('{name}', $row['user_search_pref']);
-                    $tpl->set('{uid}', $row['im_user_id']);
-                    if($row['user_photo'])
-                        $tpl->set('{ava}', '/uploads/users/'.$row['im_user_id'].'/50_'.$row['user_photo']);
-                    else
-                        $tpl->set('{ava}', '/images/no_ava_50.png');
-                    if($row['msg_num'])
-                        $tpl->set('{msg_num}', '<div class="im_new fl_l" id="msg_num'.$row['im_user_id'].'">'.$row['msg_num'].'</div>');
-                    else
-                        $tpl->set('{msg_num}', '');
-                    $tpl->compile('dialog');
+//                    $tpl->set('{name}', $row['user_search_pref']);
+                    $row['tttt'] =  $row['user_search_pref'];
+//                    $tpl->set('{uid}', $row['im_user_id']);
+                    $row['tttt'] =  $row['im_user_id'];
+                    if($row['user_photo']){
+//                        $tpl->set('{ava}', );
+                        $row['tttt'] =  '/uploads/users/'.$row['im_user_id'].'/50_'.$row['user_photo'];
+                    }else{
+//                        $tpl->set('{ava}', );
+                        $row['tttt'] =  '/images/no_ava_50.png';
+                    }
+                    if($row['msg_num']){
+//                        $tpl->set('{msg_num}', );
+                        $row['tttt'] =  '<div class="im_new fl_l" id="msg_num'.$row['im_user_id'].'">'.$row['msg_num'].'</div>';
+                    }else{
+//                        $tpl->set('{msg_num}', '');
+                        $row['tttt'] =  '';
+                    }
+//                    $tpl->compile('dialog');
                 }
 
+                $params['dialog'] = $sql_;
+
                 //header сообщений
-                $tpl->load_template('im/head.tpl');
-                $tpl->set('{dialogs}', $tpl->result['dialog']);
-                $tpl->set('[inbox]', '');
-                $tpl->set('[/inbox]', '');
-                $tpl->set_block("'\\[outbox\\](.*?)\\[/outbox\\]'si","");
-                $tpl->set_block("'\\[review\\](.*?)\\[/review\\]'si","");
-                $tpl->compile('info');
-            } else {
+//                $tpl->load_template('im/head.tpl');
+//                $tpl->set('{dialogs}', $tpl->result['dialog']);
+//                $tpl->set('[inbox]', '');
+//                $tpl->set('[/inbox]', '');
+//                $tpl->set_block("'\\[outbox\\](.*?)\\[/outbox\\]'si","");
+//                $tpl->set_block("'\\[review\\](.*?)\\[/review\\]'si","");
+//                $tpl->compile('info');
+            }
+            else {
                 $params['title'] = $lang['msg_inbox'].' | Sura';
-                $user_speedbar = $lang['msg_inbox'];
+//                $user_speedbar = $lang['msg_inbox'];
 
                 //Вывод информации после отправки сообщения
-                if($_GET['info'] == 1)
-                    msgbox('', '<script type="text/javascript">setTimeout(\'$(".err_yellow").fadeOut()\', 1500);</script>Ваше сообщение успешно отправлено.', 'info');
+//                if($_GET['info'] == 1)
+//                    msgbox('', '<script type="text/javascript">setTimeout(\'$(".err_yellow").fadeOut()\', 1500);</script>Ваше сообщение успешно отправлено.', 'info');
 
                 //Для поиска
                 $se_query = $db->safesql(Validation::ajax_utf8(Validation::strip_data(urldecode($_GET['se_query']))));
@@ -828,46 +825,59 @@ class MessagesController extends Module{
                     $msg_count = $db->super_query("SELECT COUNT(*) AS cnt FROM `messages` tb1, `users` tb2 WHERE tb1.for_user_id = '{$user_id}' AND tb1.folder = 'inbox' AND tb1.from_user_id = tb2.user_id {$search_sql}");
 
                 //header сообщений
-                $tpl->load_template('messages/head.tpl');
+//                $tpl->load_template('messages/head.tpl');
 
-                if($user_info['user_msg_type'] == 0)
-                    $tpl->set('{msg-type}', 'Показать в виде диалогов');
-                else
-                    $tpl->set('{msg-type}', 'Показать в виде сообщений');
+//                if($user_info['user_msg_type'] == 0){
+//                    $params['msg_type'] = 'Показать в виде диалогов';
+//                }else{
+//                    $params['msg_type'] = 'Показать в виде сообщений';
+//                }
 
-                $tpl->set('{query}', $se_query);
+//                $tpl->set('{query}', $se_query);
+                $params['query'] = $se_query;
 
                 $titles = array('сообщение', 'сообщения', 'сообщений');//msg
                 if($search_sql)
-                    if($sql_)
-                        $tpl->set('{msg-cnt}', 'Найдено <span id="all_msg_num">'.$msg_count['cnt'].'</span> '.Gramatic::declOfNum($msg_count['cnt'], $titles));
-                    else
-                        $tpl->set('{msg-cnt}', 'Найденные <span id="all_msg_num">'.$msg_count['cnt'].'</span> '.Gramatic::declOfNum($msg_count['cnt'], $titles));
-                else
-                    if($sql_)
-                        $tpl->set('{msg-cnt}', 'Вы получили <span id="all_msg_num">'.$msg_count['cnt'].'</span> '.Gramatic::declOfNum($msg_count['cnt'], $titles));
-                    else
-                        $tpl->set('{msg-cnt}', 'Нет полученных сообщений');
+                    if($sql_){
+                        $params['msg_cnt'] = 'Найдено <span id="all_msg_num">'.$msg_count['cnt'].'</span> '.Gramatic::declOfNum($msg_count['cnt'], $titles);
 
-                $tpl->set('[inbox]', '');
-                $tpl->set('[/inbox]', '');
-                $tpl->set_block("'\\[outbox\\](.*?)\\[/outbox\\]'si","");
-                $tpl->set_block("'\\[review\\](.*?)\\[/review\\]'si","");
-                $tpl->compile('info');
+                    }else{
+                        $params['msg_cnt'] = 'Найденные <span id="all_msg_num">'.$msg_count['cnt'].'</span> '.Gramatic::declOfNum($msg_count['cnt'], $titles);
+                    }
+                else
+                    if($sql_){
+                        $params['msg_cnt'] = 'Вы получили <span id="all_msg_num">'.$msg_count['cnt'].'</span> '.Gramatic::declOfNum($msg_count['cnt'], $titles);
+                    }else{
+                        $params['msg_cnt'] = 'Нет полученных сообщений';
+                    }
+
+//                $tpl->set('[inbox]', '');
+//                $tpl->set('[/inbox]', '');
+                $params['inbox'] = true;
+//                $tpl->set_block("'\\[outbox\\](.*?)\\[/outbox\\]'si","");
+                $params['outbox'] = false;
+//                $tpl->set_block("'\\[review\\](.*?)\\[/review\\]'si","");
+                $params['review'] = false;
+//                $tpl->compile('info');
 
                 //Если есть сообщения то продолжаем, если нет, то выводи информацию
                 if($sql_){
-                    $tpl->load_template('messages/message.tpl');
+//                    $tpl->load_template('messages/message.tpl');
                     foreach($sql_ as $row){
 
-                        if($row['user_photo'])
-                            $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['from_user_id'].'/50_'.$row['user_photo']);
-                        else
-                            $tpl->set('{ava}', '/images/no_ava_50.png');
+                        if($row['user_photo']){
+//                            $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['from_user_id'].'/50_'.$row['user_photo']);
+                            $row['ava'] =  $config['home_url'].'uploads/users/'.$row['from_user_id'].'/50_'.$row['user_photo'];
 
-                        $tpl->set('{subj}', stripslashes($row['theme']));
+                        }else{
+//                            $tpl->set('{ava}', '/images/no_ava_50.png');
+                            $row['ava'] =  '/images/no_ava_50.png';
+                        }
 
-                        $tpl->set('{text}', iconv_substr(stripslashes(strip_tags($row['text'])), 0, 150, 'utf-8'));
+//                        $tpl->set('{subj}', stripslashes($row['theme']));
+                        $row['subj'] =  stripslashes($row['theme']);
+//                        $tpl->set('{text}', iconv_substr(stripslashes(strip_tags($row['text'])), 0, 150, 'utf-8'));
+                        $row['text'] =  iconv_substr(stripslashes(strip_tags($row['text'])), 0, 150, 'utf-8');
 
                         $attach_filesPhoto = explode('photo_u|', $row['attach']);
                         if($attach_filesPhoto[1]) $attach_filesP = '<div class="msg_new_mes_ic_photo">Фотография</div>';
@@ -893,43 +903,58 @@ class MessagesController extends Module{
                         if($attach_filesDoc[1]) $attach_filesD = 'Файл';
                         else $attach_filesD = '';
 
-                        $tpl->set('{attach}', $attach_filesP.$attach_filesV.$attach_filesS.$attach_filesA.$attach_filesVX.$attach_filesD);
-
-                        $tpl->set('{user-id}', $row['from_user_id']);
-                        $tpl->set('{name}', $row['user_search_pref']);
-                        $tpl->set('{mid}', $row['id']);
+//                        $tpl->set('{attach}', $attach_filesP.$attach_filesV.$attach_filesS.$attach_filesA.$attach_filesVX.$attach_filesD);
+                        $row['attach'] =  $attach_filesP.$attach_filesV.$attach_filesS.$attach_filesA.$attach_filesVX.$attach_filesD;
+//                        $tpl->set('{user-id}', );
+                        $row['user_id'] =  $row['from_user_id'];
+//                        $tpl->set('{name}', );
+                        $row['name'] =  $row['user_search_pref'];
+//                        $tpl->set('{mid}', );
+                        $row['mid'] =  $row['id'];
 
                         $online = Online($row['user_last_visit'], $row['user_logged_mobile']);
-                        $tpl->set('{online}', $online);
+//                        $tpl->set('{online}', $online);
+                        $row['online'] =  $online;
 
                         $date = megaDate(strtotime($row['date']), 1, 1);
-                        $tpl->set('{date}', $date);
+//                        $tpl->set('{date}', $date);
+                        $row['date'] =  $date;
 
                         if($row['pm_read'] == 'no'){
-                            $tpl->set('[new]', '');
-                            $tpl->set('[/new]', '');
-                        } else
-                            $tpl->set_block("'\\[new\\](.*?)\\[/new\\]'si","");
+//                            $tpl->set('[new]', '');
+//                            $tpl->set('[/new]', '');
+                            $params['new'] =  true;
+                        } else{
+//                            $tpl->set_block("'\\[new\\](.*?)\\[/new\\]'si","");
+                            $params['new'] =  false;
+                        }
 
-                        $tpl->set('{folder}', 'inbox');
-                        $tpl->compile('content');
+//                        $tpl->set('{folder}', 'inbox');
+                        $row['folder'] = 'inbox' ;
+//                        $tpl->compile('content');
                     }
 
-                    if($msg_count['cnt'] > $gcount)
-                        navigation($gcount, $msg_count['cnt'], '/index.php?go=messages'.$query_string.'&page=');
-                } else
-                    msgbox('', $lang['no_msg'], 'info_2');
+                    $params['dialog'] = $sql_;
+
+//                    if($msg_count['cnt'] > $gcount)
+//                        navigation($gcount, $msg_count['cnt'], '/index.php?go=messages'.$query_string.'&page=');
+                } else{
+//                    msgbox('', $lang['no_msg'], 'info_2');
+                    $params['title'] = $lang['no_infooo'];
+                    $params['info'] = $lang['no_msg'];
+                    return view('info.info', $params);
+                }
             }
-            $tpl->clear();
-            $db->free();
+
+            $params['info'] = $lang['not_logged'];
+            return view('im.main', $params);
         } else {
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
         }
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
+
+
     }
 }

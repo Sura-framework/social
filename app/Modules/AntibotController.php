@@ -44,6 +44,7 @@ class AntibotController extends Module{
         imagefill($src,0,0,$fon); //заливаем изображение фоном
 
         //то же самое для основных букв
+//        $cod = '';
         for($i=0; $i < $let_amount; $i++){
             $color = imagecolorallocatealpha($src, $foreground_color[0], $foreground_color[1], $foreground_color[2], rand(20,40)); //Цвет шрифта
             $letter = $letters[rand(0,sizeof($letters)-1)];
@@ -77,20 +78,15 @@ class AntibotController extends Module{
     public static function code()
     {
         session_start();
-
-        error_reporting(E_ALL ^ E_WARNING ^ E_NOTICE);
+//        error_reporting(E_ALL ^ E_WARNING ^ E_NOTICE);
 
 //        if(clean_url($_SERVER['HTTP_REFERER']) != clean_url($_SERVER['HTTP_HOST']))
 //            die("Hacking attempt!");
-
-        //$user_code = $_GET['user_code'];
 
         if($_GET['user_code'] == $_SESSION['sec_code']){
             echo 'ok';
         } else {
             echo 'no';
         }
-
-        die();
     }
 }

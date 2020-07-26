@@ -13,7 +13,7 @@ class ReportController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxQuery();
+        Tools::NoAjaxRedirect();
 
         if($logged){
             $act = textFilter($_POST['act']);

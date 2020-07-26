@@ -12,6 +12,8 @@ class Audio_player extends Module{
 
     /**
      * Загрузка плей листа
+     * @param $params
+     * @return bool
      */
     public function index($params)
     {

@@ -14,14 +14,13 @@ class Attach_commController extends Module{
      * Удаление комментария
      */
     public function delcomm($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = langs::get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         Tools::NoAjaxQuery();
         if ($logged) {
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $id = intval($_POST['id']);
@@ -74,14 +73,13 @@ class Attach_commController extends Module{
      * Добавления комментария
      */
     public function addcomm($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         include __DIR__ . '/../lang/' . $checkLang . '/site.lng';
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         Tools::NoAjaxQuery();
         if ($logged) {
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $text = Validation::ajax_utf8(Validation::textFilter($_POST['text']));
@@ -152,14 +150,13 @@ class Attach_commController extends Module{
      */
     public function prevcomm($params)
     {
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         include __DIR__ . '/../lang/' . $checkLang . '/site.lng';
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         Tools::NoAjaxQuery();
         if ($logged) {
-            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
             $foSQLurl = $db->safesql(Gramatic::totranslit($_POST['purl']));
@@ -237,8 +234,7 @@ class Attach_commController extends Module{
 
     public function index($params)
     {
-        $tpl = $params['tpl'];
-
+//        $tpl = $params['tpl'];
         //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -365,6 +361,5 @@ class Attach_commController extends Module{
         }
 
         Registry::set('tpl', $tpl);
-        die();
     }
 }

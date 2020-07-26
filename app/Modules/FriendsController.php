@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use Exception;
 use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
@@ -24,8 +25,6 @@ class FriendsController extends Module{
     public function send($params){
 
         $path = explode('/', $_SERVER['REQUEST_URI']);
-
-        //die();
 
         $lang = $this->get_langs();
         $db = $this->db();
@@ -227,7 +226,6 @@ class FriendsController extends Module{
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
-            $act = $_GET['act'];
             $params['title'] = $lang['friends'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
@@ -267,7 +265,6 @@ class FriendsController extends Module{
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
-            $act = $_GET['act'];
             $params['title'] = $lang['friends'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
@@ -313,7 +310,7 @@ class FriendsController extends Module{
      * Удаления друга из списка друзей
      */
     public function requests($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -342,31 +339,41 @@ class FriendsController extends Module{
 //                $user_speedbar = $lang['no_requests'];
 
             //Верх
-            $tpl->load_template('friends/head.tpl');
-            $tpl->set('{user-id}', $user_id);
+//            $tpl->load_template('friends/head.tpl');
+//            $tpl->set('{user-id}', );
+            $params['user_id'] =$user_id;
             if($user_info['user_friends_demands'])
-                $tpl->set('{demands}', '('.$user_info['user_friends_demands'].')');
+//                $tpl->set('{demands}', );
+            $params['demands'] ='('.$user_info['user_friends_demands'].')';
             else
-                $tpl->set('{demands}', '');
-            $tpl->set('[request-friends]', '');
-            $tpl->set('[/request-friends]', '');
-            $tpl->set_block("'\\[all-friends\\](.*?)\\[/all-friends\\]'si","");
-            $tpl->set_block("'\\[online-friends\\](.*?)\\[/online-friends\\]'si","");
-            $tpl->compile('info');
+//                $tpl->set('{demands}', '');
+            $params['demands'] ='';
+//                $tpl->set('[request-friends]', '');
+//            $tpl->set('[/request-friends]', '');
+            $params['request_friends'] = true;
+//                $tpl->set_block("'\\[all-friends\\](.*?)\\[/all-friends\\]'si","");
+            $params['all_friends'] = false;
+//                $tpl->set_block("'\\[online-friends\\](.*?)\\[/online-friends\\]'si","");
+            $params['online_friends'] = false;
+//                $tpl->compile('info');
 
             //Выводим заявки в друзья если они есть
             if($user_info['user_friends_demands']){
                 $sql_ = $db->super_query("SELECT tb1.from_user_id, demand_date, tb2.user_photo, user_search_pref, user_country_city_name, user_birthday FROM `friends_demands` tb1, `users` tb2 WHERE tb1.for_user_id = '{$user_id}' AND tb1.from_user_id = tb2.user_id ORDER by `demand_date` DESC LIMIT {$limit_page}, {$gcount}", 1);
-                $tpl->load_template('friends/request.tpl');
+//                $tpl->load_template('friends/request.tpl');
 
                 $config = Settings::loadsettings();
 
-                foreach($sql_ as $row){
+                foreach($sql_ as $key => $row){
                     $user_country_city_name = explode('|', $row['user_country_city_name']);
-                    $tpl->set('{country}', $user_country_city_name[0]);
-                    $tpl->set('{city}', ', '.$user_country_city_name[1]);
-                    $tpl->set('{user-id}', $row['from_user_id']);
-                    $tpl->set('{name}', $row['user_search_pref']);
+//                    $tpl->set('{country}', );
+                    $sql_[$key]['country'] = $user_country_city_name[0];
+//                        $tpl->set('{city}', );
+                    $sql_[$key]['city'] = ', '.$user_country_city_name[1];
+//                        $tpl->set('{user-id}', );
+                    $sql_[$key]['user_id'] = $row['from_user_id'];
+//                        $tpl->set('{name}', );
+                    $sql_[$key]['name'] = $row['user_search_pref'];
 
                     // FOR MOBILE VERSION 1.0
                     if($config['temp'] == 'mobile'){
@@ -382,57 +389,65 @@ class FriendsController extends Module{
                     }
 
                     if($row['user_photo'])
-                        $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['from_user_id'].'/'.$avaPREFver.$row['user_photo']);
+//                        $tpl->set('{ava}', );
+                    $sql_[$key]['ava'] = $config['home_url'].'uploads/users/'.$row['from_user_id'].'/'.$avaPREFver.$row['user_photo'];
                     else
-                        $tpl->set('{ava}', "/images/{$noAvaPrf}");
+//                        $tpl->set('{ava}', );
+                    $sql_[$key]['ava'] = "/images/{$noAvaPrf}";
 
-                    //Возраст юзера
+                        //Возраст юзера
                     $user_birthday = explode('-', $row['user_birthday']);
-                    $tpl->set('{age}', user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]));
+//                    $tpl->set('{age}', );
+                    $sql_[$key]['age'] = user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
 
-                    $tpl->compile('content');
+//                        $tpl->compile('content');
                 }
-                Tools::navigation($gcount, $user_info['user_friends_demands'], $config['home_url'].'friends/requests/page/', $tpl);
+                $params['friends'] = $sql_;
+//                Tools::navigation($gcount, $user_info['user_friends_demands'], $config['home_url'].'friends/requests/page/', $tpl);
 
-            } else
-                msgbox('', $lang['no_requests'], 'info_2');
+            } else{
+//                msgbox('', $lang['no_requests'], 'info_2');
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+            }
+            return view('friends.request', $params);
+
+        }else{
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
     }
 
     /**
      * Просмотр всех онлайн друзей
+     * @param $params
+     * @return bool
+     * @throws Exception
      */
     public function online($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
 
         if($logged){
             //$act = $_GET['act'];
             $params['title'] = $lang['friends'].' | Sura';
 
-            $path = explode('/', $_SERVER['REQUEST_URI']);
-            $get_user_id = intval($path['3']);
-
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-//            $mobile_speedbar = 'Друзья на сайте';
-
-            //$get_user_id = intval($_GET['user_id']);
-            if(!$get_user_id)
+            $path = explode('/', $_SERVER['REQUEST_URI']);
+            if (empty($path['3'])) {
                 $get_user_id = $user_info['user_id'];
+            } else {
+                $get_user_id = $path['3'];
+            }
+            $params['user_id'] = $get_user_id;
 
             //ЧС
             $CheckBlackList = Tools::CheckBlackList($get_user_id);
@@ -459,91 +474,79 @@ class FriendsController extends Module{
                     //Кол-во друзей в онлайне
                     $online_friends = $db->super_query("SELECT COUNT(*) AS cnt FROM `users` tb1, `friends` tb2 WHERE tb1.user_id = tb2.friend_id AND tb2.user_id = '{$get_user_id}' AND tb1.user_last_visit >= '{$online_time}' AND tb2.subscriptions = 0");
 
-                $titles = array('друг на сайте', 'друга на сайте', 'друзей на сайте');//friends_online
-//                if($online_friends['cnt'])
-//                    $user_speedbar = 'У '.$gram_name.' '.$online_friends['cnt'].' '.Gramatic::declOfNum($online_friends['cnt'], $titles);
-//                else
-//                    $user_speedbar = $lang['no_requests_online'];
-
                 //Верх
-                $tpl->load_template('friends/head.tpl');
                 if($user_info['user_id'] != $get_user_id)
-                    $tpl->set('{name}', $gram_name);
+                    $params['name'] = $gram_name;
                 else
-                    $tpl->set('{name}', '');
+                    $params['name'] = '';
 
-                $tpl->set('{user-id}', $get_user_id);
                 if($get_user_id == $user_info['user_id']){
-                    $tpl->set('[owner]', '');
-                    $tpl->set('[/owner]', '');
-                    $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+                    $params['owner'] = true;
+                    $params['not_owner'] = false;
                     if($user_info['user_friends_demands'])
-                        $tpl->set('{demands}', '('.$user_info['user_friends_demands'].')');
+                        $params['demands'] = '('.$user_info['user_friends_demands'].')';
                     else
-                        $tpl->set('{demands}', '');
+                        $params['demands'] = '';
                 } else {
-                    $tpl->set('[not-owner]', '');
-                    $tpl->set('[/not-owner]', '');
-                    $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                    $params['not_owner'] = true;
+                    $params['not_owner'] = false;
                 }
-                $tpl->set('[online-friends]', '');
-                $tpl->set('[/online-friends]', '');
-                $tpl->set_block("'\\[request-friends\\](.*?)\\[/request-friends\\]'si","");
-                $tpl->set_block("'\\[all-friends\\](.*?)\\[/all-friends\\]'si","");
-                $tpl->compile('info');
+                $params['online_friends'] = true;
+                $params['request_friends'] = false;
+                $params['all_friends'] = false;
 
                 if($sql_){
-                    $tpl->load_template('friends/friend.tpl');
                     $config = Settings::loadsettings();
-                    foreach($sql_ as $row){
+                    foreach($sql_ as $key => $row){
                         $user_country_city_name = explode('|', $row['user_country_city_name']);
-                        $tpl->set('{country}', $user_country_city_name[0]);
+                        $sql_[$key]['country'] = $user_country_city_name[0];
                         if($user_country_city_name[1])
-                            $tpl->set('{city}', ', '.$user_country_city_name[1]);
+                            $sql_[$key]['city'] = ', '.$user_country_city_name[1];
                         else
-                            $tpl->set('{city}', '');
-                        $tpl->set('{user-id}', $row['user_id']);
-                        $tpl->set('{name}', $row['user_search_pref']);
-
+                            $sql_[$key]['city'] = '';
+                            $sql_[$key]['user_id'] = $row['user_id'];
+                            $sql_[$key]['name'] = $row['user_search_pref'];
 
                         if($row['user_photo'])
-                            $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['user_id'].'/100_'.$row['user_photo']);
+                            $sql_[$key]['ava'] = $config['home_url'].'uploads/users/'.$row['user_id'].'/100_'.$row['user_photo'];
                         else
-                            $tpl->set('{ava}', '/images/100_no_ava.png');
+                            $sql_[$key]['ava'] = '/images/100_no_ava.png';
 
-                        $online = Online($row['user_last_visit'], $row['user_logged_mobile']);
-                        $tpl->set('{online}', $online);
+                            $online = Online($row['user_last_visit'], $row['user_logged_mobile']);
+                        $sql_[$key]['online'] = $online;
 
-                        //Возраст юзера
+                            //Возраст юзера
                         $user_birthday = explode('-', $row['user_birthday']);
-                        $tpl->set('{age}', user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]));
+                        $sql_[$key]['age'] = user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
 
                         if($get_user_id == $user_info['user_id']){
-                            $tpl->set('[owner]', '');
-                            $tpl->set('[/owner]', '');
+                            $sql_[$key]['owner'] = true;
                         } else
-                            $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                            $sql_[$key]['owner'] = false;
 
                         if($row['user_id'] == $user_info['user_id'])
-                            $tpl->set_block("'\\[viewer\\](.*?)\\[/viewer\\]'si","");
+                            $sql_[$key]['viewer'] = false;
                         else {
-                            $tpl->set('[viewer]', '');
-                            $tpl->set('[/viewer]', '');
+                            $sql_[$key]['viewer'] = true;
                         }
 
-                        $tpl->compile('content');
                     }
-                    $tpl = Tools::navigation($gcount, $online_friends['cnt'], $config['home_url'].'friends/online/'.$get_user_id.'/page/', $tpl);
-                } else
-                    msgbox('', $lang['no_requests_online'], 'info_2');
+                    $params['friends'] = $sql_;
+//                    $tpl = Tools::navigation($gcount, $online_friends['cnt'], $config['home_url'].'friends/online/'.$get_user_id.'/page/', $tpl);
+                } else{
+//                    msgbox('', $lang['no_requests_online'], 'info_2');
+
+                }
             } else {
                 //$user_speedbar = $lang['error'];
-                msgbox('', $lang['no_notes'], 'info');
+//                msgbox('', $lang['no_notes'], 'info');
             }
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+            return view('friends.online', $params);
+        }else{
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
     }
 
@@ -559,9 +562,9 @@ class FriendsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
+
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
@@ -619,121 +622,150 @@ class FriendsController extends Module{
 
     /**
      * Общие друзья
+     * @param $params
+     * @return string
+     * @throws Exception
      */
     public function common($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $act = $_GET['act'];
-            $params['title'] = $lang['friends'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+//        if($ajax == 'yes')
+//            Tools::NoAjaxQuery();
+        if($logged) {
+//            $params['title'] = $lang['friends'].' | Sura';
+            if ($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+            $limit_page = ($page - 1) * $gcount;
 
-            $params['title'] = 'Общие друзья'.' | Sura';
-           // $user_speedbar = 'Общие друзья'.' | Sura';
+            $params['title'] = 'Общие друзья' . ' | Sura';
 
-            $uid = intval($_GET['uid']);
+            $path = explode('/', $_SERVER['REQUEST_URI']);
+            if (empty($path['3'])) {
+                $get_user_id = $user_info['user_id'];
+            } else {
+                $get_user_id = $path['3'];
+            }
+            $params['user_id'] = $get_user_id;
 
             //Выводим информацию о человеке, у которого смотрим общих друзей
-            $owner = $db->super_query("SELECT user_friends_num, user_name FROM `users` WHERE user_id = '{$uid}'");
+            $owner = $db->super_query("SELECT user_friends_num, user_name FROM `users` WHERE user_id = '{$get_user_id}'");
 
             //Если есть такой юзер и есть вообще друзья
-            if($owner AND $owner['user_friends_num'] AND $uid != $user_info['user_id']){
+            if ($owner and $owner['user_friends_num'] and $get_user_id != $user_info['user_id']) {
 
                 //Считаем кол-во общих дузей
-                $count_common = $db->super_query("SELECT COUNT(*) AS cnt FROM `friends` tb1 INNER JOIN `friends` tb2 ON tb1.friend_id = tb2.user_id WHERE tb1.user_id = '{$user_info['user_id']}' AND tb2.friend_id = '{$uid}' AND tb1.subscriptions = 0 AND tb2.subscriptions = 0");
+                $count_common = $db->super_query("SELECT COUNT(*) AS cnt FROM `friends` tb1 INNER JOIN `friends` tb2 ON tb1.friend_id = tb2.user_id WHERE tb1.user_id = '{$user_info['user_id']}' AND tb2.friend_id = '{$get_user_id}' AND tb1.subscriptions = 0 AND tb2.subscriptions = 0");
 
                 //Верх
-                $tpl->load_template('friends/head_common.tpl');
+//                $tpl->load_template('friends/head_common.tpl');
 
-                $tpl->set('{name}', Gramatic::gramatikName($owner['user_name']));
-                $tpl->set('{user-id}', $uid);
+//                $tpl->set('{name}', );
+                $params['name'] = Gramatic::gramatikName($owner['user_name']);
+//                $tpl->set('{user-id}', );
+                $params['user_id'] = $get_user_id;
 
-                if($count_common['cnt'])
-
-                    $tpl->set_block("'\\[no\\](.*?)\\[/no\\]'si","");
-
-                else {
-
-                    $tpl->set('[no]', '');
-                    $tpl->set('[/no]', '');
-
+                if ($count_common['cnt']) {
+//                    $tpl->set_block("'\\[no\\](.*?)\\[/no\\]'si","");
+                    $params['no'] = false;
+                } else {
+//                    $tpl->set('[no]', '');
+//                    $tpl->set('[/no]', '');
+                    $params['no'] = true;
                 }
 
-                $tpl->compile('info');
+//                $tpl->compile('info');
 
                 //Если есть на вывод
-                if($count_common['cnt']){
+                if ($count_common['cnt']) {
                     $titles = array('общий друг', 'общих друга', 'общих друзей');//friends_common
 //                    $user_speedbar = $count_common['cnt'].' '.Gramatic::declOfNum($count_common['cnt'], $titles);
 
                     //SQL запрос на вывод друзей, по дате новых 20
-                    $sql_mutual = $db->super_query("SELECT tb1.friend_id, tb3.user_birthday, user_photo, user_search_pref, user_country_city_name, user_last_visit, user_logged_mobile FROM `users` tb3, `friends` tb1 INNER JOIN `friends` tb2 ON tb1.friend_id = tb2.user_id WHERE tb1.user_id = '{$user_info['user_id']}' AND tb2.friend_id = '{$uid}' AND tb1.subscriptions = 0 AND tb2.subscriptions = 0 AND tb1.friend_id = tb3.user_id ORDER by `friends_date` LIMIT {$limit_page}, {$gcount}", 1);
+                    $sql_ = $db->super_query("SELECT tb1.friend_id, tb3.user_birthday, user_photo, user_search_pref, user_country_city_name, user_last_visit, user_logged_mobile FROM `users` tb3, `friends` tb1 INNER JOIN `friends` tb2 ON tb1.friend_id = tb2.user_id WHERE tb1.user_id = '{$user_info['user_id']}' AND tb2.friend_id = '{$get_user_id}' AND tb1.subscriptions = 0 AND tb2.subscriptions = 0 AND tb1.friend_id = tb3.user_id ORDER by `friends_date` LIMIT {$limit_page}, {$gcount}", 1);
 
-                    if($sql_mutual){
+                    if ($sql_) {
 
-                        $tpl->load_template('friends/friend.tpl');
+//                        $tpl->load_template('friends/friend.tpl');
                         $config = Settings::loadsettings();
-                        foreach($sql_mutual as $row){
+                        foreach ($sql_ as $key => $row) {
 
                             $user_country_city_name = explode('|', $row['user_country_city_name']);
-                            $tpl->set('{country}', $user_country_city_name[0]);
-
-                            if($user_country_city_name[1])
-                                $tpl->set('{city}', ', '.$user_country_city_name[1]);
+//                            $tpl->set('{country}', );
+                            $sql_[$key]['country'] = $user_country_city_name[0];
+                            if ($user_country_city_name[1])
+//                             $tpl->set('{city}', );
+                                $sql_[$key]['city'] = ', ' . $user_country_city_name[1];
                             else
-                                $tpl->set('{city}', '');
+//                              $tpl->set('{city}', '');
+                                $sql_[$key]['city'] = '';
 
-                            $tpl->set('{user-id}', $row['friend_id']);
-                            $tpl->set('{name}', $row['user_search_pref']);
+//                            $tpl->set('{user-id}', );
+                            $sql_[$key]['user_id'] = $row['friend_id'];
+//                                $tpl->set('{name}', );
+                            $sql_[$key]['name'] = $row['user_search_pref'];
 
-                            if($row['user_photo'])
-                                $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['friend_id'].'/'.$avaPREFver.$row['user_photo']);
+                            if (!isset($noAvaPrf))
+                                $noAvaPrf = null;
+
+                            if (empty($avaPREFver))
+                                $avaPREFver = null;
+
+                            if ($row['user_photo'])
+//                                $tpl->set('{ava}', );
+                                $sql_[$key]['ava'] = $config['home_url'] . 'uploads/users/' . $row['friend_id'] . '/' . $avaPREFver . $row['user_photo'];
                             else
-                                $tpl->set('{ava}', "/images/{$noAvaPrf}");
+//                                $tpl->set('{ava}', );
+                                $sql_[$key]['ava'] = "/images/{$noAvaPrf}";
 
                             $online = Online($row['user_last_visit'], $row['user_logged_mobile']);
-                            $tpl->set('{online}', $online);
+//                            $tpl->set('{online}', );
+                            $sql_[$key]['online'] = $online;
 
                             //Возраст юзера
                             $user_birthday = explode('-', $row['user_birthday']);
-                            $tpl->set('{age}', user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]));
+//                            $tpl->set('{age}', );
+                            $sql_[$key]['age'] = user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
 
-                            if($get_user_id == $user_info['user_id']){
+                            if (!isset($get_user_id))
+                                $get_user_id = null;
 
-                                $tpl->set('[owner]', '');
-                                $tpl->set('[/owner]', '');
+                            if ($get_user_id == $user_info['user_id']) {
 
+//                                $tpl->set('[owner]', '');
+//                                $tpl->set('[/owner]', '');
+                                $sql_[$key]['owner'] = true;
                             } else
-                                $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+//                                $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                                $sql_[$key]['owner'] = false;
 
-                            $tpl->set('[viewer]', '');
-                            $tpl->set('[/viewer]', '');
+//                                $tpl->set('[viewer]', '');
+//                            $tpl->set('[/viewer]', '');
+                            $sql_[$key]['viewer'] = true;
 
-                            $tpl->compile('content');
+//                                $tpl->compile('content');
 
                         }
-
-                        navigation($gcount, $count_common['cnt'], $config['home_url'].'friends/common/'.$uid.'/page/');
+                        $params['friends'] = $sql_;
+//                        navigation($gcount, $count_common['cnt'], $config['home_url'].'friends/common/'.$get_user_id.'/page/');
 
                     }
 
                 }
 
-            } else
-                msgbox('', 'У Вас с этим пользователем нет общих друзей.', 'info_2');
+            }
+            else {
+//            msgbox('', 'У Вас с этим пользователем нет общих друзей.', 'info_2');
+            }
+            return view('friends.common', $params);
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+        }else{
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
     }
 
@@ -741,36 +773,33 @@ class FriendsController extends Module{
      * Просмотр всех друзей
      * @param $params
      * @return bool
+     * @throws Exception
      */
     public function index($params){
-        $tpl = $params['tpl'];
-
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
         //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
             $params['title'] = $lang['friends'].' | Sura';
 
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-//            $mobile_speedbar = 'Друзья';
-
             $path = explode('/', $_SERVER['REQUEST_URI']);
-            $get_user_id = intval($path['3']);
-
-            //$get_user_id = intval($_GET['user_id']);
-            if(!$get_user_id)
+            if (empty($path['2']) ){
                 $get_user_id = $user_info['user_id'];
+            }else{
+                $get_user_id = $path['2'];
+            }
+
+            $params['user_id'] = $get_user_id;
 
             //ЧС
             $CheckBlackList = Tools::CheckBlackList($get_user_id);
@@ -778,127 +807,129 @@ class FriendsController extends Module{
                 //Выводим кол-во друзей из таблицы юзеров
                 $friends_sql = $db->super_query("SELECT user_name, user_friends_num FROM `users` WHERE user_id = '{$get_user_id}'");
 
-                if($user_info['user_id'] != $get_user_id)
+                if($user_info['user_id'] != $get_user_id){
                     $gram_name = Gramatic::gramatikName($friends_sql['user_name']);
-                else
+
+                }
+                else{
                     $gram_name = 'Вас';
 
-                $titles = array('друг', 'друга', 'друзей');//friends
-//                if($friends_sql['user_friends_num'])
-//                    $user_speedbar = 'У '.$gram_name.' <span id="friend_num">'.$friends_sql['user_friends_num'].'</span> '.Gramatic::declOfNum($friends_sql['user_friends_num'], $titles);
-//                else
-//                    $user_speedbar = $lang['no_requests'];
-
-                //Верх
-                $tpl->load_template('friends/head.tpl');
-                if($user_info['user_id'] != $get_user_id)
-                    $tpl->set('{name}', $gram_name);
-                else
-                    $tpl->set('{name}', '');
-
-                $tpl->set('{user-id}', $get_user_id);
-                if($get_user_id == $user_info['user_id']){
-                    $tpl->set('[owner]', '');
-                    $tpl->set('[/owner]', '');
-                    $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
-                    if($user_info['user_friends_demands'])
-                        $tpl->set('{demands}', '('.$user_info['user_friends_demands'].')');
-                    else
-                        $tpl->set('{demands}', '');
-                } else {
-                    $tpl->set('[not-owner]', '');
-                    $tpl->set('[/not-owner]', '');
-                    $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
                 }
 
-                $tpl->set('[all-friends]', '');
-                $tpl->set('[/all-friends]', '');
-                $tpl->set_block("'\\[request-friends\\](.*?)\\[/request-friends\\]'si","");
-                $tpl->set_block("'\\[online-friends\\](.*?)\\[/online-friends\\]'si","");
-                $tpl->compile('info');
+                //Верх
+                if($user_info['user_id'] != $get_user_id){
+                    $params['name'] = $gram_name;
+                }
+                else{
+                    $params['name'] = '';
+                }
+
+                if($get_user_id == $user_info['user_id']){
+                    $params['owner'] = true;
+                    $params['not_owner'] = false;
+                    if($user_info['user_friends_demands']){
+                        $params['demands'] = '('.$user_info['user_friends_demands'].')';
+                    }
+                    else{
+                        $params['demands'] = '';
+                    }
+                } else {
+                    $params['not_owner'] = true;
+                    $params['not_owner'] = false;
+                }
+
+                $params['all_friends'] = true;
+                $params['request_friends'] = false;
+                $params['online_friends'] = false;
 
                 //Все друзья
                 if($friends_sql['user_friends_num']){
 
-                    if($get_user_id == $user_info['user_id'])
+                    if($get_user_id == $user_info['user_id']){
                         $sql_order = "ORDER by `views`";
-                    else
+                    }
+                    else{
                         $sql_order = "ORDER by `friends_date`";
+                    }
 
                     $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.user_birthday, user_photo, user_search_pref, user_country_city_name, user_last_visit, user_logged_mobile FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$get_user_id}' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 0 {$sql_order} DESC LIMIT {$limit_page}, {$gcount}", 1);
                     if($sql_){
-                        $tpl->load_template('friends/friend.tpl');
                         $config = Settings::loadsettings();
-                        foreach($sql_ as $row){
+                        foreach($sql_ as $key => $row){
                             $user_country_city_name = explode('|', $row['user_country_city_name']);
-                            $tpl->set('{country}', $user_country_city_name[0]);
+                            $sql_[$key]['country'] = $user_country_city_name[0];
+                            if(isset($user_country_city_name[1])){
+                                $sql_[$key]['city'] = ', '.$user_country_city_name[1];
+                            }
+                            else{
+                                $sql_[$key]['city'] = '';
+                            }
 
-                            if(isset($user_country_city_name[1]))
-                                $tpl->set('{city}', ', '.$user_country_city_name[1]);
-                            else
-                                $tpl->set('{city}', '');
-
-                            $tpl->set('{user-id}', $row['friend_id']);
-                            $tpl->set('{name}', $row['user_search_pref']);
+                            $sql_[$key]['user_id'] = $row['friend_id'];
+                            $sql_[$key]['name'] = $row['user_search_pref'];
 
                             // FOR MOBILE VERSION 1.0
                             if($config['temp'] == 'mobile'){
-
                                 $avaPREFver = '50_';
                                 $noAvaPrf = 'no_ava_50.png';
-
                             } else {
-
                                 $avaPREFver = '100_';
                                 $noAvaPrf = '100_no_ava.png';
-
                             }
 
-                            if($row['user_photo'])
-                                $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['friend_id'].'/'.$avaPREFver.$row['user_photo']);
-                            else
-                                $tpl->set('{ava}', "/images/{$noAvaPrf}");
+                            if($row['user_photo']){
+                                $sql_[$key]['ava'] = $config['home_url'].'uploads/users/'.$row['friend_id'].'/'.$avaPREFver.$row['user_photo'];
+                            }
+                            else{
+                                $sql_[$key]['ava'] = "/images/{$noAvaPrf}";
+                            }
 
                             $online = Online($row['user_last_visit'], $row['user_logged_mobile']);
-                            $tpl->set('{online}', $online);
-
-                            //Возраст юзера
+                            $sql_[$key]['online'] = $online;
                             $user_birthday = explode('-', $row['user_birthday']);
-                            $tpl->set('{age}', user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]));
-
+                            $sql_[$key]['age'] = user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
                             if($get_user_id == $user_info['user_id']){
-                                $tpl->set('[owner]', '');
-                                $tpl->set('[/owner]', '');
-                            } else
-                                $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
-
-                            if($row['friend_id'] == $user_info['user_id'])
-                                $tpl->set_block("'\\[viewer\\](.*?)\\[/viewer\\]'si","");
-                            else {
-                                $tpl->set('[viewer]', '');
-                                $tpl->set('[/viewer]', '');
+                                $sql_[$key]['owner'] = true;
+                            } else{
+                                $sql_[$key]['owner'] = false;
                             }
 
-                            $tpl->compile('content');
+                            if($row['friend_id'] == $user_info['user_id']){
+                                $sql_[$key]['viewer'] = false;
+                            }
+                            else {
+                                $sql_[$key]['viewer'] = true;
+                            }
+
                         }
-                        $tpl = Tools::navigation($gcount, $friends_sql['user_friends_num'], $config['home_url'].'friends/'.$get_user_id.'/page/', $tpl);
-                    } else
-                        msgbox('', $lang['no_requests'], 'info_2');
-                } else
-                    msgbox('', $lang['no_requests'], 'info_2');
+//                        $tpl = Tools::navigation($gcount, $friends_sql['user_friends_num'], $config['home_url'].'friends/'.$get_user_id.'/page/', $tpl);
+
+                        $params['friends'] = $sql_;
+                    } else{
+//                        msgbox('', $lang['no_requests'], 'info_2');
+
+                    }
+
+                } else{
+//                    msgbox('', $lang['no_requests'], 'info_2');
+
+                }
             } else {
 //                $user_speedbar = $lang['error'];
-                msgbox('', $lang['no_notes'], 'info');
+//                msgbox('', $lang['no_notes'], 'info');
             }
-            $db->free();
-            $tpl->clear();
+//            $db->free();
+//            $tpl->clear();
+
+            return view('friends.friends', $params);
         } else {
-//            $user_speedbar = 'Информация';
-            msgbox('', $lang['not_logged'], 'info');
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['not_logged'];
+            return view('info.info', $params);
         }
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
+//        $params['tpl'] = $tpl;
+//        Page::generate($params);
+//        return true;
     }
 }
