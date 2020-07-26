@@ -35,7 +35,7 @@ However, if you are not using Homestead, you will need to make sure your server 
 It's recommended that you use [Composer](https://getcomposer.org/) to install Sura.
 
 ```bash
-$ composer create-project sura/sura:^0.5 MYPROJECT --prefer-dist
+$ composer create-project sura/sura:^0.6 MYPROJECT --prefer-dist
 ```
 
 The database configuration is located in config/config.php
