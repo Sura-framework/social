@@ -20,7 +20,7 @@
     "james-heinrich/getid3": "^1.9",
     "php": "^8.0",
     "php-ffmpeg/php-ffmpeg": "^0.14.0",
-    "sura/framework": "^0.6",
+    "sura/framework": "^0.8",
     "sura/menu": "^1.0"
   },
   "require-dev": {
