@@ -2,7 +2,7 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Cache;
+use App\Services\Cache;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
@@ -11,6 +11,9 @@ use Sura\Libs\Validation;
 
 class RepostController extends Module{
 
+    /**
+     * @param $params
+     */
     public function for_wall($params){
         $tpl = $params['tpl'];
         $db = $this->db();
@@ -62,7 +65,11 @@ class RepostController extends Module{
                         $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 1, action_text = '{$row['text']}', obj_id = '{$dbid}', action_time = '{$server_time}'");
 
                         //Чистим кеш
-                        Cache::mozg_clear_cache_file("user_{$user_id}/profile_{$user_id}");
+//                        Cache::mozg_clear_cache_file("user_{$user_id}/profile_{$user_id}");
+
+                        $Cache = Cache::initialize();
+                        $Cache->delete("users/{$user_id}/profile_{$user_id}");
+
                     } else
                         echo 1;
                 } else
@@ -72,6 +79,9 @@ class RepostController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function groups($params){
         $tpl = $params['tpl'];
         $db = $this->db();
@@ -129,6 +139,9 @@ class RepostController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function groups_2($params){
         $tpl = $params['tpl'];
         $db = $this->db();
@@ -187,6 +200,9 @@ class RepostController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function message($params){
         $tpl = $params['tpl'];
         $db = $this->db();
@@ -287,8 +303,12 @@ class RepostController extends Module{
                                 $db->query("UPDATE im  SET idate = '".$server_time."', msg_num = msg_num+1, all_msg_num = all_msg_num+1 WHERE iuser_id = '".$for_user_id."' AND im_user_id = '".$user_id."'");
 
                             //Читисм кеш обновлений
-                            Cache::mozg_clear_cache_file('user_'.$for_user_id.'/im');
-                            Cache::mozg_create_cache('user_'.$for_user_id.'/im_update', '1');
+//                            Cache::mozg_clear_cache_file('user_'.$for_user_id.'/im');
+//                            Cache::mozg_create_cache('user_'.$for_user_id.'/im_update', '1');
+
+                            $Cache = Cache::initialize();
+                            $Cache->delete("users/{$for_user_id}/im");
+                            $Cache->set("users/{$for_user_id}/im_update", 1);
 
                             $config = Settings::loadsettings();
 
@@ -320,6 +340,10 @@ class RepostController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function index($params)
     {
         $tpl = $params['tpl'];

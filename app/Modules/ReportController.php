@@ -7,6 +7,9 @@ use Sura\Libs\Tools;
 
 class ReportController extends Module{
 
+    /**
+     * @param $params
+     */
     public function index($params)
     {
         $db = $this->db();
@@ -30,7 +33,5 @@ class ReportController extends Module{
                     $db->query("INSERT INTO `report` SET act = '".$act."', type = '".$type_report."', text = '".$text_report."', mid = '".$mid."', date = '".$server_time."', ruser_id = '".$user_info['user_id']."'");
             }
         }
-
-        die();
     }
 }

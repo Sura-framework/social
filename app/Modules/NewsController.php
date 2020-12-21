@@ -15,6 +15,7 @@ use Sura\Libs\Gramatic;
 /**
  * Новости
  */
+//#[Deprecated]
 class NewsController extends Module
 {
 
@@ -1996,7 +1997,7 @@ class NewsController extends Module
 
 					} else
 						if(!$_POST['page_cnt']){
-                            msgbox('', $no_news, 'info_2');
+                            msg_box( $no_news, 'info_2');
 
                             $tpl->result['content'] .= '</div>';
 

@@ -4,6 +4,8 @@
 namespace App\Models;
 
 
+use App\Services\Cache;
+use Exception;
 use Sura\Libs\Db;
 
 class News
@@ -65,8 +67,19 @@ class News
      */
     public static function video_info(int $id) : array
     {
-        $db = Db::getDB();
-        return $db->super_query("SELECT video, title FROM `videos` WHERE id = '{$id}'", false, "wall/video{$id}");
+        $Cache = Cache::initialize();
+        $key = "user_{$id}/wall/video{$id}";
+
+        try {
+            $value = $Cache->get($key, $default = null);
+            $row = unserialize($value);
+        }catch (Exception $e){
+            $db = Db::getDB();
+            $row = $db->super_query("SELECT video, title FROM `videos` WHERE id = '{$id}'", false);
+            $value = serialize($row);
+            $Cache->set($key, $value);
+        }
+        return $row;
     }
 
     /**
@@ -95,8 +108,19 @@ class News
      */
     public static function vote_info(int $id) : array
     {
-        $db = Db::getDB();
-        return $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$id}'\", false, \"votes/vote_{$id}");
+        $Cache = Cache::initialize();
+        $key = "user_{$id}/votes/vote_{$id}";
+
+        try {
+            $row = $Cache->get($key, $default = null);
+            $value = unserialize($row);
+        }catch (Exception $e){
+            $db = Db::getDB();
+            $row = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$id}'", false);
+            $value = serialize($row);
+            $Cache->set($key, $value);
+        }
+        return $value;
     }
 
 
@@ -107,8 +131,19 @@ class News
      */
     public static function vote_info_check(int $id, int $user_id) : array
     {
-        $db = Db::getDB();
-        return $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$id}'\", false, \"votes/check{$user_id}_{$id}");
+        $Cache = Cache::initialize();
+        $key = "user_{$id}/votes/check{$user_id}_{$id}";
+
+        try {
+            $row = $Cache->get($key, $default = null);
+            $value = unserialize($row);
+        }catch (Exception $e){
+            $db = Db::getDB();
+            $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$id}'", false);
+            $value = serialize($row);
+            $Cache->set($key, $value);
+        }
+        return $value;
     }
 
     /**
@@ -117,8 +152,19 @@ class News
      */
     public static function vote_info_answer(int $id) : array
     {
-        $db = Db::getDB();
-        return $db->super_query("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$id}' GROUP BY answer", 1, "votes/vote_answer_cnt_{$id}");
+        $Cache = Cache::initialize();
+        $key = "votes/vote_answer_cnt_{$id}";
+
+        try {
+            $row = $Cache->get($key, $default = null);
+            $value = unserialize($row);
+        }catch (Exception $e){
+            $db = Db::getDB();
+            $row = $db->super_query("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$id}' GROUP BY answer", true);
+            $value = serialize($row);
+            $Cache->set($key, $value);
+        }
+        return $value;
     }
 
     /**
@@ -128,11 +174,22 @@ class News
      */
     public static function user_tell_info(int $user_id, int $type) : array
     {
-        $db = Db::getDB();
         if ($type == 1){
+            $db = Db::getDB();
             return $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$user_id}'");
         }else{
-            return $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$user_id}'\", false, \"wall/group{$user_id}");
+            $Cache = Cache::initialize();
+            $key = "user_{$user_id}/wall/group{$user_id}";
+            try {
+                $row = $Cache->get($key, $default = null);
+                $value = unserialize($row);
+            }catch (Exception $e){
+                $db = Db::getDB();
+                $row = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$user_id}'", false);
+                $value = serialize($row);
+                $Cache->set($key, $value);
+            }
+            return $value;
         }
     }
 
@@ -174,7 +231,7 @@ class News
     public static function comments(int $id, int $limit) : array
     {
         $db = Db::getDB();
-        return $db->super_query("SELECT tb1.id, author_user_id, text, add_date, tb2.user_photo, user_search_pref FROM `wall` tb1, `users` tb2 WHERE tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = '{$id}' ORDER by `add_date` ASC LIMIT {$limit}, 3", 1);
+        return $db->super_query("SELECT tb1.id, author_user_id, text, add_date, tb2.user_photo, user_search_pref FROM `wall` tb1, `users` tb2 WHERE tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = '{$id}' ORDER by `add_date` LIMIT {$limit}, 3", 1);
     }
 
     /**

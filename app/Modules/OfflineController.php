@@ -12,7 +12,10 @@ use Sura\Libs\Settings;
  */
 class OfflineController extends Module
 {
-	
+
+    /**
+     *
+     */
 	public static function index()
 	{
         $tpl = new Templates();

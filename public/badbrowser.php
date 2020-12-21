@@ -8,12 +8,13 @@ html, body {
   width: 100%;
   height: 100%;
   background: #F7F7F7;
-  padding: 0px;
-  margin: 0px;
+  padding: 0;
+  margin: 0;
   font-size:11px;
   font-family:Tahoma;
 }
-a{text-decoration:none;color:#21578b;margin:0px;padding:0px}
+a{text-decoration:none;color:#21578b;margin:0;padding:0
+}
 a:hover{text-decoration:underline;outline:none}
 #bad_browser {
   position: absolute;
@@ -21,28 +22,27 @@ a:hover{text-decoration:underline;outline:none}
   top: 50%;
   text-align: center;
   width: 530px;
-  margin: -200px 0px 0px -250px;
+  margin: -200px 0 0 -250px;
   background: #FFF;
   line-height: 250%;
   border-bottom: 1px solid #E4E4E4;
 }
 #content {
   border: solid #B8C7D3;
-  border-width: 0px 1px 1px;
+  border-width: 0 1px 1px;
   padding: 20px;
 }
 #head {
   width: 100%;
 }
 #head tr, .head td {
-  padding: 0px;
-  margin: 0px;
+  padding: 0;
+  margin: 0;
 }
 #head1{
   width: 145px;
   height: 40px;
-  background: #5788b8 url(/templates/Default/images/logo.png) no-repeat -5px;
-  background-position: 7px -3px;
+    background: #5788b8 url(/images/logo.png) no-repeat 7px -3px;
 }
 #head2{
   width: 100%;
@@ -74,7 +74,7 @@ a:hover{text-decoration:underline;outline:none}
     Для работы с сайтом необходима поддержка Javascript и Cookies.
     <div>
       Чтобы использовать все возможности сайта, загрузите и установите один из этих браузеров:<br>
-      <div id="browsers"><a href="http://www.opera.com/" target="_blank" style="background: url(/templates/Default/images/opera.gif) no-repeat 50% 7px;">Opera</a><a href="http://www.apple.com/safari/" target="_blank" style="background: url(/templates/Default/images/safari.gif) no-repeat 50% 0px;">Safari</a><a href="http://www.google.com/chrome/" target="_blank" style="background: url(/templates/Default/images/chrome.gif) no-repeat 50% 6px;">Google Chrome</a><a href="http://www.mozilla-europe.org/" target="_blank" style="background: url(/templates/Default/images/firefox.gif) no-repeat 50% 7px;">Mozilla Firefox</a></div>
+      <div id="browsers"><a href="http://www.opera.com/" target="_blank" style="background: url(/images/opera.gif) no-repeat 50% 7px;">Opera</a><a href="http://www.apple.com/safari/" target="_blank" style="background: url(/images/safari.gif) no-repeat 50% 0;">Safari</a><a href="http://www.google.com/chrome/" target="_blank" style="background: url(/images/chrome.gif) no-repeat 50% 6px;">Google Chrome</a><a href="http://www.mozilla-europe.org/" target="_blank" style="background: url(/images/firefox.gif) no-repeat 50% 7px;">Mozilla Firefox</a></div>
     </div>
   </div>
 </div>

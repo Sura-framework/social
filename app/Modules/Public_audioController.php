@@ -2,14 +2,16 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use Exception;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Settings;
 use Sura\Libs\Validation;
 
 class Public_audioController extends Module{
 
+    /**
+     * @param $params
+     */
     public function upload_box($params){
         $tpl = $params['tpl'];
         $config = Settings::loadsettings();
@@ -61,6 +63,9 @@ class Public_audioController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function upload($params){
         $tpl = $params['tpl'];
         $config = Settings::loadsettings();
@@ -130,6 +135,9 @@ class Public_audioController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function add($params){
         $tpl = $params['tpl'];
         $config = Settings::loadsettings();
@@ -157,6 +165,11 @@ class Public_audioController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return bool|string
+     * @throws Exception
+     */
     public function index($params){
         $tpl = $params['tpl'];
 
@@ -182,7 +195,7 @@ class Public_audioController extends Module{
             $info = $db->super_query("SELECT admin, title, audio_num,ulist,ctype FROM `communities` WHERE id = '{$pid}'");
 
 
-            if($info['ctype'] == 2 && stripos($info['ulist'], "|{$user_info['user_id']}|") === false) msgbox('', '<br /><br />Ошибка доступа.<br /><br /><br />', 'info_2');
+            if($info['ctype'] == 2 && stripos($info['ulist'], "|{$user_info['user_id']}|") === false) msg_box( '<br /><br />Ошибка доступа.<br /><br /><br />', 'info_2');
             else {
 
 

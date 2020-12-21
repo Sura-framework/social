@@ -2,17 +2,17 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Cache;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use App\Services\Cache;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
 class SubscriptionsController extends Module{
 
+    /**
+     * @param $params
+     */
     public function add($params){
-        $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -41,6 +41,8 @@ class SubscriptionsController extends Module{
 
                 $update_time = $server_time - 70;
 
+                $Cache = Cache::initialize();
+
                 if($row_owner['user_last_visit'] >= $update_time){
 
                     $myRow = $db->super_query("SELECT user_sex FROM `users` WHERE user_id = '{$user_info['user_id']}'");
@@ -52,19 +54,27 @@ class SubscriptionsController extends Module{
 
                     $db->query("INSERT INTO `updates` SET for_user_id = '{$for_user_id}', from_user_id = '{$user_info['user_id']}', type = '13', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/u{$user_info['user_id']}'");
 
-                    Cache::mozg_create_cache("user_{$for_user_id}/updates", 1);
+//                    Cache::mozg_create_cache("user_{$for_user_id}/updates", 1);
+
+                    $Cache->set("users/{$for_user_id}/updates", 1);
 
                 }
 
+
                 //Чистим кеш
-                Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-                Cache::mozg_clear_cache_file('subscr_user_'.$user_id);
+//                Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
+//                Cache::mozg_clear_cache_file('subscr_user_'.$user_id);
+
+                $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                $Cache->delete("users/{$user_id}/subscr");
             }
         }
     }
 
-    public function del($params){
-        $tpl = $params['tpl'];
+    /**
+     *
+     */
+    public function del(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -76,6 +86,8 @@ class SubscriptionsController extends Module{
 
             $del_user_id = intval($_POST['del_user_id']);
 
+            $Cache = Cache::initialize();
+
             //Проверка на существование юзера в подписках
             $check = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$del_user_id}' AND subscriptions = 1");
             if($check){
@@ -83,12 +95,19 @@ class SubscriptionsController extends Module{
                 $db->query("UPDATE `users` SET user_subscriptions_num = user_subscriptions_num-1 WHERE user_id = '{$user_id}'");
 
                 //Чистим кеш
-                Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-                Cache::mozg_clear_cache_file('subscr_user_'.$user_id);
+//                Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
+//                Cache::mozg_clear_cache_file('subscr_user_'.$user_id);
+
+                $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                $Cache->delete("users/{$user_id}/subscr");
             }
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function index($params){
         $tpl = $params['tpl'];
 
@@ -132,14 +151,14 @@ class SubscriptionsController extends Module{
                     $tpl->set('{last-name}', $friend_info_online[1]);
                     $tpl->compile('content');
                 }
-                box_navigation($gcount, $subscr_num, $for_user_id, 'subscriptions.all', $subscr_num);
+//                box_navigation($gcount, $subscr_num, $for_user_id, 'subscriptions.all', $subscr_num);
             }
-            Tools::AjaxTpl($tpl);
-            $tpl->clear();
-            $db->free();
+//            Tools::AjaxTpl($tpl);
+//            $tpl->clear();
+//            $db->free();
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
+//            $params['tpl'] = $tpl;
+//            Page::generate($params);
             return true;
         } else
             echo 'no_log';

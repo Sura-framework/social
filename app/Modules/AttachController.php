@@ -3,15 +3,16 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Libs\Langs;
-use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
 class AttachController extends Module{
 
-    public function index($params)
+    /**
+     *
+     */
+    public function index()
     {
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -39,7 +40,8 @@ class AttachController extends Module{
             $server_time = intval($_SERVER['REQUEST_TIME']);
             $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
-            $type = end(explode(".", $image_name)); // формат файла
+            $array = explode(".", $image_name);
+            $type = end($array); // формат файла
 
             //Проверям если, формат верный то пропускаем
             if(in_array(strtolower($type), $allowed_files)){
@@ -64,7 +66,7 @@ class AttachController extends Module{
 
                         //Вставляем фотографию
                         $db->query("INSERT INTO `attach` SET photo = '{$image_rename}{$res_type}', ouser_id = '{$user_id}', add_date = '{$server_time}'");
-                        $ins_id = $db->insert_id();
+//                        $ins_id = $db->insert_id();
 
                         $config = Settings::loadsettings();
 

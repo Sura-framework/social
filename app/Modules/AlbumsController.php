@@ -2,11 +2,10 @@
 
 namespace App\Modules;
 
+use App\Services\Cache;
+use Exception;
 use Intervention\Image\ImageManager;
-use Sura\Libs\Thumb;
-use Sura\Libs\Cache;
 use Sura\Libs\Langs;
-use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
@@ -18,7 +17,7 @@ class AlbumsController extends Module{
     /**
      * Создание альбома
      */
-    public function create($params){
+    public function create(){
         //$tpl = $params['tpl'];
         //$db = $this->db();
         //$user_info = $this->user_info();
@@ -39,7 +38,7 @@ class AlbumsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
 
         Tools::NoAjaxRedirect();
 
@@ -68,7 +67,13 @@ class AlbumsController extends Module{
                     $id = $db->insert_id();
                     $db->query("UPDATE `users` SET user_albums_num = user_albums_num+1 WHERE user_id = '{$user_info['user_id']}'");
 
-                    Cache::mozg_mass_clear_cache_file("user_{$user_info['user_id']}/albums|user_{$user_info['user_id']}/albums_all|user_{$user_info['user_id']}/albums_friends|user_{$user_info['user_id']}/albums_cnt_friends|user_{$user_info['user_id']}/albums_cnt_all|user_{$user_info['user_id']}/profile_{$user_info['user_id']}");
+                    $Cache = Cache::initialize();
+                    $Cache->delete("users/{$user_info['user_id']}/albums");
+                    $Cache->delete("users/{$user_info['user_id']}/albums_all");
+                    $Cache->delete("users/{$user_info['user_id']}/albums_friends");
+                    $Cache->delete("users/{$user_info['user_id']}/albums_cnt_all");
+                    $Cache->delete("users/{$user_info['user_id']}/profile_{$user_info['user_id']}");
+
                     if($sql_)
                         echo '/albums/add/'.$id;
                     else
@@ -107,12 +112,12 @@ class AlbumsController extends Module{
                 //$params['title'] = $lang['add_photo'];
                 $params['title'] = $lang['add_photo'];
                 $user_speedbar = $lang['add_photo_2'];
-                $tpl->load_template('/albums/albums_addphotos.tpl');
-                $tpl->set('{aid}', $aid);
-                $tpl->set('{album-name}', stripslashes($row['name']));
-                $tpl->set('{user-id}', $user_id);
-                $tpl->set('{PHPSESSID}', $_COOKIE['PHPSESSID']);
-                $tpl->compile('content');
+//                $tpl->load_template('/albums/albums_addphotos.tpl');
+//                $tpl->set('{aid}', $aid);
+//                $tpl->set('{album-name}', stripslashes($row['name']));
+//                $tpl->set('{user-id}', $user_id);
+//                $tpl->set('{PHPSESSID}', $_COOKIE['PHPSESSID']);
+//                $tpl->compile('content');
 
                 $params['tpl'] = $tpl;
                 Page::generate($params);
@@ -232,12 +237,25 @@ class AlbumsController extends Module{
 
                                 $photos_num = null; // bug !!!
 
+                                $Cache = Cache::initialize();
+
                                 //Удаляем кеш позиций фотографий
                                 if(!$photos_num)
-                                    Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
+                                {
+//                                    Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
+
+
+                                    $Cache->delete("users/{$$user_id}/profile_".$user_id);
+                                }
 
                                 //Чистим кеш
-                                Cache::mozg_mass_clear_cache_file("user_{$user_info['user_id']}/albums|user_{$user_info['user_id']}/albums_all|user_{$user_info['user_id']}/albums_friends|user_{$user_info['user_id']}/position_photos_album_{$aid}");
+
+//                                $Cache = \App\Services\Cache::initialize();
+                                $Cache->delete("users/{$user_info['user_id']}/albums");
+                                $Cache->delete("users/{$user_info['user_id']}/albums_all");
+                                $Cache->delete("users/{$user_info['user_id']}/albums_friends");
+                                $Cache->delete("users/{$user_info['user_id']}/position_photos_album_{$aid}");
+
 
                                 $img_url = str_replace($config['home_url'], '/', $img_url);
 
@@ -314,7 +332,17 @@ class AlbumsController extends Module{
                 $db->query("UPDATE `albums` SET photo_num = photo_num-1, comm_num = comm_num-{$row['comm_num']} {$set_cover} WHERE aid = '{$row['album_id']}'");
 
                 //Чистим кеш
-                Cache::mozg_mass_clear_cache_file("user_{$user_info['user_id']}/albums|user_{$user_info['user_id']}/albums_all|user_{$user_info['user_id']}/albums_friends|user_{$row['user_id']}/position_photos_album_{$row['album_id']}");
+//                Cache::mozg_mass_clear_cache_file("
+//                user_{$user_info['user_id']}/albums|
+//                user_{$user_info['user_id']}/albums_all|
+//                user_{$user_info['user_id']}/albums_friends|
+//                user_{$row['user_id']}/position_photos_album_{$row['album_id']}");
+
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_info['user_id']}/albums");
+                $Cache->delete("users/{$user_info['user_id']}/albums_all");
+                $Cache->delete("users/{$user_info['user_id']}/albums_friends");
+                $Cache->delete("users/{$row['user_id']}/position_photos_album_{$row['album_id']}");
 
                 //Выводим и удаляем отметки если они есть
                 $sql_mark = $db->super_query("SELECT muser_id FROM `photos_mark` WHERE mphoto_id = '".$id."' AND mapprove = '0'", 1);
@@ -354,10 +382,16 @@ class AlbumsController extends Module{
                 $db->query("UPDATE `albums` SET cover = '{$row['photo_name']}' WHERE aid = '{$row['album_id']}'");
 
                 //Чистим кеш
-                Cache::mozg_mass_clear_cache_file("user_{$user_info['user_id']}/albums|user_{$user_info['user_id']}/albums_all|user_{$user_info['user_id']}/albums_friends");
-            }
+//                Cache::mozg_mass_clear_cache_file("
+//                user_{$user_info['user_id']}/albums|
+//                user_{$user_info['user_id']}/albums_all|
+//                user_{$user_info['user_id']}/albums_friends");
 
-            die();
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_info['user_id']}/albums");
+                $Cache->delete("users/{$user_info['user_id']}/albums_all");
+                $Cache->delete("users/{$user_info['user_id']}/albums_friends");
+            }
         }
     }
 
@@ -442,9 +476,15 @@ class AlbumsController extends Module{
                 }
 
                 //Чистим кеш
-                Cache::mozg_mass_clear_cache_file("user_{$user_info['user_id']}/albums|user_{$user_info['user_id']}/albums_all|user_{$user_info['user_id']}/albums_friends");
+//                Cache::mozg_mass_clear_cache_file("
+//                user_{$user_info['user_id']}/albums|
+//                user_{$user_info['user_id']}/albums_all|
+//                user_{$user_info['user_id']}/albums_friends");
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_info['user_id']}/albums");
+                $Cache->delete("users/{$user_info['user_id']}/albums_all");
+                $Cache->delete("users/{$user_info['user_id']}/albums_friends");
             }
-            die();
         }
     }
 
@@ -479,10 +519,13 @@ class AlbumsController extends Module{
                         $photo_info .= $count.'|'.$idval.'||';
                         $count ++;
                     }
-                    Cache::mozg_create_cache('user_'.$user_info['user_id'].'/position_photos_album_'.$row['album_id'], $photo_info);
+//                    Cache::mozg_create_cache('
+//                    user_'.$user_info['user_id'].'/position_photos_album_'.$row['album_id'], $photo_info);
+
+                    $Cache = Cache::initialize();
+                    $Cache->set("users/{$user_info['user_id']}/position_photos_album_{$row['album_id']}", $photo_info);
                 }
             }
-            die();
         }
     }
 
@@ -556,11 +599,22 @@ class AlbumsController extends Module{
                     $db->query("UPDATE `albums` SET name = '{$name}', descr = '{$descr}', privacy = '{$sql_privacy}' WHERE aid = '{$id}'");
                     echo stripslashes($name).'|#|||#row#|||#|'.stripslashes($descr);
 
-                    Cache::mozg_mass_clear_cache_file("user_{$user_id}/albums|user_{$user_id}/albums_all|user_{$user_id}/albums_friends|user_{$user_id}/albums_cnt_friends|user_{$user_id}/albums_cnt_all");
+//                    Cache::mozg_mass_clear_cache_file("
+//                    user_{$user_id}/albums|
+//                    user_{$user_id}/albums_all|
+//                    user_{$user_id}/albums_friends|
+//                    user_{$user_id}/albums_cnt_friends|
+//                    user_{$user_id}/albums_cnt_all");
+
+                    $Cache = Cache::initialize();
+                    $Cache->delete("users/{$user_id}/albums");
+                    $Cache->delete("users/{$user_id}/albums_all");
+                    $Cache->delete("users/{$user_id}/albums_friends");
+                    $Cache->delete("users/{$user_id}/albums_cnt_friends");
+                    $Cache->delete("users/{$user_id}/albums_cnt_all");
                 } else
                     echo 'no_name';
             }
-            die();
         }
     }
 
@@ -796,7 +850,12 @@ class AlbumsController extends Module{
                 Cache::mozg_clear_cache_file('user_'.$row['user_id'].'/position_photos_album_'.$row['aid']);
                 Cache::mozg_clear_cache_file("user_{$user_info['user_id']}/profile_{$user_info['user_id']}");
 
-                Cache::mozg_mass_clear_cache_file("user_{$user_id}/albums|user_{$user_id}/albums_all|user_{$user_id}/albums_friends|user_{$user_id}/albums_cnt_friends|user_{$user_id}/albums_cnt_all");
+                Cache::mozg_mass_clear_cache_file("
+                user_{$user_id}/albums|
+                user_{$user_id}/albums_all|
+                user_{$user_id}/albums_friends|
+                user_{$user_id}/albums_cnt_friends|
+                user_{$user_id}/albums_cnt_all");
             }
 
             die();
@@ -996,14 +1055,14 @@ class AlbumsController extends Module{
                     Page::generate($params);
                     return true;
                 } else
-                    msgbox('', $lang['no_comments'], 'info_2');
+                    msg_box( $lang['no_comments'], 'info_2');
 
                     $params['tpl'] = $tpl;
                     Page::generate($params);
                     return true;
             } else {
                 $user_speedbar = $lang['title_albums'];
-                msgbox('', $lang['no_notes'], 'info');
+                msg_box( $lang['no_notes'], 'info');
 
                 $params['tpl'] = $tpl;
                 Page::generate($params);
@@ -1080,7 +1139,7 @@ class AlbumsController extends Module{
                     Page::generate($params);
                     return true;
                 } else{
-                    msgbox('', $lang['no_photos'], 'info_2');
+                    msg_box($lang['no_photos'], 'info_2');
 
                     $params['tpl'] = $tpl;
                     Page::generate($params);
@@ -1091,7 +1150,7 @@ class AlbumsController extends Module{
                 //$params['title'] = $lang['hacking'];
                 $params['title'] = $lang['hacking'].' | Sura';
                 $user_speedbar = $lang['no_infooo'];
-                msgbox('', $lang['hacking'], 'info_2');
+                msg_box( $lang['hacking'], 'info_2');
 
                 $params['tpl'] = $tpl;
                 Page::generate($params);
@@ -1210,7 +1269,7 @@ class AlbumsController extends Module{
                         }
                         $tpl = Tools::navigation($gcount, $row_album['photo_num'], $config['home_url'].'albums/view/'.$aid.'/page/', $tpl);
                     } else
-                        msgbox('', '<br /><br />В альбоме нет фотографий<br /><br /><br />', 'info_2');
+                        msg_box( '<br /><br />В альбоме нет фотографий<br /><br /><br />', 'info_2');
 
                     //Проверяем на наличии файла с позициям фоток
                     $check_pos = Cache::mozg_cache('user_'.$row_album['user_id'].'/position_photos_album_'.$aid);
@@ -1220,7 +1279,7 @@ class AlbumsController extends Module{
                         GenerateAlbumPhotosPosition($row_album['user_id'], $aid);
                 } else {
                     $user_speedbar = $lang['error'];
-                    msgbox('', $lang['no_notes'], 'info');
+                    msg_box($lang['no_notes'], 'info');
                 }
 
                 $params['tpl'] = $tpl;
@@ -1229,7 +1288,7 @@ class AlbumsController extends Module{
 
             } else {
                 $user_speedbar = $lang['title_albums'];
-                msgbox('', $lang['no_notes'], 'info');
+                msg_box($lang['no_notes'], 'info');
 
                 $params['tpl'] = $tpl;
                 Page::generate($params);
@@ -1257,187 +1316,212 @@ class AlbumsController extends Module{
 
     /**
      *  Просмотр всех альбомов юзера
+     * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function index()
+    public function index($params): string
     {
-
-        $tpl = Registry::get('tpl');
-
         $db = $this->db();
         $user_info = $this->user_info();
         $lang = $this->get_langs();
         $logged = $this->logged();
 
-//        $lang = $this->get_langs();
-
         Tools::NoAjaxRedirect();
 
         if($logged){
-        $mobile_speedbar = 'Альбомы';
-        $uid = intval($_GET['uid']);
-
             $path = explode('/', $_SERVER['REQUEST_URI']);
-//            $id = str_replace('u', '', $path);
             $uid = intval($path['2']);
 
-        //Выводим данные о владельце альбома(ов)
-        $row_owner = $db->super_query("SELECT user_search_pref, user_albums_num, user_new_mark_photos FROM `users` WHERE user_id = '{$uid}'");
+            //Выводим данные о владельце альбома(ов)
+            $row_owner = $db->super_query("SELECT user_search_pref, user_albums_num, user_new_mark_photos FROM `users` WHERE user_id = '{$uid}'");
 
-        if($row_owner){
-            //ЧС
-            $CheckBlackList = Tools::CheckBlackList($uid);
-            if(!$CheckBlackList){
-                $author_info = explode(' ', $row_owner['user_search_pref']);
+            if($row_owner){
+                //ЧС
+                $CheckBlackList = Tools::CheckBlackList($uid);
+                if(!$CheckBlackList){
+                    $author_info = explode(' ', $row_owner['user_search_pref']);
 
-                $params['title'] = $lang['title_albums'].' '.Gramatic::gramatikName($author_info[0]).' '.Gramatic::gramatikName($author_info[1]).' | Sura';
-                $user_speedbar = $lang['title_albums'];
+                    $params['title'] = $lang['albums'].' '.Gramatic::gramatikName($author_info['0']).' '.Gramatic::gramatikName($author_info['1']).' | Sura';
 
-                //Выводи данные о альбоме
-                $sql_ = $db->super_query("SELECT aid, name, adate, photo_num, descr, comm_num, cover, ahash, privacy FROM `albums` WHERE user_id = '{$uid}' ORDER by `position` ASC", 1);
+                    //Выводи данные о альбоме
+                    $sql_ = $db->super_query("SELECT aid, name, adate, photo_num, descr, comm_num, cover, ahash, privacy FROM `albums` WHERE user_id = '{$uid}' ORDER by `position` ASC", 1);
 
-                //Если есть альбомы то выводи их
-                if($sql_){
-                    $m_cnt = $row_owner['user_albums_num'];
+                    //Если есть альбомы то выводи их
+                    if($sql_){
+                        $m_cnt = $row_owner['user_albums_num'];
 
-                    $tpl->load_template('/albums/album.tpl');
+//                        $tpl->load_template('/albums/album.tpl');
 
-                    //Добавляем ID для DragNDrop jQuery
-                    $tpl->result['content'] .= '<div id="dragndrop"><ul>';
+                        //Добавляем ID для DragNDrop jQuery
+//                        $tpl->result['content'] .= '<div id="dragndrop"><ul>';
 
-                    //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-                    if($user_info['user_id'] != $uid)
-                        $check_friend = Tools::CheckFriends($uid);
+                        //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
+                        if($user_info['user_id'] != $uid)
+                            $check_friend = Tools::CheckFriends($uid);
 
-                    foreach($sql_ as $row){
+                        foreach($sql_ as $key => $row){
 
-                        //Приватность
-                        $album_privacy = explode('|', $row['privacy']);
-                        if($album_privacy[0] == 1 OR $album_privacy[0] == 2 AND $check_friend OR $user_info['user_id'] == $uid){
+                            //Приватность
+                            $album_privacy = explode('|', $row['privacy']);
+                            if($album_privacy[0] == 1 OR $album_privacy[0] == 2 AND $check_friend OR $user_info['user_id'] == $uid){
+                                if($user_info['user_id'] == $uid){
+//                                    $tpl->set('[owner]', '');
+//                                    $tpl->set('[/owner]', '');
+                                    $sql_[$key]['owner'] = true;
+//                                    $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+                                    $sql_[$key]['not_owner'] = false;
+                                } else {
+//                                    $tpl->set('[not-owner]', '');
+//                                    $tpl->set('[/not-owner]', '');
+                                    $sql_[$key]['not_owner'] = true;
+//                                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                                    $sql_[$key]['owner'] = false;
+                                }
+
+//                                $tpl->set('{name}', stripslashes($row['name']));
+                                $sql_[$key]['name'] = stripslashes($row['name']);
+                                if($row['descr'])
+//                                    $tpl->set('{descr}', );
+                                $sql_[$key]['descr'] = '<div style="padding-top:4px;">'.stripslashes($row['descr']).'</div>';
+                                else
+//                                    $tpl->set('{descr}', '');
+                                $sql_[$key]['descr'] = '';
+
+                                $titles = array('фотография', 'фотографии', 'фотографий');
+//                                $tpl->set('{photo-num}', );
+                                $sql_[$key]['photo_num'] = $row['photo_num'].' '.Gramatic::declOfNum($row['photo_num'], $titles);
+
+                                $titles = array('комментарий', 'комментария', 'комментариев');
+//                                $tpl->set('{comm-num}', );
+                                $sql_[$key]['comm_num'] = $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles);
+
+                                $date = megaDate(strtotime($row['adate']), 1, 1);
+//                                $tpl->set('{date}', );
+                                $sql_[$key]['date'] = $date;
+
+                                $config = Settings::loadsettings();
+
+                                if($row['cover'])
+//                                    $tpl->set('{cover}', );
+                                    $sql_[$key]['cover'] = $config['home_url'].'uploads/users/'.$uid.'/albums/'.$row['aid'].'/c_'.$row['cover'];
+                                else
+//                                    $tpl->set('{cover}', );
+                                $sql_[$key]['cover'] = '/images/no_cover.png';
+
+//                                    $tpl->set('{aid}', );
+                                $sql_[$key]['aid'] = $row['aid'];
+//                                    $tpl->set('{hash}', );
+                                $sql_[$key]['hash'] = $row['ahash'];
+//                                    $tpl->compile('content');
+                            } else
+                                $m_cnt--;
+                        }
+
+                        $params['albums'] = $sql_;
+
+                        //Конец ID для DragNDrop jQuery
+//                        $tpl->result['content'] .= '</div></ul>';
+
+                        $row_owner['user_albums_num'] = $m_cnt;
+
+                        if($row_owner['user_albums_num']){
+//                            $titles = array('альбом', 'альбома', 'альбомов');
+//                            if($user_info['user_id'] == $uid){
+//                                $user_speedbar = 'У Вас <span id="albums_num">'.$row_owner['user_albums_num'].'</span> '.Gramatic::declOfNum($row_owner['user_albums_num'], $titles);
+//                            } else {
+//                                $user_speedbar = 'У '.Gramatic::gramatikName($author_info[0]).' '.$row_owner['user_albums_num'].' '.Gramatic::declOfNum($row_owner['user_albums_num'], $titles);
+//                            }
+
+//                            $tpl->load_template('/albums/albums_top.tpl');
+//                            $tpl->set('{user-id}', );
+                            $sql_[$key]['user_id'] = $uid;
+//                                $tpl->set('{name}', );
+                            $sql_[$key]['name'] = Gramatic::gramatikName($author_info['0']);
+//                                $tpl->set('[all-albums]', '');
+//                            $tpl->set('[/all-albums]', '');
+                            $sql_[$key]['all_albums'] = true;
+//                                $tpl->set_block("'\\[view\\](.*?)\\[/view\\]'si","");
+                            $sql_[$key]['view'] = false;
+//                                $tpl->set_block("'\\[comments\\](.*?)\\[/comments\\]'si","");
+                            $sql_[$key]['comments'] = false;
+//                                $tpl->set_block("'\\[editphotos\\](.*?)\\[/editphotos\\]'si","");
+                            $sql_[$key]['editphotos'] = false;
+//                                $tpl->set_block("'\\[albums-comments\\](.*?)\\[/albums-comments\\]'si","");
+                            $sql_[$key]['albums_comments'] = false;
+//                                $tpl->set_block("'\\[all-photos\\](.*?)\\[/all-photos\\]'si","");
+                            $sql_[$key]['all_photos'] = false;
+
+                            //Показ скрытых тексто только для владельца страницы
                             if($user_info['user_id'] == $uid){
-                                $tpl->set('[owner]', '');
-                                $tpl->set('[/owner]', '');
-                                $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+//                                $tpl->set('[owner]', '');
+//                                $tpl->set('[/owner]', '');
+                                $sql_[$key]['owner'] = true;
+//                                    $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+                                $sql_[$key]['not_owner'] = false;
                             } else {
-                                $tpl->set('[not-owner]', '');
-                                $tpl->set('[/not-owner]', '');
-                                $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+//                                $tpl->set('[not-owner]', '');
+//                                $tpl->set('[/not-owner]', '');
+                                $sql_[$key]['not_owner'] = true;
+//                                    $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                                $sql_[$key]['owner'] = false;
                             }
-
-                            $tpl->set('{name}', stripslashes($row['name']));
-                            if($row['descr'])
-                                $tpl->set('{descr}', '<div style="padding-top:4px;">'.stripslashes($row['descr']).'</div>');
-                            else
-                                $tpl->set('{descr}', '');
-
-                            $titles = array('фотография', 'фотографии', 'фотографий');
-                            $tpl->set('{photo-num}', $row['photo_num'].' '.Gramatic::declOfNum($row['photo_num'], $titles));
-
-                            $titles = array('комментарий', 'комментария', 'комментариев');
-                            $tpl->set('{comm-num}', $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles));
-
-                            $date = megaDate(strtotime($row['adate']), 1, 1);
-                            $tpl->set('{date}', $date);
 
                             $config = Settings::loadsettings();
 
-                            if($row['cover'])
-                                $tpl->set('{cover}', $config['home_url'].'uploads/users/'.$uid.'/albums/'.$row['aid'].'/c_'.$row['cover']);
-                            else
-                                $tpl->set('{cover}', '/images/no_cover.png');
+                            if($config['albums_drag'] == 'no')
+//                                $tpl->set_block("'\\[admin-drag\\](.*?)\\[/admin-drag\\]'si","");
+                                $sql_[$key]['albums_drag'] = false;
+                            else {
+//                                $tpl->set('[admin-drag]', '');
+//                                $tpl->set('[/admin-drag]', '');
+                                $sql_[$key]['albums_drag'] = true;
+                            }
 
-                            $tpl->set('{aid}', $row['aid']);
-                            $tpl->set('{hash}', $row['ahash']);
+                            if($row_owner['user_new_mark_photos'] AND $user_info['user_id'] == $uid){
+//                                $tpl->set('[new-photos]', '');
+//                                $tpl->set('[/new-photos]', '')
+                                $sql_[$key]['new_photos'] = true;
+//                                $tpl->set('{num}', );
+                                $sql_[$key]['num'] = $row_owner['user_new_mark_photos'];
+                            } else
+//                                $tpl->set_block("'\\[new-photos\\](.*?)\\[/new-photos\\]'si","");
+                                $sql_[$key]['new_photos'] = false;
 
-                            $tpl->compile('content');
-                        } else
-                            $m_cnt--;
-                    }
+//                                    $tpl->compile('info');
+                        } else{
+//                            msg_box('', $lang['no_albums'], 'info_2');
 
-                    //Конец ID для DragNDrop jQuery
-                    $tpl->result['content'] .= '</div></ul>';
-
-                    $row_owner['user_albums_num'] = $m_cnt;
-
-                    if($row_owner['user_albums_num']){
-                        $titles = array('альбом', 'альбома', 'альбомов');
-                        if($user_info['user_id'] == $uid){
-                            $user_speedbar = 'У Вас <span id="albums_num">'.$row_owner['user_albums_num'].'</span> '.Gramatic::declOfNum($row_owner['user_albums_num'], $titles);
-                        } else {
-                            $user_speedbar = 'У '.Gramatic::gramatikName($author_info[0]).' '.$row_owner['user_albums_num'].' '.Gramatic::declOfNum($row_owner['user_albums_num'], $titles);
                         }
+                    } else {
 
-                        $tpl->load_template('/albums/albums_top.tpl');
-                        $tpl->set('{user-id}', $uid);
-                        $tpl->set('{name}', Gramatic::gramatikName($author_info[0]));
-                        $tpl->set('[all-albums]', '');
-                        $tpl->set('[/all-albums]', '');
-                        $tpl->set_block("'\\[view\\](.*?)\\[/view\\]'si","");
-                        $tpl->set_block("'\\[comments\\](.*?)\\[/comments\\]'si","");
-                        $tpl->set_block("'\\[editphotos\\](.*?)\\[/editphotos\\]'si","");
-                        $tpl->set_block("'\\[albums-comments\\](.*?)\\[/albums-comments\\]'si","");
-                        $tpl->set_block("'\\[all-photos\\](.*?)\\[/all-photos\\]'si","");
-
+    //                    $tpl->load_template('/albums/albums_info.tpl');
                         //Показ скрытых тексто только для владельца страницы
                         if($user_info['user_id'] == $uid){
-                            $tpl->set('[owner]', '');
-                            $tpl->set('[/owner]', '');
-                            $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+                            $params['owner'] = true;
+                            $params['not_owner'] = false;
                         } else {
-                            $tpl->set('[not-owner]', '');
-                            $tpl->set('[/not-owner]', '');
-                            $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                            $params['not_owner'] = true;
+                            $params['owner'] = false;
                         }
-
-                        $config = Settings::loadsettings();
-
-                        if($config['albums_drag'] == 'no')
-                            $tpl->set_block("'\\[admin-drag\\](.*?)\\[/admin-drag\\]'si","");
-                        else {
-                            $tpl->set('[admin-drag]', '');
-                            $tpl->set('[/admin-drag]', '');
-                        }
-
-                        if($row_owner['user_new_mark_photos'] AND $user_info['user_id'] == $uid){
-                            $tpl->set('[new-photos]', '');
-                            $tpl->set('[/new-photos]', '');
-                            $tpl->set('{num}', $row_owner['user_new_mark_photos']);
-                        } else
-                            $tpl->set_block("'\\[new-photos\\](.*?)\\[/new-photos\\]'si","");
-
-                        $tpl->compile('info');
-                    } else
-                        msgbox('', $lang['no_albums'], 'info_2');
-                } else {
-                    $tpl->load_template('/albums/albums_info.tpl');
-                    //Показ скрытых тексто только для владельца страницы
-                    if($user_info['user_id'] == $uid){
-                        $tpl->set('[owner]', '');
-                        $tpl->set('[/owner]', '');
-                        $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
-                    } else {
-                        $tpl->set('[not-owner]', '');
-                        $tpl->set('[/not-owner]', '');
-                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
                     }
-                    $tpl->compile('content');
+                } else {
+    //                msg_box('', $lang['no_notes'], 'info');
                 }
-            } else {
-                $user_speedbar = $lang['error'];
-                msgbox('', $lang['no_notes'], 'info');
+            } else{
+    //            Hacking();
+
             }
-        } else
-            Hacking();
-//            }
-            $tpl->clear();
-            $db->free($sql_);
-        } else {
+
+            return view('albums.albums', $params);
+    //            }
+    //            $tpl->clear();
+    //            $db->free($sql_);
+            }
+        else {
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
         }
-
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
     }
 }

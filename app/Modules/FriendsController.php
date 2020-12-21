@@ -2,18 +2,15 @@
 
 namespace App\Modules;
 
+use App\Services\Cache;
 use Exception;
-use Sura\Libs\Cache;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
 class FriendsController extends Module{
 
-    public function sends($params)
+    public function sends()
     {
         echo 'true';
     }
@@ -37,9 +34,9 @@ class FriendsController extends Module{
 
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
 
             //Tools::NoAjaxQuery();
 
@@ -76,11 +73,11 @@ class FriendsController extends Module{
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$for_user_id}', from_user_id = '{$user_info['user_id']}', type = '11', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/friends/requests'");
 
-                            Cache::mozg_create_cache("user_{$for_user_id}/updates", 1);
-
+                            $Cache = Cache::initialize();
+                            $Cache->set("users/{$for_user_id}/updates", '1');
                         }
 
-                        $config = Settings::loadsettings();
+//                        $config = Settings::loadsettings();
 
                         //Отправка уведомления на E-mail
 //                        if($config['news_mail_1'] == 'yes'){
@@ -116,15 +113,15 @@ class FriendsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+//        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
 //        if($ajax == 'no')
 //            Tools::NoAjaxQuery();
 
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
 
             //Tools::NoAjaxQuery();
 
@@ -181,8 +178,8 @@ class FriendsController extends Module{
 
                     $db->query("INSERT INTO `updates` SET for_user_id = '{$take_user_id}', from_user_id = '{$user_info['user_id']}', type = '12', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/u{$take_user_id}'");
 
-                    Cache::mozg_create_cache("user_{$take_user_id}/updates", 1);
-
+                    $Cache = Cache::initialize();
+                    $Cache->set("users/{$take_user_id}/updates", '1');
                 }
 
                 //Добавляем действия в ленту новостей себе
@@ -196,15 +193,16 @@ class FriendsController extends Module{
                     $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 4, action_text = '{$take_user_id}', action_time = '{$server_time}'");
 
                 //Чистим кеш владельцу стр и тому кого добавляем в др.
-                Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-                Cache::mozg_clear_cache_file('user_'.$take_user_id.'/profile_'.$take_user_id);
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_id}/profile_".$user_id);
+                $Cache->delete("users/{$take_user_id}/profile_".$take_user_id);
 
                 //Записываем пользователя в кеш файл друзей
-                $openMyList = Cache::mozg_cache("user_{$user_id}/friends");
-                Cache::mozg_create_cache("user_{$user_id}/friends", $openMyList."u{$take_user_id}|");
+                $openMyList = $Cache->get("users/{$user_id}/friends");
+                $Cache->set("users/{$user_id}/friends", $openMyList."u{$take_user_id}|");
 
-                $openTakeList = Cache::mozg_cache("user_{$take_user_id}/friends");
-                Cache::mozg_create_cache("user_{$take_user_id}/friends", $openTakeList."u{$user_id}|");
+                $openTakeList = $Cache->get("users/{$take_user_id}/friends");
+                $Cache->set("users/{$take_user_id}/friends", $openTakeList."u{$user_id}|");
             } else
                 echo 'no_request';
 
@@ -216,7 +214,7 @@ class FriendsController extends Module{
      * Отклонение заявки на дружбу
      */
     public function reject($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -227,9 +225,9 @@ class FriendsController extends Module{
             Tools::NoAjaxQuery();
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
 
             //Tools::NoAjaxQuery();
             $reject_user_id = $db->safesql(intval($_GET['reject_user_id']));
@@ -246,16 +244,15 @@ class FriendsController extends Module{
 
             } else
                 echo 'no_request';
-
-            die();
         }
     }
 
     /**
      * Удаления друга из списка друзей
+     * @param $params
      */
     public function delete($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -265,10 +262,9 @@ class FriendsController extends Module{
         if($ajax == 'yes')
             Tools::NoAjaxQuery();
         if($logged){
-            $params['title'] = $lang['friends'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
 
             //Tools::NoAjaxQuery();
             $delet_user_id = $db->safesql(intval($_POST['delet_user_id']));
@@ -290,26 +286,29 @@ class FriendsController extends Module{
                 $db->query("UPDATE `users` SET user_friends_num = user_friends_num-1 WHERE user_id = '{$delet_user_id}'");
 
                 //Чистим кеш владельцу стр и тому кого удаляем из др.
-                Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-                Cache::mozg_clear_cache_file('user_'.$delet_user_id.'/profile_'.$delet_user_id);
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_id}/profile_".$user_id);
+                $Cache->delete("users/{$delet_user_id}/profile_".$delet_user_id);
 
                 //Удаляем пользователя из кеш файл друзей
-                $openMyList = Cache::mozg_cache("user_{$user_id}/friends");
-                Cache::mozg_create_cache("user_{$user_id}/friends", str_replace("u{$delet_user_id}|", "", $openMyList));
+                $openMyList = $Cache->get("users/{$user_id}/friends");
+                $Cache->set("users/{$user_id}/friends", str_replace("u{$delet_user_id}|", "", $openMyList));
 
-                $openTakeList = Cache::mozg_cache("user_{$delet_user_id}/friends");
-                Cache::mozg_create_cache("user_{$delet_user_id}/friends", str_replace("u{$user_id}|", "", $openTakeList));
+                $openTakeList = $Cache->get("users/{$delet_user_id}/friends");
+                $Cache->set("users/{$delet_user_id}/friends", str_replace("u{$user_id}|", "", $openTakeList));
             } else
                 echo 'no_friend';
-
-            die();
         }
     }
 
     /**
      * Удаления друга из списка друзей
+     * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function requests($params){
+    public function requests($params): string
+    {
 //        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -332,7 +331,7 @@ class FriendsController extends Module{
 
             $user_id = $user_info['user_id'];
 
-            $titles = array('заявка в друзья', 'заявки в друзья', 'заявок в друзья');//friends_demands
+//            $titles = array('заявка в друзья', 'заявки в друзья', 'заявок в друзья');//friends_demands
 //            if($user_info['user_friends_demands'])
 //                $user_speedbar = $user_info['user_friends_demands'].' '.Gramatic::declOfNum($user_info['user_friends_demands'], $titles);
 //            else
@@ -409,6 +408,9 @@ class FriendsController extends Module{
 //                msgbox('', $lang['no_requests'], 'info_2');
 
             }
+
+            $params['menu'] = \App\Models\Menu::friends();
+
             return view('friends.request', $params);
 
         }else{
@@ -421,10 +423,11 @@ class FriendsController extends Module{
     /**
      * Просмотр всех онлайн друзей
      * @param $params
-     * @return bool
+     * @return string
      * @throws Exception
      */
-    public function online($params){
+    public function online($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -472,7 +475,9 @@ class FriendsController extends Module{
 
                 if($sql_)
                     //Кол-во друзей в онлайне
-                    $online_friends = $db->super_query("SELECT COUNT(*) AS cnt FROM `users` tb1, `friends` tb2 WHERE tb1.user_id = tb2.friend_id AND tb2.user_id = '{$get_user_id}' AND tb1.user_last_visit >= '{$online_time}' AND tb2.subscriptions = 0");
+                {
+//                    $online_friends = $db->super_query("SELECT COUNT(*) AS cnt FROM `users` tb1, `friends` tb2 WHERE tb1.user_id = tb2.friend_id AND tb2.user_id = '{$get_user_id}' AND tb1.user_last_visit >= '{$online_time}' AND tb2.subscriptions = 0");
+                }
 
                 //Верх
                 if($user_info['user_id'] != $get_user_id)
@@ -542,6 +547,8 @@ class FriendsController extends Module{
 //                msgbox('', $lang['no_notes'], 'info');
             }
 
+            $params['menu'] = \App\Models\Menu::friends();
+
             return view('friends.online', $params);
         }else{
             $params['title'] = $lang['no_infooo'];
@@ -567,9 +574,9 @@ class FriendsController extends Module{
 
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
 
             //Tools::NoAjaxQuery();
 
@@ -606,16 +613,16 @@ class FriendsController extends Module{
 
                         $tpl->compile('content');
                     }
-                    box_navigation($gcount, $count['cnt'], "''", 'sp.openfriends', '');
+//                    box_navigation($gcount, $count['cnt'], "''", 'sp.openfriends', '');
                 } else
-                    msgbox('', '<div class="clear" style="margin-top:140px"></div>'.$lang['no_requests'], 'info_2');
+                    msg_box( '<div class="clear" style="margin-top:140px"></div>'.$lang['no_requests'], 'info_2');
             } else
-                msgbox('', '<div class="clear" style="margin-top:140px"></div>'.$lang['no_requests'], 'info_2');
+                msg_box( '<div class="clear" style="margin-top:140px"></div>'.$lang['no_requests'], 'info_2');
 
-            Tools::AjaxTpl($tpl);
+//            Tools::AjaxTpl($tpl);
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
+//            $params['tpl'] = $tpl;
+//            Page::generate($params);
             return true;
         }
     }
@@ -626,7 +633,8 @@ class FriendsController extends Module{
      * @return string
      * @throws Exception
      */
-    public function common($params){
+    public function common($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -681,7 +689,7 @@ class FriendsController extends Module{
 
                 //Если есть на вывод
                 if ($count_common['cnt']) {
-                    $titles = array('общий друг', 'общих друга', 'общих друзей');//friends_common
+//                    $titles = array('общий друг', 'общих друга', 'общих друзей');//friends_common
 //                    $user_speedbar = $count_common['cnt'].' '.Gramatic::declOfNum($count_common['cnt'], $titles);
 
                     //SQL запрос на вывод друзей, по дате новых 20
@@ -758,8 +766,11 @@ class FriendsController extends Module{
 
             }
             else {
-//            msgbox('', 'У Вас с этим пользователем нет общих друзей.', 'info_2');
+//            msg_box('', 'У Вас с этим пользователем нет общих друзей.', 'info_2');
             }
+
+            $params['menu'] = \App\Models\Menu::friends();
+
             return view('friends.common', $params);
 
         }else{
@@ -772,10 +783,11 @@ class FriendsController extends Module{
     /**
      * Просмотр всех друзей
      * @param $params
-     * @return bool
+     * @return string
      * @throws Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -788,7 +800,10 @@ class FriendsController extends Module{
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
 
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if(isset($_GET['page']) AND $_GET['page'] > 0)
+                $page = intval($_GET['page']);
+            else
+                $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
@@ -906,20 +921,22 @@ class FriendsController extends Module{
 
                         $params['friends'] = $sql_;
                     } else{
-//                        msgbox('', $lang['no_requests'], 'info_2');
+//                        msg_box('', $lang['no_requests'], 'info_2');
 
                     }
 
                 } else{
-//                    msgbox('', $lang['no_requests'], 'info_2');
+//                    msg_box('', $lang['no_requests'], 'info_2');
 
                 }
             } else {
 //                $user_speedbar = $lang['error'];
-//                msgbox('', $lang['no_notes'], 'info');
+//                msg_box('', $lang['no_notes'], 'info');
             }
 //            $db->free();
 //            $tpl->clear();
+
+            $params['menu'] = \App\Models\Menu::friends();
 
             return view('friends.friends', $params);
         } else {

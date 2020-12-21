@@ -6,9 +6,9 @@ const lastname = $('#lastname');
 const email = $('#email');
 const new_pass = $('#new_pass');
 const new_pass2 = $('#new_pass2');
-const sex = $("#sex");
+let sex = $("#sex");
 const day = $("#day");
-const month = $("#month");
+let month = $("#month");
 const year = $("#year");
 const country = $("#country");
 const city = $("#select_city");
@@ -258,7 +258,11 @@ var login = {
 		const log_password = $('#log_password');
 		const token = $( "input[name='_mytoken']" );
 
-		$.post('/login/', {
+		// if (location.protocol == 'http:'){
+		// 	window.location.href('https://'+location.host+'/no_ssl/');
+		// }
+
+		$.post('https://'+location.host+'/login/', {
 			login: '',
 			email: log_email.val(),
 			pass: log_password.val(),

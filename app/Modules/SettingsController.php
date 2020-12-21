@@ -2,10 +2,9 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Cache;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use App\Services\Cache;
+use Exception;
+use Sura\Libs\Profile_check;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -14,8 +13,10 @@ use Sura\Libs\Validation;
 
 class SettingsController extends Module{
 
+    /**
+     * @param $params
+     */
     public function newpass($params){
-        //$tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -25,9 +26,6 @@ class SettingsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            //$act = $_GET['act'];
-            $params['title'] = $lang['settings'].' | Sura';
-
             Tools::NoAjaxRedirect();
 
             $_POST['old_pass'] = Validation::ajax_utf8($_POST['old_pass']);
@@ -53,7 +51,6 @@ class SettingsController extends Module{
     }
 
     public function newname($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -63,7 +60,6 @@ class SettingsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            $params['title'] = $lang['settings'].' | Sura';
 
             $user_name = Validation::ajax_utf8(Validation::textFilter($_POST['name']));
             $user_lastname = Validation::ajax_utf8(Validation::textFilter(ucfirst($_POST['lastname'])));
@@ -73,6 +69,8 @@ class SettingsController extends Module{
                 if(strlen($user_name) >= 2){
                     if(!preg_match("/^[a-zA-Zа-яА-Я]+$/iu", $user_name))
                         $errors = 3;
+                    else
+                        $errors = 0;
                 } else
                     $errors = 2;
             } else
@@ -83,31 +81,32 @@ class SettingsController extends Module{
                 if(strlen($user_lastname) >= 2){
                     if(!preg_match("/^[a-zA-Zа-яА-Я]+$/iu", $user_lastname))
                         $errors_lastname = 3;
+                    else
+                        $errors_lastname = 0;
                 } else
                     $errors_lastname = 2;
             } else
                 $errors_lastname = 1;
 
-            if(!$errors){
-                if(!$errors_lastname){
+            if($errors == 0 AND $errors_lastname == 0){
                     $user_name = ucfirst($user_name);
                     $user_lastname = ucfirst($user_lastname);
 
                     $db->query("UPDATE `users` SET user_name = '{$user_name}', user_lastname = '{$user_lastname}', user_search_pref = '{$user_name} {$user_lastname}' WHERE user_id = '{$user_id}'");
 
-                    Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-                    Cache::mozg_clear_cache();
-                } else
-                    echo $errors;
+                    $Cache = Cache::initialize();
+                    $response = $Cache->delete('users/'.$user_id.'/profile_'.$user_id);
+                    if ($response == false){
+                        echo 1;
+                    }else{
+                        echo 'true';
+                    }
             } else
                 echo $errors;
-
-            die();
         }
     }
 
     public function saveprivacy($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -136,13 +135,13 @@ class SettingsController extends Module{
 
             $db->query("UPDATE `users` SET user_privacy = '{$user_privacy}' WHERE user_id = '{$user_id}'");
 
-            Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-
-            die();
+            $Cache = Cache::initialize();
+            $Cache->delete('users/'.$user_id.'/profile_'.$user_id);
         }
     }
 
-    public function privacy($params){
+    public function privacy($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -178,11 +177,13 @@ class SettingsController extends Module{
 //            $tpl->set('{val_info_text}', );
             $params['val_info_text'] = strtr($row['val_info'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я'));
         }
+
+        $params['menu'] = \App\Models\Menu::settings();
+
         return view('settings.privacy', $params);
     }
 
     public function addblacklist($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -192,8 +193,6 @@ class SettingsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-
-            $params['title'] = $lang['settings'].' | Sura';
 
             $bad_user_id = intval($_POST['bad_user_id']);
 
@@ -208,7 +207,7 @@ class SettingsController extends Module{
                 $db->query("UPDATE `users` SET user_blacklist_num = user_blacklist_num+1, user_blacklist = '{$myRow['user_blacklist']}|{$bad_user_id}|' WHERE user_id = '{$user_id}'");
 
                 //Если юзер есть в др.
-                if(CheckFriends($bad_user_id)){
+                if(Tools::CheckFriends($bad_user_id)){
                     //Удаляем друга из таблицы друзей
                     $db->query("DELETE FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$bad_user_id}' AND subscriptions = 0");
 
@@ -222,27 +221,27 @@ class SettingsController extends Module{
                     $db->query("UPDATE `users` SET user_friends_num = user_friends_num-1 WHERE user_id = '{$bad_user_id}'");
 
                     //Чистим кеш владельцу стр и тому кого удаляем из др.
-                    Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-                    Cache::mozg_clear_cache_file('user_'.$bad_user_id.'/profile_'.$bad_user_id);
+                    $Cache = Cache::initialize();
+                    $Cache->delete('users/'.$user_id.'/profile_'.$user_id);
+                    $Cache->delete('users/'.$bad_user_id.'/profile_'.$bad_user_id);
 
                     //Удаляем пользователя из кеш файл друзей
-                    $openMyList = Cache::mozg_cache("user_{$user_id}/friends");
-                    Cache::mozg_create_cache("user_{$user_id}/friends", str_replace("u{$bad_user_id}|", "", $openMyList));
+                    $openMyList = $Cache->get("users/{$user_id}/friends");
+                    $Cache->set("users/{$user_id}/friends", str_replace("u{$bad_user_id}|", "", $openMyList));
 
-                    $openTakeList = Cache::mozg_cache("user_{$bad_user_id}/friends");
-                    Cache::mozg_create_cache("user_{$bad_user_id}/friends", str_replace("u{$user_id}|", "", $openTakeList));
+                    $openTakeList = $Cache->get("users/{$bad_user_id}/friends");
+//                    $openTakeList = Cache::mozg_cache("user_{$bad_user_id}/friends");
+                    $Cache->set("users/{$bad_user_id}/friends", str_replace("u{$user_id}|", "", $openTakeList));
                 }
 
-                $openMyList = Cache::mozg_cache("user_{$user_id}/blacklist");
-                Cache::mozg_create_cache("user_{$user_id}/blacklist", $openMyList."|{$bad_user_id}|");
+                $Cache = Cache::initialize();
+                $openMyList = $Cache->get('users/'.$user_id.'/blacklist');
+                $Cache->set('users/'.$user_id.'/blacklist', $openMyList."|{$bad_user_id}|");
             }
-
-            die();
         }
     }
 
     public function delblacklist($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -252,8 +251,6 @@ class SettingsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            $params['title'] = $lang['settings'].' | Sura';
-
             $bad_user_id = intval($_POST['bad_user_id']);
 
             //Проверяем на существование юзера
@@ -267,16 +264,14 @@ class SettingsController extends Module{
                 $myRow['user_blacklist'] = str_replace("|{$bad_user_id}|", "", $myRow['user_blacklist']);
                 $db->query("UPDATE `users` SET user_blacklist_num = user_blacklist_num-1, user_blacklist = '{$myRow['user_blacklist']}' WHERE user_id = '{$user_id}'");
 
-                $openMyList = Cache::mozg_cache("user_{$user_id}/blacklist");
-                Cache::mozg_create_cache("user_{$user_id}/blacklist", str_replace("|{$bad_user_id}|", "", $openMyList));
+                $Cache = Cache::initialize();
+                $openMyList = $Cache->get('users/'.$user_id.'/blacklist');
+                $Cache->set("users/{$user_id}/blacklist", str_replace("|{$bad_user_id}|", "", $openMyList));
             }
-
-            die();
         }
     }
 
     public function blacklist($params){
-//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
 
@@ -328,16 +323,15 @@ class SettingsController extends Module{
 //            $tpl->set('{bad_user}', $tpl->result['alert_info']);
 //            $tpl->compile('content');
         }
+        $params['menu'] = \App\Models\Menu::settings();
 
         return view('settings.blacklist', $params);
-
-//        $params['tpl'] = $tpl;
-//        Page::generate($params);
-//        return true;
     }
 
-    public function change_mail($params){
-        $tpl = $params['tpl'];
+    /**
+     *
+     */
+    public function change_mail(){
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -347,13 +341,12 @@ class SettingsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            $params['title'] = $lang['settings'].' | Sura';
 
             $config = Settings::loadsettings();
 
             //Отправляем письмо на обе почты
-            include_once __DIR__.'/../Classes/mail.php';
-            $mail = new \dle_mail($config);
+//            include_once __DIR__.'/../Classes/mail.php';
+//            $mail = new \dle_mail($config);
 
             $email = Validation::textFilter($_POST['email'], false, true);
 
@@ -393,7 +386,7 @@ class SettingsController extends Module{
                         проигнорируйте это письмо.С уважением,
                         Администрация {$config['home_url']}
                         HTML;
-                $mail->send($row['user_email'], 'Изменение почтового адреса', $message);
+//                $mail->send($row['user_email'], 'Изменение почтового адреса', $message);
 
                 if (!isset($_IP))
                     $_IP = NULL;
@@ -434,9 +427,34 @@ class SettingsController extends Module{
         }
     }
 
-    public function general($params){
+    /**
+     *
+     */
+    public function time_zone()
+    {
+        $time_zone = intval($_POST['time_zone']);
+        $max = 26;
+        if($time_zone < $max){
+            $user_info = $this->user_info();
+            $db = $this->db();
+            $db->query("UPDATE `users` SET time_zone = '".$time_zone."'  WHERE user_id = '".$user_info['user_id']."'");
+
+            $Cache = Cache::initialize();
+            $Cache->delete('users/'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
+        }
+        echo '';
+    }
+
+    /**
+     * @param $params
+     * @return string
+     * @throws Exception
+     */
+    public function general($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
+        $user_info = $this->user_info();
 
         Tools::NoAjaxRedirect();
 
@@ -494,35 +512,17 @@ class SettingsController extends Module{
             }
 
             //Email
-            $substre = substr($params['user']['user_email'], 0, 1);
-            $epx1 = explode('@', $params['user']['user_email']);
+            $substre = substr($user_info['user_email'], 0, 1);
+            $epx1 = explode('@', $user_info['user_email']);
             $params['email'] = $substre.'*******@'.$epx1[1];
 
-            $params['timezs'] = installationSelected($params['user']['user_timezona'], ' <option value="1">GMT-11 "Samoa"</option> 
- <option value="2">GMT-10 "Hawaii"</option>
- <option value="3">GMT-9 "Alaska"</option> 
- <option value="4">GMT-8 "Los Angeles"</option>  
- <option value="5">GMT-7 "Denver"</option>
-  <option value="6">GMT-6 "Chicago"</option>
-  <option value="7">GMT-5 "New York"</option> 
-  <option value="8">GMT-4 "Caracas"</option> 
- <option value="9">GMT-3 "Buenos Aires"</option>
- <option value="10">GMT-2 "Sao Paulo"</option> 
- <option value="11">GMT-1 "Azores"</option>  
- <option value="12">GMT 0 "London"</option>
-  <option value="13">GMT1 "Berlin,Paris"</option>
-  <option value="14">GMT 2 "Kyiv, Minsk"</option> 
-  <option value="15">GMT 3 "Moscow, Saint-Peterburg"</option> 
- <option value="16">GMT 4 "Yerevan"</option>
- <option value="17">GMT 5 "Yekaterinburg, Tashkent"</option> 
- <option value="18">GMT 6 "Novosibirsk"</option>  
- <option value="19">GMT 7 "Krasnoyarsk, Bangkok"</option>
-  <option value="20">GMT 8 "Singapore, Hong Kong"</option>
-  <option value="21">GMT 9 "Tokyo"</option> 
-  <option value="22">GMT 10 "Vladivostok"</option> 
- <option value="23">GMT 11 "Sydney"</option>
- <option value="24">GMT 12 "Kamchatka"</option> ');
+            $time_list = Profile_check::list();
 
+            $params['date_today'] = date("d.m.y H:i:s");
+
+            $params['timezs'] = installationSelected($user_info['time_zone'], $time_list);
+
+            $params['menu'] = \App\Models\Menu::settings();
 
             return view('settings.general', $params);
         } else {
@@ -532,8 +532,11 @@ class SettingsController extends Module{
         }
     }
 
-    public function index($params){
+    public function index($params): string
+    {
         $lang = $this->get_langs();
+        $params['menu'] = \App\Models\Menu::settings();
+
         if($params['user']['logged']){
             $params['title'] = $lang['settings'].' | Sura';
             return view('settings.settings', $params);

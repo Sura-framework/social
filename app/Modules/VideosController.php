@@ -2,9 +2,10 @@
 
 namespace App\Modules;
 
+use App\Services\Cache;
+use Exception;
 use Intervention\Image\ImageManager;
 use Sura\Libs\Thumb;
-use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
@@ -19,9 +20,10 @@ use FFMpeg\Coordinate\TimeCode;
 
 class VideosController extends Module{
 
+    /**
+     * @param $params
+     */
     public function upload($params){
-        //$tpl = $params['tpl'];
-        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -29,16 +31,12 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            //$limit_vieos = 20;
-
             $config = Settings::loadsettings();
 
             $file_tmp = $_FILES['uploadfile']['tmp_name'];
             if (!file_exists($file_tmp)) {
                 echo 'not_uploaded';
-                die();
             }
 
             $modules_dir = dirname (__FILE__);
@@ -48,18 +46,18 @@ class VideosController extends Module{
             $server_time = intval($_SERVER['REQUEST_TIME']);
             $file_rename = substr(md5($server_time+rand(1,100000)), 0, 15);
             $file_size = $_FILES['uploadfile']['size'];
-            $type = strtolower(end(explode(".", $file_name)));
+            $array = explode(".", $file_name);
+            $type = strtolower(end($array));
             if($type == 'mp4' AND $config['video_mod_add'] == 'yes' AND $file_size < 500000000){
                 $video_dir = $root_dir.'/public/uploads/videos/'.$user_id.'/';
                 if(!is_dir($video_dir)){
-                    @mkdir($video_dir, 0777);
-                    @chmod($video_dir, 0777);
+                    mkdir($video_dir, 0777);
+                    chmod($video_dir, 0777);
                 }
                 $res_type = '.'.$type;
 
                 if(move_uploaded_file($file_tmp, $video_dir.$file_rename.$res_type)){
                     $result_video = $config['home_url'].'uploads/videos/'.$user_id.'/'.$file_rename.$res_type;
-
 
                     if ($type == 'mp4') {
 
@@ -81,7 +79,6 @@ class VideosController extends Module{
 
                     }else{
                         echo 'bad_format';
-                        die();
                     }
 
                     $photo = $config['home_url'].'uploads/videos/'.$user_id.'/'.$file_rename.'.jpg';
@@ -95,63 +92,61 @@ class VideosController extends Module{
                     $row = $db->super_query("SELECT ac_id, action_text FROM `news` WHERE action_time > '{$generateLastTime}' AND action_type = 2 AND ac_user_id = '{$user_id}'");
                     if($row) $db->query("UPDATE `news` SET action_text = '{$dbid}|{$photo}||{$row['action_text']}', action_time = '{$server_time}' WHERE ac_id = '{$row['ac_id']}'");
                     else $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 2, action_text = '{$dbid}|{$photo}', action_time = '{$server_time}'");
-                    Cache::mozg_mass_clear_cache_file("user_{$user_id}/page_videos_user|user_{$user_id}/page_videos_user_friends|user_{$user_id}/page_videos_user_all|user_{$user_id}/profile_{$user_id}|user_{$user_id}/videos_num_all|user_{$user_id}/videos_num_friends");
+//                    Cache::mozg_mass_clear_cache_file("
+//                    user_{$user_id}/page_videos_user|
+//                    user_{$user_id}/page_videos_user_friends|
+//                    user_{$user_id}/page_videos_user_all|
+//                    user_{$user_id}/profile_{$user_id}|
+//                    user_{$user_id}/videos_num_all|
+//                    user_{$user_id}/videos_num_friends");
+
+                    $Cache = Cache::initialize();
+                    $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                    $Cache->delete("users/{$user_id}/page_videos_user");
+                    $Cache->delete("users/{$user_id}/page_videos_user_friends");
+                    $Cache->delete("users/{$user_id}/page_videos_user_all");
+                    $Cache->delete("users/{$user_id}/videos_num_all");
+                    $Cache->delete("users/{$user_id}/videos_num_friends");
+
                     echo $Video_id; // 'complited'
                 } else echo 'not_upload';
             } else echo 'big_file';
-            die();
         }
     }
 
+    /**
+     * @param $params
+     * @return string
+     * @throws Exception
+     */
     public function add($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
-        $user_info = $this->user_info();
         $logged = $this->logged();
-
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $user_id = $user_info['user_id'];
-            $limit_vieos = 20;
+            return view('videos.add', $params);
 
-            $tpl->load_template('videos/add.tpl');
-            $tpl->compile('content');
-            Tools::AjaxTpl($tpl);
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
         }
     }
 
+    /**
+     * @param $params
+     * @return string
+     * @throws Exception
+     */
     public function upload_add($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
-        $user_info = $this->user_info();
         $logged = $this->logged();
-
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $user_id = $user_info['user_id'];
-            $limit_vieos = 20;
-
-            $tpl->load_template('videos/upload.tpl');
-            $tpl->compile('content');
-            Tools::AjaxTpl($tpl);
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+            return view('videos.upload', $params);
         }
     }
 
+    /**
+     * @param $params
+     */
     public function send($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -160,8 +155,6 @@ class VideosController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            $limit_vieos = 20;
-
             $config = Settings::loadsettings();
 
             if($config['video_mod_add'] == 'yes'){
@@ -215,8 +208,8 @@ class VideosController extends Module{
                     $res_type = '.'.$img_format;
                     //Если нет папки юзера, то создаём её
                     if(!is_dir($upload_dir)){
-                        @mkdir($upload_dir, 0777);
-                        @chmod($upload_dir, 0777);
+                        mkdir($upload_dir, 0777);
+                        chmod($upload_dir, 0777);
                     }
 
                     copy($photo, $upload_dir.$image_rename.$res_type);
@@ -250,37 +243,43 @@ class VideosController extends Module{
                         $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 2, action_text = '{$dbid}|{$photo}', action_time = '{$server_time}'");
 
                     //Чистим кеш
-                    Cache::mozg_mass_clear_cache_file("user_{$user_id}/page_videos_user|user_{$user_id}/page_videos_user_friends|user_{$user_id}/page_videos_user_all|user_{$user_id}/profile_{$user_id}|user_{$user_id}/videos_num_all|user_{$user_id}/videos_num_friends");
+//                    Cache::mozg_mass_clear_cache_file("
+//                    user_{$user_id}/page_videos_user|
+//                    user_{$user_id}/page_videos_user_friends|
+//                    user_{$user_id}/page_videos_user_all|
+//                    user_{$user_id}/profile_{$user_id}|
+//                    user_{$user_id}/videos_num_all|
+//                    user_{$user_id}/videos_num_friends");
+
+                    $Cache = Cache::initialize();
+                    $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                    $Cache->delete("users/{$user_id}/page_videos_user");
+                    $Cache->delete("users/{$user_id}/page_videos_user_friends");
+                    $Cache->delete("users/{$user_id}/page_videos_user_all");
+                    $Cache->delete("users/{$user_id}/videos_num_all");
+                    $Cache->delete("users/{$user_id}/videos_num_friends");
 
                     if($_POST['notes'] == 1)
                         echo "{$photo}|{$user_id}|{$dbid}";
                 }
             } else
                 echo 'error';
-
-            die();
         }
     }
 
+    /**
+     * @param $params
+     */
     public function load($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $user_id = $user_info['user_id'];
-            $limit_vieos = 20;
-
             $video_lnk = $_POST['video_lnk'];
 
             if(preg_match("/https:\/\/www.youtube.com|https:\/\/youtube.com|https:\/\/rutube.ru|https:\/\/www.rutube.ru|https:\/\/www.vimeo.com|https:\/\/vimeo.com|https:\/\/smotri.com|https:\/\/www.smotri.com/i", $video_lnk)){
-
                 //Открываем ссылку
-
                 //Если ссылка youtube, то формируем xml ссылку для получения данных
                 if(preg_match("/https:\/\/www.youtube.com|https:\/\/youtube.com/i", $video_lnk)){
                     $exp_y = explode('v=', $video_lnk);
@@ -380,25 +379,20 @@ class VideosController extends Module{
                 }
             } else
                 echo 'no_serviece';
-
-            die();
         }
     }
 
+    /**
+     * @param $params
+     */
     public function delet($params){
-        //$tpl = $params['tpl'];
-        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            //$limit_vieos = 20;
-
             $vid = intval($_POST['vid']);
 
             if($vid){
@@ -429,20 +423,37 @@ class VideosController extends Module{
                     }
 
                     //Чистим кеш
-                    Cache::mozg_mass_clear_cache_file("user_{$row['owner_user_id']}/page_videos_user|user_{$row['owner_user_id']}/page_videos_user_friends|user_{$row['owner_user_id']}/page_videos_user_all|user_{$row['owner_user_id']}/profile_{$row['owner_user_id']}|user_{$row['owner_user_id']}/videos_num_all|user_{$row['owner_user_id']}/videos_num_friends|wall/video{$vid}");
+//                    Cache::mozg_mass_clear_cache_file("
+//                    user_{$row['owner_user_id']}/page_videos_user|
+//                    user_{$row['owner_user_id']}/page_videos_user_friends|
+//                    user_{$row['owner_user_id']}/page_videos_user_all|
+//                    user_{$row['owner_user_id']}/profile_{$row['owner_user_id']}|
+//                    user_{$row['owner_user_id']}/videos_num_all|
+//                    user_{$row['owner_user_id']}/videos_num_friends|
+//                    wall/video{$vid}");
+
+                    $Cache = Cache::initialize();
+                    $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                    $Cache->delete("users/{$user_id}/page_videos_user");
+                    $Cache->delete("users/{$user_id}/page_videos_user_friends");
+                    $Cache->delete("users/{$user_id}/page_videos_user_all");
+                    $Cache->delete("users/{$user_id}/videos_num_all");
+                    $Cache->delete("users/{$user_id}/videos_num_friends");
+
+                    $Cache->delete("wall/video{$vid}");
+
                 }
             }
-            die();
         }
     }
 
+    /**
+     * @param $params
+     */
     public function edit($params){
-        $tpl = $params['tpl'];
-        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
         Tools::NoAjaxRedirect();
 
         if($logged){
@@ -454,37 +465,33 @@ class VideosController extends Module{
             if($vid){
                 $row = $db->super_query("SELECT title, descr, privacy FROM `videos` WHERE id = '{$vid}' AND owner_user_id = '{$user_id}'");
                 if($row){
-                    $tpl->load_template('videos/editpage.tpl');
-                    $tpl->set('{title}', stripslashes($row['title']));
-                    $tpl->set('{descr}', stripslashes(myBrRn($row['descr'])));
-                    $tpl->set('{privacy}', $row['privacy']);
-                    $tpl->set('{privacy-text}', strtr($row['privacy'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я')));
-                    $tpl->compile('content');
-                    Tools::AjaxTpl($tpl);
+//                    $tpl->load_template('videos/editpage.tpl');
+//                    $tpl->set('{title}', stripslashes($row['title']));
+//                    $tpl->set('{descr}', stripslashes(myBrRn($row['descr'])));
+//                    $tpl->set('{privacy}', $row['privacy']);
+//                    $tpl->set('{privacy-text}', strtr($row['privacy'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я')));
+//                    $tpl->compile('content');
+//                    Tools::AjaxTpl($tpl);
 
-                    $params['tpl'] = $tpl;
-                    Page::generate($params);
-                    return true;
+//                    $params['tpl'] = $tpl;
+//                    Page::generate($params);
+//                    return true;
                 }
             }
-            die();
         }
     }
 
+    /**
+     * @param $params
+     */
     public function editsave($params){
-        //$tpl = $params['tpl'];
-        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            //$limit_vieos = 20;
-
             $vid = intval($_POST['vid']);
 
             if($vid){
@@ -500,16 +507,33 @@ class VideosController extends Module{
                     echo stripslashes($descr);
 
                     //Чистим кеш
-                    Cache::mozg_mass_clear_cache_file("user_{$row['owner_user_id']}/page_videos_user|user_{$row['owner_user_id']}/page_videos_user_friends|user_{$row['owner_user_id']}/page_videos_user_all|user_{$row['owner_user_id']}/videos_num_all|user_{$row['owner_user_id']}/videos_num_friends|wall/video{$vid}");
+//                    Cache::mozg_mass_clear_cache_file("
+//                    user_{$row['owner_user_id']}/page_videos_user|
+//                    user_{$row['owner_user_id']}/page_videos_user_friends|
+//                    user_{$row['owner_user_id']}/page_videos_user_all|
+//                    user_{$row['owner_user_id']}/videos_num_all|
+//                    user_{$row['owner_user_id']}/videos_num_friends|
+//                    wall/video{$vid}");
+
+                    $Cache = Cache::initialize();
+                    $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                    $Cache->delete("users/{$user_id}/page_videos_user");
+                    $Cache->delete("users/{$user_id}/page_videos_user_friends");
+                    $Cache->delete("users/{$user_id}/page_videos_user_all");
+                    $Cache->delete("users/{$user_id}/videos_num_all");
+                    $Cache->delete("users/{$user_id}/videos_num_friends");
+
+                    $Cache->delete("wall/video{$vid}");
+
                 }
             }
-            die();
         }
     }
 
+    /**
+     * @param $params
+     */
     public function view($params){
-        $tpl = $params['tpl'];
-        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -517,13 +541,7 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            //$limit_vieos = 20;
-
-            //$db = $this->db();
-            // $logged = Registry::get('logged');
-//            $user_info = Registry::get('user_info');
 
             $path = explode('/', $_SERVER['REQUEST_URI']);
 
@@ -583,29 +601,35 @@ class VideosController extends Module{
                             $limit_comm = 0;
 
                         $sql_comm = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, tb2.user_search_pref, user_photo, user_last_visit, user_logged_mobile FROM `videos_comments` tb1, `users` tb2 WHERE tb1.video_id = '{$vid}' AND tb1.author_user_id = tb2.user_id ORDER by `add_date` ASC LIMIT {$limit_comm}, {$row['comm_num']}", 1);
-                        $tpl->load_template('videos/comment.tpl');
+//                        $tpl->load_template('videos/comment.tpl');
                         foreach($sql_comm as $row_comm){
                             $online = Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
-                            $tpl->set('{online}', $online);
+//                            $tpl->set('{online}', $online);
 
-                            $tpl->set('{uid}', $row_comm['author_user_id']);
-                            $tpl->set('{author}', $row_comm['user_search_pref']);
-                            $tpl->set('{comment}', stripslashes($row_comm['text']));
-                            $tpl->set('{id}', $row_comm['id']);
+//                            $tpl->set('{uid}', $row_comm['author_user_id']);
+//                            $tpl->set('{author}', $row_comm['user_search_pref']);
+//                            $tpl->set('{comment}', stripslashes($row_comm['text']));
+//                            $tpl->set('{id}', $row_comm['id']);
                             //Registry::set('tpl', $tpl);
                             $date = megaDate(strtotime($row_comm['add_date']));
-                            $tpl->set('{date}', $date);
+//                            $tpl->set('{date}', $date);
 
                             if($row_comm['author_user_id'] == $user_id || $row['owner_user_id'] == $user_id || $public_admin){
-                                $tpl->set('[owner]', '');
-                                $tpl->set('[/owner]', '');
-                            } else
-                                $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+//                                $tpl->set('[owner]', '');
+//                                $tpl->set('[/owner]', '');
+                            } else{
+//                                $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
 
-                            if($row_comm['user_photo'])
-                                $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comm['author_user_id'].'/50_'.$row_comm['user_photo']);
-                            else
-                                $tpl->set('{ava}', '/images/no_ava_50.png');
+                            }
+
+                            if($row_comm['user_photo']){
+//                                $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comm['author_user_id'].'/50_'.$row_comm['user_photo']);
+
+                            }
+                            else{
+//                                $tpl->set('{ava}', '/images/no_ava_50.png');
+
+                            }
                             $tpl->compile('comments');
                         }
                     }
@@ -630,8 +654,8 @@ class VideosController extends Module{
                     }
                     if($row['download'] == '1') {
 
-                        $tpl->load_template('videos/show.tpl');
-                        $tpl->set('{photo}', $row['photo']);
+//                        $tpl->load_template('videos/show.tpl');
+//                        $tpl->set('{photo}', $row['photo']);
 
                         $video_strlen = mb_strlen($row['video']);
 
@@ -647,102 +671,113 @@ class VideosController extends Module{
                         $check_converted = $db->super_query("SELECT id FROM `videos_decode` WHERE video = '".$root_dir."/public/".$video_patch.".mp4'");
 
                         if (file_exists(__DIR__.'/../../public/'.$video_patch.'_240.mp4')) {
-                            $tpl->set('{video_240}', '<source src="'.$video_w_patch.'_240.mp4" type="video/mp4" size="240" />');
+//                            $tpl->set('{video_240}', '<source src="'.$video_w_patch.'_240.mp4" type="video/mp4" size="240" />');
                         }else{
-                            $tpl->set('{video_240}', '');
+//                            $tpl->set('{video_240}', '');
                         }
 
                         if (file_exists(__DIR__.'/../../public/'.$video_patch.'_720.mp4')) {
-                            $tpl->set('{video_720}', '<source src="'.$video_w_patch.'_720.mp4" type="video/mp4" size="720" />');
+//                            $tpl->set('{video_720}', '<source src="'.$video_w_patch.'_720.mp4" type="video/mp4" size="720" />');
                         }else{
-                            $tpl->set('{video_720}', '');
+//                            $tpl->set('{video_720}', '');
                         }
                         // $tpl->set('{video_1080}', '<source src="'.$video_w_patch.'_240.mp4" type="video/mp4" size="320" />');
-                        $tpl->set('{video}', '<source src="'.$row['video'].'" type="video/mp4" size="1080" />');
+//                        $tpl->set('{video}', '<source src="'.$row['video'].'" type="video/mp4" size="1080" />');
                     }else {
-                        $tpl->load_template('videos/full.tpl');
+//                        $tpl->load_template('videos/full.tpl');
                         $row['video'] = str_replace('960','800',$row['video']);
-                        $tpl->set('{video}', $row['video']);
+//                        $tpl->set('{video}', $row['video']);
                     }
-                    $tpl->set('{vid}', $vid);
+//                    $tpl->set('{vid}', $vid);
 
-                    $tpl->set('{vplaylist}', $vplaylist);
+//                    $tpl->set('{vplaylist}', $vplaylist);
                     $type = explode('.', $row['video']);
-                    $tpl->set('{type}', $type[count($type)-1]);
-                    $tpl->set('{vid}', $vid);
+//                    $tpl->set('{type}', $type[count($type)-1]);
+//                    $tpl->set('{vid}', $vid);
                     $titles = array('просмотр', 'просмотра', 'просмотров');//video_views
-                    if($row['views']) $tpl->set('{views}', $row['views'].' '.Gramatic::declOfNum($row['views'], $titles).'<br /><br />'); else $tpl->set('{views}', '');
-                    $tpl->set('{title}', stripslashes($row['title']));
-                    $tpl->set('{descr}', stripslashes($row['descr']));
-                    $tpl->set('{author}', $row['user_search_pref']);
-                    $tpl->set('{uid}', $row['owner_user_id']);
-                    $tpl->set('{comments}', $tpl->result['comments']);
-                    $tpl->set('{comm-num}', $row['comm_num']);
-                    $tpl->set('{owner-id}', $row['owner_user_id']);
-                    $tpl->set('{close-link}', $close_link);
+                    if($row['views']) {
+//                        $tpl->set('{views}', $row['views'].' '.Gramatic::declOfNum($row['views'], $titles).'<br /><br />');
+
+                    }
+                    else{
+//                        $tpl->set('{views}', '');
+
+                    }
+//                    $tpl->set('{tit/le}', stripslashes($row['title']));
+//                    $tpl->set('{descr}', stripslashes($row['descr']));
+//                    $tpl->set('{author}', $row['user_search_pref']);
+//                    $tpl->set('{uid}', $row['owner_user_id']);
+//                    $tpl->set('{comments}', $tpl->result['comments']);
+//                    $tpl->set('{comm-num}', $row['comm_num']);
+//                    $tpl->set('{owner-id}', $row['owner_user_id']);
+//                    $tpl->set('{close-link}', $close_link);
 
                     $date = megaDate(strtotime($row['add_date']));
-                    $tpl->set('{date}', $date);
+//                    $tpl->set('{date}', $date);
 
                     if($row['owner_user_id'] == $user_id){
-                        $tpl->set('[owner]', '');
-                        $tpl->set('[/owner]', '');
-                        $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+//                        $tpl->set('[owner]', '');
+//                        $tpl->set('[/owner]', '');
+//                        $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
                     } else {
-                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
-                        $tpl->set('[not-owner]', '');
-                        $tpl->set('[/not-owner]', '');
+//                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+//                        $tpl->set('[not-owner]', '');
+//                        $tpl->set('[/not-owner]', '');
                     }
 
                     if($row['public_id']){
-
-                        $tpl->set_block("'\\[public\\](.*?)\\[/public\\]'si","");
+//                        $tpl->set_block("'\\[public\\](.*?)\\[/public\\]'si","");
 
                     } else {
-
-                        $tpl->set('[public]', '');
-                        $tpl->set('[/public]', '');
+//                        $tpl->set('[public]', '');
+//                        $tpl->set('[/public]', '');
 
                     }
 
-                    if($config['video_mod_add_my'] == 'no')
-                        $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+                    if($config['video_mod_add_my'] == 'no'){
+//                        $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+
+                    }
 
                     $titles1 = array('предыдущий', 'предыдущие', 'предыдущие');//prev
                     $titles2 = array('комментарий', 'комментария', 'комментариев');//comments
-                    $tpl->set('{prev-text-comm}', Gramatic::declOfNum(($row['comm_num']-3), $titles1).' '.($row['comm_num']-3).' '.Gramatic::declOfNum(($row['comm_num']-3), $titles2));
-                    if($row['comm_num'] < 4)
-                        $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
+//                    $tpl->set('{prev-text-comm}', Gramatic::declOfNum(($row['comm_num']-3), $titles1).' '.($row['comm_num']-3).' '.Gramatic::declOfNum(($row['comm_num']-3), $titles2));
+                    if($row['comm_num'] < 4){
+//                        $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
+
+                    }
                     else {
-                        $tpl->set('[all-comm]', '');
-                        $tpl->set('[/all-comm]', '');
+//                        $tpl->set('[all-comm]', '');
+//                        $tpl->set('[/all-comm]', '');
                     }
 
                     if($config['video_mod_comm'] == 'yes'){
-                        $tpl->set('[admin-comments]', '');
-                        $tpl->set('[/admin-comments]', '');
-                    } else
-                        $tpl->set_block("'\\[admin-comments\\](.*?)\\[/admin-comments\\]'si","");
+//                        $tpl->set('[admin-comments]', '');
+//                        $tpl->set('[/admin-comments]', '');
+                    } else{
+//                        $tpl->set_block("'\\[admin-comments\\](.*?)\\[/admin-comments\\]'si","");
 
-                    $tpl->compile('content');
-                    Tools::AjaxTpl($tpl);
+                    }
+
+//                    $tpl->compile('content');
+//                    Tools::AjaxTpl($tpl);
 
                     $db->query("UPDATE LOW_PRIORITY `videos` SET views = views+1 WHERE id = '".$vid."'");
 
-                    $params['tpl'] = $tpl;
-                    Page::generate($params);
-                    return true;
+//                    $params['tpl'] = $tpl;
+//                    Page::generate($params);
+//                    return true;
                 } else
                     echo 'err_privacy';
             } else
                 echo 'no_video';
-
-            die();
         }
     }
 
+    /**
+     * @param $params
+     */
     public function addcomment($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -771,20 +806,24 @@ class VideosController extends Module{
                         $id = $db->insert_id();
                         $db->query("UPDATE `videos` SET comm_num = comm_num+1 WHERE id = '{$vid}'");
 
-                        $tpl->load_template('videos/comment.tpl');
-                        $tpl->set('{online}', $lang['online']);
-                        $tpl->set('{uid}', $user_id);
-                        $tpl->set('{author}', $user_info['user_search_pref']);
-                        $tpl->set('{comment}', stripslashes($comment));
-                        $tpl->set('[owner]', '');
-                        $tpl->set('[/owner]', '');
-                        $tpl->set('{id}', $id);
-                        $tpl->set('{date}', langdate('сегодня в H:i', time()));
-                        if($user_info['user_photo'])
-                            $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$user_id.'/50_'.$user_info['user_photo']);
-                        else
-                            $tpl->set('{ava}', '/images/no_ava_50.png');
-                        $tpl->compile('content');
+//                        $tpl->load_template('videos/comment.tpl');
+//                        $tpl->set('{online}', $lang['online']);
+//                        $tpl->set('{uid}', $user_id);
+//                        $tpl->set('{author}', $user_info['user_search_pref']);
+//                        $tpl->set('{comment}', stripslashes($comment));
+//                        $tpl->set('[owner]', '');
+//                        $tpl->set('[/owner]', '');
+//                        $tpl->set('{id}', $id);
+//                        $tpl->set('{date}', langdate('сегодня в H:i', time()));
+                        if($user_info['user_photo']){
+//                            $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$user_id.'/50_'.$user_info['user_photo']);
+
+                        }
+                        else{
+//                            $tpl->set('{ava}', '/images/no_ava_50.png');
+
+                        }
+//                        $tpl->compile('content');
 
                         if(!$check_video['public_id']){
 
@@ -799,60 +838,77 @@ class VideosController extends Module{
                                 $row_userOW = $db->super_query("SELECT user_last_visit FROM `users` WHERE user_id = '{$check_video['owner_user_id']}'");
                                 $update_time = $server_time - 70;
 
+                                $Cache = Cache::initialize();
                                 if($row_userOW['user_last_visit'] >= $update_time){
 
                                     $db->query("INSERT INTO `updates` SET for_user_id = '{$check_video['owner_user_id']}', from_user_id = '{$user_id}', type = '3', date = '{$server_time}', text = '{$comment}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/video{$check_video['owner_user_id']}_{$vid}'");
 
-                                    Cache::mozg_create_cache("user_{$check_video['owner_user_id']}/updates", 1);
+//                                    Cache::mozg_create_cache("
+//                                    user_{$check_video['owner_user_id']}/updates", 1);
+                                    $Cache->set("users/{$check_video['owner_user_id']}/updates", 1);
 
                                     //ИНАЧЕ Добавляем +1 юзеру для оповещания
                                 } else {
 
-                                    $cntCacheNews = Cache::mozg_cache('user_'.$check_video['owner_user_id'].'/new_news');
-                                    Cache::mozg_create_cache('user_'.$check_video['owner_user_id'].'/new_news', ($cntCacheNews+1));
+//                                    $cntCacheNews = Cache::mozg_cache('user_'.$check_video['owner_user_id'].'/new_news');
+//                                    Cache::mozg_create_cache('user_'.$check_video['owner_user_id'].'/new_news', ($cntCacheNews+1));
+
+                                    $cntCacheNews = $Cache->get("users/{$check_video['owner_user_id']}/new_news");
+                                    $Cache->set("users/{$check_video['owner_user_id']}/new_news", $cntCacheNews+1);
 
                                 }
 
                                 //Отправка уведомления на E-mail
-                                if($config['news_mail_3'] == 'yes'){
-                                    $rowUserEmail = $db->super_query("SELECT user_name, user_email FROM `users` WHERE user_id = '".$check_video['owner_user_id']."'");
-                                    if($rowUserEmail['user_email']){
-                                        include_once __DIR__.'/../Classes/mail.php';
-                                        $mail = new \dle_mail($config);
-                                        $rowMyInfo = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '".$user_id."'");
-                                        $rowEmailTpl = $db->super_query("SELECT text FROM `mail_tpl` WHERE id = '3'");
-                                        $rowEmailTpl['text'] = str_replace('{%user%}', $rowUserEmail['user_name'], $rowEmailTpl['text']);
-                                        $rowEmailTpl['text'] = str_replace('{%user-friend%}', $rowMyInfo['user_search_pref'], $rowEmailTpl['text']);
-                                        $rowEmailTpl['text'] = str_replace('{%rec-link%}', $config['home_url'].'video'.$check_video['owner_user_id'].'_'.$vid, $rowEmailTpl['text']);
-                                        $mail->send($rowUserEmail['user_email'], 'Новый комментарий к Вашей видеозаписи', $rowEmailTpl['text']);
-                                    }
-                                }
+//                                if($config['news_mail_3'] == 'yes'){
+//                                    $rowUserEmail = $db->super_query("SELECT user_name, user_email FROM `users` WHERE user_id = '".$check_video['owner_user_id']."'");
+//                                    if($rowUserEmail['user_email']){
+//                                        include_once __DIR__.'/../Classes/mail.php';
+//                                        $mail = new \dle_mail($config);
+//                                        $rowMyInfo = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '".$user_id."'");
+//                                        $rowEmailTpl = $db->super_query("SELECT text FROM `mail_tpl` WHERE id = '3'");
+//                                        $rowEmailTpl['text'] = str_replace('{%user%}', $rowUserEmail['user_name'], $rowEmailTpl['text']);
+//                                        $rowEmailTpl['text'] = str_replace('{%user-friend%}', $rowMyInfo['user_search_pref'], $rowEmailTpl['text']);
+//                                        $rowEmailTpl['text'] = str_replace('{%rec-link%}', $config['home_url'].'video'.$check_video['owner_user_id'].'_'.$vid, $rowEmailTpl['text']);
+//                                        $mail->send($rowUserEmail['user_email'], 'Новый комментарий к Вашей видеозаписи', $rowEmailTpl['text']);
+//                                    }
+//                                }
                             }
 
                             //Чистим кеш
-                            Cache::mozg_mass_clear_cache_file("user_{$check_video['owner_user_id']}/page_videos_user|user_{$check_video['owner_user_id']}/page_videos_user_friends|user_{$check_video['owner_user_id']}/page_videos_user_all");
+//                            Cache::mozg_mass_clear_cache_file("
+//                            user_{$check_video['owner_user_id']}/page_videos_user|
+//                            user_{$check_video['owner_user_id']}/page_videos_user_friends|
+//                            user_{$check_video['owner_user_id']}/page_videos_user_all");
 
-                        } else
-                            Cache::mozg_clear_cache_file("groups/video{$check_video['public_id']}");
+                            $Cache = Cache::initialize();
+                            $Cache->delete("users/{$check_video['owner_user_id']}/profile");
+                            $Cache->delete("users/{$check_video['owner_user_id']}/page_videos_user_friends");
+                            $Cache->delete("users/{$check_video['owner_user_id']}/page_videos_user_all");
 
-                        Tools::AjaxTpl($tpl);
+                        } else{
+//                            Cache::mozg_clear_cache_file("
+//                            groups/video{$check_video['public_id']}");
+                            $Cache = Cache::initialize();
+                            $Cache->delete("groups/{$check_video['public_id']}/video{$check_video['public_id']}");
+                        }
 
-                        $params['tpl'] = $tpl;
-                        Page::generate($params);
-                        return true;
+//                        Tools::AjaxTpl($tpl);
+//
+//                        $params['tpl'] = $tpl;
+//                        Page::generate($params);
+//                        return true;
 
                     }
                 }
             } else
                 echo 'error';
-
-            die();
         }
     }
 
+    /**
+     * @param $params
+     */
     public function delcomment($params){
-        //$tpl = $params['tpl'];
-        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -860,21 +916,18 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            //$limit_vieos = 20;
-
             $comm_id = intval($_POST['comm_id']);
 
             //Проверка на существования комментария, и выводим ИД владельца видео
             $row = $db->super_query("SELECT tb1.video_id, author_user_id, tb2.owner_user_id, public_id FROM `videos_comments` tb1, `videos` tb2 WHERE tb1.id = '{$comm_id}' AND tb1.video_id = tb2.id");
 
             if($row['public_id']){
-
                 $infoGroup = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$row['public_id']}'");
-
-                if(strpos($infoGroup['admin'], "u{$user_id}|") !== false) $public_admin = true;
-                else $public_admin = false;
+                if(strpos($infoGroup['admin'], "u{$user_id}|") !== false)
+                    $public_admin = true;
+                else
+                    $public_admin = false;
 
                 if($public_admin AND $row){
 
@@ -882,8 +935,9 @@ class VideosController extends Module{
                     $db->query("DELETE FROM `news` WHERE obj_id = '{$comm_id}' AND action_type = 9");
                     $db->query("UPDATE `videos` SET comm_num = comm_num-1 WHERE id = '{$row['video_id']}'");
 
-                    Cache::mozg_clear_cache_file("groups/video{$row['public_id']}");
-
+//                    Cache::mozg_clear_cache_file("groups/video{$row['public_id']}");
+                    $Cache = Cache::initialize();
+                    $Cache->delete("groups/{$check_video['public_id']}/video{$check_video['public_id']}");
                 }
 
             } else {
@@ -895,19 +949,26 @@ class VideosController extends Module{
                     $db->query("UPDATE `videos` SET comm_num = comm_num-1 WHERE id = '{$row['video_id']}'");
 
                     //Чистим кеш
-                    Cache::mozg_mass_clear_cache_file("user_{$row['owner_user_id']}/page_videos_user|user_{$row['owner_user_id']}/page_videos_user_friends|user_{$row['owner_user_id']}/page_videos_user_all");
+//                    Cache::mozg_mass_clear_cache_file("
+//                    user_{$row['owner_user_id']}/page_videos_user|
+//                    user_{$row['owner_user_id']}/page_videos_user_friends|
+//                    user_{$row['owner_user_id']}/page_videos_user_all");
+
+                    $Cache = Cache::initialize();
+                    $Cache->delete("users/{$row['owner_user_id']}/profile");
+                    $Cache->delete("users/{$row['owner_user_id']}/page_videos_user_friends");
+                    $Cache->delete("users/{$row['owner_user_id']}/page_videos_user_all");
 
                 }
 
             }
-
-            die();
         }
     }
 
+    /**
+     * @param $params
+     */
     public function all_comm($params){
-        $tpl = $params['tpl'];
-        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -915,23 +976,19 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            //$limit_vieos = 20;
-
             $vid = intval($_POST['vid']);
             $comm_num = intval($_POST['num']);
             $owner_id = intval($_POST['owner_id']);
 
-
             $row = $db->super_query("SELECT public_id FROM `videos` WHERE id = '{$vid}'");
             $public_admin = null;
             if($row['public_id']){
-
                 $infoGroup = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$row['public_id']}'");
-
-                if(strpos($infoGroup['admin'], "u{$user_id}|") !== false) $public_admin = true;
-                else $public_admin = false;
+                if(strpos($infoGroup['admin'], "u{$user_id}|") !== false)
+                    $public_admin = true;
+                else
+                    $public_admin = false;
 
             }
 
@@ -941,51 +998,58 @@ class VideosController extends Module{
 
                 $sql_comm = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, tb2.user_search_pref, user_photo, user_last_visit, user_logged_mobile FROM `videos_comments` tb1, `users` tb2 WHERE tb1.video_id = '{$vid}' AND tb1.author_user_id = tb2.user_id ORDER by `add_date` ASC LIMIT 0, {$limit_comm}", 1);
 
-                $tpl->load_template('videos/comment.tpl');
+//                $tpl->load_template('videos/comment.tpl');
 
                 foreach($sql_comm as $row_comm){
 
-                    $tpl->set('{uid}', $row_comm['author_user_id']);
-                    $tpl->set('{author}', $row_comm['user_search_pref']);
-                    $tpl->set('{comment}', stripslashes($row_comm['text']));
-                    $tpl->set('{id}', $row_comm['id']);
+//                    $tpl->set('{uid}', $row_comm['author_user_id']);
+//                    $tpl->set('{author}', $row_comm['user_search_pref']);
+//                    $tpl->set('{comment}', stripslashes($row_comm['text']));
+//                    $tpl->set('{id}', $row_comm['id']);
                     $online = Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
-                    $tpl->set('{online}', $online);
+//                    $tpl->set('{online}', $online);
 
                     $date = megaDate(strtotime($row_comm['add_date']));
-                    $tpl->set('{date}', $date);
+//                    $tpl->set('{date}', $date);
 
                     if($row_comm['author_user_id'] == $user_id OR $owner_id == $user_id OR $public_admin){
+//                        $tpl->set('[owner]', '');
+//                        $tpl->set('[/owner]', '');
 
-                        $tpl->set('[owner]', '');
-                        $tpl->set('[/owner]', '');
+                    } else{
+//                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
 
-                    } else
-
-                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                    }
 
                     $config = Settings::loadsettings();
 
-                    if($row_comm['user_photo'])
-                        $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comm['author_user_id'].'/50_'.$row_comm['user_photo']);
-                    else
-                        $tpl->set('{ava}', '/images/no_ava_50.png');
-                    $tpl->compile('content');
+                    if($row_comm['user_photo']){
+//                        $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comm['author_user_id'].'/50_'.$row_comm['user_photo']);
+
+                    }
+                    else{
+//                        $tpl->set('{ava}', '/images/no_ava_50.png');
+
+                    }
+//                    $tpl->compile('content');
 
                 }
 
             }
 
-            Tools::AjaxTpl($tpl);
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+//            Tools::AjaxTpl($tpl);
+//
+//            $params['tpl'] = $tpl;
+//            Page::generate($params);
+//            return true;
         }
     }
 
+    /**
+     * @param $params
+     */
     public function all_videos($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -1012,54 +1076,65 @@ class VideosController extends Module{
             $count = $db->super_query("SELECT user_videos_num FROM `users` WHERE user_id = '{$user_id}'");
 
             if($count['user_videos_num']){
-                if($notes)
-                    $tpl->load_template('videos/box_all_video_notes_top.tpl');
-                else
-                    $tpl->load_template('videos/box_all_video_top.tpl');
+                if($notes){
+//                    $tpl->load_template('videos/box_all_video_notes_top.tpl');
 
-                $tpl->set('[top]', '');
-                $tpl->set('[/top]', '');
+                }
+                else{
+//                    $tpl->load_template('videos/box_all_video_top.tpl');
+
+                }
+
+//                $tpl->set('[top]', '');
+//                $tpl->set('[/top]', '');
                 $titles = array('видеозапись', 'видеозаписи', 'видеозаписей');//videos
-                $tpl->set('{photo-num}', $count['user_videos_num'].' '.Gramatic::declOfNum($count['user_videos_num'], $titles));
-                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
-                $tpl->compile('content');
+//                $tpl->set('{photo-num}', $count['user_videos_num'].' '.Gramatic::declOfNum($count['user_videos_num'], $titles));
+//                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
+//                $tpl->compile('content');
 
                 //Выводим циклом видео
-                if(!$notes)
-                    $tpl->load_template('videos/box_all_video.tpl');
-                else
-                    $tpl->load_template('videos/box_all_video_notes.tpl');
+                if(!$notes){
+//                    $tpl->load_template('videos/box_all_video.tpl');
+
+                }
+                else{
+//                    $tpl->load_template('videos/box_all_video_notes.tpl');
+
+                }
 
                 foreach($sql_ as $row){
-                    $tpl->set('{photo}', $row['photo']);
-                    $tpl->set('{title}', stripslashes($row['title']));
-                    $tpl->set('{video-id}', $row['id']);
-                    $tpl->set('{user-id}', $user_id);
-                    $tpl->compile('content');
+//                    $tpl->set('{photo}', $row['photo']);
+//                    $tpl->set('{title}', stripslashes($row['title']));
+//                    $tpl->set('{video-id}', $row['id']);
+//                    $tpl->set('{user-id}', $user_id);
+//                    $tpl->compile('content');
                 }
-                box_navigation($gcount, $count['user_videos_num'], $page, 'wall.attach_addvideo', $notes);
+//                box_navigation($gcount, $count['user_videos_num'], $page, 'wall.attach_addvideo', $notes);
 
-                $tpl->load_template('/albums/albums_editcover.tpl');
-                $tpl->set('[bottom]', '');
-                $tpl->set('[/bottom]', '');
-                $tpl->set_block("'\\[top\\](.*?)\\[/top\\]'si","");
-                $tpl->compile('content');
+//                $tpl->load_template('/albums/albums_editcover.tpl');
+//                $tpl->set('[bottom]', '');
+//                $tpl->set('[/bottom]', '');
+//                $tpl->set_block("'\\[top\\](.*?)\\[/top\\]'si","");
+//                $tpl->compile('content');
             } else
                 if($notes)
                     echo $lang['videos_box_none'].'<div class="button_div_gray fl_l" style="margin-left:210px;margin-top:20px"><button onClick="videos.add(1)">Добавить новый видеоролик</button></div>';
                 else
                     echo $lang['videos_box_none'];
 
-            Tools::AjaxTpl($tpl);
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+//            Tools::AjaxTpl($tpl);
+//
+//            $params['tpl'] = $tpl;
+//            Page::generate($params);
+//            return true;
         }
     }
 
+    /**
+     * @param $params
+     */
     public function all_videos_public($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -1087,50 +1162,50 @@ class VideosController extends Module{
 
             if($count['videos_num']){
 
-                $tpl->load_template('videos/box_all_video_top.tpl');
+//                $tpl->load_template('videos/box_all_video_top.tpl');
 
-                $tpl->set('[top]', '');
-                $tpl->set('[/top]', '');
+//                $tpl->set('[top]', '');
+//                $tpl->set('[/top]', '');
                 $titles = array('видеозапись', 'видеозаписи', 'видеозаписей');//videos
-                $tpl->set('{photo-num}', $count['videos_num'].' '.Gramatic::declOfNum($count['videos_num'], $titles));
-                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
-                $tpl->compile('content');
+//                $tpl->set('{photo-num}', $count['videos_num'].' '.Gramatic::declOfNum($count['videos_num'], $titles));
+//                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
+//                $tpl->compile('content');
 
                 //Выводим циклом видео
-                $tpl->load_template('videos/box_all_video.tpl');
+//                $tpl->load_template('videos/box_all_video.tpl');
 
                 foreach($sql_ as $row){
 
-                    $tpl->set('{photo}', $row['photo']);
-                    $tpl->set('{title}', stripslashes($row['title']));
-                    $tpl->set('{video-id}', $row['id']);
-                    $tpl->set('{user-id}', $user_id);
-                    $tpl->compile('content');
+//                    $tpl->set('{photo}', $row['photo']);
+//                    $tpl->set('{title}', stripslashes($row['title']));
+//                    $tpl->set('{video-id}', $row['id']);
+//                    $tpl->set('{user-id}', $user_id);
+//                    $tpl->compile('content');
 
                 }
 
-                box_navigation($gcount, $count['videos_num'], $page, 'wall.attach_addvideo_public', $pid);
+//                box_navigation($gcount, $count['videos_num'], $page, 'wall.attach_addvideo_public', $pid);
 
-                $tpl->load_template('/albums/albums_editcover.tpl');
-                $tpl->set('[bottom]', '');
-                $tpl->set('[/bottom]', '');
-                $tpl->set_block("'\\[top\\](.*?)\\[/top\\]'si","");
-                $tpl->compile('content');
+//                $tpl->load_template('/albums/albums_editcover.tpl');
+//                $tpl->set('[bottom]', '');
+//                $tpl->set('[/bottom]', '');
+//                $tpl->set_block("'\\[top\\](.*?)\\[/top\\]'si","");
+//                $tpl->compile('content');
 
-            } else
-
+            } else{
                 echo '<div class="info_center" style="padding-top:170px">Нет ни одной видеозаписи.</div>';
 
-            Tools::AjaxTpl($tpl);
+            }
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+
         }
     }
 
+    /**
+     * @param $params
+     */
     public function page($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -1169,41 +1244,45 @@ class VideosController extends Module{
 
                     //Если есть ответ из БД
                     if($sql_){
-                        $tpl->load_template('videos/short.tpl');
+//                        $tpl->load_template('videos/short.tpl');
                         foreach($sql_ as $row){
-                            $tpl->set('{photo}', stripslashes($row['photo']));
-                            $tpl->set('{title}', stripslashes($row['title']));
-                            $tpl->set('{id}', $row['id']);
-                            $tpl->set('{user-id}', $get_user_id);
-                            if($row['descr'])
-                                $tpl->set('{descr}', stripslashes($row['descr']).'...');
-                            else
-                                $tpl->set('{descr}', '');
+//                            $tpl->set('{photo}', stripslashes($row['photo']));
+//                            $tpl->set('{title}', stripslashes($row['title']));
+//                            $tpl->set('{id}', $row['id']);
+//                            $tpl->set('{user-id}', $get_user_id);
+                            if($row['descr']){
+//                                $tpl->set('{descr}', stripslashes($row['descr']).'...');
+
+                            }
+                            else{
+//                                $tpl->set('{descr}', '');
+
+                            }
+
 
                             $titles = array('комментарий', 'комментария', 'комментариев');//comments
-                            $tpl->set('{comm}', $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles));
+//                            $tpl->set('{comm}', $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles));
 
                             $date = megaDate(strtotime($row['add_date']));
-                            $tpl->set('{date}', $date);
+//                            $tpl->set('{date}', $date);
                             if($get_user_id == $user_id){
-                                $tpl->set('[owner]', '');
-                                $tpl->set('[/owner]', '');
-                            } else
-                                $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
-                            $tpl->compile('content');
+//                                $tpl->set('[owner]', '');
+//                                $tpl->set('[/owner]', '');
+                            } else{
+//                                $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+
+                            }
+//                            $tpl->compile('content');
                         }
                     }
-                    Tools::AjaxTpl($tpl);
-
-                    $params['tpl'] = $tpl;
-                    Page::generate($params);
-                    return true;
                 }
             }
-            die();
         }
     }
 
+    /**
+     * @param $params
+     */
     public function addmylist($params){
         //$tpl = $params['tpl'];
         //$lang = $this->get_langs();
@@ -1233,8 +1312,9 @@ class VideosController extends Module{
                     @chmod($upload_dir, 0777);
                 }
 
-                $expPhoto = end(explode('/', $row['photo']));
-                @copy($row['photo'], __DIR__."/../../public/uploads/videos/{$user_id}/{$expPhoto}");
+                $array = explode('/', $row['photo']);
+                $expPhoto = end($array);
+                copy($row['photo'], __DIR__."/../../public/uploads/videos/{$user_id}/{$expPhoto}");
                 $newPhoto = "{$config['home_url']}uploads/videos/{$user_id}/{$expPhoto}";
                 $row['video'] = $db->safesql($row['video']);
                 $row['descr'] = $db->safesql($row['descr']);
@@ -1244,15 +1324,32 @@ class VideosController extends Module{
                 $db->query("UPDATE `users` SET user_videos_num = user_videos_num+1 WHERE user_id = '{$user_id}'");
 
                 //Чистим кеш
-                Cache::mozg_mass_clear_cache_file("user_{$user_id}/page_videos_user|user_{$user_id}/page_videos_user_friends|user_{$user_id}/page_videos_user_all|user_{$user_id}/profile_{$user_id}|user_{$user_id}/videos_num_all|user_{$user_id}/videos_num_friends");
+//                Cache::mozg_mass_clear_cache_file("
+//                user_{$user_id}/page_videos_user|
+//                user_{$user_id}/page_videos_user_friends|
+//                user_{$user_id}/page_videos_user_all|
+//                user_{$user_id}/profile_{$user_id}|
+//                user_{$user_id}/videos_num_all|
+//                user_{$user_id}/videos_num_friends");
+
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_id}/page_videos_user");
+                $Cache->delete("users/{$user_id}/page_videos_user_friends");
+                $Cache->delete("users/{$user_id}/page_videos_user_all");
+                $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                $Cache->delete("users/{$user_id}/videos_num_all");
+                $Cache->delete("users/{$user_id}/videos_num_friends");
+
             }
-            die();
         }
     }
 
+    /**
+     * @param $params
+     * @return string
+     * @throws Exception
+     */
     public function index($params){
-        $tpl = $params['tpl'];
-
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -1261,13 +1358,28 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $limit_vieos = 20;
 
-
             $path = explode('/', $_SERVER['REQUEST_URI']);
             $get_user_id = intval($path['2']);
+
+            $params['user_id'] = $get_user_id;
+            if($get_user_id == $user_id){
+                $params['owner'] = true;
+                $params['not_owner'] = false;
+            } else {
+                $params['not_owner'] = true;
+                $params['owner'] = false;
+            }
+
+            $config = Settings::loadsettings();
+
+            if($config['video_mod_add'] == 'yes'){
+                $params['admin_video_add'] = true;
+            } else{
+                $params['admin_video_add'] = false;
+            }
 
 
             //################### Вывод всех видео ###################//
@@ -1283,7 +1395,7 @@ class VideosController extends Module{
                 $owner = $db->super_query("SELECT user_videos_num, user_search_pref FROM `users` WHERE user_id = '{$get_user_id}'");
                 if($owner){
                     $name_info = explode(' ', $owner['user_search_pref']);
-                    $params['title'] = $lang['videos'].' '.Gramatic::gramatikName($name_info[0]).' '.Gramatic::gramatikName($name_info[1]).' | Sura';
+                    $params['title'] = $lang['videos'].' '.Gramatic::gramatikName($name_info['0']).' '.Gramatic::gramatikName($name_info['1']).' | Sura';
 
                     $check_friend = null;
 
@@ -1308,11 +1420,11 @@ class VideosController extends Module{
                         $owner['user_videos_num'] = $video_cnt['cnt'];
                     }
 
-                    $titles = array('видеозапись', 'видеозаписи', 'видеозаписей');//videos
-                    if($get_user_id == $user_id)
-                        $user_speedbar = 'У Вас <span id="nums">'.($owner['user_videos_num'] ? $owner['user_videos_num'] : false).'</span> '.Gramatic::declOfNum($owner['user_videos_num'], $titles);
-                    else
-                        $user_speedbar = 'У '.Gramatic::gramatikName($name_info[0]).' '.($owner['user_videos_num'] ? $owner['user_videos_num'] : false).' '.Gramatic::declOfNum($owner['user_videos_num'], $titles);
+//                    $titles = array('видеозапись', 'видеозаписи', 'видеозаписей');//videos
+//                    if($get_user_id == $user_id)
+//                        $user_speedbar = 'У Вас <span id="nums">'.($owner['user_videos_num'] ? $owner['user_videos_num'] : false).'</span> '.Gramatic::declOfNum($owner['user_videos_num'], $titles);
+//                    else
+//                        $user_speedbar = 'У '.Gramatic::gramatikName($name_info[0]).' '.($owner['user_videos_num'] ? $owner['user_videos_num'] : false).' '.Gramatic::declOfNum($owner['user_videos_num'], $titles);
 
                     if($owner['user_videos_num']){
 
@@ -1320,81 +1432,66 @@ class VideosController extends Module{
                         $sql_ = $db->super_query("SELECT id, title, photo, comm_num, add_date, SUBSTRING(descr, 1, 180) AS descr FROM `videos` WHERE owner_user_id = '{$get_user_id}' {$sql_privacy} AND public_id = '0' ORDER by `add_date` DESC LIMIT 0, {$limit_vieos}", 1);
 
                         //Загружаем меню по видео
-                        $tpl->load_template('videos/head.tpl');
-                        $tpl->set('{user-id}', $get_user_id);
-                        $tpl->set('{videos_num}', $owner['user_videos_num']);
-                        $tpl->set('{name}', Gramatic::gramatikName($name_info[0]));
-                        if($get_user_id == $user_id){
-                            $tpl->set('[owner]', '');
-                            $tpl->set('[/owner]', '');
-                            $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
-                        } else {
-                            $tpl->set('[not-owner]', '');
-                            $tpl->set('[/not-owner]', '');
-                            $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
-                        }
-
-                        $config = Settings::loadsettings();
-
-                        if($config['video_mod_add'] == 'yes'){
-                            $tpl->set('[admin-video-add]', '');
-                            $tpl->set('[/admin-video-add]', '');
-                        } else
-                            $tpl->set_block("'\\[admin-video-add\\](.*?)\\[/admin-video-add\\]'si","");
-
-                        $tpl->compile('info');
+//                        $tpl->load_template('videos/head.tpl');
+                        $params['videos_num'] = $owner['user_videos_num'];
+                        $params['name'] = Gramatic::gramatikName($name_info['0']);
 
                         if($sql_){
-                            $tpl->load_template('videos/short.tpl');
-                            $tpl->result['content'] .= '<span id="video_page" class="scroll_page">';
-                            foreach($sql_ as $row){
-                                $tpl->set('{photo}', stripslashes($row['photo']));
-                                $tpl->set('{title}', stripslashes($row['title']));
-                                $tpl->set('{user-id}', $get_user_id);
-                                $tpl->set('{id}', $row['id']);
-                                if($row['descr'])
-                                    $tpl->set('{descr}', stripslashes($row['descr']).'...');
-                                else
-                                    $tpl->set('{descr}', '');
+//                            $tpl->load_template('videos/short.tpl');
+                            foreach($sql_ as $key => $row){
+                                $params[$sql_]['photo'] = stripslashes($row['photo']);
+                                $params[$sql_]['title'] = stripslashes($row['title']);
+                                $params[$sql_]['user_id'] = $get_user_id;
+                                $params[$sql_]['id'] = $row['id'];
+                                if($row['descr']){
+                                    $params[$sql_]['descr'] = stripslashes($row['descr']).'...';
+                                }
+                                else{
+                                    $params[$sql_]['descr'] = '';
+                                }
 
                                 $titles = array('комментарий', 'комментария', 'комментариев');//comments
-                                $tpl->set('{comm}', $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles));
+                                $params[$sql_]['comm'] = $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles);
 
                                 $date = megaDate(strtotime($row['add_date']));
-                                $tpl->set('{date}', $date);
+                                $params[$sql_]['date'] = $date;
                                 if($get_user_id == $user_id){
-                                    $tpl->set('[owner]', '');
-                                    $tpl->set('[/owner]', '');
-                                } else
-                                    $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
-                                $tpl->compile('content');
+                                    $params[$sql_]['owner'] = true;
+                                } else{
+                                    $params[$sql_]['owner'] = false;
+                                }
                             }
-                            $tpl->result['content'] .= '</span>';
+                            $params['videos'] = $sql_;
 
-                        } else
-                            msgbox('', $lang['videos_nones_videos_user'], 'info_2');
+                        } else{
+//                            msgbox('', $lang['videos_nones_videos_user'], 'info_2');
+
+                        }
                     } else {
-                        if($get_user_id == $user_id)
-                            msgbox('', $lang['videos_nones_videos_user'], 'info_2');
-                        else
-                            msgbox('', $owner['user_search_pref'].' '.$lang['videos_none'], 'info_2');
+                        if($get_user_id == $user_id){
+//                            msgbox('', $lang['videos_nones_videos_user'], 'info_2');
+
+                        }
+                        else{
+//                            msgbox('', $owner['user_search_pref'].' '.$lang['videos_none'], 'info_2');
+
+                        }
                     }
-                } else
-                    Hacking();
+                } else{
+//                    Hacking();
+
+                }
             } else {
-                $user_speedbar = $lang['error'];
-                msgbox('', $lang['no_notes'], 'info');
+//                $user_speedbar = $lang['error'];
+//                msgbox('', $lang['no_notes'], 'info');
             }
-            $tpl->clear();
-            $db->free();
+            return view('videos.videos', $params);
         } else {
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
         }
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
+
     }
 }

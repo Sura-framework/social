@@ -25,7 +25,6 @@ class AntibotController extends Module{
         $height = 50;				//Высота изображения
         $font_size = 16;   			//Размер шрифта
         $let_amount = 5;			//Количество символов, которые нужно набрать
-        $fon_let_amount = 30;		//Количество символов на фоне
         $font = __DIR__.'/../../vendor/sura/framework/src/fonts/cour.ttf';	//Путь к шрифту
 
         //набор символов
@@ -39,23 +38,23 @@ class AntibotController extends Module{
 
         $src = imagecreatetruecolor($width,$height); //создаем изображение
 
-        $fon = imagecolorallocate($src, $background_color[0], $background_color[1], $background_color[2]); //создаем фон
+        $fon = imagecolorallocate($src, $background_color['0'], $background_color['1'], $background_color['2']); //создаем фон
 
         imagefill($src,0,0,$fon); //заливаем изображение фоном
 
         //то же самое для основных букв
-//        $cod = '';
+        $cod = [];
         for($i=0; $i < $let_amount; $i++){
-            $color = imagecolorallocatealpha($src, $foreground_color[0], $foreground_color[1], $foreground_color[2], rand(20,40)); //Цвет шрифта
+            $color = imagecolorallocatealpha($src, $foreground_color['0'], $foreground_color['1'], $foreground_color['2'], rand(20,40)); //Цвет шрифта
             $letter = $letters[rand(0,sizeof($letters)-1)];
-            $size = rand($font_size*2-2,$font_size*2+2);
-            $x = ($i+1)*$font_size + rand(2,5); //даем каждому символу случайное смещение
-            $y = (($height*2)/3) + rand(0,5);
+            $size = rand(25,34);
+            $x = ($i+1)*$font_size + rand(5,9); //даем каждому символу случайное смещение
+            $y = (($height*2)/3) + rand(0,7);
             $cod[] = $letter; //запоминаем код
-            imagettftext($src,$size,rand(0,15),$x,$y,$color,$font,$letter);
+            imagettftext($src,$size,rand(0,20),$x,$y,$color,$font,$letter);
         }
 
-        $foreground = imagecolorallocate($src, $foreground_color[0], $foreground_color[1], $foreground_color[2]);
+        $foreground = imagecolorallocate($src, $foreground_color['0'], $foreground_color['1'], $foreground_color['2']);
 
         imageline($src, 0, 0,  $width, 0, $foreground);
         imageline($src, 0, 0,  0, $height, $foreground);
@@ -69,7 +68,6 @@ class AntibotController extends Module{
         imagegif($src);
 
         $_SESSION['sec_code'] = $cod; //Добавляем код в сессию
-        die();
     }
 
     /**

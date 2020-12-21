@@ -2,19 +2,18 @@
 
 namespace App\Modules;
 
+use App\Services\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
-use Sura\Libs\Cache;
 use Sura\Libs\Validation;
 
 class ImController extends Module{
 
     public function send($params){
-        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -23,8 +22,6 @@ class ImController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-
-//            Tools::NoAjaxQuery();
 
 //            AntiSpam('messages');
 
@@ -54,13 +51,16 @@ class ImController extends Module{
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if($user_privacy['val_msg'] == 2)
                         $check_friend = Tools::CheckFriends($for_user_id);
+                    else{
+                        $check_friend = false;
+                    }
 
                     if(!$CheckBlackList AND $user_privacy['val_msg'] == 1 OR $user_privacy['val_msg'] == 2 AND $check_friend)
-                        $xPrivasy = 1;
+                        $Privacy = true;
                     else
-                        $xPrivasy = 0;
+                        $Privacy = false;
 
-                    if($xPrivasy AND $user_id != $for_user_id){
+                    if($Privacy AND $user_id != $for_user_id){
 
 //                        AntiSpamLogInsert('identical', $msg.$attach_files);
 
@@ -70,7 +70,7 @@ class ImController extends Module{
 
                         //Отправляем сообщение получателю
                         $db->query("INSERT INTO `messages` SET theme = '...', text = '".$msg."', for_user_id = '".$for_user_id."', from_user_id = '".$user_id."', date = '".$server_time."', pm_read = 'no', folder = 'inbox', history_user_id = '".$user_id."', attach = '".$attach_files."'");
-                        $dbid2 = $db->insert_id();
+//                        $dbid2 = $db->insert_id();
 
                         //Сохраняем сообщение в папку отправленные
                         $db->query("INSERT INTO `messages` SET theme = '...', text = '".$msg."', for_user_id = '".$user_id."', from_user_id = '".$for_user_id."', date = '".$server_time."', pm_read = 'no', folder = 'outbox', history_user_id = '".$user_id."', attach = '".$attach_files."'");
@@ -106,7 +106,10 @@ class ImController extends Module{
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$for_user_id}', from_user_id = '{$user_id}', type = '8', date = '{$server_time}', text = '{$msg}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '{$msg_lnk}'");
 
-//                            Cache::mozg_create_cache("user_{$for_user_id}/updates", 1);
+                            $key = "users/{$for_user_id}/updates";
+                            $Cache = Cache::initialize();
+                            $Cache->set($key, 1);
+
                         }
 
                         //Ответ скрипта
@@ -245,9 +248,11 @@ class ImController extends Module{
 //                        $tpl->compile('content');
 
                         //Читисм кеш обновлений
-//                        Cache::mozg_clear_cache_file('user_'.$for_user_id.'/im');
-//                        Cache::mozg_create_cache('user_'.$for_user_id.'/im_update', '1');
-//                        Cache::mozg_create_cache("user_{$for_user_id}/typograf{$user_id}", "");
+                        $Cache = Cache::initialize();
+
+                        $Cache->delete("users/{$for_user_id}/im");
+                        $Cache->set("users/{$for_user_id}/im_update", 1);
+                        $Cache->set("users/{$for_user_id}/typograf{$user_id}", "");
 
 //                        Tools::AjaxTpl($tpl);
 
@@ -265,8 +270,6 @@ class ImController extends Module{
     }
 
     public function settTypeMsg($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -274,7 +277,6 @@ class ImController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $user_id = $user_info['user_id'];
 
 //            Tools::NoAjaxQuery();
 
@@ -284,13 +286,10 @@ class ImController extends Module{
             if($user_info['user_msg_type'] == 1)
                 $db->query("UPDATE `users` SET user_msg_type = 1 WHERE user_id = '".$user_info['user_id']."'");
 
-            die();
         }
     }
 
     public function read($params){
-//        $tpl = $params['tpl'];
-//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -312,10 +311,11 @@ class ImController extends Module{
                 $db->query("UPDATE `im` SET msg_num = msg_num-1 WHERE iuser_id = '".$user_id."' AND im_user_id = '".$check['from_user_id']."'");
 
                 //Читисм кеш обновлений
-                Cache::mozg_clear_cache_file('user_'.$check['from_user_id'].'/im');
-            }
+                $Cache = Cache::initialize();
 
-//            die();
+                $Cache->delete("users/{$check['from_user_id']}/im");
+
+            }
         }
     }
 
@@ -332,12 +332,14 @@ class ImController extends Module{
             $user_id = $user_info['user_id'];
 //            Tools::NoAjaxQuery();
             $for_user_id = intval($_POST['for_user_id']);
-//            if(isset($_GET['stop'] ) AND $_GET['stop'] == 1){
-//                Cache::mozg_create_cache("user_{$for_user_id}/typograf{$user_id}", "");
-//            }
-//            else{
-//                Cache::mozg_create_cache("user_{$for_user_id}/typograf{$user_id}", 1);
-//            }
+            if(isset($_GET['stop'] ) AND $_GET['stop'] == 1){
+                $Cache = Cache::initialize();
+                $Cache->set("users/{$for_user_id}/typograf{$user_id}", "");
+            }
+            else{
+                $Cache = Cache::initialize();
+                $Cache->set("users/{$for_user_id}/typograf{$user_id}", "1");
+            }
         }
     }
 
@@ -356,9 +358,11 @@ class ImController extends Module{
 //            Tools::NoAjaxQuery();
             $for_user_id = intval($_POST['for_user_id']);
             $last_id = intval($_POST['last_id']);
-            $sess_last_id = Cache::mozg_cache('user_'.$user_id.'/im');
 
-            $typograf = Cache::mozg_cache("user_{$user_id}/typograf{$for_user_id}");
+            $Cache = Cache::initialize();
+            $sess_last_id = $Cache->get('users/'.$user_id.'/im');
+            $typograf = $Cache->get("users/{$user_id}/typograf{$for_user_id}");
+
             if($typograf) echo "<script>$('#im_typograf').fadeIn()</script>";
 
             if($last_id == $sess_last_id){
@@ -374,7 +378,8 @@ class ImController extends Module{
 
             $sql_ = $db->super_query("SELECT tb1.id, text, date, pm_read, folder, history_user_id, from_user_id, attach, tell_uid, tell_date, public, tell_comm, tb2.user_name, user_photo FROM `messages` tb1, `users` tb2 WHERE tb1.for_user_id = '{$user_id}' AND tb1.from_user_id = '{$for_user_id}' AND tb1.history_user_id = tb2.user_id ORDER by `date` ASC LIMIT ".$limit.", 20", 1);
 
-            Cache::mozg_create_cache('user_'.$user_id.'/im', $last_id);
+            $Cache = Cache::initialize();
+            $Cache->set('users/'.$user_id.'/im', $last_id);
 
             if($sql_){
                 $tpl->load_template('im/msg.tpl');
@@ -705,7 +710,8 @@ class ImController extends Module{
             $for_user_id = intval($_POST['for_user_id']);
             $first_id = intval($_POST['first_id']);
 
-            Cache::mozg_create_cache("user_{$for_user_id}/typograf{$user_id}", "");
+            $Cache = Cache::initialize();
+            $Cache->set("users/{$for_user_id}/typograf{$user_id}", "");
 
             $config = Settings::loadsettings();
 
@@ -723,7 +729,8 @@ class ImController extends Module{
                     $db->query("UPDATE `im` SET msg_num = msg_num-{$newMSGnum} WHERE iuser_id = '".$user_id."' AND im_user_id = '".$for_user_id."'");
                     $db->query("UPDATE `users` SET user_pm_num = user_pm_num-{$newMSGnum} WHERE user_id = '".$user_id."'");
                     //Читисм кеш обновлений
-                    Cache::mozg_clear_cache_file('user_'.$for_user_id.'/im');
+                    $Cache = Cache::initialize();
+                    $Cache->delete("users/{$for_user_id}/im");
                 }
                 $limit_msg = 5;
             } else {
@@ -1147,7 +1154,9 @@ class ImController extends Module{
             $user_id = $user_info['user_id'];
 
 //            Tools::NoAjaxQuery();
-            $update = Cache::mozg_cache('user_'.$user_id.'/im_update');
+
+            $Cache = Cache::initialize();
+            $update = $Cache->get("users/{$user_id}/im_update");
 
             if($update){
                 $sql_ = $db->super_query("SELECT tb1.msg_num, im_user_id FROM `im` tb1, `users` tb2 WHERE tb1.iuser_id = '".$user_id."' AND tb1.im_user_id = tb2.user_id AND msg_num > 0 ORDER by `idate` DESC LIMIT 0, 50", 1);
@@ -1162,7 +1171,9 @@ class ImController extends Module{
                 } else {
                     $user_pm_num_2 = '';
                     $doc_title = 'document.title = \'Диалоги\';';
-                    Cache::mozg_create_cache('user_'.$user_id.'/im_update', '0');
+
+                    $Cache = Cache::initialize();
+                    $Cache->set("users/{$user_id}/im_update", "0");
                 }
 
                 echo '<script type="text/javascript">
@@ -1176,8 +1187,6 @@ class ImController extends Module{
     }
 
     public function del($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1186,35 +1195,25 @@ class ImController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-
             $im_user_id = intval($_POST['im_user_id']);
 
             //Выводим информацию о диалоге
             $row = $db->super_query("SELECT msg_num, all_msg_num FROM `im` WHERE iuser_id = '{$user_id}' AND im_user_id = '{$im_user_id}'");
 
             if($row){
-
                 //Удаляем сообщения
                 if($row['all_msg_num']){
-
                     $db->query("DELETE FROM `messages` WHERE for_user_id = '{$user_id}' AND from_user_id = '{$im_user_id}'");
-
                 }
 
                 //Если есть новые сообщения
                 if($row['msg_num']){
-
                     $db->query("UPDATE `users` SET user_pm_num = user_pm_num-{$row['msg_num']} WHERE user_id = '{$user_id}'");
-
                 }
 
                 //Удаляем сам диалог
                 $db->query("DELETE FROM `im` WHERE iuser_id = '{$user_id}' AND im_user_id = '{$im_user_id}'");
-
             }
-
-            exit;
-
         }
     }
 

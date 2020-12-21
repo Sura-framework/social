@@ -2,19 +2,19 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Cache;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use App\Services\Cache;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
 class DistinguishController extends Module{
 
+    /**
+     * @param $params
+     */
     public function mark($params){
-        $tpl = $params['tpl'];
-        $lang = langs::get_langs();
+//        $tpl = $params['tpl'];
+//        $lang = langs::get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -50,14 +50,20 @@ class DistinguishController extends Module{
             if($user_id != $muser_id){
                 $db->query("UPDATE `users` SET user_new_mark_photos = user_new_mark_photos+1 WHERE user_id = '".$muser_id."'");
             } else{
-                $db->query("INSERT INTO `" . PREFIX . "_photos_mark` SET muser_id = '" . rand(0, 100000) . "', mphoto_id = '" . $photo_id . "', mdate = '" . $server_time . "', msettings_pos = '" . $msettings_pos . "', mphoto_name = '" . $mphoto_name . "', mmark_user_id = '" . $user_id . "', mapprove = 1");
+                $db->query("INSERT INTO `photos_mark` SET muser_id = '" . rand(0, 100000) . "', mphoto_id = '" . $photo_id . "', mdate = '" . $server_time . "', msettings_pos = '" . $msettings_pos . "', mphoto_name = '" . $mphoto_name . "', mmark_user_id = '" . $user_id . "', mapprove = 1");
             }
-            Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
+//            Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
+            $Cache = Cache::initialize();
+            $Cache->delete('photos/photos_mark/p'.$photo_id);
         }
     }
+
+    /**
+     * @param $params
+     */
     public function mark_del($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -84,13 +90,19 @@ class DistinguishController extends Module{
                     if(!$row_mark['mapprove'])
                         $db->query("UPDATE `users` SET user_new_mark_photos = user_new_mark_photos-1 WHERE user_id = '".$muser_id."'");
                 }
-                Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
+//                Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
+                $Cache = Cache::initialize();
+                $Cache->delete('photos/photos_mark/p'.$photo_id);
             }
         }
     }
+
+    /**
+     * @param $params
+     */
     public function mark_ok($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -103,13 +115,19 @@ class DistinguishController extends Module{
             if($row AND !$row['mapprove']){
                 $db->query("UPDATE `photos_mark` SET mapprove = '1' WHERE mphoto_id = '".$photo_id."' AND muser_id = '".$user_id."'");
                 $db->query("UPDATE `users` SET user_new_mark_photos = user_new_mark_photos-1 WHERE user_id = '".$user_id."'");
-                Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
+//                Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
+                $Cache = Cache::initialize();
+                $Cache->delete('photos/photos_mark/p'.$photo_id);
             }
         }
     }
+
+    /**
+     * @param $params
+     */
     public function load_friends($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -122,7 +140,7 @@ class DistinguishController extends Module{
             if($_POST['page'] == 2) $limit = $all_limit.", ".($all_limit*2);
             else $limit = "0, ".$all_limit;
 
-            $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.user_search_pref FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '".$user_id."' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 0 ORDER by `user_search_pref` ASC LIMIT ".$limit, 1);
+            $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.user_search_pref FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '".$user_id."' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 0 ORDER by `user_search_pref` LIMIT ".$limit, 1);
 
             $myRow = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '".$user_id."'");
 
@@ -153,18 +171,21 @@ class DistinguishController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function index($params){
         $tpl = $params['tpl'];
 
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
-        $user_info = $this->user_info();
+//        $user_info = $this->user_info();
         $logged = $this->logged();
 
         Tools::NoAjaxQuery();
 
         if($logged){
-            $user_id = $user_info['user_id'];
+//            $user_id = $user_info['user_id'];
             $tpl->clear();
             $db->free();
         } else

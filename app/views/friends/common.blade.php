@@ -1,13 +1,8 @@
 @extends('app.app')
 @section('content')
 <div class="container">
-    <div class="buttonsprofile albumsbuttonsprofile pt-3 mb-3">
-        <a href="/friends/{{ $user_id }}/" onClick="Page.Go(this.href); return false;">Все друзья</a>
-        <a href="/friends/online/{{ $user_id }}/" onClick="Page.Go(this.href); return false;">Друзья на сайте</a>
-        <div class="activetab"><a href="/friends/common/{{ $user_id }}/" onClick="Page.Go(this.href); return false;"><div>Общие друзья</div></a></div>
-        <a href="/u{{ $user_id }}" onClick="Page.Go(this.href); return false;">К странице {{ $name }}</a>
-    </div>
-    @if($no)<div class="info_center">У Вас с этим пользователем нет общих друзей.</div>@endif
+    {{ $menu }}
+    @if($no)<div class="info_center">@_e('friends_common_not')</div>@endif
     <div>
         @if($friends)
         @foreach($friends as $row)
@@ -23,14 +18,20 @@
                     <span class="online">{{ $row['online'] }}</span><div class="friends_clr"></div>
                 </div>
                 <div class="menuleft fl_r friends_m">
-                    @if($row['viewer'])<a href="/" onClick="messages.new_({{ $row['user_id'] }}); return false"><div>Написать сообщение</div></a>@endif
-                    @if($row['owner'])<a onMouseDown="friends.delet({{ $row['user_id'] }}, 0); return false"><div>Убрать из друзей</div></a>@endif
-                    <a href="/albums/{{ $row['user_id'] }}/" onClick="Page.Go(this.href); return false"><div>Альбомы</div></a>
+                    @if($row['viewer'])<a href="/" onClick="messages.new_({{ $row['user_id'] }}); return false">
+                        <div>@_e('write_message')</div>
+                    </a>@endif
+                    @if($row['owner'])<a onMouseDown="friends.delet({{ $row['user_id'] }}, 0); return false">
+                            <div>@_e('friend_remove')</div>
+                        </a>@endif
+                    <a href="/albums/{{ $row['user_id'] }}/" onClick="Page.Go(this.href); return false">
+                        <div>@_e('albums')</div>
+                    </a>
                 </div>
             </div>
         @endforeach
         @else
-            <div class="info_center">У Вас с этим пользователем нет общих друзей.</div>
+            <div class="info_center">@_e('friends_common_not')</div>
         @endif
     </div>
 </div>

@@ -1,5 +1,5 @@
 @foreach($wall_records as $row)
-    <div class="card mt-3" id="wall_record_{{ $row['rec_id'] }}">
+    <div class="card mt-3 wallrecord" id="wall_record_{{ $row['rec_id'] }}">
         @if($row['record'])
         <div id="link_tag_{{ $row['user_id'] }}_{{ $row['rec_id'] }}"></div>
         <div class="card-body">
@@ -7,11 +7,15 @@
                 <div class="row align-items-center">
                     <div class="col-auto [privacy-comment][if-comments]wall_ava_mini[/if-comments][/privacy-comment]" id="ava_rec_{{ $row['rec_id'] }}">
                         <a href="/u{{ $row['user_id'] }}" class="avatar"  onmouseover="wall.showTag({{ $row['user_id'] }}, {{ $row['rec_id'] }}, 1)" onmouseout="wall.hideTag({{ $row['user_id'] }}, {{ $row['rec_id'] }}, 1)">
-                            <img src="{{ $row['ava'] }}" alt="..." class="avatar-img rounded-circle">
+                            {{-- <img src="{{ $row['ava'] }}" alt="..." class="avatar-img rounded-circle"> --}}
+
+                            <div class="wall-avatar wall-avatar-online mr-5">
+                                <img src="{{ $row['ava'] }}" alt="{{ $row['name'] }}" class="wall-avatar-img rounded-circle" style="width: 34px;height: 34px;" onmouseover="wall.showTag({{ $row['user_id'] }}, {{ $row['rec_id'] }}, 1)" onmouseout="wall.hideTag({{ $row['user_id'] }}, {{ $row['rec_id'] }}, 1)">
+                            </div>
                         </a>
                     </div>
                     <div class="col ml-n2">
-                        <h4 class="mb-1" onmouseover="wall.showTag({{ $row['user_id'] }}, {{ $row['rec_id'] }}, 1)" onmouseout="wall.hideTag({{ $row['user_id'] }}, {{ $row['rec_id'] }}, 1)">{{ $row['name'] }} {{ $row['online'] }}</h4>
+                        <h4 class="mb-1" onmouseover="wall.showTag({{ $row['user_id'] }}, {{ $row['rec_id'] }}, 1)" onmouseout="wall.hideTag({{ $row['user_id'] }}, {{ $row['rec_id'] }}, 1)">{{ $row['name'] }}</h4>
                         <p class="card-text small text-muted">
                             <span class="fe fe-clock"></span>{{ $row['type'] }} <time datetime="2018-05-24"> {{ $row['date'] }}</time>
                         </p>
@@ -42,7 +46,7 @@
                     <div onClick="wall.all_liked_users('{{ $row['rec_id'] }}', '', '{likes}')">Понравилось {likes-text}</div>
                     <div class="public_wall_likes_hidden">
                         <div class="public_wall_likes_hidden2">
-                            <a href="/u{{ $row['viewer-id'] }}" id="like_user{viewer-id}_{{ $row['rec_id'] }}" class="no_display" onClick="Page.Go(this.href); return false">
+                            <a href="/u{{ $row['viewer_id'] }}" id="like_user{viewer_id}_{{ $row['rec_id'] }}" class="no_display" onClick="Page.Go(this.href); return false">
                                 <img src="{{ $row['viewer_ava'] }}" width="32"  alt="" /></a>
                             <div id="likes_users{{ $row['rec_id'] }}"></div>
                         </div>
@@ -76,7 +80,7 @@
                 <div class="public_wall_all_comm" id="wall_all_comm_but_{{ $row['rec_id'] }}">Показать {gram-record-all-comm}</div>
             </div>
             @endif
-            @if($row['comment'])
+            @if(isset($row['comment']) AND $row['comment'])
             <hr>
             <div class="comment mb-3" id="wall_fast_comment_{comm-id}" onMouseOver="ge('fast_del_{comm-id}').style.display = 'block'" onMouseOut="ge('fast_del_{comm-id}').style.display = 'none'">
                 <div class="row">

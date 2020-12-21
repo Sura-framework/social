@@ -2,55 +2,60 @@
 
 namespace App\Modules;
 
-use App\Modules\FeedController;
-use Sura\Libs\Auth;
-use Sura\Libs\Blade;
-use Sura\Libs\Cache;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Password;
-use Sura\Libs\Registry;
+use App\Services\Cache;
+use Exception;
 use Sura\Libs\Request;
-use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
-use thiagoalessio\TesseractOCR\TesseractOCR;
-use App\Modules\Module;
-use App\Modules\NewsController;
-
 
 class HomeController extends Module{
 
     /**
      * @param array $params
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
-    public function index($params)
+    public function index(array $params)
     {
-//        var_dump($params);
-        //$logged = $this->logged();
-        $logged = $params['user']['logged'];
-        $params['title'] = 'Новости'.' | Sura';
+        $logged = $this->logged();
 
+        if ($logged == true || isset($logged)){
+            $params['title'] = 'Новости'.' | Sura';
+//            $params['title'] = 'Sura';
 
-        if ($logged == true){
-           return (new FeedController)->feed($params);
+//            var_dump($params);
+//            exit();
+            return (new FeedController)->feed($params);
         }else{
-            $data  = array();
-            $params['title'] = 'Sura';
 
-            return view('reg', $params);
+            $params['title'] = 'Sura';
+            try {
+                return view('reg', $params);
+            } catch (Exception $e) {
+                echo 'error';
+            }
         }
     }
 
-    public function login($params)
+    /**
+     *
+     */
+    public function login()
     {
-        $logged = $params['user']['logged'];
+        $logged = $this->logged();
         $db = $this->db();
         $token = $_POST['token'].'|'.$_SERVER['REMOTE_ADDR'];
+        $check_token = false;
+        if ($token == $_SESSION['_mytoken'] AND $check_token == true){
+            $user_token = true;
+        }elseif ($check_token == false){
+            $user_token = true;
+        }else{
+            $user_token = false;
+        }
+
         //Если данные поступили через пост запрос и пользователь не авторизован
-        if(isset($_POST['login']) AND $logged == false AND $token == $_SESSION['_mytoken'] ){
+        if(isset($_POST['login']) AND $logged == false AND $user_token == true ){
 
             $errors = 0;
             $err = '';
@@ -74,20 +79,17 @@ class HomeController extends Module{
                 $err .= 'password|n\a';
             }
 
-            // if( _strlen( $name, $config['charset'] ) > 40 OR _strlen(trim($name), $config['charset']) < 3) $stop = 'error';
-//            $lang = $this->get_langs();
-
             if($errors == 0) {
                 $check_user = $db->super_query("SELECT user_id, user_password FROM `users` WHERE user_email = '".$email."'");
 
                 //Если есть юзер то пропускаем
-                if(is_array($check_user) AND password_verify($password, $check_user['user_password']) == true){
+                if($check_user['user_password'] == true AND is_array($check_user) AND password_verify($password, $check_user['user_password']) == true){
                     //Hash ID
-                    $_IP = null;
-                    $hid = $password.md5(md5($_IP));
+                    $_IP = $_SERVER['REMOTE_ADDR'];
+                    $hash = password_hash($password, PASSWORD_DEFAULT);
 
                     //Обновляем хэш входа
-                    $db->query("UPDATE `users` SET user_hid = '".$hid."' WHERE user_id = '".$check_user['user_id']."'");
+                    $db->query("UPDATE `users` SET user_hash = '".$hash."' WHERE user_id = '".$check_user['user_id']."'");
 
                     //Удаляем все рание события
                     $db->query("DELETE FROM `updates` WHERE for_user_id = '{$check_user['user_id']}'");
@@ -97,14 +99,12 @@ class HomeController extends Module{
 
                     //Записываем COOKIE
                     Tools::set_cookie("user_id", intval($check_user['user_id']), 365);
-                    Tools::set_cookie("password", $password, 365);
-                    Tools::set_cookie("hid", $hid, 365);
+//                    Tools::set_cookie("password", $password, 365);
+                    Tools::set_cookie("hash", $hash, 365);
 
                     //Вставляем лог в бд
                     $_BROWSER = null;
                     $db->query("UPDATE `log` SET browser = '".$_BROWSER."', ip = '".$_IP."' WHERE uid = '".$check_user['user_id']."'");
-
-                    //$config = Settings::loadsettings();
 
                        // header('Location: /');
                     echo 'ok|'.$check_user['user_id'];
@@ -120,4 +120,40 @@ class HomeController extends Module{
             echo 'error|no_val|';
         }
     }
+
+    /**
+     *
+     */
+    public function Test()
+    {
+        $key = "system/all_country";
+        $Cache = Cache::initialize();
+
+        try {
+            $item = $Cache->get($key, $default = null);
+            print_r($item);
+
+            $Cache->delete($key);
+
+            $item2 = $Cache->get($key, $default = null);
+            echo '<br>';
+            echo '<br>';
+            print_r($item2);
+            echo '<br>end| ';
+
+            $s = 1;
+        }catch (Exception $e){
+            $db = $this->db();
+            $item = $db->super_query("SELECT * FROM `country` ORDER by `name` ", true);
+            $Cache->set($key, $item);
+            $s = 2;
+        }
+
+        echo '<br>';
+
+        print_r($item);
+
+        echo $s;
+    }
+
 }

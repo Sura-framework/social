@@ -63,7 +63,9 @@
 {{--        </div>--}}
         <div class="d-flex justify-content-around align-items-center">
             <div class="">
-                <div class="wall_attach fl_r" onClick="wall.attach_menu('open', this.id, 'wall_attach_menu')" onMouseOut="wall.attach_menu('close', this.id, 'wall_attach_menu')" id="wall_attach" style="margin-top:0px">Прикрепить</div>
+                <div class="wall_attach fl_r" onClick="wall.attach_menu('open', this.id, 'wall_attach_menu')"
+                     onMouseOut="wall.attach_menu('close', this.id, 'wall_attach_menu')"
+                     id="wall_attach" style="margin-top:0px">@_e('attach')</div>
                 <div class="wall_attach_menu no_display" onMouseOver="wall.attach_menu('open', 'wall_attach', 'wall_attach_menu')" onMouseOut="wall.attach_menu('close', 'wall_attach', 'wall_attach_menu')" id="wall_attach_menu" style="margin-left:433px;margin-top:20px">
                     <div class="wall_attach_icon_smile" id="wall_attach_link" onClick="wall.attach_addsmile()">Смайлик</div>
                     <div class="wall_attach_icon_photo" id="wall_attach_link" onClick="wall.attach_addphoto()">Фотографию</div>
@@ -87,19 +89,14 @@
             </textarea>
                 </div>
             </div>
-            <div class="">
+            <div>
                 <button onClick="im.send('{{ $for_user_id }}', '{{ $my_name }}', '{{ $my_ava }}')" id="sending" class="btn btn-ico btn-primary rounded-circle" type="button">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
                         <path d="m4.7 15.8c-.7 1.9-1.1 3.2-1.3 3.9-.6 2.4-1 2.9 1.1 1.8s12-6.7 14.3-7.9c2.9-1.6 2.9-1.5-.2-3.2-2.3-1.4-12.2-6.8-14-7.9s-1.7-.6-1.2 1.8c.2.8.6 2.1 1.3 3.9.5 1.3 1.6 2.3 3 2.5l5.8 1.1c.1 0 .1.1.1.1s0 .1-.1.1l-5.8 1.1c-1.3.4-2.5 1.3-3 2.7z" fill="#fff"/>
                     </svg>
                 </button>
             </div>
-
-
-
-
         </div>
-
         <div id="attach_files" class="no_display" style="margin-left:60px"></div>
         <input id="vaLattach_files" type="hidden" />
     </div>
@@ -110,5 +107,4 @@
     <input type="hidden" id="status_sending" value="1" />
     <input type="hidden" id="for_user_id" value="{for_user_id}" />
     @endif
-
 </div>

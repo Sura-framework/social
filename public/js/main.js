@@ -19,36 +19,14 @@ var scrollTopForFirefox = 0;
 var url_next_id = 1;
 
 $(document).ready(function(){
-	// var mw = ($('html, body').width()-800)/2;
-	// if($('.autowr').css('padding-left', mw+'px').css('padding-right', mw+'px')){
 		$('body').show();
 		history.pushState({link:location.href}, '', location.href);
-	// }
 	$('.update_code').click(function(){
 		var rndval = new Date().getTime();
 		$('#sec_code').html('<img src="/antibot/antibot.php?rndval=' + rndval + '" alt="" title="Показать другой код" width="120" height="50" />');
 		return false;
 	});
-	// $(window).scroll(function(){
-	// 	if($(document).scrollTop() > ($(window).height()/2))
-	// 		$('.scroll_fix_bg').fadeIn(200); 
-	// 	else 
-	// 		$('.scroll_fix_bg').fadeOut(200); 
-	// });
-
-	// setInterval(function(){
-	// 	$("#ads_view").show();
-	// }, 10000);
-	// setInterval(function(){
-    //     $.ajax({
-    //         url: "/ads/view_ajax/",
-    //         cache: true,
-    //         success: function(html){
-    //             $("#ads_view").html(html);
-    //         }
-    //     });
-	// }, 10000);
-});	
+});
 if(CheckRequestPhoto(req_href)){
 	$(document).ready(function(){
 		Photo.Show(req_href);
@@ -56,19 +34,27 @@ if(CheckRequestPhoto(req_href)){
 }
 if(CheckRequestVideo(req_href)){
 	$(document).ready(function(){
-		var video_id = req_href.split('_');
-		var section = req_href.split('sec=');
-		var fuser = req_href.split('wall/');
-		if(fuser[1]) var close_link = '/u'+fuser[1];
+		let close_link;
+		const video_id = req_href.split('_');
+		const section = req_href.split('sec=');
+		const fuser = req_href.split('wall/');
+		if(fuser[1])
+			{
+				close_link = '/u'+fuser[1];
+			}
 		else
-			var close_link = '';
+			{
+				close_link = '';
+			}
 		if(section[1]){
 			var xSection = section[1].split('/');
-			if(xSection[0] == 'news')
-				var close_link = 'news';
-			if(xSection[0] == 'msg'){
-				var msg_id = xSection[1].split('id=');
-				var close_link = '/messages/show/'+msg_id[1]+'/';
+			if(xSection[0] === 'news')
+				{
+					close_link = 'news';
+				}
+			if(xSection[0] === 'msg'){
+				const msg_id = xSection[1].split('id=');
+				close_link = '/messages/show/'+msg_id[1]+'/';
 			}
 		}
 		
@@ -77,25 +63,25 @@ if(CheckRequestVideo(req_href)){
 }
 
 // AJAX PAGES ONLOAD
-window.onload = function(){
-	window.setTimeout(
-		function(){
-			window.addEventListener(
-				"popstate",
-				function(e){
-					e.preventDefault();
-
-					if(CheckRequestPhoto(e.state.link))
-						Photo.Prev(e.state.link);
-					else if(CheckRequestVideo(e.state.link))
-						videos.prev(e.state.link);
-					else
-						Page.Go(e.state.link, 1);
-				},
-				false);
-		},
-		1);
-}
+// window.onload = function(){
+// 	window.setTimeout(
+// 		function(){
+// 			window.addEventListener(
+// 				"popstate",
+// 				function(e){
+// 					e.preventDefault();
+//
+// 					if(CheckRequestPhoto(e.state.link))
+// 						Photo.Prev(e.state.link);
+// 					else if(CheckRequestVideo(e.state.link))
+// 						videos.prev(e.state.link);
+// 					else
+// 						Page.Go(e.state.link, 1);
+// 				},
+// 				false);
+// 		},
+// 		1);
+// }
 function CheckRequestPhoto(request){
 	var pattern = new RegExp(/photo[0-9]/i);
  	return pattern.test(request);
@@ -110,17 +96,21 @@ function onBodyResize(){
 }
 var Page = {
 	Loading: function(f){
-		var top_pad = $(window).height()/2-50;
+		const top_pad = $(window).height() / 2 - 50;
 		if(f == 'start'){
 			$('#loading').remove();
-			$('html, body').append('<div id="loading" style="margin-top:'+top_pad+'px"><div class="loadstyle"></div></div>');
+			$('html, body').append('<div id="loading" style="margin-top:'+top_pad+'px"><div class="d-flex justify-content-center" style="width: 3rem; height: 3rem;">\n' +
+				'  <div class="spinner-border text-primary" role="status">\n' +
+				'    <span class="sr-only">Loading...</span>\n' +
+				'  </div>\n' +
+				'</div></div>');
 			$('#loading').show();
 		}
 		if(f == 'stop'){
 			$('#loading').remove();
 		}
 	},
-	Go: function(h, pref){
+	Go: function(h){
 		// hh = (location.href).replace('https://'+location.host+'/', '');
 		//
 		// if(hh === 'my_stats' || ((hh).substring(0, 5)) === 'stats'){
@@ -128,7 +118,7 @@ var Page = {
 		//   return false;
 		// }
 		//
-		history.pushState({link:h}, null, h);
+
 
 		//if(!pref) history.pushState({link:h}, null, h);
 
@@ -140,13 +130,13 @@ var Page = {
 		Page.Loading('start');
 		$.post(h, {ajax: 'yes'}, function(res){
 			// var d = JSON.parse(res);
-			// console.log(res);
-
 			const d = res;
+
+			history.pushState({link:h}, d.title, h);
 
 			document.title = d.title;
 
-			$('#page').html(d.content).css('min-height', '0px');
+			$('#page').html(d.content);
 
 			Page.Loading('stop');
 			$('html, body').scrollTop(0);
@@ -162,7 +152,8 @@ var Page = {
 			$('.photo_view, .box_pos, .box_info, .video_view').remove();
 
 			//Возвращаем scroll
-			$('html, body').css('overflow-y', 'auto');
+			$('html').css('overflow-y', 'auto');
+			// $('html, body').css('overflow-y', 'auto');
 
 			//Возвращаем дизайн плеера
 			if($('.staticPlbg').length){ $('.staticPlbg').css('margin-top', '-500px'); player.reestablish(); }
@@ -507,6 +498,7 @@ var Box = {
 	}
 }
 function ge(i){
+	// return $('#'+i);
 	return document.getElementById(i);
 }
 function butloading(i, w, d, t){
@@ -2891,9 +2883,7 @@ var audio = {
 				pname: 'Сейчас играют аудиозаписи ' + audio.uname + ' | ' + declOfNum(audio.loaded_len, 'аудиозапись', 'аудиозаписи', 'аудиозаписей'),
 			};
 		} else {
-			$.post(url, {
-				doload: 1
-			}, function (d) {
+			$.post(url, {doload: 1, ajax: 'yes'}, function (d) {
 				$('#search_preloader').hide();
 				d = JSON.parse(d);
 				$('#atitle').html(d.title);
@@ -3172,7 +3162,7 @@ var audio = {
 			var file = files[i];
 			var ext = file.name.split('.');
 			ext = ext[ext.length - 1];
-			if (ext != 'mp3') {
+			if (ext !== 'mp3') {
 				var err_msg = 'Аудиозапись <b>{name}</b> имеет не верный формат.<br>Выбирите аудиозаписи с форматом MP3!'.replace('{name}', file.name);
 				_a.audioUploadErrorBox(err_msg);
 				e.value = '';
@@ -3322,14 +3312,17 @@ var audio = {
 		}, function (d) {
 			d = JSON.stringify(d);;
 			page++;
-			if (d.loaded == 1) {
+			if (d.loaded === 1) {
 				audio.audiosRes = d.res;
 				audio.loaded_len = d.res.length;
 				audio.searchResult = {
 					data: d.res,
 					cnt: audio.loaded_len
 				};
-			} else audio.loadAll(uid, page);
+			} else {
+
+				// audio.loadAll(uid, page);
+			}
 			if (audio.loaded_len > 40) {
 				$('#load_but').html('<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>');
 			}
@@ -3590,4 +3583,181 @@ function hideUserMenu(){
 function ads_close(){
 		$("#ads_view").fadeOut(400);
 }
+
+//CHECKBOX
+var myhtml = {
+	// checkbox: function(id){
+	// 	const name = '#'+id;
+	// 	$('#'+id).addClass('html_checked');
+	//
+	// 	if(ge('checknox_'+id)){
+	// 		myhtml.checkbox_off(id);
+	// 	} else {
+	// 		$(name).append('<div id="checknox_'+id+'"><input type="hidden" id="'+id+'" /></div>');
+	// 		$(name).val('1');
+	// 	}
+	// },
+	checkbox_off: function(id){
+		const name = '#'+id;
+		$('#checknox_'+id).remove();
+		$(name).removeClass('html_checked');
+		$(name).val('');
+	},
+	// checked: function(arr){
+	// 	$.each(arr, function(){
+	// 		myhtml.checkbox(this);
+	// 	});
+	// },
+	title: function(id, text, prefix_id, pad_left){
+		if(!pad_left)
+			pad_left = 5;
+
+		$("body").append('<div id="js_title_'+id+'" class="js_titleRemove"><div id="easyTooltip">'+text+'</div><div class="tooltip"></div></div>');
+		xOffset = $('#'+prefix_id+id).offset().left-pad_left;
+		yOffset = $('#'+prefix_id+id).offset().top-32;
+
+		$('#js_title_'+id)
+			.css("position","absolute")
+			.css("top", yOffset+"px")
+			.css("left", xOffset+"px")
+			.css("z-index","1000")
+			.fadeIn('fast');
+
+		$('#'+prefix_id+id).mouseout(function(){
+			$('.js_titleRemove').remove();
+		});
+	},
+	title_close: function(id){
+		$('#js_title_'+id).remove();
+	},
+	updateAjaxNav: function(gc, pref, num, page){
+		$.get('/updateAjaxNav', {gcount: gc, pref: pref, num: num, page:page}, function(data){
+			$('#nav').html(data);
+		});
+	},
+	scrollTop: function(){
+		$('.scroll_fix_bg').hide();
+		$(window).scrollTop(0);
+	}
+}
+
+//M lib
+const M = {
+	_d: document,
+	_post: function (q) {
+		var query = [], enc = function (str) {
+			if (window._decodeEr && _decodeEr[str]) {
+				return str;
+			}
+			try {
+				return encodeURIComponent(str);
+			} catch (e) {
+				return str;
+			}
+		};
+		for (var key in q) {
+			if (q[key] == null || M._func(q[key])) continue;
+			if (M._array(q[key])) {
+				for (var i = 0, c = 0, l = q[key].length; i < l; ++i) {
+					if (q[key][i] == null || M._func(q[key][i])) {
+						continue;
+					}
+					query.push(enc(key) + '[' + c + ']=' + enc(q[key][i]));
+					++c;
+				}
+			} else {
+				query.push(enc(key) + '=' + enc(q[key]));
+			}
+		}
+		query.sort();
+		return query.join('&');
+	},
+	post: function (link, d) {
+		var q = (typeof (d.query) != 'string') ? M._post(d.query) : d.query;
+		if (window.history) {
+			M._xhr();
+			var r = M._xhr();
+			r.open("POST", link, true);
+			r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+			r.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+			r.send(q);
+			r.onreadystatechange = function () {
+				if (r.readyState === 4) {
+					if (r.status >= 200 && r.status < 300) {
+						this.text = r.responseText;
+						if (d.onDone) d.onDone(this.text, r); else if (d.onJsonDone) d.onJsonDone(eval("(" + this.text + ")"), r); else if (d.onFail) d.onFail = '';
+					} else {
+						// console.warn(r.status);
+					}
+				}
+			}
+		}
+	},
+	get: function (link, d) {
+		var q = (typeof (d.query) != 'string') ? M._post(d.query) : d.query;
+		if (window.history) {
+			M._xhr();
+			var r = M._xhr();
+			r.open("GET", link + "?" + q, true);
+			r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+			r.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+			r.send(null);
+			r.onreadystatechange = function () {
+				if (r.readyState === 4) {
+					if (r.status >= 200 && r.status < 300) {
+						this.text = r.responseText;
+						if (d.onDone) d.onDone(this.text, r); else if (d.onJsonDone) d.onJsonDone(eval("(" + this.text + ")"), r); else if (d.onFail) d.onFail = '';
+					} else {
+						// console.warn(r.status);
+					}
+				}
+			}
+		}
+	},
+	_func: function (obj) {
+		return Object.prototype.toString.call(obj) === '[object Function]';
+	},
+
+	_array: function (obj) {
+		return Object.prototype.toString.call(obj) === '[object Array]';
+	},
+	_ge_by_tag: function (id) {
+		this.p = M._d.getElementsByTagName(id);
+		this.ct = this.p.length;
+		this.count = 0;
+		do {
+			return this.p[this.count];
+			this.count++;
+		} while (this.count < this.ct)
+	},
+	_ge_by_class: function (id) {
+		this.p = M._d.getElementsByClassName(id);
+		this.ct = this.p.length;
+		this.count = 0;
+		do {
+			return this.p[this.count];
+			this.count++
+		} while (this.count < this.ct)
+	},
+	_ge_by_id: function (id) {
+		return document.getElementById(id);
+	},
+
+
+	_xhr() {
+		try {
+			this.a = new ActiveXObject("Msxml2.XMLHTTP");
+		} catch (e) {
+			try {
+				this.a = new ActiveXObject("Microsoft.XMLHTTP");
+			} catch (E) {
+				this.a = false;
+			}
+		}
+		if (!this.a && typeof XMLHttpRequest != 'undefined') {
+			this.a = new XMLHttpRequest();
+		}
+		return this.a;
+	}
+};
 

@@ -7,15 +7,17 @@ use Sura\Libs\Auth;
 
 class User
 {
-    public function new_news()
+    public function new_news(): string
     {
 
         return '';
     }
 
-    public function info()
+    /**
+     * @return array
+     */
+    public function info() : array
     {
-        $user = Auth::index();
-        return $user;
+        return Auth::index();
     }
 }

@@ -1,14 +1,7 @@
 @extends('app.app')
 @section('content')
     <div class="container">
-        <div class="buttonsprofile albumsbuttonsprofile pt-3 ">
-            <div class="activetab"><a href="/friends/{{ $user_id }}/" onClick="Page.Go(this.href); return false;"><div>Все друзья</div></a></div>
-            <a href="/friends/online/{{ $user_id }}/" onClick="Page.Go(this.href); return false;">Друзья на сайте</a>
-            @if($owner)<a href="/friends/requests/" onClick="Page.Go(this.href); return false;">Заявки в друзья {{ $demands }}</a>@else
-            <a href="/friends/common/{{ $user_id }}/" onClick="Page.Go(this.href); return false;">Общие друзья</a>
-            <a href="/u{{ $user_id }}" onClick="Page.Go(this.href); return false;">К странице {{ $name }}</a>@endif
-        </div>
-        <div>
+        {{ $menu }}
         @foreach($friends as $row)
                 <div class="friends_onefriend width_100" id="friend_{{ $row['user_id'] }}">
                     <a href="/u{{ $row['user_id'] }}" onClick="Page.Go(this.href); return false">
@@ -22,9 +15,9 @@
                         <span class="online">{{ $row['online'] }}</span><div class="friends_clr"></div>
                     </div>
                     <div class="menuleft fl_r friends_m">
-                        @if($row['viewer'])<a href="/" onClick="messages.new_({{ $row['user_id'] }}); return false"><div>Написать сообщение</div></a>@endif
-                        @if($row['owner'])<a onMouseDown="friends.delet({{ $row['user_id'] }}, 0); return false"><div>Убрать из друзей</div></a>@endif
-                        <a href="/albums/{{ $row['user_id'] }}/" onClick="Page.Go(this.href); return false"><div>Альбомы</div></a>
+                        @if($row['viewer'])<a href="/" onClick="messages.new_({{ $row['user_id'] }}); return false"><div>@_e('write_message')</div></a>@endif
+                        @if($row['owner'])<a onMouseDown="friends.delet({{ $row['user_id'] }}, 0); return false"><div>@_e('friend_remove')</div></a>@endif
+                        <a href="/albums/{{ $row['user_id'] }}/" onClick="Page.Go(this.href); return false"><div>@_e('albums')</div></a>
                     </div>
                 </div>
         @endforeach

@@ -3,32 +3,34 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Libs\Db;
-use Sura\Libs\Thumb;
-use Sura\Libs\Gramatic;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
 class BugsController extends Module
 {
-
+    /**
+     * @param $params
+     * @return bool
+     */
     function add_box($params){
         $tpl = $params['tpl'];
         $db = $this->db();
+        $user_info = $row = $this->user_info();
 
         Tools::NoAjaxQuery();
         $tpl->load_template('bugs/add.tpl');
-        $row = $db->super_query("SELECT user_id, user_photo FROM `users` WHERE user_id = '{$user_id}'");
+//        $row = $db->super_query("SELECT user_id, user_photo FROM `users` WHERE user_id = '{$user_id}'");
         if($row['user_photo']) $tpl->set('{photo}', '/uploads/users/'.$row['user_id'].'/'.$row['user_photo']);
         else $tpl->set('{photo}', '/images/no_ava.gif');
         $tpl->compile('content');
         Tools::AjaxTpl($tpl);
         return true;
     }
-    function create($params){
+
+    /**
+     *
+     */
+    function create(){
         $db = $this->db();
 
         Tools::NoAjaxQuery();
@@ -53,6 +55,10 @@ class BugsController extends Module
 
         die();
     }
+
+    /**
+     * @param $params
+     */
     function load_img($params){
         Tools::NoAjaxQuery();
 
@@ -105,9 +111,11 @@ class BugsController extends Module
             }
         }else
             die('size');
-
-        die();
     }
+
+    /**
+     * @param $params
+     */
     function delete($params){
         $db = $this->db();
 
@@ -133,6 +141,11 @@ class BugsController extends Module
 
         die();
     }
+
+    /**
+     * @param $params
+     * @return bool
+     */
     function open($params){
         $tpl = $params['tpl'];
         $db = $this->db();
@@ -143,7 +156,7 @@ class BugsController extends Module
 
         $where = "AND status = '1'";
 
-        $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `vii_users` tb2 WHERE tb1.uids = tb2.user_id  {$where} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
+        $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id  {$where} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
 
         if($sql_){
 
@@ -207,9 +220,14 @@ class BugsController extends Module
         $tpl->compile('content');
 
         $params['tpl'] = $tpl;
-        Page::generate($params);
+//        Page::generate($params);
         return true;
     }
+
+    /**
+     * @param $params
+     * @return bool
+     */
     function complete($params){
         $tpl = $params['tpl'];
         $db = $this->db();
@@ -284,9 +302,14 @@ class BugsController extends Module
         $tpl->compile('content');
 
         $params['tpl'] = $tpl;
-        Page::generate($params);
+//        Page::generate($params);
         return true;
     }
+
+    /**
+     * @param $params
+     * @return bool
+     */
     function close($params){
         $tpl = $params['tpl'];
         $db = $this->db();
@@ -361,9 +384,14 @@ class BugsController extends Module
         $tpl->compile('content');
 
         $params['tpl'] = $tpl;
-        Page::generate($params);
+//        Page::generate($params);
         return true;
     }
+
+    /**
+     * @param $params
+     * @return bool
+     */
     function my($params){
         $tpl = $params['tpl'];
         $db = $this->db();
@@ -441,10 +469,14 @@ class BugsController extends Module
         $tpl->compile('content');
 
         $params['tpl'] = $tpl;
-        Page::generate($params);
+//        Page::generate($params);
         return true;
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     function view($params){
         $tpl = $params['tpl'];
         $db = $this->db();
@@ -521,10 +553,14 @@ class BugsController extends Module
         Tools::AjaxTpl($tpl);
 
         $params['tpl'] = $tpl;
-        Page::generate($params);
+//        Page::generate($params);
         return true;
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     function index($params){
         $tpl = $params['tpl'];
         $db = $this->db();
@@ -597,7 +633,7 @@ class BugsController extends Module
         $tpl->compile('content');
 
         $params['tpl'] = $tpl;
-        Page::generate($params);
+//        Page::generate($params);
         return true;
     }
 }

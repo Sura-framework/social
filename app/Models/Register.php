@@ -10,9 +10,9 @@ class Register
 
     /**
      * @param $user_email
-     * @return array|mixed|string[]
+     * @return array
      */
-    public static function check_email($user_email)
+    public static function check_email(string $user_email) : array
     {
         $db = Db::getDB();
         return $db->super_query("SELECT COUNT(*) AS cnt FROM `users` WHERE user_email = '{$user_email}'");
@@ -20,9 +20,9 @@ class Register
 
     /**
      * @param $user_country
-     * @return array|mixed|string[]
+     * @return array
      */
-    public static function country_info($user_country)
+    public static function country_info(string $user_country) : array
     {
         $db = Db::getDB();
         return $db->super_query("SELECT name FROM `country` WHERE id = '" . $user_country . "'");
@@ -30,9 +30,9 @@ class Register
 
     /**
      * @param $user_city
-     * @return array|mixed|string[]
+     * @return array
      */
-    public static function city_info($user_city)
+    public static function city_info(string $user_city) : array
     {
         $db = Db::getDB();
         return $db->super_query("SELECT name FROM `city` WHERE id = '" . $user_city . "'");

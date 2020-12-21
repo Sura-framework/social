@@ -2,20 +2,20 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Cache;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use App\Services\Cache;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
+use Exception;
 
 class NotificationsController extends Module{
 
+    /**
+     * @param $params
+     */
     public function settings($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
+//        $lang = $this->get_langs();
+//        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
@@ -37,6 +37,9 @@ class NotificationsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function save_settings($params){
         $db = $this->db();
         $user_info = $this->user_info();
@@ -56,6 +59,9 @@ class NotificationsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function del($params){
         $db = $this->db();
         $user_info = $this->user_info();
@@ -74,9 +80,13 @@ class NotificationsController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function notification($params){
         $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -125,24 +135,36 @@ class NotificationsController extends Module{
                 }
             }
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
+//            $params['tpl'] = $tpl;
+//            Page::generate($params);
             return true;
         }
     }
 
+    /**
+     * @param $params
+     */
     public function index($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
 
         //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
-        $logged = $this->logged();
+//        $logged = $this->logged();
 
         $limit_news = 15;
         $last_id = intval($_POST['last_id']);
-        $CacheNews = Cache::mozg_cache('user_'.$_SESSION['user_id'].'/new_news');
-        if($CacheNews) Cache::mozg_create_cache('user_'.$user_info['user_id'].'/new_news', '');
+//        $CacheNews = Cache::mozg_cache('user_'.$_SESSION['user_id'].'/new_news');
+//        if($CacheNews) {
+//            Cache::mozg_create_cache('user_'.$user_info['user_id'].'/new_news', '');
+//        }
+
+        $Cache = Cache::initialize();
+        try {
+            $Cache->get("users/{$_SESSION['user_id']}/new_news");
+        }catch (Exception $e){
+            $Cache->set("users/{$user_info['user_id']}/new_news", '');
+        }
 
         $count = $db->super_query("SELECT COUNT(*) as cnt FROM `news` tb1 WHERE tb1.action_type IN (7,20,21,22) AND tb1.for_user_id = '{$user_info['user_id']}'");
 
@@ -157,7 +179,7 @@ class NotificationsController extends Module{
             Оценки дуелей 22
             */
 
-            $tpl->load_template('news/notifications2.tpl');
+//            $tpl->load_template('news/notifications2.tpl');
             foreach($sql_ as $row){
 
                 if(!$last_date || $last_date != date('d.m.Y', $row['action_time'])) $tpl->result['content'] .= '<div class="unp-date-separator">'.Gramatic::megaDateNoTpl2($row['action_time']).'</div>';
@@ -190,40 +212,41 @@ class NotificationsController extends Module{
 
                     $type = $cntUse.' '.Gramatic::declOfNum($cntUse, array('оценка','оценки','оценок'));
                     $type = $type.' <a class="user" href="/wall'.$row_info_likes['for_user_id'].'_'.$row['obj_id'].'" onClick="Page.Go(this.href); return false;">записи со стены</a>';
-                    $tpl->set('{icon}', 'like');
-                    $tpl->set_block("'\\[gifts\\](.*?)\\[/gifts\\]'si","");
+//                    $tpl->set('{icon}', 'like');
+//                    $tpl->set_block("'\\[gifts\\](.*?)\\[/gifts\\]'si","");
                 } else if($row['action_type'] == 20){
                     $row_info_likes = $db->super_query("SELECT album_id FROM `photos` WHERE id = '{$row['obj_id']}'");
                     $type = $cntUse.' '.Gramatic::declOfNum($cntUse, array('оценка','оценки','оценок'));
                     $type = $type.' <a class="user" href="/photo'.$user_info['user_id'].'_'.$row['obj_id'].'_'.$row_info_likes['album_id'].'" onClick="Photo.Show(this.href); return false;">фотографии</a>';
-                    $tpl->set('{icon}', 'like');
-                    $tpl->set_block("'\\[gifts\\](.*?)\\[/gifts\\]'si","");
+//                    $tpl->set('{icon}', 'like');
+//                    $tpl->set_block("'\\[gifts\\](.*?)\\[/gifts\\]'si","");
                 } else if($row['action_type'] == 21){
                     $type = 'Вам подарили <a class="user" href="/" onClick="gifts.browse('.$user_info['user_id'].'); return false;">'.$cntUse.' '.Gramatic::declOfNum($cntUse, array('подарок','подарка','подарков')).'</a>';
-                    $tpl->set('{icon}', '');
-                    $tpl->set('{gift}', $row['obj_id']);
-                    $tpl->set('[gifts]', '');
-                    $tpl->set('[/gifts]', '');
+//                    $tpl->set('{icon}', '');
+//                    $tpl->set('{gift}', $row['obj_id']);
+//                    $tpl->set('[gifts]', '');
+//                    $tpl->set('[/gifts]', '');
 
                 } else if($row['action_type'] == 22){
                     $type = $cntUse.' '.Gramatic::declOfNum($cntUse, array('оценка','оценки','оценок'));
                     $type = $type.' <a class="user" href="/?go=compare&act=choose&out=1" onClick="Page.Go(this.href); return false;">в дуэлях</a>';
-                    $tpl->set('{icon}', 'like');
-                    $tpl->set_block("'\\[gifts\\](.*?)\\[/gifts\\]'si","");
+//                    $tpl->set('{icon}', 'like');
+//                    $tpl->set_block("'\\[gifts\\](.*?)\\[/gifts\\]'si","");
                 }
 
-                $tpl->set('{id}', $row['ac_id']);
-                $tpl->set('{type}', $type);
-                $tpl->set('{users}', $rList);
+//                $tpl->set('{id}', $row['ac_id']);
+//                $tpl->set('{type}', $type);
+//                $tpl->set('{users}', $rList);
                 $date = megaDate(strtotime($row['action_time']), 1, 1);
-                $tpl->set('{date}', $date);
+//                $tpl->set('{date}', $date);
                 $last_date = date('d.m.Y', $row['action_time']);
-                $tpl->compile('content');
+//                $tpl->compile('content');
             }
 
             if(!$last_id && $count['cnt'] > $limit_news) $tpl->result['content'] .= '<div class="show_all_button" onclick="QNotifications.MoreShow();">Показать больше уведомлений</div>';
 
-        } else if(!$last_id && !$_POST['page_cnt']) msgbox('', 'Нет оповещений.', 'info_2');
+        } else if(!$last_id && !$_POST['page_cnt'])
+            msg_box('Нет оповещений.', 'info_2');
 
         if($last_id){
             $config = Settings::loadsettings();

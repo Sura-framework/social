@@ -3,12 +3,14 @@
 namespace App\Modules;
 
 use Sura\Libs\Cache;
-use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
 class VotesController extends Module{
 
+    /**
+     * @param $params
+     */
     public function index($params){
         $db = $this->db();
         $user_info = $this->user_info();
@@ -31,7 +33,11 @@ class VotesController extends Module{
 
                 $db->query("UPDATE `votes` SET answer_num = answer_num+1 WHERE id = '{$vote_id}'");
 
-                Cache::mozg_mass_clear_cache_file("votes/vote_{$vote_id}|votes/vote_answer_cnt_{$vote_id}|votes/check{$user_id}_{$vote_id}");
+
+                //TODO update cache system
+                Cache::mozg_mass_clear_cache_file("
+                votes/vote_{$vote_id}|
+                votes/vote_answer_cnt_{$vote_id}|votes/check{$user_id}_{$vote_id}");
 
                 //Составляем новый ответ
                 Cache::mozg_create_cache("votes/check{$user_id}_{$vote_id}", "a:1:{s:3:\"cnt\";s:1:\"1\";}");
@@ -40,7 +46,7 @@ class VotesController extends Module{
 
                 $row_vote['title'] = stripslashes($row_vote['title']);
 
-                $result .= "<div class=\"wall_vote_title\">{$row_vote['title']}</div>";
+                $result = "<div class=\"wall_vote_title\">{$row_vote['title']}</div>";
 
                 $rowAnswers = stripslashes($row_vote['answers']);
                 $arr_answe_list = explode('|', $rowAnswers);

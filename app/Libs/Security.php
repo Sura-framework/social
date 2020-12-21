@@ -123,7 +123,12 @@ class Security
 
     }
 
-    function AntiSpamLogInsert($act, $text = false)
+    /**
+     * @param $act
+     * @param false $text
+     * @return bool
+     */
+    function AntiSpamLogInsert($act, $text = false) : bool
     {
 
         global $db, $user_info, $server_time;

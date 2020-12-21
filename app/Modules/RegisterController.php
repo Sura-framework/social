@@ -3,7 +3,8 @@
 namespace App\Modules;
 
 use App\Models\Register;
-use Sura\Libs\Cache;
+use App\Services\Cache;
+use Exception;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Tools;
@@ -11,6 +12,10 @@ use Sura\Libs\Validation;
 
 class RegisterController extends Module{
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function index($params)
     {
         $db = $this->db();
@@ -111,10 +116,9 @@ class RegisterController extends Module{
 
                         //Hash ID
                         $_IP = $_SERVER['REMOTE_ADDR']; //!NB
-                        $hid = $pass_hash . md5(md5($_IP));
 
                         $server_time = intval($_SERVER['REQUEST_TIME']);
-                        $db->query("INSERT INTO `users` (user_email, user_password, user_name, user_lastname, user_sex, user_day, user_month, user_year, user_country, user_city, user_reg_date, user_lastdate, user_group, user_hid, user_country_city_name, user_search_pref, user_birthday, user_privacy) VALUES ('{$user_email}', '{$pass_hash}', '{$user_name}', '{$user_last_name}', '{$user_sex}', '{$user_day}', '{$user_month}', '{$user_year}', '{$user_country}', '{$user_city}', '{$server_time}', '{$server_time}', '{$user_group}', '{$hid}', '{$user_country_city_name}', '{$user_search_pref}', '{$user_birthday}', 'val_msg|1||val_wall1|1||val_wall2|1||val_wall3|1||val_info|1||')");
+                        $db->query("INSERT INTO `users` (user_email, user_password, user_name, user_lastname, user_sex, user_day, user_month, user_year, user_country, user_city, user_reg_date, user_lastdate, user_group, user_hash, user_country_city_name, user_search_pref, user_birthday, user_privacy) VALUES ('{$user_email}', '{$pass_hash}', '{$user_name}', '{$user_last_name}', '{$user_sex}', '{$user_day}', '{$user_month}', '{$user_year}', '{$user_country}', '{$user_city}', '{$server_time}', '{$server_time}', '{$user_group}', '{$pass_hash}', '{$user_country_city_name}', '{$user_search_pref}', '{$user_birthday}', 'val_msg|1||val_wall1|1||val_wall2|1||val_wall3|1||val_info|1||')");
                         $id = $db->insert_id();
 
                         //Устанавливаем в сессию ИД юзера
@@ -122,11 +126,11 @@ class RegisterController extends Module{
 
                         //Записываем COOKIE
                         Tools::set_cookie("user_id", intval($id), 365);
-                        Tools::set_cookie("password", md5(md5($password_first)), 365);
-                        Tools::set_cookie("hid", $hid, 365);
+//                        Tools::set_cookie("password", md5(md5($password_first)), 365);
+                        Tools::set_cookie("hash", $pass_hash, 365);
 
                         //Создаём папку юзера в кеше
-                        Cache::mozg_create_folder_cache("user_{$id}");
+//                        Cache::mozg_create_folder_cache("user_{$id}");
 
                         //Директория юзеров
                         $uploaddir = __DIR__ . '/../../public/uploads/users/';
@@ -173,36 +177,32 @@ class RegisterController extends Module{
         die();
     }
 
+    /**
+     * @param $params
+     * @return string
+     * @throws Exception
+     */
     public function Signup($params)
     {
-       // $tpl = $params['tpl'];
+        $title = 'Регистрация | Sura';
+        /**
+         * Загружаем Страны
+         */
+        $Cache = Cache::initialize();
 
-        ################## Загружаем Страны ##################//
-            try {
-                $sql_country_serialize = Cache::system_cache('all_country');
-                $sql_country = unserialize($sql_country_serialize);
-            }catch (\Exception $e){
-                $db = $this->db();
-                $sql_country = $db->super_query("SELECT * FROM `country` ORDER by `name` ASC", true, "country", true);
-                $sql_country_serialize = serialize($sql_country);
-                Cache::creat_system_cache('all_country', $sql_country_serialize);
-                $db->free();
-            }
-            $all_country = '';
-            foreach($sql_country as $row_country)
-                $all_country .= '<option value="'.$row_country['id'].'">'.stripslashes($row_country['name']).'</option>';
-
-//        $tpl->load_template('sign_up.tpl');
-//        $tpl->set('{country}', $all_country);
-//        $tpl->compile('content');
-//
-//        $tpl->clear();
-//        $params['tpl'] = $tpl;
-//        Page::generate($params);
-
-
-        $data  = array();
-        $data['title'] = 'Регистрация | Sura';
-        return view('sign_up', array("title"=>$data['title'],"country" => $all_country));
+        $key = "system/all_country";
+        try {
+            $value = $Cache->get($key, $default = null);
+        }catch (Exception $e){
+            $db = $this->db();
+            $value = $db->super_query("SELECT * FROM `country` ORDER by `name` ASC", 1);
+            $Cache->set($key, $value);
+            $db->free();
+        }
+        $all_country = '';
+        foreach($value as $row_country){
+            $all_country .= '<option value="'.$row_country['id'].'">'.stripslashes($row_country['name']).'</option>';
+        }
+        return view('sign_up', array("title"=>$title,"country" => $all_country));
     }
 }

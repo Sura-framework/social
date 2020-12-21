@@ -19,46 +19,65 @@ function GoPage(event, p){
 	}
 }
 $(document).ready(function(){
-	setInterval(function(){
-		$.post('/updates/', function(d){
-			row = d.split('|');
-			if(d && row[1]){
-				if(row[0] == 1) uTitle = 'Новый ответ на стене';
-				else if(row[0] == 2) uTitle = 'Новый комментарий к фотографии';
-				else if(row[0] == 3) uTitle = 'Новый комментарий к видеозаписи';
-				else if(row[0] == 4) uTitle = 'Новый комментарий к заметке';
-				else if(row[0] == 5) uTitle = 'Новый ответ на Ваш комментарий';
-				else if(row[0] == 6) uTitle = 'Новый ответ в теме';
-				else if(row[0] == 7) uTitle = 'Новый подарок';
-				else if(row[0] == 8) uTitle = 'Новое сообщение';
-				else if(row[0] == 9) uTitle = 'Новая оценка';
-				else if(row[0] == 10) uTitle = 'Ваша запись понравилась';
-				else if(row[0] == 11) uTitle = 'Новая заявка';
-				else if(row[0] == 12) uTitle = 'Заявка принята';
-				else if(row[0] == 13) uTitle = 'Подписки';
-				else uTitle = 'Событие';
-				if(row[0] == 8){
-					sli = row[6].split('/');
-					tURL = (location.href).replace('http://'+location.host, '').replace('/', '').split('#');
-					if(!sli[2] && tURL[0] == 'messages') return false;
-					if($('#new_msg').text()) msg_num = parseInt($('#new_msg').text().replace(')', '').replace('(', ''))+1;
-					else msg_num = 1;
-					$('#new_msg').html("<div class=\"headm_newac\" style=\"margin-left:37px\">"+msg_num+"</div>");
-				}
-				temp = '<div class="update_box cursor_pointer" id="event'+row[4]+'" onClick="GoPage(event, \''+row[6]+'\'); upClose('+row[4]+')"><div class="update_box_margin"><div style="height:19px"><span>'+uTitle+'</span><div class="update_close fl_r no_display" id="update_close" onMouseDown="upClose('+row[4]+')"><div class="update_close_ic" id="update_close2"></div></div></div><div class="clear"></div><div class="update_inpad"><a href="/u'+row[2]+'" onClick="Page.Go(this.href); return false"><div class="update_box_marginimg"><img src="'+row[5]+'" id="no_ev" /></div></a><div class="update_data"><a id="no_ev" href="/u'+row[2]+'" onClick="Page.Go(this.href); return false">'+row[1]+'</a>&nbsp;&nbsp;'+row[3]+'</div></div><div class="clear"></div></div></div>';
-				$('#updates').html($('#updates').html()+temp);
-				var beepThree = $("#beep-three")[0];
-				beepThree.play();
-				if($('.update_box').size() <= 5) $('#updates').animate({'height': (123*$('.update_box').size())+'px'});
-				if($('.update_box').size() > 5){
-					evFirst = $('.update_box:first').attr('id');
-					$('#'+evFirst).animate({'margin-top': '-123px'}, 400, function(){
-						$('#'+evFirst).fadeOut('fast', function(){
-							$('#'+evFirst).remove();
-						});
-					});
-				}
-			}
-		});
-	}, 3000);
+	// setInterval(function(){
+
+            M.post("/updates/",{ // M.post or M.get
+                // query:{}, // Значение запроса
+                onDone:function(d){ // Если всё нормально, то отобразить результат.
+                    // M._ge_by_id("result").innerHTML = a;
+                    if (d.res) {
+                        row = d.res;
+                        if(row.type){
+                            if(row.type === 1) uTitle = 'Новый ответ на стене';
+                            else if(row.type === 2) uTitle = 'Новый комментарий к фотографии';
+                            else if(row.type === 3) uTitle = 'Новый комментарий к видеозаписи';
+                            else if(row.type === 4) uTitle = 'Новый комментарий к заметке';
+                            else if(row.type === 5) uTitle = 'Новый ответ на Ваш комментарий';
+                            else if(row.type === 6) uTitle = 'Новый ответ в теме';
+                            else if(row.type === 7) uTitle = 'Новый подарок';
+                            else if(row.type === 8) uTitle = 'Новое сообщение';
+                            else if(row.type === 9) uTitle = 'Новая оценка';
+                            else if(row.type === 10) uTitle = 'Ваша запись понравилась';
+                            else if(row.type === 11) uTitle = 'Новая заявка';
+                            else if(row.type === 12) uTitle = 'Заявка принята';
+                            else if(row.type === 13) uTitle = 'Подписки';
+                            else if(row.type === 14) uTitle = 'Уведомление';
+                            else uTitle = 'Событие';
+                            //Новое сообщение
+                            if(row.type === 8){
+                                sli = row.link.split('/');
+                                tURL = (location.href).replace('http://'+location.host, '').replace('/', '').split('#');
+                                if(!sli[2] && tURL[0] === 'messages') return false;
+                                if($('#new_msg').text()) msg_num = parseInt($('#new_msg').text().replace(')', '').replace('(', ''))+1;
+                                else msg_num = 1;
+                                $('#new_msg').html("<div class=\"headm_newac\" style=\"margin-left:37px\">"+msg_num+"</div>");
+                            }
+                            temp = '<div class="update_box cursor_pointer" id="event'+row.time+'" onClick="GoPage(event, \''+row.link+'\'); upClose('+row.time+')"><div class="update_box_margin"><div style="height:19px"><span>'+uTitle+'</span><div class="update_close fl_r no_display" id="update_close" onMouseDown="upClose('+row.time+')"><div class="update_close_ic" id="update_close2"></div></div></div><div class="clear"></div><div class="update_inpad"><a href="/u'+row.id+'" onClick="Page.Go(this.href); return false"><div class="update_box_marginimg"><img src="'+row.ava+'" id="no_ev" /></div></a><div class="update_data"><a id="no_ev" href="/u'+row.id+'" onClick="Page.Go(this.href); return false">'+row.name+'</a>&nbsp;&nbsp;'+row.text+'</div></div><div class="clear"></div></div></div>';
+                            $('#updates').html($('#updates').html()+temp);
+                            var beepThree = $("#beep-three")[0];
+                            beepThree.play();
+                            if($('.update_box').size() <= 5) $('#updates').animate({'height': (123*$('.update_box').size())+'px'});
+                            if($('.update_box').size() > 5){
+                                evFirst = $('.update_box:first').attr('id');
+                                $('#'+evFirst).animate({'margin-top': '-123px'}, 400, function(){
+                                    $('#'+evFirst).fadeOut('fast', function(){
+                                        $('#'+evFirst).remove();
+                                    });
+                                });
+                            }
+                        }
+                    }
+
+                },
+                onFail:function(d){ // А если нет. то показать ошибку
+                    // alert("Error");
+                    console.warn('Ошибка ' + d.name + ":" + d.message + "\n" + d.stack);
+                }
+            });
+/*            $.post('/updates/', function(d){
+            // if (d.error) addAllErr('Неизвестная ошибка');
+            });*/
+
+
+	// }, 3000);
 });

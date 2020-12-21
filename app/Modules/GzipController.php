@@ -7,8 +7,7 @@ use Sura\Libs\Langs;
 class GzipController extends Module{
 
     public static function index($params){
-        //$lang = $this->get_langs();
-
+        $lang = langs::get_langs();
         function CheckCanGzip(){
             if(headers_sent() OR connection_aborted() OR !function_exists('ob_gzhandler') OR ini_get('zlib.output_compression')) return 0;
             if(strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'x-gzip') !== false) return "x-gzip";

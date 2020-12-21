@@ -2,43 +2,36 @@
 
 namespace App\Modules;
 
+use App\Models\Menu;
+use App\Services\Cache;
+use Exception;
 use Intervention\Image\ImageManager;
-use Sura\Libs\Public_wall;
-use Sura\Libs\Cache;
 use Sura\Libs\Langs;
-use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
+use Sura\Menu\Html;
+use Sura\Menu\Link;
 
 class GroupsController extends Module{
 
     /**
      * Отправка сообщества БД
      */
-    public function send($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+    public function send(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
         Tools::NoAjaxRedirect();
-
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
-
-//            Tools::NoAjaxQuery();
             $title = Validation::ajax_utf8(Validation::textFilter($_POST['title'], false, true));
+
             AntiSpam('groups');
 
-            if(isset($title) AND !empty($title)){
+            if(isset($_POST['title']) AND !empty($_POST['title'])){
 
                 AntiSpamLogInsert('groups');
                 $db->query("INSERT INTO `communities` SET title = '{$title}', type = 1, traf = 1, ulist = '|{$user_id}|', date = NOW(), admin = 'u{$user_id}|', real_admin = '{$user_id}', comments = 1");
@@ -46,28 +39,24 @@ class GroupsController extends Module{
                 $db->query("INSERT INTO `friends` SET friend_id = '{$cid}', user_id = '{$user_id}', friends_date = NOW(), subscriptions = 2");
                 $db->query("UPDATE `users` SET user_public_num = user_public_num+1 WHERE user_id = '{$user_id}'");
 
-                @mkdir(__DIR__.'/../../public/uploads/groups/'.$cid.'/', 0777);
-                @chmod(__DIR__.'/../../public/uploads/groups/'.$cid.'/', 0777);
+                mkdir(__DIR__.'/../../public/uploads/groups/'.$cid.'/', 0777);
+                chmod(__DIR__.'/../../public/uploads/groups/'.$cid.'/', 0777);
 
-                @mkdir(__DIR__.'/../../public/uploads/groups/'.$cid.'/photos/', 0777);
-                @chmod(__DIR__.'/../../public/uploads/groups/'.$cid.'/photos/', 0777);
+                mkdir(__DIR__.'/../../public/uploads/groups/'.$cid.'/photos/', 0777);
+                chmod(__DIR__.'/../../public/uploads/groups/'.$cid.'/photos/', 0777);
 
-                Cache::mozg_mass_clear_cache_file("user_{$user_id}/profile_{$user_id}|groups/{$user_id}");
-
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_id}/profile_{$user_id}");
                 echo $cid;
             } else
-                echo 'no_title';
-
-            die();
+                echo 'err';
         }
     }
 
     /**
      *  Выход из сообщества
      */
-    public function exit($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+    public function exit(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -76,12 +65,6 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
-
-//            Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
             $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `friends` WHERE friend_id = '{$id}' AND user_id = '{$user_id}' AND subscriptions = 2");
             if($check['cnt']){
@@ -100,24 +83,25 @@ class GroupsController extends Module{
                 $check_user_stat = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_stats_log` WHERE gid = '{$id}' AND user_id = '{$user_info['user_id']}' AND date = '{$stat_date}' AND act = '3'");
 
                 if(!$check_user_stat['cnt']){
-
                     if($check_stat['cnt']){
-
                         $db->query("UPDATE `communities_stats` SET exit_users = exit_users + 1 WHERE gid = '{$id}' AND date = '{$stat_date}'");
-
                     } else {
-
                         $db->query("INSERT INTO `communities_stats` SET gid = '{$id}', date = '{$stat_date}', exit_users = '1', date_x = '{$stat_x_date}'");
-
                     }
-
                     $db->query("INSERT INTO `communities_stats_log` SET user_id = '{$user_info['user_id']}', date = '{$stat_date}', act = '3', gid = '{$id}'");
-
                 }
-
-                Cache::mozg_mass_clear_cache_file("user_{$user_id}/profile_{$user_id}|groups/{$user_id}");
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                $Cache->delete("public/{$id}/profile_{$id}");
+                echo 'true';
+            }else{
+                $user_id = $user_info['user_id'];
+                $id = intval($_POST['id']);
+                $db->query("DELETE FROM `friends` WHERE friend_id = '{$id}' AND user_id = '{$user_id}' AND subscriptions = 2");
+                echo 'false';
             }
-            die();
+        }else{
+            echo 'err_logged';
         }
     }
 
@@ -125,29 +109,23 @@ class GroupsController extends Module{
      * Страница загрузки главного фото сообщества
      */
     public function loadphoto_page($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
-        $user_info = $this->user_info();
+//        $lang = $this->get_langs();
+//        $user_info = $this->user_info();
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            $user_id = $user_info['user_id'];
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $tpl->load_template('groups/load_photo.tpl');
-            $tpl->set('{id}', $_POST['id']);
-            $tpl->compile('content');
-            Tools::AjaxTpl($tpl);
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
+//            $tpl->load_template('groups/load_photo.tpl');
+//            $tpl->set('{id}', $_POST['id']);
+            $params['id'] = $_POST['id'];
             return true;
         }
     }
@@ -156,7 +134,6 @@ class GroupsController extends Module{
      * Загрузка и изминение главного фото сообщества
      */
     public function loadphoto($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -188,7 +165,8 @@ class GroupsController extends Module{
                 $server_time = intval($_SERVER['REQUEST_TIME']);
                 $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя фотографии
                 $image_size = $_FILES['uploadfile']['size']; // размер файла
-                $type = end(explode(".", $image_name)); // формат файла
+                $array = explode(".", $image_name);
+                $type = end($array); // формат файла
 
                 //Проверям если, формат верный то пропускаем
                 if(in_array(strtolower($type), $allowed_files)){
@@ -198,9 +176,7 @@ class GroupsController extends Module{
                         $upload_dir = __DIR__."/../../public/uploads/groups/{$id}/";
 
                         if(move_uploaded_file($image_tmp, $upload_dir.$image_rename.$res_type)){
-
                             $manager = new ImageManager(array('driver' => 'gd'));
-
                             //Создание оригинала
                             $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(200, null, function ($constraint) {
                                 $constraint->aspectRatio();
@@ -230,17 +206,15 @@ class GroupsController extends Module{
                             //Результат для ответа
                             echo $image_rename.$res_type;
 
-                            Cache::mozg_clear_cache_folder('groups');
-                            Cache::mozg_clear_cache_file("wall/group{$id}");
-
-                        } else
+                            $Cache = Cache::initialize();
+                            $Cache->delete("wall/group{$id}");
+                         } else
                             echo 'big_size';
                     } else
                         echo 'big_size';
                 } else
                     echo 'bad_format';
             }
-            die();
         }
     }
 
@@ -248,7 +222,6 @@ class GroupsController extends Module{
      * Удаление фото сообщества
      */
     public function delphoto($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -260,8 +233,8 @@ class GroupsController extends Module{
             $user_id = $user_info['user_id'];
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            $limit_page = ($page-1)*$gcount;
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
@@ -270,25 +243,21 @@ class GroupsController extends Module{
             $row = $db->super_query("SELECT photo, admin FROM `communities` WHERE id = '{$id}'");
             if(stripos($row['admin'], "u{$user_id}|") !== false){
                 $upload_dir = __DIR__."/../../public/uploads/groups/{$id}/";
-                @unlink($upload_dir.$row['photo']);
-                @unlink($upload_dir.'50_'.$row['photo']);
-                @unlink($upload_dir.'100_'.$row['photo']);
+                unlink($upload_dir.$row['photo']);
+                unlink($upload_dir.'50_'.$row['photo']);
+                unlink($upload_dir.'100_'.$row['photo']);
                 $db->query("UPDATE `communities` SET photo = '' WHERE id = '{$id}'");
 
-                Cache::mozg_clear_cache_folder('groups');
-                Cache::mozg_clear_cache_file("wall/group{$id}");
-
+                $Cache = Cache::initialize();
+                $Cache->delete("wall/group{$id}");
             }
-            die();
         }
     }
 
     /**
      * Вступление в сообщество
      */
-    public function login($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+    public function login(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -297,14 +266,11 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
-
-//            Tools::NoAjaxQuery();
-            $id = intval($_POST['id']);
-
+            if (isset($_POST['id']))
+                $id = intval($_POST['id']);
+            else{
+                throw new \Exception('item not found');
+            }
             //Проверка на существования юзера в сообществе
             $row = $db->super_query("SELECT ulist, del, ban FROM `communities` WHERE id = '{$id}'");
 
@@ -329,19 +295,12 @@ class GroupsController extends Module{
                 $check_user_stat = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_stats_log` WHERE gid = '{$id}' AND user_id = '{$user_info['user_id']}' AND date = '{$stat_date}' AND act = '2'");
 
                 if(!$check_user_stat['cnt']){
-
                     if($check_stat['cnt']){
-
                         $db->query("UPDATE `communities_stats` SET new_users = new_users + 1 WHERE gid = '{$id}' AND date = '{$stat_date}'");
-
                     } else {
-
                         $db->query("INSERT INTO `communities_stats` SET gid = '{$id}', date = '{$stat_date}', new_users = '1', date_x = '{$stat_x_date}'");
-
                     }
-
                     $db->query("INSERT INTO `communities_stats_log` SET user_id = '{$user_info['user_id']}', date = '{$stat_date}', act = '2', gid = '{$id}'");
-
                 }
 
                 //Проверка на приглашению юзеру
@@ -349,19 +308,23 @@ class GroupsController extends Module{
 
                 //Если есть приглашение, то удаляем его
                 if($check['cnt']){
-
                     $db->query("DELETE FROM `communities_join` WHERE for_user_id = '{$user_id}' AND public_id = '{$id}'");
                     $appSQLDel = ", invties_pub_num = invties_pub_num - 1";
-
+                }else{
+                    $appSQLDel = '';
                 }
 
                 //Обновляем кол-во сообществ у юзера
                 $db->query("UPDATE `users` SET user_public_num = user_public_num + 1 {$appSQLDel} WHERE user_id = '{$user_id}'");
 
                 //Чистим кеш
-                Cache::mozg_mass_clear_cache_file("user_{$user_id}/profile_{$user_id}|groups/{$user_id}");
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                $Cache->delete("public/{$id}/profile_{$id}");
+                echo 'true';
+            }else{
+                echo 'false';
             }
-            die();
         }
     }
 
@@ -369,9 +332,8 @@ class GroupsController extends Module{
      * Страница добавления контактов
      */
     public function addfeedback_pg($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
-        $db = $this->db();
+//        $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
 
@@ -385,13 +347,9 @@ class GroupsController extends Module{
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $tpl->load_template('groups/addfeedback_pg.tpl');
-            $tpl->set('{id}', $_POST['id']);
-            $tpl->compile('content');
-            Tools::AjaxTpl($tpl);
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
+//            $tpl->load_template('groups/addfeedback_pg.tpl');
+//            $tpl->set('{id}', $_POST['id']);
+            $params['id'] = $_POST['id'];
             return true;
         }
     }
@@ -400,7 +358,6 @@ class GroupsController extends Module{
      * Добавления контакт в БД
      */
     public function addfeedback_db($params){
-//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -437,8 +394,6 @@ class GroupsController extends Module{
                 $db->query("INSERT INTO `communities_feedback` SET cid = '{$id}', fuser_id = '{$upage}', office = '{$office}', fphone = '{$phone}', femail = '{$email}', fdate = '{$server_time}'");
             } else
                 echo 1;
-
-            die();
         }
     }
 
@@ -446,7 +401,6 @@ class GroupsController extends Module{
      * Удаление контакта из БД
      */
     public function delfeedback($params){
-//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -475,8 +429,6 @@ class GroupsController extends Module{
                 $db->query("UPDATE `communities` SET feedback = feedback-1 WHERE id = '{$id}'");
                 $db->query("DELETE FROM `communities_feedback` WHERE fuser_id = '{$uid}' AND cid = '{$id}'");
             }
-
-            die();
         }
     }
 
@@ -484,7 +436,6 @@ class GroupsController extends Module{
      * Выводим фотографию юзера при указании ИД страницы
      */
     public function checkFeedUser($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -494,16 +445,15 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
             $id = intval($_POST['id']);
             $row = $db->super_query("SELECT user_photo, user_search_pref FROM `users` WHERE user_id = '{$id}'");
             if($row) echo $row['user_search_pref']."|".$row['user_photo'];
-            die();
         }
     }
 
@@ -511,7 +461,6 @@ class GroupsController extends Module{
      * Сохранение отредактированых данных контакт в БД
      */
     public function editfeeddave($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -541,13 +490,10 @@ class GroupsController extends Module{
 
             if(stripos($checkAdmin['admin'], "u{$user_id}|") !== false AND $checkSec['cnt']){
                 $db->query("UPDATE `communities_feedback` SET office = '{$office}', fphone = '{$phone}', femail = '{$email}' WHERE fuser_id = '{$upage}' AND cid = '{$id}'");
-
-                Cache::mozg_clear_cache_file("wall/group{$id}");
-
+                $Cache = Cache::initialize();
+                $Cache->delete("wall/group{$id}");
             } else
                 echo 1;
-
-            die();
         }
     }
 
@@ -555,7 +501,6 @@ class GroupsController extends Module{
      * Все контакты (БОКС)
      */
     public function allfeedbacklist($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -565,9 +510,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
@@ -577,35 +522,46 @@ class GroupsController extends Module{
             $owner = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$id}'");
 
             $sql_ = $db->super_query("SELECT tb1.fuser_id, office, fphone, femail, tb2.user_search_pref, user_photo FROM `communities_feedback` tb1, `users` tb2 WHERE tb1.cid = '{$id}' AND tb1.fuser_id = tb2.user_id ORDER by `fdate` ASC", 1);
-            $tpl->load_template('groups/allfeedbacklist.tpl');
+//            $tpl->load_template('groups/allfeedbacklist.tpl');
             if($sql_){
-                foreach($sql_ as $row){
-                    $tpl->set('{id}', $id);
-                    $tpl->set('{name}', $row['user_search_pref']);
-                    $tpl->set('{office}', stripslashes($row['office']));
-                    $tpl->set('{phone}', stripslashes($row['fphone']));
-                    $tpl->set('{user-id}', $row['fuser_id']);
-                    if($row['fphone'] AND $row['femail']) $tpl->set('{email}', ', '.stripslashes($row['femail']));
-                    else $tpl->set('{email}', stripslashes($row['femail']));
-                    if($row['user_photo']) $tpl->set('{ava}', '/uploads/users/'.$row['fuser_id'].'/50_'.$row['user_photo']);
-                    else $tpl->set('{ava}', '/images/no_ava_50.png');
+                foreach($sql_ as $key => $row){
+//                    $tpl->set('{id}', $id);
+
+//                    $tpl->set('{name}', $row['user_search_pref']);
+//                    $tpl->set('{office}', stripslashes($row['office']));
+//                    $tpl->set('{phone}', stripslashes($row['fphone']));
+//                    $tpl->set('{user-id}', $row['fuser_id']);
+                    if($row['fphone'] AND $row['femail']) {
+//                        $tpl->set('{email}', ', '.stripslashes($row['femail']));
+
+                    }
+                    else{
+//                        $tpl->set('{email}', stripslashes($row['femail']));
+
+                    }
+                    if($row['user_photo']) {
+//                        $tpl->set('{ava}', '/uploads/users/'.$row['fuser_id'].'/50_'.$row['user_photo']);
+
+                    }
+                    else {
+//                        $tpl->set('{ava}', '/images/no_ava_50.png');
+                    }
                     if(stripos($owner['admin'], "u{$user_id}|") !== false){
-                        $tpl->set('[admin]', '');
-                        $tpl->set('[/admin]', '');
+//                        $tpl->set('[admin]', '');
+//                        $tpl->set('[/admin]', '');
                     } else
-                        $tpl->set_block("'\\[admin\\](.*?)\\[/admin\\]'si","");
-                    $tpl->compile('content');
+                    {
+//                        $tpl->set_block("'\\[admin\\](.*?)\\[/admin\\]'si","");
+                    }
+//                    $tpl->compile('content');
                 }
-                Tools::AjaxTpl();
+//                Tools::AjaxTpl();
             } else
                 echo '<div align="center" style="padding-top:10px;color:#777;font-size:13px;">Список контактов пуст.</div>';
 
             if(stripos($owner['admin'], "u{$user_id}|") !== false)
                 echo "<style>#box_bottom_left_text{padding-top:6px;float:left}</style><script>$('#box_bottom_left_text').html('<a href=\"/\" onClick=\"groups.addcontact({$id}); return false\">Добавить контакт</a>');</script>";
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
         }
     }
 
@@ -613,7 +569,6 @@ class GroupsController extends Module{
      * Сохранение отредактированых данных группы
      */
     public function saveinfo($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -623,9 +578,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
@@ -662,11 +617,9 @@ class GroupsController extends Module{
                 } else
                     echo 'err_adres';
 
-                Cache::mozg_clear_cache_folder('groups');
-                Cache::mozg_clear_cache_file("wall/group{$id}");
+                $Cache = Cache::initialize();
+                $Cache->delete("wall/group{$id}");
             }
-
-            die();
         }
     }
 
@@ -674,7 +627,6 @@ class GroupsController extends Module{
      * Выводим информацию о пользователе которого будем делать админом
      */
     public function new_admin($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -684,9 +636,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
@@ -703,7 +655,7 @@ class GroupsController extends Module{
             } else
                 echo "<div style=\"padding:15px\"><div class=\"err_red\">Пользователь с таким адресом страницы не подписан на эту страницу.</div></div><script>$('#box_but').hide()</script>";
 
-            die();
+//            die();
         }
     }
 
@@ -711,7 +663,6 @@ class GroupsController extends Module{
      * Запись нового админа в БД
      */
     public function send_new_admin($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -734,7 +685,6 @@ class GroupsController extends Module{
                 $admin = $row['admin']."u{$new_admin_id}|";
                 $db->query("UPDATE `communities` SET admin = '{$admin}' WHERE id = '{$id}'");
             }
-            die();
         }
     }
 
@@ -742,7 +692,6 @@ class GroupsController extends Module{
      * Удаление админа из БД
      */
     public function deladmin($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -752,9 +701,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
@@ -765,7 +714,6 @@ class GroupsController extends Module{
                 $admin = str_replace("u{$uid}|", '', $row['admin']);
                 $db->query("UPDATE `communities` SET admin = '{$admin}' WHERE id = '{$id}'");
             }
-            die();
         }
     }
 
@@ -773,7 +721,6 @@ class GroupsController extends Module{
      * Добавление записи на стену
      */
     public function wall_send($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -784,9 +731,9 @@ class GroupsController extends Module{
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
 
             //Если страница вывзана через "к предыдущим записям"
             $limit_select = 10;
@@ -907,24 +854,24 @@ class GroupsController extends Module{
                 //$pid = $id;
 
                 $query = $db->super_query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, fixed, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = '{$row['id']}' AND tb1.public_id = tb2.id AND fast_comm_id = 0 ORDER by `fixed` DESC, `add_date` DESC LIMIT {$page_cnt}, {$limit_select}", 1);
-                $tpl->load_template('groups/record.tpl');
+//                $tpl->load_template('groups/record.tpl');
                 $compile = 'content';
 
-                foreach($query as $row_wall){
-                    $tpl->set('{rec-id}', $row_wall['id']);
+                foreach($query as $key => $row_wall){
+//                    $tpl->set('{rec-id}', $row_wall['id']);
 
                     //Закрепить запись
                     if($row_wall['fixed']){
 
-                        $tpl->set('{styles-fasten}', 'style="opacity:1"');
-                        $tpl->set('{fasten-text}', 'Закрепленная запись');
-                        $tpl->set('{function-fasten}', 'wall_unfasten');
+//                        $tpl->set('{styles-fasten}', 'style="opacity:1"');
+//                        $tpl->set('{fasten-text}', 'Закрепленная запись');
+//                        $tpl->set('{function-fasten}', 'wall_unfasten');
 
                     } else {
 
-                        $tpl->set('{styles-fasten}', '');
-                        $tpl->set('{fasten-text}', 'Закрепить запись');
-                        $tpl->set('{function-fasten}', 'wall_fasten');
+//                        $tpl->set('{styles-fasten}', '');
+//                        $tpl->set('{fasten-text}', 'Закрепить запись');
+//                        $tpl->set('{function-fasten}', 'wall_fasten');
 
                     }
 
@@ -934,6 +881,8 @@ class GroupsController extends Module{
                     $strTXT = strlen($row_wall['text']);
                     if($textLength > 9 OR $strTXT > 600)
                         $row_wall['text'] = '<div class="wall_strlen" id="hide_wall_rec'.$row_wall['id'].'">'.$row_wall['text'].'</div><div class="wall_strlen_full" onMouseDown="wall.FullText('.$row_wall['id'].', this.id)" id="hide_wall_rec_lnk'.$row_wall['id'].'">Показать полностью..</div>';
+
+                    $config = Settings::loadsettings();
 
                     //Прикрипленные файлы
                     if($row_wall['attach']){
@@ -1237,85 +1186,103 @@ class GroupsController extends Module{
                         HTML;
                     }
 
-                    $tpl->set('{text}', stripslashes($row_wall['text']));
-                    $tpl->set('{name}', $row_wall['title']);
+//                    $tpl->set('{text}', stripslashes($row_wall['text']));
+//                    $tpl->set('{name}', $row_wall['title']);
 
-                    $tpl->set('{user-id}', $row_wall['public_id']);
-                    if($row_wall['adres']) $tpl->set('{adres-id}', $row_wall['adres']);
-                    else $tpl->set('{adres-id}', 'public'.$row_wall['public_id']);
+//                    $tpl->set('{user-id}', $row_wall['public_id']);
+                    if($row_wall['adres']) {
+//                        $tpl->set('{adres-id}', $row_wall['adres']);
+                    }
+                    else {
+//                        $tpl->set('{adres-id}', 'public'.$row_wall['public_id']);
+                    }
 
                     $date = megaDate(strtotime($row_wall['add_date']));
-                    $tpl->set('{date}', $date);
+//                    $tpl->set('{date}', $date);
 
                     if($row_wall['photo'])
-                        $tpl->set('{ava}', '/uploads/groups/'.$row_wall['public_id'].'/50_'.$row_wall['photo']);
+                    {
+//                        $tpl->set('{ava}', '/uploads/groups/'.$row_wall['public_id'].'/50_'.$row_wall['photo']);
+                    }
                     else
-                        $tpl->set('{ava}', '/images/no_ava_50.png');
+                    {
+//                        $tpl->set('{ava}', '/images/no_ava_50.png');
+                    }
 
                     //Мне нравится
                     if(stripos($row_wall['likes_users'], "u{$user_id}|") !== false){
-                        $tpl->set('{yes-like}', 'public_wall_like_yes');
-                        $tpl->set('{yes-like-color}', 'public_wall_like_yes_color');
-                        $tpl->set('{like-js-function}', 'groups.wall_remove_like('.$row_wall['id'].', '.$user_id.')');
+//                        $tpl->set('{yes-like}', 'public_wall_like_yes');
+//                        $tpl->set('{yes-like-color}', 'public_wall_like_yes_color');
+//                        $tpl->set('{like-js-function}', 'groups.wall_remove_like('.$row_wall['id'].', '.$user_id.')');
                     } else {
-                        $tpl->set('{yes-like}', '');
-                        $tpl->set('{yes-like-color}', '');
-                        $tpl->set('{like-js-function}', 'groups.wall_add_like('.$row_wall['id'].', '.$user_id.')');
+//                        $tpl->set('{yes-like}', '');
+//                        $tpl->set('{yes-like-color}', '');
+//                        $tpl->set('{like-js-function}', 'groups.wall_add_like('.$row_wall['id'].', '.$user_id.')');
                     }
 
                     if($row_wall['likes_num']){
-                        $tpl->set('{likes}', $row_wall['likes_num']);
-                        $tpl->set('{likes-text}', '<span id="like_text_num'.$row_wall['id'].'">'.$row_wall['likes_num'].'</span> '.Gramatic::declOfNum($row_wall['likes_num'], 'like'));
+//                        $tpl->set('{likes}', $row_wall['likes_num']);
+//                        $tpl->set('{likes-text}', '<span id="like_text_num'.$row_wall['id'].'">'.$row_wall['likes_num'].'</span> '.Gramatic::declOfNum($row_wall['likes_num'], 'like'));
                     } else {
-                        $tpl->set('{likes}', '');
-                        $tpl->set('{likes-text}', '<span id="like_text_num'.$row_wall['id'].'">0</span> человеку');
+//                        $tpl->set('{likes}', '');
+//                        $tpl->set('{likes-text}', '<span id="like_text_num'.$row_wall['id'].'">0</span> человеку');
                     }
 
                     //Выводим информцию о том кто смотрит страницу для себя
-                    $tpl->set('{viewer-id}', $user_id);
+//                    $tpl->set('{viewer-id}', $user_id);
                     if($user_info['user_photo'])
-                        $tpl->set('{viewer-ava}', '/uploads/users/'.$user_id.'/50_'.$user_info['user_photo']);
+                    {
+//                        $tpl->set('{viewer-ava}', '/uploads/users/'.$user_id.'/50_'.$user_info['user_photo']);
+                    }
                     else
-                        $tpl->set('{viewer-ava}', '/images/no_ava_50.png');
+                    {
+//                        $tpl->set('{viewer-ava}', '/images/no_ava_50.png');
+                    }
 
                     //Админ
                     if($public_admin){
-                        $tpl->set('[owner]', '');
-                        $tpl->set('[/owner]', '');
+//                        $tpl->set('[owner]', '');
+//                        $tpl->set('[/owner]', '');
                     } else
-                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                    {
+//                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                    }
 
                     //Если есть комменты к записи, то выполняем след. действия / Приватность
                     if($row_wall['fasts_num'])
-                        $tpl->set_block("'\\[comments-link\\](.*?)\\[/comments-link\\]'si","");
+                    {
+//                        $tpl->set_block("'\\[comments-link\\](.*?)\\[/comments-link\\]'si","");
+                    }
                     else {
-                        $tpl->set('[comments-link]', '');
-                        $tpl->set('[/comments-link]', '');
+//                        $tpl->set('[comments-link]', '');
+//                        $tpl->set('[/comments-link]', '');
                     }
 
-                    $tpl->set('{public-id}', $row['id']);
+//                    $tpl->set('{public-id}', $row['id']);
 
                     //Приватность комментирования записей
                     if($row_wall['comments'] OR $public_admin){
-                        $tpl->set('[privacy-comment]', '');
-                        $tpl->set('[/privacy-comment]', '');
+//                        $tpl->set('[privacy-comment]', '');
+//                        $tpl->set('[/privacy-comment]', '');
                     } else
-                        $tpl->set_block("'\\[privacy-comment\\](.*?)\\[/privacy-comment\\]'si","");
+                    {
+//                        $tpl->set_block("'\\[privacy-comment\\](.*?)\\[/privacy-comment\\]'si","");
+                    }
 
-                    $tpl->set('[record]', '');
-                    $tpl->set('[/record]', '');
-                    $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-                    $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-                    $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-
-                    $tpl->compile($compile);
+//                    $tpl->set('[record]', '');
+//                    $tpl->set('[/record]', '');
+//                    $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
+//                    $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
+//                    $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
+//
+//                    $tpl->compile($compile);
 
                     //Если есть комменты к записи, то открываем форму ответа уже в развернутом виде и выводим комменты к записи
                     if($row_wall['comments'] OR $public_admin){
                         if($row_wall['fasts_num']){
 
                             //Помещаем все комменты в id wall_fast_block_{id} это для JS
-                            $tpl->result[$compile] .= '<div id="wall_fast_block_'.$row_wall['id'].'" class="public_wall_rec_comments">';
+//                            $tpl->result[$compile] .= '<div id="wall_fast_block_'.$row_wall['id'].'" class="public_wall_rec_comments">';
 
                             if($row_wall['fasts_num'] > 3)
                                 $comments_limit = $row_wall['fasts_num']-3;
@@ -1327,32 +1294,38 @@ class GroupsController extends Module{
                             //Загружаем кнопку "Показать N запсии"
                             $titles1 = array('предыдущий', 'предыдущие', 'предыдущие');//prev
                             $titles2 = array('комментарий', 'комментария', 'комментариев');//comments
-                            $tpl->set('{gram-record-all-comm}', Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles1).' '.($row_wall['fasts_num']-3).' '.Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles2));
+//                            $tpl->set('{gram-record-all-comm}', Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles1).' '.($row_wall['fasts_num']-3).' '.Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles2));
                             if($row_wall['fasts_num'] < 4)
-                                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                            else {
-                                $tpl->set('{rec-id}', $row_wall['id']);
-                                $tpl->set('[all-comm]', '');
-                                $tpl->set('[/all-comm]', '');
+                            {
+//                                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
                             }
-                            $tpl->set('{public-id}', $row['id']);
-                            $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                            $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-                            $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-                            $tpl->compile($compile);
+                            else {
+//                                $tpl->set('{rec-id}', $row_wall['id']);
+//                                $tpl->set('[all-comm]', '');
+//                                $tpl->set('[/all-comm]', '');
+                            }
+//                            $tpl->set('{public-id}', $row['id']);
+//                            $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
+//                            $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
+//                            $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
+//                            $tpl->compile($compile);
 
                             //Сообственно выводим комменты
-                            foreach($sql_comments as $row_comments){
-                                $tpl->set('{public-id}', $row['id']);
-                                $tpl->set('{name}', $row_comments['user_search_pref']);
+                            foreach($sql_comments as $key => $row_comments){
+//                                $tpl->set('{public-id}', $row['id']);
+//                                $tpl->set('{name}', $row_comments['user_search_pref']);
                                 if($row_comments['user_photo'])
-                                    $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comments['public_id'].'/50_'.$row_comments['user_photo']);
+                                {
+//                                    $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comments['public_id'].'/50_'.$row_comments['user_photo']);
+                                }
                                 else
-                                    $tpl->set('{ava}', '/images/no_ava_50.png');
+                                {
+//                                    $tpl->set('{ava}', '/images/no_ava_50.png');
+                                }
 
-                                $tpl->set('{rec-id}', $row_wall['id']);
-                                $tpl->set('{comm-id}', $row_comments['id']);
-                                $tpl->set('{user-id}', $row_comments['public_id']);
+//                                $tpl->set('{rec-id}', $row_wall['id']);
+//                                $tpl->set('{comm-id}', $row_comments['id']);
+//                                $tpl->set('{user-id}', $row_comments['public_id']);
 
                                 $expBR2 = explode('<br />', $row_comments['text']);
                                 $textLength2 = count($expBR2);
@@ -1363,64 +1336,64 @@ class GroupsController extends Module{
                                 //Обрабатываем ссылки
                                 $row_comments['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row_comments['text']);
 
-                                $tpl->set('{text}', stripslashes($row_comments['text']));
+//                                $tpl->set('{text}', stripslashes($row_comments['text']));
 
                                 $date = megaDate(strtotime($row_comments['add_date']));
-                                $tpl->set('{date}', $date);
+//                                $tpl->set('{date}', $date);
                                 if($public_admin OR $user_id == $row_comments['public_id']){
-                                    $tpl->set('[owner]', '');
-                                    $tpl->set('[/owner]', '');
+//                                    $tpl->set('[owner]', '');
+//                                    $tpl->set('[/owner]', '');
                                 } else
-                                    $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                                {
+//                                    $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                                }
 
                                 if($user_id == $row_comments['public_id'])
 
-                                    $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
-
+                                {
+//                                    $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+                                }
+//
                                 else {
 
-                                    $tpl->set('[not-owner]', '');
-                                    $tpl->set('[/not-owner]', '');
+//                                    $tpl->set('[not-owner]', '');
+//                                    $tpl->set('[/not-owner]', '');
 
                                 }
 
-                                $tpl->set('[comment]', '');
-                                $tpl->set('[/comment]', '');
-                                $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                                $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-                                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                                $tpl->compile($compile);
+//                                $tpl->set('[comment]', '');
+//                                $tpl->set('[/comment]', '');
+//                                $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
+//                                $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
+//                                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
+//                                $tpl->compile($compile);
                             }
 
                             //Загружаем форму ответа
-                            $tpl->set('{rec-id}', $row_wall['id']);
-                            $tpl->set('{user-id}', $row_wall['public_id']);
-                            $tpl->set('[comment-form]', '');
-                            $tpl->set('[/comment-form]', '');
-                            $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                            $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-                            $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                            $tpl->compile($compile);
+//                            $tpl->set('{rec-id}', $row_wall['id']);
+//                            $tpl->set('{user-id}', $row_wall['public_id']);
+//                            $tpl->set('[comment-form]', '');
+//                            $tpl->set('[/comment-form]', '');
+//                            $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
+//                            $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
+//                            $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
+//                            $tpl->compile($compile);
 
                             //Закрываем блок для JS
-                            $tpl->result[$compile] .= '</div>';
+//                            $tpl->result[$compile] .= '</div>';
                         }
                     }
                 }
 
-                Tools::AjaxTpl($tpl);
             }
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
         }
     }
 
     /**
      * Добавление комментария к записи
+     * @param $params
      */
-    public function wall_send_comm($params){
-        $tpl = $params['tpl'];
+    public function wall_send_comm(&$params){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1477,14 +1450,14 @@ class GroupsController extends Module{
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$row_owner2['public_id']}', from_user_id = '{$user_id}', type = '5', date = '{$server_time}', text = '{$wall_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/news/notifications'");
 
-                            Cache::mozg_create_cache("user_{$row_owner2['public_id']}/updates", 1);
-
+                            $Cache = Cache::initialize();
+                            $Cache->set("users/{$row_owner2['public_id']}/updates", 1);
                             //ИНАЧЕ Добавляем +1 юзеру для оповещания
                         } else {
 
-                            $cntCacheNews = Cache::mozg_cache("user_{$row_owner2['public_id']}/new_news");
-                            Cache::mozg_create_cache("user_{$row_owner2['public_id']}/new_news", ($cntCacheNews+1));
-
+                            $Cache = Cache::initialize();
+                            $cntCacheNews = $Cache->get("users/{$row_owner2['public_id']}/new_news");
+                            $Cache->set("users/{$row_owner2['public_id']}/new_news", ($cntCacheNews+1));
                         }
 
                     }
@@ -1506,37 +1479,58 @@ class GroupsController extends Module{
                 $sql_comments = $db->super_query("SELECT tb1.id, public_id, text, add_date, tb2.user_photo, user_search_pref FROM `communities_wall` tb1, `users` tb2 WHERE tb1.public_id = tb2.user_id AND tb1.fast_comm_id = '{$rec_id}' ORDER by `add_date` ASC LIMIT {$comments_limit}, 3", 1);
 
                 //Загружаем кнопку "Показать N запсии"
-                $tpl->load_template('groups/record.tpl');
+//                $tpl->load_template('groups/record.tpl');
 
                 $titles1 = array('предыдущий', 'предыдущие', 'предыдущие');//prev
                 $titles2 = array('комментарий', 'комментария', 'комментариев');//comments
-                $tpl->set('{gram-record-all-comm}', Gramatic::declOfNum(($row['fasts_num']-3), $titles1).' '.($row['fasts_num']-3).' '.Gramatic::declOfNum(($row['fasts_num']-3), $titles2));
+//                $tpl->set('{gram-record-all-comm}', );
+                $params['gram_record_all_comm'] = Gramatic::declOfNum(($row['fasts_num']-3), $titles1).' '.($row['fasts_num']-3).' '.Gramatic::declOfNum(($row['fasts_num']-3), $titles2);
                 if($row['fasts_num'] < 4)
-                    $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                else {
-                    $tpl->set('{rec-id}', $rec_id);
-                    $tpl->set('[all-comm]', '');
-                    $tpl->set('[/all-comm]', '');
+                {
+//                    $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
+                    $params['all_comm'] = false;
                 }
-                $tpl->set('{public-id}', $public_id);
-                $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-                $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-                $tpl->compile('content');
-
-                $tpl->load_template('groups/record.tpl');
+                else {
+//                    $tpl->set('{rec-id}', $rec_id);
+                    $params['rec_id'] = $rec_id;
+//                    $tpl->set('[all-comm]', '');
+                    $params['all_comm'] = true;
+//                    $tpl->set('[/all-comm]', '');
+                }
+//                $tpl->set('{public-id}', $public_id);
+                $params['public_id'] = $public_id;
+//                $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
+                $params['record'] = false;
+//                $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
+                $params['comment_form'] = false;
+//                $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
+                $params['comment'] = false;
+//                $tpl->compile('content');
+//
+//                $tpl->load_template('groups/record.tpl');
                 //Сообственно выводим комменты
                 $config = Settings::loadsettings();
-                foreach($sql_comments as $row_comments){
-                    $tpl->set('{public-id}', $public_id);
-                    $tpl->set('{name}', $row_comments['user_search_pref']);
+                foreach($sql_comments as $key => $row_comments){
+//                    $tpl->set('{public-id}', $public_id);
+                    $sql_comments[$key]['public_id'] = $public_id;
+//                    $tpl->set('{name}', $row_comments['user_search_pref']);
+                    $sql_comments[$key]['name'] = $row_comments['user_search_pref'];
                     if($row_comments['user_photo'])
-                        $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comments['public_id'].'/50_'.$row_comments['user_photo']);
+                    {
+//                        $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comments['public_id'].'/50_'.$row_comments['user_photo']);
+                        $sql_comments[$key]['ava'] = $config['home_url'].'uploads/users/'.$row_comments['public_id'].'/50_'.$row_comments['user_photo'];
+                    }
                     else
-                        $tpl->set('{ava}', '/images/no_ava_50.png');
-                    $tpl->set('{comm-id}', $row_comments['id']);
-                    $tpl->set('{user-id}', $row_comments['public_id']);
-                    $tpl->set('{rec-id}', $rec_id);
+                    {
+//                        $tpl->set('{ava}', '/images/no_ava_50.png');
+                        $sql_comments[$key]['ava'] = '/images/no_ava_50.png';
+                    }
+//                    $tpl->set('{comm-id}', $row_comments['id']);
+                    $sql_comments[$key]['comm_id'] = $row_comments['id'];
+//                    $tpl->set('{user-id}', );
+                    $sql_comments[$key]['user_id'] = $row_comments['public_id'];
+//                    $tpl->set('{rec-id}', $rec_id);
+                    $sql_comments[$key]['rec_id'] = $rec_id;
 
                     $expBR2 = explode('<br />', $row_comments['text']);
                     $textLength2 = count($expBR2);
@@ -1547,59 +1541,71 @@ class GroupsController extends Module{
                     //Обрабатываем ссылки
                     $row_comments['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row_comments['text']);
 
-                    $tpl->set('{text}', stripslashes($row_comments['text']));
+//                    $tpl->set('{text}', );
+                    $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
                     $date = megaDate(strtotime($row['add_date']));
-                    $tpl->set('{date}', $date);
+//                    $tpl->set('{date}', $date);
+                    $sql_comments[$key]['date'] = $date;
                     if(stripos($row['admin'], "u{$user_id}|") !== false OR $user_id == $row_comments['public_id']){
-                        $tpl->set('[owner]', '');
-                        $tpl->set('[/owner]', '');
+//                        $tpl->set('[owner]', '');
+//                        $tpl->set('[/owner]', '');
+                        $sql_comments[$key]['owner'] = true;
                     } else
-                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                    {
+//                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                        $sql_comments[$key]['owner'] = false;
+                    }
 
                     if($user_id == $row_comments['public_id'])
 
-                        $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+                    {
+//                        $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+                        $sql_comments[$key]['not_owner'] = false;
+                    }
 
                     else {
 
-                        $tpl->set('[not-owner]', '');
-                        $tpl->set('[/not-owner]', '');
-
+//                        $tpl->set('[not-owner]', '');
+//                        $tpl->set('[/not-owner]', '');
+                        $sql_comments[$key]['not_owner'] = true;
                     }
 
-                    $tpl->set('[comment]', '');
-                    $tpl->set('[/comment]', '');
-                    $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                    $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-                    $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                    $tpl->compile('content');
+//                    $tpl->set('[comment]', '');
+//                    $tpl->set('[/comment]', '');
+                    $sql_comments[$key]['comment'] = true;
+//                    $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
+                    $sql_comments[$key]['record'] = false;
+//                    $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
+                    $sql_comments[$key]['comment-form'] = false;
+//                    $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
+                    $sql_comments[$key]['all-comm'] = false;
+//                    $tpl->compile('content');
                 }
 
                 //Загружаем форму ответа
-                $tpl->load_template('groups/record.tpl');
-                $tpl->set('{rec-id}', $rec_id);
-                $tpl->set('{user-id}', $public_id);
-                $tpl->set('[comment-form]', '');
-                $tpl->set('[/comment-form]', '');
-                $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                $tpl->compile('content');
-
-                Tools::AjaxTpl($tpl);
+//                $tpl->load_template('groups/record.tpl');
+//                $tpl->set('{rec-id}', $rec_id);
+                $params['rec_id'] = $rec_id;
+//                $tpl->set('{user-id}', $public_id);
+                $params['user_id'] = $public_id;
+//                $tpl->set('[comment-form]', '');
+                $params['comment_form'] = true;
+//                $tpl->set('[/comment-form]', '');
+//                $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
+                $params['record'] = false;
+//                $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
+                $params['comment'] = false;
+//                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
+                $params['all-comm'] = false;
             }
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
         }
     }
 
     /**
      * Удаление записи
+     * @param $params
      */
     public function wall_del($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1652,15 +1658,14 @@ class GroupsController extends Module{
                 }
 
             }
-            die();
         }
     }
 
     /**
      * Показ всех комментариев к записи
+     * @param $params
      */
     public function all_comm($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1684,20 +1689,31 @@ class GroupsController extends Module{
 
             if($row['comments'] OR stripos($row['admin'], "u{$user_id}|") !== false){
                 $sql_comments = $db->super_query("SELECT tb1.id, public_id, text, add_date, tb2.user_photo, user_search_pref FROM `communities_wall` tb1, `users` tb2 WHERE tb1.public_id = tb2.user_id AND tb1.fast_comm_id = '{$rec_id}' ORDER by `add_date` ASC", 1);
-                $tpl->load_template('groups/record.tpl');
+//                $tpl->load_template('groups/record.tpl');
                 //Сообственно выводим комменты
                 $config = Settings::loadsettings();
-                foreach($sql_comments as $row_comments){
-                    $tpl->set('{public-id}', $public_id);
-                    $tpl->set('{name}', $row_comments['user_search_pref']);
+                foreach($sql_comments as $key => $row_comments){
+//                    $tpl->set('{public-id}', );
+                    $sql_comments[$key]['public_id'] = $public_id;
+//                    $tpl->set('{name}', );
+                    $sql_comments[$key]['name'] = $row_comments['user_search_pref'];
                     if($row_comments['user_photo'])
-                        $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comments['public_id'].'/50_'.$row_comments['user_photo']);
+                    {
+//                        $tpl->set('{ava}', );
+                        $sql_comments[$key]['ava'] = $config['home_url'].'uploads/users/'.$row_comments['public_id'].'/50_'.$row_comments['user_photo'];
+                    }
                     else
-                        $tpl->set('{ava}', '/images/no_ava_50.png');
+                    {
+//                        $tpl->set('{ava}', );
+                        $sql_comments[$key]['ava'] = '/images/no_ava_50.png';
+                    }
 
-                    $tpl->set('{rec-id}', $rec_id);
-                    $tpl->set('{comm-id}', $row_comments['id']);
-                    $tpl->set('{user-id}', $row_comments['public_id']);
+//                    $tpl->set('{rec-id}', );
+                    $sql_comments[$key]['rec_id'] = $rec_id;
+//                    $tpl->set('{comm-id}', );
+                    $sql_comments[$key]['comm_id'] = $row_comments['id'];
+//                    $tpl->set('{user-id}', );
+                    $sql_comments[$key]['user_id'] = $row_comments['public_id'];
 
                     $expBR2 = explode('<br />', $row_comments['text']);
                     $textLength2 = count($expBR2);
@@ -1708,59 +1724,71 @@ class GroupsController extends Module{
                     //Обрабатываем ссылки
                     $row_comments['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row_comments['text']);
 
-                    $tpl->set('{text}', stripslashes($row_comments['text']));
+//                    $tpl->set('{text}', );
+                    $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
                     $date = megaDate(strtotime($row_comments['add_date']));
-                    $tpl->set('{date}', $date);
+//                    $tpl->set('{date}', );
+                    $sql_comments[$key]['date'] = $date;
                     if(stripos($row['admin'], "u{$user_id}|") !== false OR $user_id == $row_comments['public_id']){
-                        $tpl->set('[owner]', '');
-                        $tpl->set('[/owner]', '');
+//                        $tpl->set('[owner]', '');
+//                        $tpl->set('[/owner]', '');
+                        $sql_comments[$key]['owner'] = true;
                     } else
-                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                    {
+//                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                        $sql_comments[$key]['owner'] = false;
+                    }
 
                     if($user_id == $row_comments['public_id'])
 
-                        $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+                    {
+//                        $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
+                        $sql_comments[$key]['not_owner'] = false;
+                    }
 
                     else {
 
-                        $tpl->set('[not-owner]', '');
-                        $tpl->set('[/not-owner]', '');
-
+//                        $tpl->set('[not-owner]', '');
+//                        $tpl->set('[/not-owner]', '');
+                        $sql_comments[$key]['not_owner'] = true;
                     }
 
-                    $tpl->set('[comment]', '');
-                    $tpl->set('[/comment]', '');
-                    $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                    $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-                    $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                    $tpl->compile('content');
+//                    $tpl->set('[comment]', '');
+//                    $tpl->set('[/comment]', '');
+                    $sql_comments[$key]['comment'] = true;
+//                    $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
+                    $sql_comments[$key]['record'] = false;
+//                    $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
+                    $sql_comments[$key]['comment_form'] = false;
+//                    $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
+                    $sql_comments[$key]['all_comm'] = false;
+//                    $tpl->compile('content');
                 }
 
                 //Загружаем форму ответа
-                $tpl->load_template('groups/record.tpl');
-                $tpl->set('{rec-id}', $rec_id);
-                $tpl->set('{user-id}', $public_id);
-                $tpl->set('[comment-form]', '');
-                $tpl->set('[/comment-form]', '');
-                $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                $tpl->compile('content');
-
-                Tools::AjaxTpl($tpl);
+//                $tpl->load_template('groups/record.tpl');
+//                $tpl->set('{rec-id}', );
+                $params['rec_id'] = $rec_id;
+//                $tpl->set('{user-id}', $public_id);
+                $params['user_id'] = $public_id;
+//                $tpl->set('[comment-form]', '');
+//                $tpl->set('[/comment-form]', '');
+                $params['comment_form'] = true;
+//                $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
+                $params['record'] = false;
+//                $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
+                $params['comment'] = false;
+//                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
+                $params['all_comm'] = false;
             }
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
         }
     }
 
     /**
      * Страница загрузки фото в сообщество
+     * @param $params
      */
     public function photos($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1785,49 +1813,52 @@ class GroupsController extends Module{
                 $limit_page = ($page-1)*$gcount;
 
                 //HEAD
-                $tpl->load_template('public/photos/head.tpl');
+//                $tpl->load_template('public/photos/head.tpl');
                 $titles = array('фотография', 'фотографии', 'фотографий');//photos
-                $tpl->set('{photo-num}', $rowPublic['photos_num'].' '.Gramatic::declOfNum($rowPublic['photos_num'], $titles));
-                $tpl->set('{public_id}', $public_id);
-                $tpl->set('[top]', '');
-                $tpl->set('[/top]', '');
-                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
-                $tpl->compile('info');
+//                $tpl->set('{photo-num}', );
+                $params['photo_num'] = $rowPublic['photos_num'].' '.Gramatic::declOfNum($rowPublic['photos_num'], $titles);
+//                $tpl->set('{public_id}', );
+                $params['public_id'] = $public_id;
+//                $tpl->set('[top]', '');
+//                $tpl->set('[/top]', '');
+                $params['top'] = true;
+//                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
+                $params['bottom'] = false;
+//                $tpl->compile('info');
 
                 //Выводим фотографии
                 if($rowPublic['photos_num']){
                     $sql_ = $db->super_query("SELECT photo FROM `attach` WHERE public_id = '{$public_id}' ORDER by `add_date` DESC LIMIT {$limit_page}, {$gcount}", 1);
-                    $tpl->load_template('public/photos/photo.tpl');
-                    foreach($sql_ as $row){
-                        $tpl->set('{photo}', $row['photo']);
-                        $tpl->set('{public-id}', $public_id);
-                        $tpl->compile('content');
+//                    $tpl->load_template('public/photos/photo.tpl');
+                    foreach($sql_ as $key => $row){
+//                        $tpl->set('{photo}', );
+                        $sql_[$key]['photo'] = $row['photo'];
+//                        $tpl->set('{public-id}', );
+                        $sql_[$key]['public_id'] = $public_id;
+//                        $tpl->compile('content');
                     }
-                    box_navigation($gcount, $rowPublic['photos_num'], $page, 'groups.wall_attach_addphoto', $public_id);
+//                    box_navigation($gcount, $rowPublic['photos_num'], $page, 'groups.wall_attach_addphoto', $public_id);
                 } else
-                    msgbox('', '<div class="clear" style="margin-top:150px;margin-left:27px"></div>В альбоме сообщества нет загруженных фотографий.', 'info_2');
+                {
+//                    msgbox('', '<div class="clear" style="margin-top:150px;margin-left:27px"></div>В альбоме сообщества нет загруженных фотографий.', 'info_2');
+                }
 
                 //BOTTOM
-                $tpl->load_template('public/photos/head.tpl');
-                $tpl->set('[bottom]', '');
-                $tpl->set('[/bottom]', '');
-                $tpl->set_block("'\\[top\\](.*?)\\[/top\\]'si","");
-                $tpl->compile('content');
-
-                Tools::AjaxTpl($tpl);
+//                $tpl->load_template('public/photos/head.tpl');
+//                $tpl->set('[bottom]', '');
+//                $tpl->set('[/bottom]', '');
+                $params['bottom'] = true;
+//                $tpl->set_block("'\\[top\\](.*?)\\[/top\\]'si","");
+                $params['top'] = false;
             }
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
         }
     }
 
     /**
      * Выводим инфу о видео при прикриплении видео на стену
+     * @param $params
      */
-    public function select_video_info($params){
-        $tpl = $params['tpl'];
+    public function select_video_info(&$params){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1837,29 +1868,28 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
             $video_id = intval($_POST['video_id']);
             $row = $db->super_query("SELECT photo FROM `videos` WHERE id = '".$video_id."'");
             if($row){
-                $photo = end(explode('/', $row['photo']));
+                $array = explode('/', $row['photo']);
+                $photo = end($array);
                 echo $photo;
             } else
                 echo '1';
-
-            die();
         }
     }
 
     /**
      * Ставим мне нравится
+     * @param $params
      */
-    public function wall_like_yes($params){
-        //$tpl = $params['tpl'];
+    public function wall_like_yes(&$params){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1870,8 +1900,8 @@ class GroupsController extends Module{
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
             //$limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
@@ -1889,9 +1919,9 @@ class GroupsController extends Module{
 
     /**
      * Убераем мне нравится
+     * @param $params
      */
-    public function wall_like_remove($params){
-        $tpl = $params['tpl'];
+    public function wall_like_remove(&$params){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1901,9 +1931,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
@@ -1914,15 +1944,14 @@ class GroupsController extends Module{
                 $db->query("UPDATE `communities_wall` SET likes_num = likes_num-1, likes_users = '{$likes_users}' WHERE id = '".$rec_id."'");
                 $db->query("DELETE FROM `communities_wall_like` WHERE rec_id = '".$rec_id."' AND user_id = '".$user_id."'");
             }
-            die();
         }
     }
 
     /**
      * Выводим последних 7 юзеров кто поставил "Мне нравится"
+     * @param $params
      */
-    public function wall_like_users_five($params){
-        $tpl = $params['tpl'];
+    public function wall_like_users_five(&$params){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1932,9 +1961,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
@@ -1948,15 +1977,16 @@ class GroupsController extends Module{
                     echo '<a href="/u'.$row['user_id'].'" id="Xlike_user'.$row['user_id'].'_'.$rec_id.'" onClick="Page.Go(this.href); return false"><img src="'.$ava.'" width="32" /></a>';
                 }
             }
-            die();
+//            die();
         }
     }
 
     /**
      * Выводим всех юзеров которые поставили "мне нравится"
+     * @param $params
+     * @return bool
      */
     public function all_liked_users($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1986,46 +2016,53 @@ class GroupsController extends Module{
                 $sql_ = $db->super_query("SELECT tb1.user_id, tb2.user_photo, user_search_pref FROM `communities_wall_like` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND tb1.rec_id = '{$rid}' ORDER by `date` DESC LIMIT {$limit_page}, {$gcount}", 1);
 
                 if($sql_){
-                    $tpl->load_template('/profile/profile_subscription_box_top.tpl');
-                    $tpl->set('[top]', '');
-                    $tpl->set('[/top]', '');
+//                    $tpl->load_template('/profile/profile_subscription_box_top.tpl');
+//                    $tpl->set('[top]', '');
+//                    $tpl->set('[/top]', '');
+                    $params['top'] =
                     $titles = array('человеку', 'людям', 'людям');//like
-                    $tpl->set('{subcr-num}', 'Понравилось '.$liked_num.' '.Gramatic::declOfNum($liked_num, $titles));
-                    $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
-                    $tpl->compile('content');
+//                    $tpl->set('{subcr-num}', 'Понравилось '.$liked_num.' '.Gramatic::declOfNum($liked_num, $titles));
+                    $params['subcr_num'] =
+//                    $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
+                    $params['bottom'] =
+//                    $tpl->compile('content');
 
-                    $tpl->result['content'] = str_replace('Всего', '', $tpl->result['content']);
+//                    $tpl->result['content'] = str_replace('Всего', '', $tpl->result['content']);
 
-                    $tpl->load_template('profile_friends.tpl');
+//                    $tpl->load_template('profile_friends.tpl');
                     $config = Settings::loadsettings();
-                    foreach($sql_ as $row){
+                    foreach($sql_ as $key => $row){
                         if($row['user_photo'])
-                            $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['user_id'].'/50_'.$row['user_photo']);
+                        {
+//                            $tpl->set('{ava}', );
+                            $sql_[$key]['ava'] = $config['home_url'].'uploads/users/'.$row['user_id'].'/50_'.$row['user_photo'];
+                        }
                         else
-                            $tpl->set('{ava}', '/images/no_ava_50.png');
+                        {
+//                            $tpl->set('{ava}',);
+                            $sql_[$key]['ava'] =  '/images/no_ava_50.png';
+                        }
                         $friend_info_online = explode(' ', $row['user_search_pref']);
-                        $tpl->set('{user-id}', $row['user_id']);
-                        $tpl->set('{name}', $friend_info_online[0]);
-                        $tpl->set('{last-name}', $friend_info_online[1]);
-                        $tpl->compile('content');
+//                        $tpl->set('{user-id}', );
+                        $sql_[$key]['user_id'] = $row['user_id'];
+//                        $tpl->set('{name}', );
+                        $sql_[$key]['name'] = $friend_info_online[0];
+//                        $tpl->set('{last-name}', );
+                        $sql_[$key]['last_name'] = $friend_info_online[1];
+//                        $tpl->compile('content');
                     }
-                    box_navigation($gcount, $liked_num, $rid, 'groups.wall_all_liked_users', $liked_num);
-
-                    Tools::AjaxTpl($tpl);
+//                    box_navigation($gcount, $liked_num, $rid, 'groups.wall_all_liked_users', $liked_num);
                 }
             }
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+//            return true;
         }
     }
 
     /**
      * Рассказать друзьям "Мне нравится"
+     * @param $params
      */
-    public function wall_tell($params){
-        $tpl = $params['tpl'];
+    public function wall_tell(&$params){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2035,9 +2072,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
@@ -2070,18 +2107,18 @@ class GroupsController extends Module{
                     $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 1, action_text = '{$row['text']}', obj_id = '{$dbid}', action_time = '{$server_time}'");
 
                     //Чистим кеш
-                    Cache::mozg_clear_cache_file("user_{$user_id}/profile_{$user_id}");
+                    $Cache = Cache::initialize();
+                    $Cache->delete("users/{$user_id}/profile_{$user_id}");
                 } else
                     echo 1;
             } else
                 echo 1;
-
-            die();
         }
     }
 
     /**
      * Показ всех подпискок
+     * @param $params
      */
     public function all_people($params){
         $tpl = $params['tpl'];
@@ -2111,43 +2148,51 @@ class GroupsController extends Module{
             $sql_ = $db->super_query("SELECT tb1.user_id, tb2.user_name, user_lastname, user_photo FROM `friends` tb1, `users` tb2 WHERE tb1.friend_id = '{$public_id}' AND tb1.user_id = tb2.user_id AND tb1.subscriptions = 2 ORDER by `friends_date` DESC LIMIT {$limit_page}, {$gcount}", 1);
 
             if($sql_){
-                $tpl->load_template('/profile/profile_subscription_box_top.tpl');
-                $tpl->set('[top]', '');
-                $tpl->set('[/top]', '');
+//                $tpl->load_template('/profile/profile_subscription_box_top.tpl');
+//                $tpl->set('[top]', '');
+//                $tpl->set('[/top]', '');
+                $params['top'] = true;
                 $titles = array('подписчик', 'подписчика', 'подписчиков');//subscribers
-                $tpl->set('{subcr-num}', $subscr_num.' '.Gramatic::declOfNum($subscr_num, $titles));
-                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
-                $tpl->compile('content');
-
-                $tpl->load_template('profile_friends.tpl');
-                foreach($sql_ as $row){
+//                $tpl->set('{subcr-num}', );
+                $params['subcr_num'] = $subscr_num.' '.Gramatic::declOfNum($subscr_num, $titles);
+//                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
+                $params['bottom'] = false;
+//                $tpl->compile('content');
+//
+//                $tpl->load_template('profile_friends.tpl');
+                foreach($sql_ as $key => $row){
                     if($row['user_photo'])
-                        $tpl->set('{ava}', '/uploads/users/'.$row['user_id'].'/50_'.$row['user_photo']);
+                    {
+//                        $tpl->set('{ava}', );
+                        $sql_[$key]['ava'] = '/uploads/users/'.$row['user_id'].'/50_'.$row['user_photo'];
+                    }
                     else
-                        $tpl->set('{ava}', '/images/no_ava_50.png');
-                    $tpl->set('{user-id}', $row['user_id']);
-                    $tpl->set('{name}', $row['user_name']);
-                    $tpl->set('{last-name}', $row['user_lastname']);
-                    $tpl->compile('content');
+                    {
+//                        $tpl->set('{ava}', );
+                        $sql_[$key]['ava'] = '/images/no_ava_50.png';
+                    }
+//                    $tpl->set('{user-id}', );
+                    $sql_[$key]['user_id'] = $row['user_id'];
+//                    $tpl->set('{name}', );
+                    $sql_[$key]['name'] = $row['user_name'];
+//                    $tpl->set('{last-name}', );
+                    $sql_[$key]['last-name'] = $row['user_lastname'];
+//                    $tpl->compile('content');
                 }
 
-                box_navigation($gcount, $subscr_num, $public_id, 'groups.all_people', $subscr_num);
+//                box_navigation($gcount, $subscr_num, $public_id, 'groups.all_people', $subscr_num);
 
             }
 
-            Tools::AjaxTpl($tpl);
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+//            return true;
         }
     }
 
     /**
      * Показ всех сообщества юзера на которые он подписан (BOX)
+     * @param $params
      */
     public function all_groups_user($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2157,9 +2202,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
             if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
@@ -2172,44 +2217,57 @@ class GroupsController extends Module{
             $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.id, title, photo, traf, adres FROM `friends` tb1, `communities` tb2 WHERE tb1.user_id = '{$for_user_id}' AND tb1.friend_id = tb2.id AND tb1.subscriptions = 2 ORDER by `traf` DESC LIMIT {$limit_page}, {$gcount}", 1);
 
             if($sql_){
-                $tpl->load_template('/profile/profile_subscription_box_top.tpl');
-                $tpl->set('[top]', '');
-                $tpl->set('[/top]', '');
+//                $tpl->load_template('/profile/profile_subscription_box_top.tpl');
+//                $tpl->set('[top]', '');
+//                $tpl->set('[/top]', '');
+                $params['top'] = true;
                 $titles = array('подписка', 'подписки', 'подписок');//subscr
-                $tpl->set('{subcr-num}', $subscr_num.' '.Gramatic::declOfNum($subscr_num, $titles));
-                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
-                $tpl->compile('content');
-
-                $tpl->load_template('/profile/profile_group.tpl');
-                foreach($sql_ as $row){
-                    if($row['photo']) $tpl->set('{ava}', '/uploads/groups/'.$row['id'].'/50_'.$row['photo']);
-                    else $tpl->set('{ava}', '/images/no_ava_50.png');
-                    $tpl->set('{name}', stripslashes($row['title']));
-                    $tpl->set('{public-id}', $row['id']);
+//                $tpl->set('{subcr-num}', );
+                $params['subcr_num'] = $subscr_num.' '.Gramatic::declOfNum($subscr_num, $titles);
+//                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
+                $params['bottom'] = false;
+//                $tpl->compile('content');
+//
+//                $tpl->load_template('/profile/profile_group.tpl');
+                foreach($sql_ as $key => $row){
+                    if($row['photo']) {
+//                        $tpl->set('{ava}', );
+                        $sql_[$key]['ava'] = '/uploads/groups/'.$row['id'].'/50_'.$row['photo'];
+                    }
+                    else {
+//                        $tpl->set('{ava}', );
+                        $sql_[$key]['ava'] = '/images/no_ava_50.png';
+                    }
+//                    $tpl->set('{name}', );
+                    $sql_[$key]['name'] = stripslashes($row['title']);
+//                    $tpl->set('{public-id}', $row['id']);
+                    $sql_[$key]['public_id'] =
                     $titles = array('подписчик', 'подписчика', 'подписчиков');//subscribers
-                    $tpl->set('{num}', '<span id="traf">'.$row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles));
-                    if($row['adres']) $tpl->set('{adres}', $row['adres']);
-                    else $tpl->set('{adres}', 'public'.$row['id']);
-                    $tpl->compile('content');
+//                    $tpl->set('{num}', );
+                    $sql_[$key]['num'] = '<span id="traf">'.$row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles);
+                    if($row['adres']) {
+//                        $tpl->set('{adres}', );
+                        $sql_[$key]['adres'] = $row['adres'];
+                    }
+                    else {
+//                        $tpl->set('{adres}', );
+                        $sql_[$key]['adres'] = 'public'.$row['id'];
+                    }
+//                    $tpl->compile('content');
                 }
 
-                Tools::box_navigation($gcount, $subscr_num, $for_user_id, 'groups.all_groups_user', $subscr_num, $tpl);
+//                Tools::box_navigation($gcount, $subscr_num, $for_user_id, 'groups.all_groups_user', $subscr_num, $tpl);
 
             }
 
-            Tools::AjaxTpl($tpl);
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
         }
     }
 
     /**
      * Одна запись со стены
+     * @param $params
      */
     public function wallgroups($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2219,9 +2277,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
             $id = intval($_GET['id']);
@@ -2231,14 +2289,22 @@ class GroupsController extends Module{
 
             if($row AND !$row['del'] AND !$row['ban']){
 
-                $tpl->load_template('groups/wall_head.tpl');
-                $tpl->set('{id}', $id);
-                $tpl->set('{pid}', $pid);
+//                $tpl->load_template('groups/wall_head.tpl');
+//                $tpl->set('{id}', $id);
+//                $params['id'] =
+//                $tpl->set('{pid}', $pid);
+//                $params['pid'] =
                 if($row['adres'])
-                    $tpl->set('{adres}', $row['adres']);
+                {
+//                    $tpl->set('{adres}', $row['adres']);
+//                    $params['adres'] =
+                }
                 else
-                    $tpl->set('{adres}', 'public'.$pid);
-                $tpl->compile('info');
+                {
+//                    $tpl->set('{adres}', 'public'.$pid);
+//                    $params['adres'] =
+                }
+//                $tpl->compile('info');
 
                 include __DIR__.'/../Classes/wall.public.php';
                 $wall = new \wall();
@@ -2246,27 +2312,28 @@ class GroupsController extends Module{
                 $wall->template('groups/record.tpl');
                 $wall->compile('content');
                 $server_time = intval($_SERVER['REQUEST_TIME']);
-                $wall->select($public_admin, $server_time);
+//                $wall->select($public_admin, $server_time);
 
-                $tpl->result['content'] = str_replace('width:500px;', 'width:710px;', $tpl->result['content']);
+//                $tpl->result['content'] = str_replace('width:500px;', 'width:710px;', $tpl->result['content']);
 
-                if(!$tpl->result['content'])
-                    msgbox('', '<br /><br /><br />Запись не найдена.<br /><br /><br />', 'info_2');
+//                if(!$tpl->result['content'])
+//                {
+//                    msgbox('', '<br /><br /><br />Запись не найдена.<br /><br /><br />', 'info_2');
+//                }
 
             } else
-                msgbox('', '<br /><br />Запись не найдена.<br /><br /><br />', 'info_2');
+            {
+//                msgbox('', '<br /><br />Запись не найдена.<br /><br /><br />', 'info_2');
+            }
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
         }
     }
 
     /**
      * Закрипление записи
+     * @param $params
      */
     public function fasten($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2276,10 +2343,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
 
 //            Tools::NoAjaxQuery();
 
@@ -2301,15 +2367,14 @@ class GroupsController extends Module{
 
             }
 
-            exit();
         }
     }
 
     /**
      * Убераем фиксацию
+     * @param $params
      */
     public function unfasten($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2341,15 +2406,14 @@ class GroupsController extends Module{
 
             }
 
-            exit();
         }
     }
 
     /**
      * Загрузка обложки
+     * @param $params
      */
     public function upload_cover($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2359,9 +2423,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
@@ -2379,7 +2443,8 @@ class GroupsController extends Module{
                 $server_time = intval($_SERVER['REQUEST_TIME']);
                 $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя файла
                 $image_size = $_FILES['uploadfile']['size']; // размер файла
-                $type = end(explode(".", $image_name)); // формат файла
+                $array = explode(".", $image_name);
+                $type = end($array); // формат файла
 
                 $max_size = 1024 * 7000;
 
@@ -2437,15 +2502,14 @@ class GroupsController extends Module{
 
             }
 
-            exit();
         }
     }
 
     /**
      * Сохранение новой позиции обложки
+     * @param $params
      */
     public function savecoverpos($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2455,9 +2519,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
@@ -2476,12 +2540,10 @@ class GroupsController extends Module{
 
             }
 
-            exit();
         }
     }
 
     public function delcover($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2491,9 +2553,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
@@ -2518,12 +2580,10 @@ class GroupsController extends Module{
 
             }
 
-            exit();
         }
     }
 
     public function invitebox($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2533,9 +2593,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
@@ -2554,25 +2614,36 @@ class GroupsController extends Module{
 
             if($sql_){
 
-                $tpl->load_template('groups/inviteuser.tpl');
+//                $tpl->load_template('groups/inviteuser.tpl');
                 $config = Settings::loadsettings();
-                foreach($sql_ as $row){
+                foreach($sql_ as $key => $row){
 
                     if($row['user_photo'])
-                        $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['friend_id'].'/50_'.$row['user_photo']);
+                    {
+//                        $tpl->set('{ava}', );
+                        $sql_[$key]['ava'] = $config['home_url'].'uploads/users/'.$row['friend_id'].'/50_'.$row['user_photo'];
+                    }
                     else
-                        $tpl->set('{ava}', "/images/100_no_ava.png");
+                    {
+//                        $tpl->set('{ava}', );
+                        $sql_[$key]['ava'] = "/images/100_no_ava.png";
+                    }
 
-                    $tpl->set('{user-id}', $row['friend_id']);
-                    $tpl->set('{name}', $row['user_search_pref']);
+//                    $tpl->set('{user-id}', );
+                    $sql_[$key]['user_id'] = $row['friend_id'];
+//                    $tpl->set('{name}', );
+                    $sql_[$key]['name'] = $row['user_search_pref'];
 
 
                     //Проверка, юзер есть в сообществе или нет
                     if(stripos($rowPub['ulist'], '|'.$row['friend_id'].'|') !== false){
 
-                        $tpl->set('{yes-group}', 'grInviteYesed');
-                        $tpl->set('{yes-text}', '<div class="fl_r online grInviteOk">в сообществе</div>');
-                        $tpl->set('{function}', '');
+//                        $tpl->set('{yes-group}', );
+                        $sql_[$key]['yes_group'] = 'grInviteYesed';
+//                        $tpl->set('{yes-text}',);
+                        $sql_[$key]['yes_text']  =  '<div class="fl_r online grInviteOk">в сообществе</div>';
+//                        $tpl->set('{function}', '');
+                        $sql_[$key]['function'] = true;
 
                     } else {
 
@@ -2580,65 +2651,72 @@ class GroupsController extends Module{
                         $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_join` WHERE for_user_id = '{$row['friend_id']}' AND public_id = '{$pub_id}'");
 
                         if($check['cnt']){
-
-                            $tpl->set('{yes-group}', 'grInviteYesed');
-
+//                            $tpl->set('{yes-group}', );
+                            $sql_[$key]['yes_group'] = 'grInviteYesed';
                             if($row['user_sex'] == 2)
-                                $tpl->set('{yes-text}', '<div class="fl_r online grInviteOk">приглашена</div>');
+                            {
+//                                $tpl->set('{yes-text}', );
+                                $sql_[$key]['yes_text'] = '<div class="fl_r online grInviteOk">приглашена</div>';
+                            }
                             else
-                                $tpl->set('{yes-text}', '<div class="fl_r online grInviteOk">приглашен</div>');
+                            {
+//                                $tpl->set('{yes-text};
+                                $sql_[$key]['yes_text'] = '<div class="fl_r online grInviteOk">приглашен</div>';
+                            }
 
-                            $tpl->set('{function}', '');
+//                            $tpl->set('{function}', '');
+                            $sql_[$key]['function'] = true;
 
                         } else {
-
-                            $tpl->set('{yes-group}', 'grIntiveUser');
-                            $tpl->set('{yes-text}', '');
-                            $tpl->set('{function}', 'groups.inviteSet');
-
+//                            $tpl->set('{yes-group}', ;
+                            $sql_[$key]['yes_group'] = 'grIntiveUser';
+//                            $tpl->set('{yes-text}', '');
+                            $sql_[$key]['yes_text'] = true;
+//                            $tpl->set('{function}', );
+                            $sql_[$key]['function'] = 'groups.inviteSet';
                         }
-
                     }
-
-                    $tpl->compile('friends');
-
+//                    $tpl->compile('friends');
                 }
-
                 $numFr = count($sql_);
-
             }
-
             if(!$page_cnt){
-
-                $tpl->load_template('groups/invitebox.tpl');
-                $tpl->set('{friends}', $tpl->result['friends']);
-                $tpl->set('{id}', $pub_id);
+//                $tpl->load_template('groups/invitebox.tpl');
+//                $tpl->set('{friends}', $tpl->result['friends']);
+                $params['friends'] = 'friends';
+//                $tpl->set('{id}', );
+                $params['id'] = $pub_id;
 
                 if($numFr == $limit_friends){
 
-                    $tpl->set('[but]', '');
-                    $tpl->set('[/but]', '');
+//                    $tpl->set('[but]', '');
+//                    $tpl->set('[/but]', '');
+                    $params['but'] = true;
 
                 } else
 
-                    $tpl->set_block("'\\[but\\](.*?)\\[/but\\]'si","");
+                {
+//                    $tpl->set_block("'\\[but\\](.*?)\\[/but\\]'si","");
+                    $params['but'] = false;
+                }
 
-                $tpl->compile('content');
+//                $tpl->compile('content');
 
             } else {
 
-                $tpl->result['content'] = $tpl->result['friends'];
+                {
+//                    $tpl->result['content'] = $tpl->result['friends'];
+                }
 
             }
 
-            Tools::AjaxTpl($tpl);
-
-            exit();
+//            Tools::AjaxTpl($tpl);
+//
         }
     }
 
     public function invitesend($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2648,11 +2726,9 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
-
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
 //            Tools::NoAjaxQuery();
 
             $pub_id = intval($_POST['id']);
@@ -2725,13 +2801,10 @@ class GroupsController extends Module{
 
             } else
                 echo 1;
-
-            exit();
         }
     }
 
     public function invites($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2741,17 +2814,17 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
             //Если подгружаем
-            if($page_cnt){
+//            if($page_cnt){
 
 //                Tools::NoAjaxQuery();
 
-            }
+//            }
 
             $limit_num = 20;
             if($_POST['page_cnt'] > 0) $page_cnt = intval($_POST['page_cnt']) * $limit_num;
@@ -2760,26 +2833,26 @@ class GroupsController extends Module{
             //Загружаем верхушку
             if(!$page_cnt){
 
-                $tpl->load_template('groups/invites_head.tpl');
+//                $tpl->load_template('groups/invites_head.tpl');
 
                 if($user_info['invties_pub_num']){
 
-                    $tpl->set('{num}', $user_info['invties_pub_num'].' '.declOfNum($user_info['invties_pub_num'], array('приглашение', 'приглашения', 'приглашений')));
-
-                    $tpl->set('[yes]', '');
-                    $tpl->set('[/yes]', '');
-                    $tpl->set_block("'\\[no\\](.*?)\\[/no\\]'si","");
+//                    $tpl->set('{num}', );
+                        $params['num'] = $user_info['invties_pub_num'].' '.declOfNum($user_info['invties_pub_num'], array('приглашение', 'приглашения', 'приглашений'));
+//                    $tpl->set('[yes]', '');
+//                    $tpl->set('[/yes]', '');
+                    $params['yes'] = true;
+//                    $tpl->set_block("'\\[no\\](.*?)\\[/no\\]'si","");
+                    $params['no'] = false;
 
                 } else {
-
-                    $tpl->set('[no]', '');
-                    $tpl->set('[/no]', '');
-                    $tpl->set_block("'\\[yes\\](.*?)\\[/yes\\]'si","");
-
+//                    $tpl->set('[no]', '');
+//                    $tpl->set('[/no]', '');
+                    $params['no'] = true;
+//                    $tpl->set_block("'\\[yes\\](.*?)\\[/yes\\]'si","");
+                    $params['yes'] = false;
                 }
-
-                $tpl->compile('info');
-
+//                $tpl->compile('info');
             }
 
             //Выводим сообщества
@@ -2787,65 +2860,76 @@ class GroupsController extends Module{
 
                 //SQL Запрос на вывод
                 $sql_ = $db->super_query("SELECT tb1.user_id, tb2.id, title, photo, traf, adres, tb3.user_search_pref, user_photo FROM `communities_join` tb1, `communities` tb2, `users` tb3 WHERE tb1.for_user_id = '{$user_id}' AND tb1.public_id = tb2.id AND tb1.user_id = tb3.user_id ORDER by `id` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
-
                 if($sql_){
-
-                    $tpl->load_template('groups/invite.tpl');
-
-                    foreach($sql_ as $row){
-
+//                    $tpl->load_template('groups/invite.tpl');
+                    foreach($sql_ as $key => $row){
                         if($row['photo'])
-                            $tpl->set('{photo}', "/uploads/groups/{$row['id']}/100_{$row['photo']}");
+                        {
+//                            $tpl->set('{photo}', );
+                            $sql_[$key]['photo'] = "/uploads/groups/{$row['id']}/100_{$row['photo']}";
+                        }
                         else
-                            $tpl->set('{photo}', "/images/no_ava_groups_100.gif");
+                        {
+//                            $tpl->set('{photo}', );
+                            $sql_[$key]['photo'] = "/images/no_ava_groups_100.gif";
+                        }
 
-                        $tpl->set('{name}', stripslashes($row['title']));
-                        $tpl->set('{traf}', $row['traf'].' '.declOfNum($row['traf'], array('участник', 'участника', 'участников')));
-                        $tpl->set('{id}', $row['id']);
+//                        $tpl->set('{name}', );
+                        $sql_[$key]['name'] = stripslashes($row['title']);
+//                        $tpl->set('{traf}', );
+                        $sql_[$key]['traf'] = $row['traf'].' '.declOfNum($row['traf'], array('участник', 'участника', 'участников'));
+//                        $tpl->set('{id}',);
+                        $sql_[$key]['id'] =  $row['id'];
 
                         if($row['adres'])
-                            $tpl->set('{adres}', $row['adres']);
+                        {
+//                            $tpl->set('{adres}', );
+                            $sql_[$key]['adres'] = $row['adres'];
+                        }
                         else
-                            $tpl->set('{adres}', 'public'.$row['id']);
+                        {
+//                            $tpl->set('{adres}', );
+                            $sql_[$key]['adres'] = 'public'.$row['id'];
+                        }
 
-                        $tpl->set('{inviter-name}', $row['user_search_pref']);
-                        $tpl->set('{inviter-id}', $row['user_id']);
+//                        $tpl->set('{inviter-name}', );
+                        $sql_[$key]['inviter_name'] = $row['user_search_pref'];
+//                        $tpl->set('{inviter-id}', );
+                        $sql_[$key]['inviter_id'] = $row['user_id'];
 
                         if($row['user_photo'])
-                            $tpl->set('{inviter-ava}', '/uploads/users/'.$row['user_id'].'/50_'.$row['user_photo']);
+                        {
+//                            $tpl->set('{inviter-ava}', );
+                            $sql_[$key]['inviter_ava'] = '/uploads/users/'.$row['user_id'].'/50_'.$row['user_photo'];
+                        }
                         else
-                            $tpl->set('{inviter-ava}', '/images/100_no_ava.png');
-
-                        $tpl->compile('content');
-
+                        {
+//                            $tpl->set('{inviter-ava}', );
+                            $sql_[$key]['inviter_ava'] = '/images/100_no_ava.png';
+                        }
                     }
-
                 }
-
             }
-
             //Загружаем низ
             if(!$page_cnt AND $user_info['invties_pub_num'] > $limit_num){
 
-                $tpl->load_template('groups/invite_bottom.tpl');
-                $tpl->compile('content');
+//                $tpl->load_template('groups/invite_bottom.tpl');
+//                $tpl->compile('content');
 
             }
 
             //Если подгружаем
             if($page_cnt){
 
-                Tools::AjaxTpl($tpl);
+//                Tools::AjaxTpl($tpl);
+//
 
-                exit();
 
             }
         }
     }
 
     public function invite_no($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2854,10 +2938,10 @@ class GroupsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
 
@@ -2876,21 +2960,21 @@ class GroupsController extends Module{
 
             }
 
-            exit();
         }
     }
 
     /**
      * Вывод всех сообществ
      * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function index($params){
-        $tpl = $params['tpl'];
-
+    public function index($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
-        $logged = Registry::get('logged');
-        $user_info = Registry::get('user_info');
+        $logged = $this->logged();
+        $user_info = $params['user']['user_info'];
 
         Tools::NoAjaxRedirect();
 
@@ -2899,10 +2983,11 @@ class GroupsController extends Module{
             $act = '';
             $user_id = $user_info['user_id'];
 
-            if(isset($_GET['page']) AND $_GET['page'] > 0)
+            if(isset($_GET['page']) AND $_GET['page'] > 0) {
                 $page = intval($_GET['page']);
-            else
+            }else {
                 $page = 1;
+            }
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
@@ -2911,85 +2996,79 @@ class GroupsController extends Module{
             $owner = $db->super_query("SELECT user_public_num FROM `users` WHERE user_id = '{$user_id}'");
 
             if($act == 'admin'){
-                $mobile_speedbar = 'Ваши сообщества';
-                $tpl->load_template('groups/head_admin.tpl');
+//                $tpl->load_template('groups/head_admin.tpl');
                 $sql_sort = "SELECT id, title, photo, traf, adres FROM `communities` WHERE admin regexp '[[:<:]](u{$user_id})[[:>:]]' ORDER by `traf` DESC LIMIT {$limit_page}, {$gcount}";
                 $sql_count = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities` WHERE admin regexp '[[:<:]](u{$user_id})[[:>:]]'");
                 $owner['user_public_num'] = $sql_count['cnt'];
             } else {
-                $mobile_speedbar = 'Сообщества';
                 $sql_sort = "SELECT tb1.friend_id, tb2.id, title, photo, traf, adres FROM `friends` tb1, `communities` tb2 WHERE tb1.user_id = '{$user_id}' AND tb1.friend_id = tb2.id AND tb1.subscriptions = 2 ORDER by `traf` DESC LIMIT {$limit_page}, {$gcount}";
-                $tpl->load_template('groups/head.tpl');
+//                $tpl->load_template('groups/head.tpl');
             }
 
             if($owner['user_public_num']){
                 $titles = array('сообществе', 'сообществах', 'сообществах');//groups
-                $tpl->set('{num}', $owner['user_public_num'].' '.Gramatic::declOfNum($owner['user_public_num'], $titles));
-                $tpl->set('[yes]', '');
-                $tpl->set('[/yes]', '');
-                $tpl->set_block("'\\[no\\](.*?)\\[/no\\]'si","");
-            } else {
-                $tpl->set('[no]', '');
-                $tpl->set('[/no]', '');
-                $tpl->set_block("'\\[yes\\](.*?)\\[/yes\\]'si","");
+                $params['num'] = $owner['user_public_num'].' '.Gramatic::declOfNum($owner['user_public_num'], $titles);
+                $params['groups_yes'] = true;
+            } else{
+                $params['groups_yes'] = false;
             }
-            $tpl->compile('info');
 
             if($owner['user_public_num']){
 
-                $sql_ = $db->super_query($sql_sort, 1);
+                $sql_ = $db->super_query($sql_sort, true);
 
-                $tpl->load_template('groups/group.tpl');
-                foreach($sql_ as $row){
-                    $tpl->set('{id}', $row['id']);
-                    if($row['adres']) $tpl->set('{adres}', $row['adres']);
-                    else $tpl->set('{adres}', 'public'.$row['id']);
+                foreach($sql_ as $key => $row){
+                    $sql_[$key]['id'] = $row['id'];
+                    if($row['adres']) {
+                        $sql_[$key]['adres'] =  $row['adres'];
+                    }
+                    else{
+                        $sql_[$key]['adres'] = 'public'.$row['id'];
+                    }
 
-                    $tpl->set('{name}', stripslashes($row['title']));
+                    $sql_[$key]['name'] = stripslashes($row['title']);
                     $titles = array('участник', 'участника', 'участников');//groups_users
-                    $tpl->set('{traf}', $row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles));
+                    $sql_[$key]['traf'] = $row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles);
 
                     if($act != 'admin'){
-                        $tpl->set('[admin]', '');
-                        $tpl->set('[/admin]', '');
-                    } else
-                        $tpl->set_block("'\\[admin\\](.*?)\\[/admin\\]'si","");
+                        $sql_[$key]['admin'] = true;
+                    } else{
+                        $sql_[$key]['admin'] = false;
+                    }
 
-                    if($row['photo'])
-                        $tpl->set('{photo}', "/uploads/groups/{$row['id']}/100_{$row['photo']}");
-                    else
-                        $tpl->set('{photo}', "/images/no_ava_groups_100.gif");
+                    if($row['photo']){
+                        $sql_[$key]['photo'] = "/uploads/groups/{$row['id']}/100_{$row['photo']}";
+                    }
+                    else{
+                        $sql_[$key]['photo'] = "/images/no_ava_groups_100.gif";
+                    }
+                }
+                $params['groups'] = $sql_;
 
-                    $tpl->compile('content');
+                if($act == 'admin') {
+                    $admn_act = 'act=admin&';
                 }
 
-                if($act == 'admin') $admn_act = 'act=admin&';
-
-                $tpl = Tools::navigation($gcount, $owner['user_public_num'], 'groups?'.$admn_act.'page=', $tpl);
+//                $params['navigation'] = Tools::navigation($gcount, $owner['user_public_num'], 'groups?'.$admn_act.'page=', $tpl);
 
             }
-            $tpl->clear();
-            $db->free();
-        } else {
+            return view('groups.groups', $params);
+        }
+        else {
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
         }
-
-        Registry::set('tpl', $tpl);
-
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
     }
 
     /**
      * Вывод всех сообществ
      * @param $params
+     * @return bool|string
+     * @throws Exception
      */
-    public function admin($params){
-        $tpl = $params['tpl'];
-
+    public function admin(&$params): bool|string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -3013,71 +3092,296 @@ class GroupsController extends Module{
 
             $owner = $db->super_query("SELECT user_public_num FROM `users` WHERE user_id = '{$user_id}'");
 
-            //$mobile_speedbar = 'Ваши сообщества';
-            $tpl->load_template('groups/head_admin.tpl');
-            $sql_sort = "SELECT id, title, photo, traf, adres FROM `communities` WHERE admin regexp '[[:<:]](u{$user_id})[[:>:]]' ORDER by `traf` DESC LIMIT {$limit_page}, {$gcount}";
+//            $tpl->load_template('groups/head_admin.tpl');
             $sql_count = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities` WHERE admin regexp '[[:<:]](u{$user_id})[[:>:]]'");
             $owner['user_public_num'] = $sql_count['cnt'];
 
-
             if($owner['user_public_num']){
                 $titles = array('сообществе', 'сообществах', 'сообществах');//groups
-                $tpl->set('{num}', $owner['user_public_num'].' '.Gramatic::declOfNum($owner['user_public_num'], $titles));
-                $tpl->set('[yes]', '');
-                $tpl->set('[/yes]', '');
-                $tpl->set_block("'\\[no\\](.*?)\\[/no\\]'si","");
-            } else {
-                $tpl->set('[no]', '');
-                $tpl->set('[/no]', '');
-                $tpl->set_block("'\\[yes\\](.*?)\\[/yes\\]'si","");
+                $params['num'] = $owner['user_public_num'].' '.Gramatic::declOfNum($owner['user_public_num'], $titles);
+                $params['groups_yes'] = true;
+            } else{
+                $params['groups_yes'] = false;
             }
-            $tpl->compile('info');
+//            $tpl->compile('info');
 
             if($owner['user_public_num']){
 
-                $sql_ = $db->super_query($sql_sort, 1);
+                $sql_ = $db->super_query("SELECT id, title, photo, traf, adres FROM `communities` WHERE admin regexp '[[:<:]](u{$user_id})[[:>:]]' ORDER by `traf` DESC LIMIT {$limit_page}, {$gcount}", true);
 
-                $tpl->load_template('groups/group.tpl');
-                foreach($sql_ as $row){
-                    $tpl->set('{id}', $row['id']);
-                    if($row['adres']) $tpl->set('{adres}', $row['adres']);
-                    else $tpl->set('{adres}', 'public'.$row['id']);
+//                $tpl->load_template('groups/group.tpl');
+                foreach($sql_ as $key => $row){
+//                    $tpl->set('{id}', );
+                    $sql_[$key]['id'] = $row['id'];
+                    if($row['adres']) {
+//                        $tpl->set('{adres}', );
+                        $sql_[$key]['adres'] = $row['adres'];
+                    }
+                    else {
+//                        $tpl->set('{adres}', );
+                        $sql_[$key]['adres'] = 'public'.$row['id'];
+                    }
 
-                    $tpl->set('{name}', stripslashes($row['title']));
+//                    $tpl->set('{name}', );
+                    $sql_[$key]['name'] = stripslashes($row['title']);
                     $titles = array('участник', 'участника', 'участников');//groups_users
-                    $tpl->set('{traf}', $row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles));
+//                    $tpl->set('{traf}', );
+                    $sql_[$key]['traf'] = $row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles);
 
                     if($act != 'admin'){
-                        $tpl->set('[admin]', '');
-                        $tpl->set('[/admin]', '');
+//                        $tpl->set('[admin]', '');
+//                        $tpl->set('[/admin]', '');
+                        $sql_[$key]['admin'] = true;
                     } else
-                        $tpl->set_block("'\\[admin\\](.*?)\\[/admin\\]'si","");
+                    {
+//                        $tpl->set_block("'\\[admin\\](.*?)\\[/admin\\]'si","");
+                        $sql_[$key]['admin'] = false;
+                    }
 
                     if($row['photo'])
-                        $tpl->set('{photo}', "/uploads/groups/{$row['id']}/100_{$row['photo']}");
+                    {
+//                        $tpl->set('{photo}', );
+                        $sql_[$key]['photo'] = "/uploads/groups/{$row['id']}/100_{$row['photo']}";
+                    }
                     else
-                        $tpl->set('{photo}', "/images/no_ava_groups_100.gif");
+                    {
+//                        $tpl->set('{photo}', );
+                        $sql_[$key]['photo'] = "/images/no_ava_groups_100.gif";
+                    }
 
-                    $tpl->compile('content');
+//                    $tpl->compile('content');
                 }
+                $params['groups'] = $sql_;
 
-                if($act == 'admin') $admn_act = 'act=admin&';
+                if($act == 'admin')
+                    $admn_act = 'act=admin&';
 
-                $tpl = Tools::navigation($gcount, $owner['user_public_num'], 'groups?'.$admn_act.'page=', $tpl);
+//                $tpl = Tools::navigation($gcount, $owner['user_public_num'], 'groups?'.$admn_act.'page=', $tpl);
 
             }
-            $tpl->clear();
-            $db->free();
+            return view('groups.groups', $params);
         } else {
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
         }
+    }
 
-        Registry::set('tpl', $tpl);
+    public function edit_main(): string
+    {
+        $path = explode('/', $_SERVER['REQUEST_URI']);
+        if (isset($path['4'])) $id = $path['4']; else $id = $path['3'];
+        $params['id'] = $id;
+        $user_info = $this->user_info();
+        $user_id = $user_info['user_id'];
+        $db = $this->db();
+        $row = $db->super_query("SELECT id, admin, title, descr, ban_reason, traf, ulist, photo, date, data_del, feedback, comments, discussion, links_num, videos_num, real_admin, rec_num, del, ban, adres, audio_num, type_public, web, date_created, privacy FROM `communities` WHERE id = '{$id}'", false);
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
+        if(stripos($row['admin'], "u{$user_id}|") !== false){
+            $explode_type = explode('-',$row['type_public']);
+            $explode_created = explode('-',$row['date_created']);
+
+            $params['pid'] = $id;
+            $params['title'] = stripslashes($row['title']);
+            $params['descr'] = stripslashes($row['descr']);
+            $params['website'] = stripslashes($row['web']);
+            $params['edit_descr'] = Validation::myBrRn(stripslashes($row['descr']));
+            if(!$row['adres']) $row['adres'] = 'public'.$row['id'];
+            $params['adres'] = $row['adres'];
+            $privaces = xfieldsdataload($row['privacy']);
+
+            if($row['comments']) {
+                $params['settings_comments'] = 'comments';
+            }
+            else {
+                $params['settings_comments'] = 'none';
+            }
+            if($privaces['p_audio']) {
+                $params['settings_audio'] = 'audio';
+            }
+            else {
+                $params['settings_audio'] = 'none';
+            }
+            if($privaces['p_videos']) {
+                $params['settings_videos'] = 'videos';
+            }
+            else {
+                $params['settings_videos'] = 'none';
+            }
+            if($privaces['p_contact']) {
+                $params['settings_contact'] = 'contact';
+            }
+            else {
+                $params['settings_contact'] = 'none';
+            }
+
+            if($row['real_admin'] == $user_id){
+                $params['admin_del'] = true;
+            } else {
+                $params['admin_del'] = false;
+            }
+        } else {
+//            msgbox('', '<div style="margin:0 auto; width:370px;text-align:center;height:65px;font-weight:bold">Вы не имеете прав для редактирования данного сообщества.<br><br><div class="button_blue fl_l" style="margin-left:115px;"><a href="/public'.$pid.'" onClick="Page.Go(this.href); return false"><button>На страницу сообщества</button></a></div></div>', 'info_red');
+        }
+
+        $params['menu'] = Menu::public_edit();
+        $params['title'] = 'Редактирование информации';
+        return view('groups.edit', $params);
+    }
+
+    public function edit_users()
+    {
+        $path = explode('/', $_SERVER['REQUEST_URI']);
+        if (isset($path['4'])) $id = $path['4']; else $id = $path['3'];
+        $params['id'] = $id;
+
+        $user_info = $this->user_info();
+        $user_id = $user_info['user_id'];
+        $db = $this->db();
+        $row = $db->super_query("SELECT id, admin, title, descr, ban_reason, traf, ulist, photo, date, data_del, feedback, comments, discussion, links_num, videos_num, real_admin, rec_num, del, ban, adres, audio_num, type_public, web, date_created, privacy FROM `communities` WHERE id = '{$id}'", false);
+
+        if(isset($_GET['tab']))
+        $tab = $_GET['tab'];
+        else{
+            $tab = false;
+        }
+        if(stripos($row['admin'], "u{$user_id}|") !== false) {
+
+            if(!isset($_POST['page_cnt']))
+                $page_cnt = 10;
+            else
+                $page_cnt = $_POST['page_cnt']*10;
+            $explode_admins = array_slice(str_replace('|', '', explode('u', $row['admin'])), 0, $page_cnt);
+            unset($explode_admins[0]);
+            $explode_users = array_slice(str_replace('|','',explode('||', $row['ulist'])), 0, $page_cnt);
+
+            $metatags['title'] = 'Участники';
+            if(!isset($_POST['page_cnt'])) {
+//                $tpl->load_template('epage/users.tpl');
+                $params['pid'] = $id;
+                if($tab == 'admin') {
+                    $params['button_tab_b'] = 'buttonsprofileSec';
+                    $params['button_tab_a'] = '';
+                    $params['type'] = 'admin';
+                    $params['admin_page'] = true;
+                    $params['noadmin_page'] = false;
+                }
+                else {
+                    $params['button_tab_b'] = '';
+                    $params['button_tab_a'] = 'buttonsprofileSec';
+                    $params['type'] = 'all';
+                    $params['noadmin_page'] = true;
+                    $params['admin_page'] = false;
+                }
+                if(!$row['adres']) {
+                    $params['adres'] = 'public'.$row['id'];
+                }
+                else {
+                    $params['adres'] = $row['adres'];
+                }
+                if($tab == 'admin') {
+                    $titles = array('администратор', 'администратора', 'администраторов');//admins
+                    $params['titles'] = 'В сообществе '.count($explode_admins).' '.Gramatic::declOfNum($row['traf'], $titles);
+                }
+                else {
+                    $titles = array('участник', 'участника', 'участников');//apps
+                    $params['titles'] = 'В сообществе '.$row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles).'';
+                }
+                $params['count'] = $row['traf'];
+            }
+
+//            if($_POST['page_cnt'])
+//                NoAjaxQuery();
+
+//            if(!$_POST['page_cnt']) {
+//                $tpl->result['content'] .= '<table><tbody><tr><td id="all_users">';
+            if(!$tab == 'admin')
+                $foreach = $explode_users;
+            else
+                $foreach = $explode_admins;
+                        $users = array();
+            foreach($foreach as $key => $user) {
+                $user = (string)($user);
+                $p_user = $db->super_query("SELECT user_search_pref, user_photo, alias, user_last_visit FROM `users` WHERE user_id = '{$user}'");
+                $a_user = $db->super_query("SELECT level FROM `communities_admins` WHERE user_id = '{$user}'");
+//                $tpl->load_template('epage/user.tpl');
+                $users[$key]['uid'] = $user;
+                $users[$key]['name'] = $p_user['user_search_pref'];
+                $users[$key]['ava'] = $p_user['user_photo'];
+                if($a_user) {
+                    if($row['real_admin'] == $user) {
+                        $users[$key]['tags'] = '<b>Создатель</b>';
+                    }
+                    else {
+                        $users[$key]['tags'] = '';
+                    }
+                    $users[$key]['view_tags'] = '';
+                } else {
+                    $users[$key]['view_tags'] = 'no_display';
+                    $users[$key]['tags'] = '';
+                }
+
+                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $online_time = $server_time - 60;
+                if($p_user['user_last_visit'] >= $online_time) {
+                    $users[$key]['online'] = true;
+                } else {
+                    $users[$key]['online'] = false;
+                }
+                if($p_user['alias']) $alias = $p_user['alias'];
+                else $alias = 'u'.$user;
+                $users[$key]['adres'] = $alias;
+                if($p_user['user_photo']) $avatar = '/uploads/users/'.$user.'/100_'.$p_user['user_photo'].'';
+                else $avatar = '/images/100_no_ava.png';
+                $users[$key]['ava_photo'] = $avatar;
+                if(in_array($user, $explode_admins)) {
+                    if($user != $row['real_admin']) {
+                        $users[$key]['yes_admin'] = true;
+                    } else {
+                        $users[$key]['yes_admin'] = false;
+                    }
+                    $users[$key]['no_admin'] = false;
+                }
+                else {
+                    if($user != $row['real_admin']) {
+                        $users[$key]['no_admin'] = true;
+                    } else {
+                        $users[$key]['no_admin'] = false;
+                    }
+                    $users[$key]['yes_admin'] = false;
+                }
+            }
+
+            $params['users'] = $users;
+
+//            if(!$_POST['page_cnt'])
+//                $tpl->result['content'] .= '</td></tr></tbody></table>';
+
+//            if($_POST['page_cnt']){
+//                AjaxTpl();
+//                exit;
+//            }
+
+        } else {
+//            msgbox('', '<div style="margin:0 auto; width:370px;text-align:center;height:65px;font-weight:bold">Вы не имеете прав для редактирования данного сообщества.<br><br><div class="button_blue fl_l" style="margin-left:115px;"><a href="/public'.$pid.'" onClick="Page.Go(this.href); return false"><button>На страницу сообщества</button></a></div></div>', 'info_red');
+        }
+
+
+        $params['menu'] = Menu::public_edit();
+        $params['title'] = 'ttt';
+        return view('groups.edit_users', $params);
+    }
+
+    public function edit(): string
+    {
+        $path = explode('/', $_SERVER['REQUEST_URI']);
+        if (isset($path['4'])) $id = $path['4']; else $id = $path['3'];
+        $params['id'] = $id;
+
+
+        $params['menu'] = Menu::public_edit();
+        $params['title'] = 'ttt';
+        $params['info'] = 'err';
+        return view('groups.edit_old', $params);
     }
 }

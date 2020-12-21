@@ -12,6 +12,9 @@ use Sura\Libs\Validation;
 
 class RestoreController extends Module{
 
+    /**
+     * @param $params
+     */
     public function send($params){
         $lang = $this->get_langs();
         $db = $this->db();
@@ -63,6 +66,9 @@ class RestoreController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function prefinish($params){
         $lang = $this->get_langs();
         $db = $this->db();
@@ -94,7 +100,7 @@ class RestoreController extends Module{
 //                $tpl->compile('content');
             } else {
                 $speedbar = $lang['no_infooo'];
-                msgbox('', $lang['restore_badlink'], 'info');
+                msg_box($lang['restore_badlink'], 'info');
             }
 
 //            $params['tpl'] = $tpl;
@@ -104,6 +110,9 @@ class RestoreController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function finish($params){
         $lang = $this->get_langs();
         $db = $this->db();
@@ -134,6 +143,11 @@ class RestoreController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return string
+     * @throws \Exception
+     */
     public function index($params)
     {
         $lang = $this->get_langs();
@@ -157,6 +171,9 @@ class RestoreController extends Module{
 
     }
 
+    /**
+     * @param $params
+     */
     public function next($params){
 //        $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -181,8 +198,6 @@ class RestoreController extends Module{
                 echo $check['user_search_pref']."|".$check['user_photo'];
             } else
                 echo 'no_user';
-
-            die();
 
         }
     }

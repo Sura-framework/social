@@ -335,7 +335,7 @@ var Photo = {
 			cursor: 'move',
 			scroll: false,
 			update: function(){
-				var order = $(this).sortable("serialize"); 
+				var order = $(this).sortable("serialize");
 				$.post("/albums/save_pos_photos/", order);
 			}
 		});
@@ -348,22 +348,22 @@ var Photo = {
 		var fuser = h.split('wall/fuser=');
 		var note_id = h.split('notes/id=');
 		var msg_id = h.split('msg/id=');
-		
+
 		if(fuser[1])
 			section[1] = 'wall';
-			
+
 		if(note_id[1]){
 			section[1] = 'notes';
 			fuser[1] = note_id[1];
 		}
-		
+
 		if(msg_id[1]){
 			section[1] = 'msg';
 			fuser[1] = msg_id[1];
 		}
 
 		$('.photo_view').hide();
-		
+
 		if(is_moz && !is_chrome) scrollTopForFirefox = $(window).scrollTop();
 		$('html').css('overflow', 'hidden');
 		if(is_moz && !is_chrome) $(window).scrollTop(scrollTopForFirefox);
@@ -384,10 +384,10 @@ var Photo = {
 					addAllErr(lang_pr_no_title);
 					$('html, body').css('overflow-y', 'auto');
 				}
-				
+
 				if(section[1] != 'loaded')
 					history.pushState({link:h}, null, h);
-				
+
 				$('body').append(d);
 				$('#photo_view_'+id[1]).show();
 
@@ -417,7 +417,7 @@ var Photo = {
 		$('.pinfo, .photo_prev_but, .photo_next_but').show();
 		$('.save_crop_text').hide();
 		$('.ladybug_ant').imgAreaSelect({remove: true});
-		
+
 		if(ge('photo_view_'+id[1])){
 			$('#photo_view_'+id[1]).show();
 			return false;
@@ -427,10 +427,10 @@ var Photo = {
 	},
 	Close: function(close_link){
 		$('.ladybug_ant').imgAreaSelect({remove: true});
-		
+
 		$('.photo_view').remove();
 		$('html, body').css('overflow-y', 'auto');
-		
+
 		if(is_moz && !is_chrome) $(window).scrollTop(scrollTopForFirefox);
 
 		if(close_link != false)
@@ -449,7 +449,7 @@ var Photo = {
 			'</div>';
 			$('body').append(loadcontent);
 			$('#photo_load').show();
-		} 
+		}
 		if(f == 'stop')
 			$('#photo_load').remove();
 	},
@@ -482,9 +482,9 @@ var Photo = {
 			if(!type){
 				$('#a_photo_'+id).remove();
 				$('#p_jid'+id).remove();
-				
+
 				updateNum('#photo_num');
-			} else 
+			} else
 				$('#pinfo_'+id).html(lang_photo_info_delok);
 		});
 	},
@@ -523,7 +523,7 @@ var Photo = {
 	Rotation: function(pos, id){
 		$('#loading_gradus'+id).show();
 		$.post('/photo/rotation/', {id: id, pos: pos}, function(d){
-			var rndval = new Date().getTime(); 
+			var rndval = new Date().getTime();
 			$('#ladybug_ant'+id).attr('src', d+'?'+rndval);
 			$('#loading_gradus'+id).hide();
 		});
@@ -691,7 +691,9 @@ var fave = {
 var messages = {
 	new_: function(user_id){
 		var content = '<div style="padding:20px">'+
-		'<div class="texta d-none" style="width:100px">Тема:</div><input type="text" id="theme" class="inpst" maxlength="255" style="width:300px" /><div class="mgclr"></div>'+
+		'<div class="texta d-none" style="width:100px">Тема:</div>' +
+			'<input type="text" id="theme" class="inpst d-none" maxlength="255" style="width:300px" />' +
+			'<div class="mgclr"></div>'+
 		'<div class="texta" style="width:100px">Сообщение:</div><textarea id="msg" class="inpst" style="width:300px;height:120px;"></textarea><div class="mgclr"></div>'+
 		'</div>';
 		Box.Show('new_msg', 460, lang_new_msg, content, lang_msg_close, lang_new_msg_send, 'messages.send('+user_id+'); return false');
@@ -1201,9 +1203,8 @@ $(document).click(function() {
 	}
 });
 
-function CheckRequestSearch(request){
-	var pattern = new RegExp(/search/i);
- 	return pattern.test(request);
+function CheckRequest_Search(request){
+	return request.indexOf("/search/");
 }
 
 var gSearch = {
@@ -1230,60 +1231,88 @@ var gSearch = {
 		$('#sel_types').hide();
 		$('#query').focus();
 	},
+	resize: function(){
+		const h = window.innerHeight - 40;
+		$('.site_menu_fix').css('height', h+'px');
+	},
 	go: function(){
-		var query = $('#query').val();
-		var type = $('#se_type').val();
-		if(query == 'Поиск' || !query)
-			var query = $('#fast_search_txt').text();
-		
-		//Если открыта страница поиска
-		if(CheckRequestSearch(location.href)){
-			query = $('#query_full').val();
-			sex = $('#sex').val();
-			day = $('#day').val();
-			month = $('#month').val();
-			year = $('#year').val();
-			country = $('#country').val();
-			city = $('#select_city').val();
-			type = $('#se_type_full').val();
-			online = $('#online').val();
-			user_photo = $('#user_photo').val();
-		}
 
-		if(query == 'Поиск' || query == 'Начните вводить любое слово или имя'){
-			query = '';
-		}
+		// var  query_full = $('#query_full').val();
+		var  query = $('#query').val();
+
+		//в поиске
+		var type = $('#se_type').val();
+
+		// if(query == 'Поиск' || !query)
+		// 	{
+		// 		query = $('#fast_search_txt').text();
+		// 	}
 		
-		//if(query != 0 && query != 'Поиск' && query != 'Начните вводить любое слово или имя'){
-			if(CheckRequestSearch(location.href) && type == 1){
-				if(sex != 0) all_queryeis_sex = '&sex='+sex;
-				else all_queryeis_sex = '';
-				if(day != 0) all_queryeis_day = '&day='+day;
-				else all_queryeis_day = '';
-				if(month != 0) all_queryeis_month = '&month='+month;
-				else all_queryeis_month = '';
-				if(year != 0) all_queryeis_year = '&year='+year;
-				else all_queryeis_year = '';
-				if(country != 0) all_queryeis_country = '&country='+country;
-				else all_queryeis_country = '';
-				if(city != 0) all_queryeis_city = '&city='+city;
-				else all_queryeis_city = '';
-				if(online != 0) all_queryeis_online = '&online='+online;
-				else all_queryeis_online = '';
-				if(user_photo != 0) all_queryeis_user_photo = '&user_photo='+user_photo;
-				else all_queryeis_user_photo = '';
+		if(query !== null){
+			let search_text = CheckRequest_Search(location.href);
+			let check_search = Number(search_text);
+			let check_type = Number(type);
+
+			if(check_search !== -1 && check_type === 1){
+				query = $('#query').val();
+				let sex = Number( $('#sex').val() );
+				let day = Number( $('#day').val() );
+				let month = Number( $('#month').val() );
+				let year = Number( $('#year').val() );
+				let country = Number( $('#country').val() );
+				let city = Number( $('#select_city').val() );
+
+				let online = document.getElementById('SwitchCheckOnline').checked;
+				let user_photo = document.getElementById('SwitchCheckUserPhoto').checked;
+				type = $('#se_type_full').val();
+
+				if(sex === 0)
+					all_queryeis_sex = '';
+				else
+					all_queryeis_sex = '&sex='+sex;
+				if(day !== 0)
+					all_queryeis_day = '&day='+day;
+				else
+					all_queryeis_day = '';
+				if(month !== 0)
+					all_queryeis_month = '&month='+month;
+				else
+					all_queryeis_month = '';
+				if(year !== 0)
+					all_queryeis_year = '&year='+year;
+				else
+					all_queryeis_year = '';
+				if(country !== 0)
+					all_queryeis_country = '&country='+country;
+				else
+					all_queryeis_country = '';
+				if(city !== 0)
+					all_queryeis_city = '&city='+city;
+				else
+					all_queryeis_city = '';
+				if(online === true)
+					all_queryeis_online = '&online=1';
+				else
+					all_queryeis_online = '';
+
+				if(user_photo === true)
+					all_queryeis_user_photo = '&user_photo=1';
+				else
+					all_queryeis_user_photo = '';
+
 				res_sort_query = all_queryeis_sex+all_queryeis_day+all_queryeis_month+all_queryeis_year+all_queryeis_country+all_queryeis_city+all_queryeis_online+all_queryeis_user_photo;
-			} else
+			} else{
+				console.log('|'+check_search +'| '+ location.href + ' search not in search and '+ type);
 				res_sort_query = '';
-			
-			lnk = '/search/?type='+type+res_sort_query+'query='+encodeURIComponent(query);
+			}
+
+			var lnk = '/search/?query='+encodeURIComponent(query) + '&type='+type+res_sort_query;
 			Page.Loading('start');
 			$.post(lnk, {ajax: 'yes'}, function(data){
 				Page.Loading('stop');
-				history.pushState({link:lnk}, null, lnk);
-				d = JSON.parse(data);
-
-				$('#page').html(d.content);
+				history.pushState({link:lnk}, data.title, lnk);
+				document.title = data.title;
+				$('#page').html(data.content);
 				//Прокручиваем страницу в самый верх
 				$('html, body').scrollTop(0);
 				//Удаляем кеш фоток и видео
@@ -1291,69 +1320,12 @@ var gSearch = {
 				//Возвращаем scroll
 				$('html, body').css('overflow-y', 'auto');
 				$('#sel_types, #search_tab, .fast_search_bg').hide();
-				$('#query').val('');
+				// $('#query').val('');
 			});
-		/*} else {
-			$('#query, #query_full').val('');
-			$('#query, #query_full').focus();
-		}*/
-	}
-}
-
-//CHECKBOX
-var myhtml = {
-	checkbox: function(id){
-		name = '#'+id;
-		$(name).addClass('html_checked');
-		
-		if(ge('checknox_'+id)){
-			myhtml.checkbox_off(id);
 		} else {
-			$(name).append('<div id="checknox_'+id+'"><input type="hidden" id="'+id+'" /></div>');
-			$(name).val('1');
+			// $('#query').focus();
+			$('#query').val('n');
 		}
-	},
-	checkbox_off: function(id){
-		name = '#'+id;
-		$('#checknox_'+id).remove();
-		$(name).removeClass('html_checked');
-		$(name).val('');
-	},
-	checked: function(arr){
-		$.each(arr, function(){
-			myhtml.checkbox(this);
-		});
-	},
-	title: function(id, text, prefix_id, pad_left){
-		if(!pad_left)
-			pad_left = 5;
-			
-		$("body").append('<div id="js_title_'+id+'" class="js_titleRemove"><div id="easyTooltip">'+text+'</div><div class="tooltip"></div></div>');	
-		xOffset = $('#'+prefix_id+id).offset().left-pad_left;
-		yOffset = $('#'+prefix_id+id).offset().top-32;
-		
-		$('#js_title_'+id)
-			.css("position","absolute")
-			.css("top", yOffset+"px")
-			.css("left", xOffset+"px")						
-			.css("z-index","1000")
-			.fadeIn('fast');
-			
-		$('#'+prefix_id+id).mouseout(function(){
-			$('.js_titleRemove').remove();
-		});
-	},
-	title_close: function(id){
-		$('#js_title_'+id).remove();
-	},
-	updateAjaxNav: function(gc, pref, num, page){
-		$.get('/updateAjaxNav', {gcount: gc, pref: pref, num: num, page:page}, function(data){
-			$('#nav').html(data);
-		});
-	},
-	scrollTop: function(){
-		$('.scroll_fix_bg').hide(); 
-		$(window).scrollTop(0);
 	}
 }
 
@@ -1455,23 +1427,40 @@ var wall = {
 			gStatus.close();
 	},
 	send: function(){
-		wall_text = $('#wall_text').val();
-		
-		attach_files = $('#vaLattach_files').val();
-		for_user_id = location.href.split(location.protocol+'://'+location.host+'/u');
-		
-		rec_num = parseInt($('#wall_rec_num').text())+1;
+		let wall_text = $('#wall_text').val();
+
+		let attach_files = $('#vaLattach_files').val();
+		var nextSibling = location.href.split(location.protocol + '//' + location.host + '/u');
+
+		let rec_num = parseInt($('#wall_rec_num').text()) + 1;
 		if(!rec_num)
 			rec_num = 1;
-			
-		if(wall_text != 0 || attach_files != 0){
+
+		let for_user_id;
+		if (wall_text !== 0 || attach_files !== 0) {
 			butloading('wall_send', 56, 'disabled');
-			$.post('/wall/send/', {wall_text: wall_text, for_user_id: for_user_id[1], attach_files: attach_files, vote_title: $('#vote_title').val(), vote_answer_1: $('#vote_answer_1').val(), vote_answer_2: $('#vote_answer_2').val(), vote_answer_3: $('#vote_answer_3').val(), vote_answer_4: $('#vote_answer_4').val(), vote_answer_5: $('#vote_answer_5').val(), vote_answer_6: $('#vote_answer_6').val(), vote_answer_7: $('#vote_answer_7').val(), vote_answer_8: $('#vote_answer_8').val(), vote_answer_9: $('#vote_answer_9').val(), vote_answer_10: $('#vote_answer_10').val()}, function(data){
-				if(data == 'antispam_err'){
-			      AntiSpam('wall');
-			      return false;
-			    }
-				if(data == 'err_privacy'){
+			for_user_id = $('#user_id').val();
+			$.post('/wall/send/', {
+				wall_text: wall_text,
+				for_user_id: for_user_id,
+				attach_files: attach_files,
+				vote_title: $('#vote_title').val(),
+				vote_answer_1: $('#vote_answer_1').val(),
+				vote_answer_2: $('#vote_answer_2').val(),
+				vote_answer_3: $('#vote_answer_3').val(),
+				vote_answer_4: $('#vote_answer_4').val(),
+				vote_answer_5: $('#vote_answer_5').val(),
+				vote_answer_6: $('#vote_answer_6').val(),
+				vote_answer_7: $('#vote_answer_7').val(),
+				vote_answer_8: $('#vote_answer_8').val(),
+				vote_answer_9: $('#vote_answer_9').val(),
+				vote_answer_10: $('#vote_answer_10').val()
+			}, function (data) {
+				if (data === 'antispam_err') {
+					AntiSpam('wall');
+					return false;
+				}
+				if (data === 'err_privacy') {
 					addAllErr(lang_pr_no_title);
 				} else {
 					$('#wall_records').html(data);
@@ -1666,7 +1655,7 @@ var wall = {
 		</td>\
 		<td class="info">\
 		<div class="audioNames">\
-		<b class="author" onClick="$(\'#query_full\').val($(this).text()); gSearch.go();" id="artist">'+p.artist+'</b>\
+		<b class="author" onClick="$(\'#query\').val($(this).text()); gSearch.go();" id="artist">'+p.artist+'</b>\
 		- \
 		<span class="name" id="name">'+p.name+'</span>\
 		<div class="clear"></div>\
@@ -2093,7 +2082,7 @@ var news = {
 			textLoad('loading_news');
 			$.post('/news/next/'+type, {page: 1, page_cnt: page_cnt}, function(d){
 				// var d = JSON.parse(d);
-				console.log(d.content);showTag
+				console.log(d.content);
 				if(d.content != 'no_news'){
 					$('#news').append(d);
 					$('#wall_l_href_news').attr('onClick', 'news.page(\''+type+'\')');
@@ -2246,6 +2235,13 @@ var settings = {
 				$('#u'+bad_user_id).remove();
 				updateNum('#badlistnum');
 			}
+		});
+	},
+	savetimezona: function(){
+		var time_zone = $('#timezona').val();
+		butloading('saveTimezona', 87, 'disabled');
+		$.post('/settings/timezone/', {time_zone: time_zone}, function(data){butloading('saveTimezona', 87, 'enabled', 'Сохранить');
+			$('#ok_timez').show();
 		});
 	}
 }
@@ -2454,12 +2450,14 @@ var groups = {
 	},
 	creat: function(){
 		var title = $('#title').val();
-		if(title != 0){
+		if(title !== 0){
 			$('#box_loading').show();
 			ge('box_butt_create').disabled = true;
 			$.post('/groups/send/', {title: title}, function(id){
 				if(id == 'antispam_err')
 					AntiSpam('groups');
+				else if(id == 'err')
+					console.log('error');
 				else
 					Page.Go('/public'+id);
 				

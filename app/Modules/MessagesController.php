@@ -3,10 +3,7 @@
 namespace App\Modules;
 
 use Sura\Libs\Cache;
-use Sura\Libs\Langs;
 use Sura\Libs\Mail;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -14,6 +11,9 @@ use Sura\Libs\Validation;
 
 class MessagesController extends Module{
 
+    /**
+     * @param $params
+     */
     public function send($params){
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -144,8 +144,8 @@ class MessagesController extends Module{
     }
 
     public function delet($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -154,9 +154,9 @@ class MessagesController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            $limit_page = ($page-1)*$gcount;
 
 //            Tools::NoAjaxQuery();
 
@@ -198,9 +198,9 @@ class MessagesController extends Module{
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            $limit_page = ($page-1)*$gcount;
 
 //            Tools::NoAjaxQuery();
             $for_user_id = intval($_POST['for_user_id']);
@@ -236,19 +236,21 @@ class MessagesController extends Module{
                 }
                 $msg_count = $db->super_query("SELECT COUNT(*) AS cnt FROM `messages` WHERE for_user_id = '{$user_id}' AND from_user_id = '{$for_user_id}'");
                 if($msg_count['cnt'] >= $gcount)
-                    box_navigation($gcount, $msg_count['cnt'], $for_user_id, 'messages.history', '');
+                {
+//                    box_navigation($gcount, $msg_count['cnt'], $for_user_id, 'messages.history', '');
+                }
 
                 Tools::AjaxTpl($tpl);
             }
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
+//            $params['tpl'] = $tpl;
+//            Page::generate($params);
             return true;
         }
     }
 
     public function review($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -573,9 +575,9 @@ class MessagesController extends Module{
                         Cache::mozg_clear_cache_file('user_'.$row['from_user_id'].'/im');
                     }
                 } else
-                    msgbox('', $lang['none_msg'], 'info_box');
+                    msg_box( $lang['none_msg'], 'info_box');
             } else
-                msgbox('', $lang['none_msg'], 'info_box');
+                msg_box( $lang['none_msg'], 'info_box');
 
             $params['tpl'] = $tpl;
             Page::generate($params);
@@ -728,7 +730,7 @@ class MessagesController extends Module{
                 if($msg_count['cnt'] >= $gcount)
                     navigation($gcount, $msg_count['cnt'], '/index.php?go=messages&act=outbox'.$query_string.'&page=');
             } else
-                msgbox('', $lang['no_outbox_msg'], 'info_2');
+                msg_box( $lang['no_outbox_msg'], 'info_2');
 
             $params['tpl'] = $tpl;
             Page::generate($params);
@@ -804,7 +806,7 @@ class MessagesController extends Module{
 
                 //Вывод информации после отправки сообщения
 //                if($_GET['info'] == 1)
-//                    msgbox('', '<script type="text/javascript">setTimeout(\'$(".err_yellow").fadeOut()\', 1500);</script>Ваше сообщение успешно отправлено.', 'info');
+//                    msg_box('', '<script type="text/javascript">setTimeout(\'$(".err_yellow").fadeOut()\', 1500);</script>Ваше сообщение успешно отправлено.', 'info');
 
                 //Для поиска
                 $se_query = $db->safesql(Validation::ajax_utf8(Validation::strip_data(urldecode($_GET['se_query']))));
@@ -939,7 +941,7 @@ class MessagesController extends Module{
 //                    if($msg_count['cnt'] > $gcount)
 //                        navigation($gcount, $msg_count['cnt'], '/index.php?go=messages'.$query_string.'&page=');
                 } else{
-//                    msgbox('', $lang['no_msg'], 'info_2');
+//                    msg_box('', $lang['no_msg'], 'info_2');
                     $params['title'] = $lang['no_infooo'];
                     $params['info'] = $lang['no_msg'];
                     return view('info.info', $params);

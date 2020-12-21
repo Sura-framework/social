@@ -2,7 +2,6 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Page;
 use App\Models\Admin;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 
@@ -18,29 +17,29 @@ class AdminController extends Module{
         $user_info = $params['user']['user_info'];
         $group = $user_info['user_group'];
         if ($logged == true AND $group == '1'){
-            $tpl = $params['tpl'];
+//            $tpl = $params['tpl'];
 
             $modules = Admin::modules();
 //            var_dump($modules);
 
-            $tpl->load_template('admin/modules.tpl');
+//            $tpl->load_template('admin/modules.tpl');
             foreach ($modules as $mod){
-                $tpl->set('{title}', $mod['name']);
-                $tpl->set('{description}', $mod['description']);
-                $tpl->set('{link}', $mod['link']);
-                $tpl->set('{img}', $mod['img']);
+//                $tpl->set('{title}', $mod['name']);
+//                $tpl->set('{description}', $mod['description']);
+//                $tpl->set('{link}', $mod['link']);
+//                $tpl->set('{img}', $mod['img']);
 
-                $tpl->compile('modules');
+//                $tpl->compile('modules');
             }
 
 
-            $tpl->load_template('admin/admin.tpl');
-            $tpl->set('{modules}', $tpl->result['modules']);
+//            $tpl->load_template('admin/admin.tpl');
+//            $tpl->set('{modules}', $tpl->result['modules']);
             //$tpl->set('{country}', $all_country);
-            $tpl->compile('content');
-            $tpl->clear();
-            $params['tpl'] = $tpl;
-            Page::generate($params);
+//            $tpl->compile('content');
+//            $tpl->clear();
+//            $params['tpl'] = $tpl;
+//            Page::generate($params);
         }
         return true;
     }
@@ -55,7 +54,7 @@ class AdminController extends Module{
         $user_info = $params['user']['user_info'];
         $group = $user_info['user_group'];
         if ($logged == true AND $group == '1'){
-            $tpl = $params['tpl'];
+//            $tpl = $params['tpl'];
 
             $db = $this->db();
             $users = $db->super_query("SELECT COUNT(*) AS cnt FROM `users`");
@@ -73,17 +72,17 @@ class AdminController extends Module{
             //SELECT user_id, SUM(user_balance) AS user_balance FROM `users` GROUP BY user_id
             $balance_full = $db->super_query("SELECT SUM(user_balance) AS user_balance FROM `users` ");
 
-            $tpl->load_template('admin/stats.tpl');
+//            $tpl->load_template('admin/stats.tpl');
             //$tpl->set('{modules}', $tpl->result['modules']);
 
-            $tpl->set('{users}', $users['cnt']);
-            $tpl->set('{balance_full}', $balance_full['user_balance']);
+//            $tpl->set('{users}', $users['cnt']);
+//            $tpl->set('{balance_full}', $balance_full['user_balance']);
 
             //$tpl->set('{country}', $all_country);
-            $tpl->compile('content');
-            $tpl->clear();
-            $params['tpl'] = $tpl;
-            Page::generate($params);
+//            $tpl->compile('content');
+//            $tpl->clear();
+//            $params['tpl'] = $tpl;
+//            Page::generate($params);
         }
         return true;
     }

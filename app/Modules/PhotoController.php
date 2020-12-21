@@ -2,9 +2,9 @@
 
 namespace App\Modules;
 
+use App\Services\Cache;
 use Intervention\Image\ImageManager;
 use Sura\Libs\Thumb;
-use Sura\Libs\Cache;
 use Sura\Libs\Langs;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
@@ -14,8 +14,11 @@ use Sura\Libs\Gramatic;
 
 class PhotoController extends Module{
 
+    /**
+     * @param $params
+     */
     public function addcomm($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -52,25 +55,29 @@ class PhotoController extends Module{
                 $db->query("UPDATE `albums` SET comm_num = comm_num+1 WHERE aid = '{$check_photo['album_id']}'");
 
                 $date = langdate('сегодня в H:i', $server_time);
-                $tpl->load_template('photo_comment.tpl');
-                $tpl->set('{author}', $user_info['user_search_pref']);
-                $tpl->set('{comment}', stripslashes($comment));
-                $tpl->set('{uid}', $user_id);
-                $tpl->set('{hash}', $hash);
-                $tpl->set('{id}', $id);
+//                $tpl->load_template('photo_comment.tpl');
+//                $tpl->set('{author}', $user_info['user_search_pref']);
+//                $tpl->set('{comment}', stripslashes($comment));
+//                $tpl->set('{uid}', $user_id);
+//                $tpl->set('{hash}', $hash);
+//                $tpl->set('{id}', $id);
 
                 $config = Settings::loadsettings();
 
                 if($user_info['user_photo'])
-                    $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$user_id.'/50_'.$user_info['user_photo']);
+                {
+//                    $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$user_id.'/50_'.$user_info['user_photo']);
+                }
                 else
-                    $tpl->set('{ava}', '/images/no_ava_50.png');
+                {
+//                    $tpl->set('{ava}', '/images/no_ava_50.png');
+                }
 
-                $tpl->set('{online}', $lang['online']);
-                $tpl->set('{date}', langdate('сегодня в H:i', $server_time));
-                $tpl->set('[owner]', '');
-                $tpl->set('[/owner]', '');
-                $tpl->compile('content');
+//                $tpl->set('{online}', $lang['online']);
+//                $tpl->set('{date}', langdate('сегодня в H:i', $server_time));
+//                $tpl->set('[owner]', '');
+//                $tpl->set('[/owner]', '');
+//                $tpl->compile('content');
 
                 //Добавляем действие в ленту новостей "ответы" владельцу фотографии
                 if($user_id != $check_photo['user_id']){
@@ -81,19 +88,19 @@ class PhotoController extends Module{
                     $row_userOW = $db->super_query("SELECT user_last_visit FROM `users` WHERE user_id = '{$check_photo['user_id']}'");
                     $update_time = $server_time - 70;
 
+                    $Cache = Cache::initialize();
+
                     if($row_userOW['user_last_visit'] >= $update_time){
 
                         $db->query("INSERT INTO `updates` SET for_user_id = '{$check_photo['user_id']}', from_user_id = '{$user_id}', type = '2', date = '{$server_time}', text = '{$comment}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/photo{$check_photo['user_id']}_{$pid}_{$check_photo['album_id']}'");
 
-                        Cache::mozg_create_cache("user_{$check_photo['user_id']}/updates", 1);
+//                        Cache::mozg_create_cache("user_{$check_photo['user_id']}/updates", 1);
 
-                        //ИНАЧЕ Добавляем +1 юзеру для оповещания
+                        $Cache->set("users/{$check_photo['user_id']}/updates", 1);
                     } else {
-
                         //Добавляем +1 юзеру для оповещания
-                        $cntCacheNews = Cache::mozg_cache('user_'.$check_photo['user_id'].'/new_news');
-                        Cache::mozg_create_cache('user_'.$check_photo['user_id'].'/new_news', ($cntCacheNews+1));
-
+                        $cntCacheNews = $Cache->get("users/{$check_photo['user_id']}/new_news" );
+                        $Cache->set("users/{$check_photo['user_id']}/new_news", $cntCacheNews+1);
                     }
 
                     //Отправка уведомления на E-mail
@@ -113,14 +120,26 @@ class PhotoController extends Module{
                 }
 
                 //Чистим кеш кол-во комментов
-                Cache::mozg_mass_clear_cache_file("user_{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm|user_{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_all|user_{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_friends");
+//                Cache::mozg_mass_clear_cache_file("
+//                user_{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm
+//                |user_{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_all|
+//                user_{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_friends");
 
-                Tools::AjaxTpl($tpl);
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm");
+                $Cache->delete("users/{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_all");
+                $Cache->delete("users/{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_friends");
+
+
+//                Tools::AjaxTpl($tpl);
             } else
                 echo 'err_privacy';
         }
     }
 
+    /**
+     * @param $params
+     */
     public function del_comm($params){
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -141,12 +160,22 @@ class PhotoController extends Module{
                 $db->query("UPDATE `albums` SET comm_num = comm_num-1 WHERE aid = '{$check_comment['album_id']}'");
 
                 //Чистим кеш кол-во комментов
-                Cache::mozg_mass_clear_cache_file("user_{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm|user_{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_all|user_{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_friends");
+//                Cache::mozg_mass_clear_cache_file("
+//                user_{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm|
+//                user_{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_all|
+//                user_{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_friends");
+
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm");
+                $Cache->delete("users/{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_all");
+                $Cache->delete("users/{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_friends");
             }
-            die();
         }
     }
 
+    /**
+     * @param $params
+     */
     public function crop($params){
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -211,13 +240,19 @@ class PhotoController extends Module{
                 //Обновляем имя фотки в бд
                 $db->query("UPDATE `users` SET user_photo = '{$image_rename}', user_wall_id = '{$dbid}' WHERE user_id = '{$user_id}'");
 
-                Cache::mozg_clear_cache_file("user_{$user_id}/profile_{$user_id}");
-                Cache::mozg_clear_cache();
+//                Cache::mozg_clear_cache_file("user_{$user_id}/profile_{$user_id}");
+//                Cache::mozg_clear_cache();
+
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_id}/profile_{$user_id}");
             }
-            die();
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function all_comm($params){
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -273,8 +308,13 @@ class PhotoController extends Module{
         }
     }
 
-    public function profile($params){
-        $tpl = $params['tpl'];
+    /**
+     * @param $params
+     * @return bool
+     */
+    public function profile($params)
+    {
+//        $tpl = $params['tpl'];
         //$lang = $this->get_langs();
         //$db = $this->db();
         //$user_info = $this->user_info();
@@ -285,25 +325,34 @@ class PhotoController extends Module{
                 $photo = __DIR__."/../../public/uploads/attach/{$uid}/c_{$_POST['photo']}";
             else
                 $photo = __DIR__."/../../public/uploads/users/{$uid}/o_{$_POST['photo']}";
-            if(file_exists($photo)){
-                $tpl->load_template('photos/photo_profile.tpl');
-                $tpl->set('{uid}', $uid);
-                if($_POST['type'])
-                    $tpl->set('{photo}', "/uploads/attach/{$uid}/{$_POST['photo']}");
-                else
-                    $tpl->set('{photo}', "/uploads/users/{$uid}/o_{$_POST['photo']}");
-                $tpl->set('{close-link}', $_POST['close_link']);
-                $tpl->compile('content');
-                Tools::AjaxTpl($tpl);
 
-                $params['tpl'] = $tpl;
-                Page::generate($params);
-                return true;
+            if(!file_exists($photo)){
+                $photo = '/../../public/images/no_ava_50.png';
+            }
+            if(file_exists($photo)){
+//                $tpl->load_template('photos/photo_profile.tpl');
+                $params['uid'] = $uid;
+                if($_POST['type'])
+                {
+                    $params['photo'] = "/uploads/attach/{$uid}/{$_POST['photo']}";
+                }
+                else {
+                    $params['photo'] = "/uploads/users/{$uid}/o_{$_POST['photo']}";
+                }
+                $params['close_link'] = $_POST['close_link'];
+                return view('photos.photo_profile', $params);
             } else
-                echo 'no_photo';
+                $params['photo'] = '/images/no_ava_50.png';
+            $params['uid'] = $uid;
+            $params['close_link'] = $_POST['close_link'];
+
+            return view('photos.photo_profile', $params);
         }
     }
 
+    /**
+     * @param $params
+     */
     public function rotation($params){
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -338,6 +387,9 @@ class PhotoController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function addrating($params){
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
@@ -407,18 +459,17 @@ class PhotoController extends Module{
                 $row_owner = $db->super_query("SELECT user_last_visit FROM `users` WHERE user_id = '{$row['user_id']}'");
                 $update_time = $server_time - 70;
 
+                $Cache = Cache::initialize();
                 if($row_owner['user_last_visit'] >= $update_time){
 
                     $db->query("INSERT INTO `updates` SET for_user_id = '{$row['user_id']}', from_user_id = '{$user_info['user_id']}', type = '9', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/photo{$row['user_id']}_{$pid}_{$row['album_id']}'");
 
-                    Cache::mozg_create_cache("user_{$row['user_id']}/updates", 1);
-
-                    //ИНАЧЕ делаем +1 для ленты
-                } else {
-
-                    $cntCacheNews = Cache::mozg_cache("user_{$row['user_id']}/new_news");
-                    Cache::mozg_create_cache("user_{$row['user_id']}/new_news", ($cntCacheNews+1));
-
+                $Cache->set("users/{$row['user_id']}/updates", 1);
+                }
+                else {
+                //Добавляем +1 юзеру для оповещания
+                $cntCacheNews = $Cache->get("users/{$row['user_id']}/new_news" );
+                $Cache->set("users/{$row['user_id']}/new_news", $cntCacheNews+1);
                 }
 
             }
@@ -427,6 +478,10 @@ class PhotoController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function view_rating($params){
         $tpl = $params['tpl'];
         //$lang = $this->get_langs();
@@ -512,6 +567,9 @@ class PhotoController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function del_rate($params){
         //$tpl = $params['tpl'];
         //$lang = $this->get_langs();
@@ -548,6 +606,10 @@ class PhotoController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function index($params){
         $tpl = $params['tpl'];
 
@@ -581,12 +643,17 @@ class PhotoController extends Module{
                 if(!$fuser AND $check_album){
 
                     //Проверяем на наличии файла с позициям только для этого фоток
-                    $check_pos = Cache::mozg_cache('user_'.$uid.'/position_photos_album_'.$check_album['album_id']);
+//                    $check_pos = Cache::mozg_cache('
+//                    user_'.$uid.'/position_photos_album_'.$check_album['album_id']);
+                    $Cache = Cache::initialize();
+                    $check_pos = $Cache->get("users/{$uid}/position_photos_album_{$check_album['album_id']}");
 
                     //Если нету, то вызываем функцию генерации
                     if(!$check_pos){
                         GenerateAlbumPhotosPosition($uid, $check_album['album_id']);
-                        $check_pos = Cache::mozg_cache('user_'.$uid.'/position_photos_album_'.$check_album['album_id']);
+//                        $check_pos = Cache::mozg_cache('user_'.$uid.'/position_photos_album_'.$check_album['album_id']);
+                        $check_pos = $Cache->get("users/{$uid}/position_photos_album_{$check_album['album_id']}");
+
                     }
 
                     $position = xfieldsdataload($check_pos);

@@ -2,10 +2,7 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Cache;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use App\Services\Cache;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
@@ -14,9 +11,9 @@ class DocController extends Module{
     /**
      * Загрузка файла
      */
-    public function upload($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+    public function upload(){
+//        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -29,7 +26,8 @@ class DocController extends Module{
             $file_tmp = $_FILES['uploadfile']['tmp_name'];
             $file_name = $_FILES['uploadfile']['name']; // оригинальное название для оприделения формата
             $file_size = $_FILES['uploadfile']['size']; // размер файла
-            $type = end(explode(".", $file_name)); // формат файла
+            $array = explode(".", $file_name);
+            $type = end($array); // формат файла
 
             //Разришенные форматы
             $allowed_files = array('doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'rtf', 'pdf', 'png', 'jpg', 'gif', 'psd', 'mp3', 'djvu', 'fb2', 'ps', 'jpeg', 'txt');
@@ -89,8 +87,13 @@ class DocController extends Module{
 
                         echo $file_name.'"'.$db->insert_id().'"'.$dsize.'"'.strtolower($type).'"'.langdate('сегодня в H:i', $server_time);
 
-                        Cache::mozg_mass_clear_cache_file("user_{$user_id}/profile_{$user_id}|user_{$user_id}/docs");
+//                        Cache::mozg_mass_clear_cache_file("
+//                        user_{$user_id}/profile_{$user_id}|
+//                        user_{$user_id}/docs");
 
+                        $Cache = Cache::initialize();
+                        $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                        $Cache->delete("users/{$user_id}/docs");
                     }
 
                 } else
@@ -105,9 +108,9 @@ class DocController extends Module{
     /**
      * Удаление документа
      */
-    public function del($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+    public function del(){
+//        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -130,12 +133,17 @@ class DocController extends Module{
                 //Обновляем кол-во док. у юзера
                 $db->query("UPDATE `users` SET user_doc_num = user_doc_num-1 WHERE user_id = '{$user_id}'");
 
-                Cache::mozg_mass_clear_cache_file("user_{$user_id}/profile_{$user_id}|user_{$user_id}/docs");
-                Cache::mozg_clear_cache_file("wall/doc{$did}");
+//                Cache::mozg_mass_clear_cache_file("
+//                user_{$user_id}/profile_{$user_id}|
+//                user_{$user_id}/docs");
+//                Cache::mozg_clear_cache_file("wall/doc{$did}");
+
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                $Cache->delete("users/{$user_id}/docs");
+                $Cache->delete("wall/doc{$did}");
 
             }
-
-            exit;
         }
     }
 
@@ -143,8 +151,8 @@ class DocController extends Module{
      * Сохранение отред.данных
      */
     public function editsave($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -165,12 +173,18 @@ class DocController extends Module{
 
                 $db->query("UPDATE `doc`SET dname = '{$name}' WHERE did = '{$did}'");
 
-                Cache::mozg_mass_clear_cache_file("user_{$user_id}/profile_{$user_id}|user_{$user_id}/docs");
-                Cache::mozg_clear_cache_file("wall/doc{$did}");
+//                Cache::mozg_mass_clear_cache_file("
+//                user_{$user_id}/profile_{$user_id}|
+//                user_{$user_id}/docs");
+//                Cache::mozg_clear_cache_file("wall/doc{$did}");
+
+                $Cache = Cache::initialize();
+                $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                $Cache->delete("users/{$user_id}/docs");
+                $Cache->delete("wall/doc{$did}");
 
             }
 
-            exit;
         }
     }
 
@@ -178,13 +192,13 @@ class DocController extends Module{
      * Скачивание документа с сервера
      */
     public function download($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $user_id = $user_info['user_id'];
+//            $user_id = $user_info['user_id'];
 
             Tools::NoAjaxQuery();
 
@@ -201,7 +215,8 @@ class DocController extends Module{
 
                 $config['files_max_speed'] = 0;
 
-                $format = end(explode('.', $filename));
+                $array = explode('.', $filename);
+                $format = end($array);
 
                 $row['dname'] = str_replace('.'.$format, '', $row['dname']).'.'.$format;
 
@@ -224,7 +239,7 @@ class DocController extends Module{
      */
     public function list($params){
         $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -257,7 +272,8 @@ class DocController extends Module{
             foreach($sql_ as $row){
 
                 $tpl->set('{name}', stripslashes($row['dname']));
-                $tpl->set('{format}', end(explode('.', $row['ddownload_name'])));
+                $array = explode('.', $row['ddownload_name']);
+                $tpl->set('{format}', end($array));
                 $tpl->set('{did}', $row['did']);
                 $tpl->set('{size}', $row['dsize']);
                 $date = megaDate(strtotime($row['ddate']));
@@ -283,7 +299,7 @@ class DocController extends Module{
         }
 
         $params['tpl'] = $tpl;
-        Page::generate($params);
+//        Page::generate($params);
         return true;
     }
 
@@ -294,7 +310,7 @@ class DocController extends Module{
     {
         $tpl = $params['tpl'];
 
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -323,7 +339,8 @@ class DocController extends Module{
             foreach($sql_ as $row){
 
                 $tpl->set('{name}', stripslashes($row['dname']));
-                $tpl->set('{format}', end(explode('.', $row['ddownload_name'])));
+                $array = explode('.', $row['ddownload_name']);
+                $tpl->set('{format}', end($array));
                 $tpl->set('{did}', $row['did']);
 
                 $date = megaDate(strtotime($row['ddate']));
@@ -341,14 +358,14 @@ class DocController extends Module{
 
             exit;
 
-            $tpl->clear();
-            $db->free();
+//            $tpl->clear();
+//            $db->free();
 
         } else
             echo 'no_log';
 
         $params['tpl'] = $tpl;
-        Page::generate($params);
+//        Page::generate($params);
         return true;
     }
 }

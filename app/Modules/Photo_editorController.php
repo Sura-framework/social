@@ -19,21 +19,21 @@ class Photo_editorController extends Module{
      */
     public function close($params){
 //        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
+//        $lang = $this->get_langs();
+//        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $user_id = $user_info['user_id'];
+//            $user_id = $user_info['user_id'];
 
-            $tpl->load_template('photos/editor_close.tpl');
-            $tpl->set('{photo}', $_GET['image']);
-            $tpl->compile('content');
+//            $tpl->load_template('photos/editor_close.tpl');
+//            $tpl->set('{photo}', $_GET['image']);
+//            $tpl->compile('content');
 
-            Tools::AjaxTpl($tpl);
+//            Tools::AjaxTpl($tpl);
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
+//            $params['tpl'] = $tpl;
+//            Page::generate($params);
             return true;
         }
     }
@@ -44,9 +44,9 @@ class Photo_editorController extends Module{
      * @return bool
      */
     public function index($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
 
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -90,15 +90,15 @@ class Photo_editorController extends Module{
                     $image = $manager->make($upload_dir.$image_rename)->resize(140, 100);
                     $image->save($upload_dir.'c_'.$image_rename, 90);
 
-                    $tpl->load_template('photos/editor.tpl');
+//                    $tpl->load_template('photos/editor.tpl');
                     $server_time = intval($_SERVER['REQUEST_TIME']);
-                    $tpl->set('{photo}', "/uploads/users/{$user_id}/albums/{$row['album_id']}/{$row['photo_name']}?{$server_time}");
-                    $tpl->compile('content');
+//                    $tpl->set('{photo}', "/uploads/users/{$user_id}/albums/{$row['album_id']}/{$row['photo_name']}?{$server_time}");
+//                    $tpl->compile('content');
 
-                    Tools::AjaxTpl($tpl);
+//                    Tools::AjaxTpl($tpl);
 
-                    $params['tpl'] = $tpl;
-                    Page::generate($params);
+//                    $params['tpl'] = $tpl;
+//                    Page::generate($params);
                     return true;
                 }
             } else

@@ -5,10 +5,7 @@ namespace App\Modules;
 
 
 use Intervention\Image\ImageManager;
-use Sura\Libs\Cache;
 use Sura\Libs\Gramatic;
-use Sura\Libs\Langs;
-use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 
@@ -18,6 +15,7 @@ class StoriesController  extends Module
     /**
      * Open pop-up box to add stories img
      *
+     * @param $params
      * @return bool
      */
     public function addbox($params)
@@ -36,6 +34,9 @@ class StoriesController  extends Module
         return true;
     }
 
+    /**
+     * @param $params
+     */
     public function upload($params)
     {
         //$tpl = $params['tpl'];
@@ -70,7 +71,8 @@ class StoriesController  extends Module
             $server_time = intval($_SERVER['REQUEST_TIME']);
             $image_rename = substr(md5($server_time+rand(1,100000)), 0, 15); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
-            $type = end(explode(".", $image_name)); // формат файла
+            $array = explode(".", $image_name);
+            $type = end($array); // формат файла
 
             //Проверям если, формат верный то пропускаем
             if(in_array($type, $allowed_files)){
@@ -133,12 +135,16 @@ class StoriesController  extends Module
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function show($params)
     {
         $db = $this->db();
         $tpl = $params['tpl'];
-        //$user_info = $params['user']['user_info'];
-        //$user_id = $user_info['user_id'];
+        $user_info = $params['user']['user_info'];
+        $user_id = $user_info['user_id'];
 
         if (isset($_POST['user'])){
             $user_id = $_POST['user'];
@@ -189,11 +195,13 @@ class StoriesController  extends Module
         return true;
     }
 
-    public function show_next($params)
+    /**
+     * @return bool
+     */
+    public function show_next()
     {
         $db = $this->db();
-        $tpl = $params['tpl'];
-        $user_info = $params['user']['user_info'];
+//        $user_info = $params['user']['user_info'];
         //$user_id = $user_info['user_id'];
 
         $path = explode('/', $_SERVER['REQUEST_URI']);

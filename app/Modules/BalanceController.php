@@ -2,17 +2,18 @@
 
 namespace App\Modules;
 
+use App\Services\Cache;
+use Exception;
 use Sura\Libs\Gramatic;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 
 class BalanceController extends Module{
 
+    /**
+     * @param $params
+     */
     public function code($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -21,10 +22,8 @@ class BalanceController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
-            //$mobile_speedbar = $lang['balance'];
 
             $code=$_POST['code'];
             $res = $db->super_query("SELECT COUNT(*) FROM `codes` WHERE code = '{$code}' LIMIT 1");
@@ -37,10 +36,14 @@ class BalanceController extends Module{
                 } else echo '2';
 
             } else echo '1';
-
-            exit();
         }
     }
+
+    /**
+     * @param $params
+     * @return string
+     * @throws Exception
+     */
     public function invite($params){
         $lang = $this->get_langs();
         $user_info = $this->user_info();
@@ -52,10 +55,19 @@ class BalanceController extends Module{
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
             $params['uid'] = $user_id;
+            $params['site'] = 'https://'.$_SERVER['HTTP_HOST'].'/u';
+
+            $params['menu'] = \App\Models\Menu::settings();
 
             return view('balance.invite', $params);
         }
     }
+
+    /**
+     * @param $params
+     * @return string
+     * @throws Exception
+     */
     public function invited($params){
         $lang = $this->get_langs();
         $db = $this->db();
@@ -116,8 +128,15 @@ class BalanceController extends Module{
             }
         }
 
+        $params['menu'] = \App\Models\Menu::settings();
+
         return view('balance.invited', $params);
     }
+
+    /**
+     * @param $params
+     * @return bool
+     */
     public function payment($params){
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -130,7 +149,7 @@ class BalanceController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
-            $mobile_speedbar = $lang['balance'];
+//            $mobile_speedbar = $lang['balance'];
 
 
             $owner = $db->super_query("SELECT balance_rub FROM `users` WHERE user_id = '{$user_id}'");
@@ -153,10 +172,15 @@ class BalanceController extends Module{
             Tools::AjaxTpl($tpl);
 
             $params['tpl'] = $tpl;
-            Page::generate($params);
+//            Page::generate($params);
             return true;
         }
     }
+
+    /**
+     * @param $params
+     * @return bool
+     */
     public function payment_2($params){
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -169,7 +193,7 @@ class BalanceController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
-            $mobile_speedbar = $lang['balance'];
+//            $mobile_speedbar = $lang['balance'];
 
             $config = Settings::loadsettings();
 
@@ -189,12 +213,16 @@ class BalanceController extends Module{
             Tools::AjaxTpl($tpl);
 
             $params['tpl'] = $tpl;
-            Page::generate($params);
+//            Page::generate($params);
             return true;
         }
     }
+
+    /**
+     * @param $params
+     */
     public function ok_payment($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -205,7 +233,7 @@ class BalanceController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
-            $mobile_speedbar = $lang['balance'];
+//            $mobile_speedbar = $lang['balance'];
 
             $num = intval($_POST['num']);
             if($num <= 0) $num = 0;
@@ -230,6 +258,9 @@ class BalanceController extends Module{
 
     /**
      * Вывод текущего счета
+     * @param $params
+     * @return string
+     * @throws Exception
      */
     public function index($params)
     {
@@ -241,23 +272,34 @@ class BalanceController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $user_id = $user_info['user_id'];
+            $user_id = $id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
 
-            $owner = $db->super_query("SELECT user_balance, balance_rub FROM `users` WHERE user_id = '{$user_id}'");
+            $Cache = Cache::initialize();
+            try {
+                $value = $Cache->get("users/{$id}/balance", $default = null);
+                $row = $owner = unserialize($value);
+            }catch (Exception $e){
+                $dir = __DIR__.'/../cache/users/'.$id.'/';
+                if(!is_dir($dir)) {
+                    mkdir($dir, 0777, true);
+                }
 
-//            $tpl->load_template('balance/main.tpl');
+                $row = $owner = $db->super_query("SELECT user_balance, balance_rub FROM `users` WHERE user_id = '{$user_id}'");
 
-//            $tpl->set('{ubm}', );
+                $value = serialize($row);
+
+                $Cache->set("users/{$id}/balance", $value);
+            }
+
+//            $owner = $db->super_query("SELECT user_balance, balance_rub FROM `users` WHERE user_id = '{$user_id}'");
+
             $params['ubm'] = $owner['user_balance'];
-//            $tpl->set('{rub}', );
             $params['rub'] = $owner['balance_rub'];
-//            $tpl->set('{text-rub}', );
             $params['text_rub'] = Gramatic::declOfNum($owner['balance_rub'], array('рубль', 'рубля', 'рублей'));
 
-//            $tpl->compile('content');
-//            $tpl->clear();
-//            $db->free();
+            $params['menu'] = \App\Models\Menu::settings();
+
             return view('balance.main', $params);
         } else {
             $params['title'] = $lang['no_infooo'];

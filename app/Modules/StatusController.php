@@ -2,14 +2,16 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Cache;
-use Sura\Libs\Registry;
+use App\Services\Cache;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
 class StatusController extends Module{
 
-    public function index($params){
+    /**
+     *
+     */
+    public function index(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -17,6 +19,8 @@ class StatusController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+
+            $Cache = Cache::initialize();
 
             $user_id = $user_info['user_id'];
             $text = Validation::ajax_utf8(Validation::textFilter($_POST['text'], false, true));
@@ -33,7 +37,7 @@ class StatusController extends Module{
                 if(stripos($row['admin'], "u{$user_id}|") !== false){
 
                     $db->query("UPDATE `communities` SET status_text = '{$text}' WHERE id = '{$public_id}'");
-                    Cache::mozg_clear_cache_folder('groups');
+//                    Cache::mozg_clear_cache_folder('groups');
 
                 }
 
@@ -43,15 +47,12 @@ class StatusController extends Module{
                 $db->query("UPDATE `users` SET user_status = '{$text}' WHERE user_id = '{$user_id}'");
 
                 //Чистим кеш
-                Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-                Cache::mozg_clear_cache();
+                $Cache->delete("users/{$user_id}/profile_{$user_id}");
 
             }
 
             echo stripslashes(stripslashes(Validation::textFilter(Validation::ajax_utf8($_POST['text']))));
         }
-
-        die();
 
     }
 }

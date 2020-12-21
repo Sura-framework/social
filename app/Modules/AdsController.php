@@ -843,7 +843,7 @@ class AdsController extends Module{
         } else {
             $lang = $this->get_langs();
             $user_speedbar = $lang['no_infooo'];
-            msgbox('', $lang['not_logged'], 'info');
+            msg_box( $lang['not_logged'], 'info');
         }
 
         $params['tpl'] = $tpl;

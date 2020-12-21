@@ -8,7 +8,10 @@ use Sura\Libs\Tools;
 class TagsController  extends Module
 {
 
-    public function Index($params)
+    /**
+     *
+     */
+    public function Index()
     {
         Tools::NoAjaxRedirect();
 
@@ -47,7 +50,7 @@ class TagsController  extends Module
         } else {
             $row = $db->super_query("SELECT id, title, traf, photo FROM `communities` WHERE id = '{$id}'");
             $name = $row['title'];
-            $status = $row['traf'].' '.gram_record($row['traf'], 'subscribers');
+            $status = $row['traf'].' '. gram_record($row['traf'], 'subscribers');
             $photo = $row['photo'];
             $link = 'public'.$id;
             $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `friends` WHERE friend_id = '{$id}' AND user_id = '{$user_info['user_id']}' AND subscriptions = 2");

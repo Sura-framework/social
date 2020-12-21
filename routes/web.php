@@ -1,10 +1,12 @@
 <?php
-$router->add([
+
+return array(
     // Главная
     '/'                                           => 'Home@Index',
 
     // Регистрация
     '/reg/'                                       => 'Home@Index',
+    '/test/'                                       => 'Home@Test',
     '/register/'                                       => 'Register@Index',
 
     //Реф. ссылка на регистрацию
@@ -36,7 +38,9 @@ $router->add([
     '/ads/upload/'                                => 'Ads@upload',
 
     // Страница пользователя
+    '/public:num'                                 => 'Public@Index',
     '/u:num'                                      => 'Profile@Index',
+
     '/u:num/after'                                => 'Profile@Index',
     '/tags/'                                      => 'Tags@Index',
 
@@ -141,9 +145,9 @@ $router->add([
     '/friends/reject/:num/'                       => 'Friends@reject',
     '/friends/box/'                               => 'Friends@box',
     '/friends/delete/'                            => 'Friends@delete',
-    '/friends/online/:num/'                       => 'Friends@online',
+    '/friends/:num/online/'                       => 'Friends@online',
     '/friends/common/'                       => 'Friends@common',
-    '/friends/common/:num/'                       => 'Friends@common',
+    '/friends/:num/common/'                       => 'Friends@common',
     '/friends/requests/'                          => 'Friends@requests',
     '/friends/requests/page/:num/'                => 'Friends@requests',
     '/friends/requests/common/:num/'              => 'Friends@requests',
@@ -213,6 +217,7 @@ $router->add([
     '/messages/settTypeMsg/'                      => 'Messages@settTypeMsg',
 
     '/im/'                                        => 'Im@Index',
+    '/im/:num/'                                   => 'Im@user',
     '/im/typograf/'                               => 'Im@typograf',
     '/im/typograf/stop/'                          => 'Im@typograf',
     '/im/read/'                                   => 'Im@read',
@@ -231,7 +236,7 @@ $router->add([
 
     //Стена
     '/wall/:num/'                                 => 'Wall@Index',
-    '/wall/:num/page/:num/'                       => 'Wall@Index',
+    '/wall/:num/page/:num/'                       => 'Wall@page',
     '/wall/:num/own/'                             => 'Wall@Index',
     '/wall/:num/own/:num/'                        => 'Wall@Index',
     '/wall/:num/:num/'                            => 'Wall@Index',
@@ -257,10 +262,11 @@ $router->add([
     '/settings/saveprivacy/'                      => 'Settings@saveprivacy',
     '/settings/addblacklist/'                     => 'Settings@addblacklist',
     '/settings/delblacklist/'                     => 'Settings@delblacklist',
-    '/settings/timezona/'                     => 'Settings@time_zona',
+    '/settings/timezone/'                     => 'Settings@time_zone',
 
     //Помощь
     '/support/'                                   => 'Support@Index',
+    '/support/:num/'                                   => 'Support@Index',
     '/support/send/'                              => 'Support@send',
     '/support/new/'                               => 'Support@new',
     '/support/show/:num/'                         => 'Support@show',
@@ -371,7 +377,7 @@ $router->add([
     '/public/videos/search/'                        => 'NoPublic_videosne@search',
 
     //Сообщества -> Публичные страницы
-    '/public:num'                                 => 'Public@Index',
+
     '/public/id:num/'                             => 'None@Index',
     '/public_audio/'                              => 'None@Index',
     '/public_audio/:num/'                         => 'None@Index',
@@ -385,6 +391,12 @@ $router->add([
     '/public_videos/edit/'                        => 'None@Index',
     '/public_videos/edit_save/'                   => 'None@Index',
     '/public_videos/:num/'                        => 'None@Index',
+
+    '/public/edit/:num'                        => 'Groups@edit_main',
+    '/public/edit/users/:num'                        => 'Groups@edit_users',
+    '/public/edit/users/:num/admin'                        => 'Groups@edit_users',
+    '/public/edit/blacklist/:num'                        => 'Groups@edit',
+    '/public/edit/link/:num'                        => 'Groups@edit',
 
     //Музыка
     '/audio/'                                     => 'Audio@Index',
@@ -401,10 +413,10 @@ $router->add([
     '/audio/loadFriends/'                         => 'Audio@loadFriends',
     '/audio/:num/load_all/'                       => 'Audio@load_all',
 
-    '/audio/my_music/'                       => 'Audio@Index',
-    '/audio/feed/'                       => 'Audio@Index',
-    '/audio/recommendations/'                       => 'Audio@Index',
-    '/audio/popular/'                       => 'Audio@Index',
+    '/audio/my_music/'                       => 'Audio@my_music',
+    '/audio/feed/'                       => 'Audio@feed',
+    '/audio/recommendations/'                       => 'Audio@recommendations',
+    '/audio/popular/'                       => 'Audio@popular',
 
     //Документы
     '/docs/'                                      => 'Doc@Index',
@@ -427,6 +439,7 @@ $router->add([
 
     //Языки
     '/lang/'                                      => 'Lang@Index',
+    '/lang/change/:num/'                                      => 'Lang@change_lang',
 
     '/logout/'                                    => 'Logout@Index',
 
@@ -465,5 +478,6 @@ $router->add([
     '/admin/city/'                                    => 'Admin@main',
     '/admin/ads/'                                    => 'Admin@main',
 
-]);
+    '/api/'                                    => 'Api@main',
+);
 

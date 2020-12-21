@@ -5,8 +5,7 @@
             <div class="row">
                 <div class="col-3 bg-white im_flblock pl-4" id="im_left_bl">
                     <div class="row">
-                        <h2 class="font-bold mb-6">Чаты</h2>
-
+                        <h2 class="font-bold mb-6">@_e('chats')</h2>
                     </div>
                     <span id="updateDialogs"></span>
                     <nav class="pl-3">
@@ -51,8 +50,7 @@
                             </svg>
                         </div>
                         <div class="text">
-
-                            Вы можете выбрать собеседника из левой колоны и начать с ним общение.
+                            @_e('im_info')
                         </div>
                     </div>
                 </div>

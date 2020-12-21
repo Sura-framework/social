@@ -3,15 +3,12 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Libs\Thumb;
-use Sura\Libs\Langs;
-use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
 class Attach_groupsController extends Module{
 
-    public function index($params)
+    public function index()
     {
         $db = $this->db();
         $user_info = $this->user_info();
@@ -37,7 +34,8 @@ class Attach_groupsController extends Module{
                 $server_time = intval($_SERVER['REQUEST_TIME']);
                 $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя фотографии
                 $image_size = $_FILES['uploadfile']['size']; // размер файла
-                $type = end(explode(".", $image_name)); // формат файла
+                $array = explode(".", $image_name);
+                $type = end($array); // формат файла
 
                 //Проверям если, формат верный то пропускаем
                 if(in_array(strtolower($type), $allowed_files)){

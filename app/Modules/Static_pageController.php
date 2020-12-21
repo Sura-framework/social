@@ -2,12 +2,18 @@
 
 namespace App\Modules;
 
+use Exception;
 use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
 class Static_pageController extends Module{
 
+    /**
+     * @param $params
+     * @return string
+     * @throws Exception
+     */
     public function index($params){
         $tpl = $params['tpl'];
 
@@ -27,7 +33,7 @@ class Static_pageController extends Module{
                 $tpl->set('{text}', stripslashes($row['text']));
                 $tpl->compile('content');
             } else
-                msgbox('', 'Страница не найдена.', 'info_2');
+                msg_box( 'Страница не найдена.', 'info_2');
 
             $tpl->clear();
             $db->free();

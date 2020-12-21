@@ -2,12 +2,16 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use Exception;
 use Sura\Libs\Tools;
 
 class Stats_groupsController extends Module{
 
+    /**
+     * @param $params
+     * @return bool|string
+     * @throws Exception
+     */
     public function index($params){
         $tpl = $params['tpl'];
 
@@ -54,7 +58,7 @@ class Stats_groupsController extends Module{
                 $t_date = langdate('F', $stat_date);
 
                 //Составляем массив для вывода за этот месяц
-                $sql_ = $db->super_query("SELECT cnt, date, hits, new_users, exit_users FROM `communities_stats` WHERE gid = '{$gid}' AND date_x = '{$stat_date}' ORDER by `date` ASC", 1);
+                $sql_ = $db->super_query("SELECT cnt, date, hits, new_users, exit_users FROM `communities_stats` WHERE gid = '{$gid}' AND date_x = '{$stat_date}' ORDER by `date` ", 1);
 
                 if($sql_){
 
@@ -100,7 +104,7 @@ class Stats_groupsController extends Module{
                 $rNum = round($row_max['cnt'] / 15);
                 if($rNum < 1) $rNum = 1;
 
-                $tickSize = $rNum;
+//                $tickSize = $rNum;
 
                 //Выводим максимальное кол-во просмотров за этот месяц
                 $row_max_hits = $db->super_query("SELECT hits FROM `communities_stats` WHERE gid = '{$gid}' AND date_x = '{$stat_date}' ORDER by `hits` DESC");
@@ -148,7 +152,7 @@ class Stats_groupsController extends Module{
 
             } else
 
-                msgbox('', 'Ошибка доступа!', 'info');
+                msg_box('Ошибка доступа!', 'info');
 
 
             $tpl->clear();
@@ -161,8 +165,8 @@ class Stats_groupsController extends Module{
 
         }
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
+//        $params['tpl'] = $tpl;
+//        Page::generate($params);
         return true;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace  App\Modules;
 
-use Sura\Libs\Cache;
+use App\Services\Cache;
 use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
@@ -12,6 +12,9 @@ use Sura\Libs\Validation;
 
 class Public_videosController extends Module{
 
+    /**
+     * @param $params
+     */
     public function add($params){
         //$tpl = $params['tpl'];
         $config = Settings::loadsettings();
@@ -62,14 +65,16 @@ class Public_videosController extends Module{
 
                 $db->query("UPDATE `communities` SET videos_num = videos_num + 1 WHERE id = '{$pid}'");
 
-                Cache::mozg_clear_cache_file("groups/video{$pid}");
-
+//                Cache::mozg_clear_cache_file("groups/video{$pid}");
+                $Cache = Cache::initialize();
+                $Cache->delete("groups/{$pid}/video{$pid}");
             }
-
-            die();
         }
     }
 
+    /**
+     * @param $params
+     */
     public function del($params){
         //$tpl = $params['tpl'];
         //$config = Settings::loadsettings();
@@ -105,14 +110,19 @@ class Public_videosController extends Module{
 
                 $db->query("UPDATE `communities` SET videos_num = videos_num - 1 WHERE id = '{$pid}'");
 
-                Cache::mozg_clear_cache_file("groups/video{$pid}");
-
+//                Cache::mozg_clear_cache_file("groups/video{$pid}");
+                $Cache = Cache::initialize();
+                $Cache->delete("groups/{$pid}/video{$pid}");
             }
 
             die();
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function edit($params){
         $tpl = $params['tpl'];
         //$config = Settings::loadsettings();
@@ -153,6 +163,9 @@ class Public_videosController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function edit_save($params){
         //$tpl = $params['tpl'];
         //$config = Settings::loadsettings();
@@ -185,14 +198,17 @@ class Public_videosController extends Module{
 
                 echo stripslashes($descr);
 
-                Cache::mozg_clear_cache_file("groups/video{$pid}");
-
+//                Cache::mozg_clear_cache_file("groups/video{$pid}");
+                $Cache = Cache::initialize();
+                $Cache->delete("groups/{$pid}/video{$pid}");
             }
-
-            die();
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function search($params){
         $tpl = $params['tpl'];
         $config = Settings::loadsettings();
@@ -278,7 +294,7 @@ class Public_videosController extends Module{
 
                     $tpl->result['info'] .= "<div class=\"allbar_title\">Нет видеозаписей  |  <a href=\"/{$adres}\" onClick=\"Page.Go(this.href); return false\" style=\"font-weight:normal\">К сообществу</a>  |  <a href=\"/public/videos{$pid}\" onClick=\"Page.Go(location.href); return false\" style=\"font-weight:normal\">Все видеозаписи</a></div>";
 
-                    msgbox('', '<br /><br /><br />По запросу <b>'.stripslashes($query).'</b> не найдено ни одной видеозаписи.<br /><br /><br />', 'info_2');
+                    msg_box( '<br /><br /><br />По запросу <b>'.stripslashes($query).'</b> не найдено ни одной видеозаписи.<br /><br /><br />', 'info_2');
 
                 }
             }
@@ -291,6 +307,10 @@ class Public_videosController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function index($params){
         $tpl = $params['tpl'];
 
@@ -422,7 +442,7 @@ class Public_videosController extends Module{
         } else {
             include __DIR__.'/../lang/'.$checkLang.'/site.lng';
             $user_speedbar = 'Информация';
-            msgbox('', $lang['not_logged'], 'info');
+            msg_box($lang['not_logged'], 'info');
 
         }
 

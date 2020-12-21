@@ -2,18 +2,16 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Db;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
 use Sura\Libs\Tools;
-use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 
 class SupportController extends Module{
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function new($params){
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
 //        $db = $this->db();
         $user_info = $this->user_info();
@@ -30,18 +28,21 @@ class SupportController extends Module{
 //
 //            $mobile_speedbar = 'Новый вопрос';
 
-            $tpl->load_template('support/new.tpl');
-            $tpl->set('{uid}', $user_id);
-            $tpl->compile('content');
+//            $tpl->load_template('support/new.tpl');
+//            $tpl->set('{uid}', $user_id);
+//            $tpl->compile('content');
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
+//            $params['tpl'] = $tpl;
+//            Page::generate($params);
             return true;
         }
     }
 
+    /**
+     * @param $params
+     */
     public function send($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -54,7 +55,7 @@ class SupportController extends Module{
             $params['title'] = $lang['support_title'].' | Sura';
             if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
             $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            $limit_page = ($page-1)*$gcount;
 
               $title = Validation::ajax_utf8(Validation::textFilter($_POST['title']), false, true);
             $question = Validation::ajax_utf8(Validation::textFilter($_POST['question']));
@@ -66,23 +67,23 @@ class SupportController extends Module{
                 $db->query("INSERT INTO `support` SET title = '{$title}', question = '{$question}', suser_id = '{$user_id}', sfor_user_id = '{$user_id}', sdate = '{$server_time}', сdate = '{$server_time}'");
                 $dbid = $db->insert_id();
                 $row = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$user_id}'");
-                $tpl->load_template('support/show.tpl');
-                $tpl->set('{title}', stripslashes($title));
-                $tpl->set('{question}', stripslashes($question));
-                $tpl->set('{qid}', $dbid);
+//                $tpl->load_template('support/show.tpl');
+//                $tpl->set('{title}', stripslashes($title));
+//                $tpl->set('{question}', stripslashes($question));
+//                $tpl->set('{qid}', $dbid);
 
                 $date = megaDate($server_time);
-                $tpl->set('{date}', $date);
-                $tpl->set('{status}', 'Вопрос ожидает обработки.');
-                $tpl->set('{name}', $row['user_search_pref']);
-                $tpl->set('{uid}', $user_id);
+//                $tpl->set('{date}', $date);
+//                $tpl->set('{status}', 'Вопрос ожидает обработки.');
+//                $tpl->set('{name}', $row['user_search_pref']);
+//                $tpl->set('{uid}', $user_id);
                 if($row['user_photo'])
                     $tpl->set('{ava}', '/uploads/users/'.$user_id.'/50_'.$row['user_photo']);
                 else
                     $tpl->set('{ava}', '/images/no_ava_50.png');
-                $tpl->set('{answers}', '');
-                $tpl->compile('content');
-                Tools::AjaxTpl($tpl);
+//                $tpl->set('{answers}', '');
+//                $tpl->compile('content');
+//                Tools::AjaxTpl($tpl);
 
                 echo 'r|x'.$dbid;
             } else
@@ -92,6 +93,9 @@ class SupportController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function delet($params){
         $lang = $this->get_langs();
         $db = $this->db();
@@ -117,6 +121,9 @@ class SupportController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function delet_answer($params){
         $lang = $this->get_langs();
         $db = $this->db();
@@ -141,6 +148,9 @@ class SupportController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     */
     public function close($params){
         $lang = $this->get_langs();
         $db = $this->db();
@@ -166,6 +176,10 @@ class SupportController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function answer($params){
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -239,6 +253,10 @@ class SupportController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return bool
+     */
     public function show($params){
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -329,7 +347,7 @@ class SupportController extends Module{
                 $tpl->compile('content');
             } else {
                 $speedbar = $lang['error'];
-                msgbox('', $lang['support_no_quest'], 'info');
+                msg_box( $lang['support_no_quest'], 'info');
             }
 
             $params['tpl'] = $tpl;
@@ -338,28 +356,31 @@ class SupportController extends Module{
         }
     }
 
+    /**
+     * @param $params
+     * @return string
+     * @throws \Exception
+     */
     public function index($params){
         $user_info = $this->user_info();
         $logged = $this->logged();
-
-        $tpl = $params['tpl'];
-
         $lang = $this->get_langs();
         $db = $this->db();
-//        $db = Db::getDB();
-
-
         Tools::NoAjaxRedirect();
 
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
 
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            $path = explode('/', $_SERVER['REQUEST_URI']);
+
+            if(is_int($path['2']) )
+                $page = $path['2'];
+            else
+                $page = 1;
+
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
-
-            $mobile_speedbar = 'Помощь';
 
             if($user_info['user_support'] AND $user_info['user_group'] != 4)
                 $db->query("UPDATE `users` SET user_support = 0 WHERE user_id = '{$user_id}'");
@@ -378,64 +399,85 @@ class SupportController extends Module{
                 $count = $db->super_query("SELECT COUNT(*) AS cnt FROM `support` {$sql_where_cnt}");
 
 
-
             if($sql_){
-                $tpl->load_template('support/question.tpl');
-                foreach($sql_ as $row){
-                    $tpl->set('{title}', stripslashes($row['title']));
-                    $date = megaDate(strtotime($row['sdate']));
-                    $tpl->set('{date}', $date);
-                    if($row['sfor_user_id'] == $row['suser_id'] OR $user_info['user_group'] == 4){
-                        if($row['sfor_user_id'] == $row['suser_id'])
-                            $tpl->set('{status}', 'Вопрос ожидает обработки.');
-                        else
-                            $tpl->set('{status}', 'Есть ответ.');
-                        $tpl->set('{name}', $row['user_search_pref']);
-                        $tpl->set('{answer}', '');
-                        if($row['user_photo'])
-                            $tpl->set('{ava}', '/uploads/users/'.$row['suser_id'].'/50_'.$row['user_photo']);
-                        else
-                            $tpl->set('{ava}', '/images/no_ava_50.png');
-                    } else {
-                        $tpl->set('{name}', 'Агент поддержки');
-                        $tpl->set('{status}', 'Есть ответ.');
-                        $tpl->set('{ava}', '/images/support.png');
-                        $tpl->set('{answer}', 'ответил');
-                    }
-                    $tpl->set('{qid}', $row['id']);
-                    $tpl->compile('alert_info');
+
+            }else{
+
+
+            }
+            if($sql_){
+                $titles = array('вопрос', 'вопроса', 'вопросов');//questions
+                if($user_info['user_group'] == 4){
+//                $tpl->set('{cnt}', $count['cnt'].' '.Gramatic::declOfNum($count['cnt'], $titles));
+
                 }
-                Registry::set('tpl', $tpl);
-                $tpl = Tools::navigation($gcount, $count['cnt'], '/support?page=', $tpl);
-                        $tpl = $params['tpl'];
-            } else
-                if($user_info['user_group'] == 4)
-                    $tpl->result['alert_info'] = msg_box($lang['support_no_quest3'], 'info_2');
-                else
-                    $tpl->result['alert_info'] = msg_box($lang['support_no_quest2'], 'info_2');
-            $tpl->clear();
-            $db->free();
+                else{
+//                $tpl->set('{cnt}', 'Вы задали '.$count['cnt'].' '.Gramatic::declOfNum($count['cnt'], $titles));
+
+                }
+
+//                $tpl->load_template('support/question.tpl');
+                foreach($sql_ as $row){
+//                    $tpl->set('{title}', stripslashes($row['title']));
+                    $date = megaDate(strtotime($row['sdate']));
+//                    $tpl->set('{date}', $date);
+                    if($row['sfor_user_id'] == $row['suser_id'] OR $user_info['user_group'] == 4){
+                        if($row['sfor_user_id'] == $row['suser_id']){
+//                            $tpl->set('{status}', 'Вопрос ожидает обработки.');
+
+                        }
+                        else{
+//                            $tpl->set('{status}', 'Есть ответ.');
+
+                        }
+//                        $tpl->set('{name}', $row['user_search_pref']);
+//                        $tpl->set('{answer}', '');
+                        if($row['user_photo']){
+//                            $tpl->set('{ava}', '/uploads/users/'.$row['suser_id'].'/50_'.$row['user_photo']);
+
+                        }
+                        else{
+//                            $tpl->set('{ava}', '/images/no_ava_50.png');
+
+                        }
+                    } else {
+//                        $tpl->set('{name}', 'Агент поддержки');
+//                        $tpl->set('{status}', 'Есть ответ.');
+//                        $tpl->set('{ava}', '/images/support.png');
+//                        $tpl->set('{answer}', 'ответил');
+                    }
+//                    $tpl->set('{qid}', $row['id']);
+//                    $tpl->compile('alert_info');
+                }
+//                Registry::set('tpl', $tpl);
+//                $tpl = Tools::navigation($gcount, $count['cnt'], '/support?page=', $tpl);
+//                        $tpl = $params['tpl'];
+            } else{
+                //            $tpl->set('{cnt}', '');
+
+                if($user_info['user_group'] == 4){
+//                    $tpl->result['alert_info'] = msg_box($lang['support_no_quest3'], 'info_2');
+
+                }
+                else{
+//                    $tpl->result['alert_info'] = msg_box($lang['support_no_quest2'], 'info_2');
+
+                }
+            }
+
+            return view('support.support', $params);
         } else {
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
         }
 
-        $tpl->load_template('support/head.tpl');
-        if($sql_){
-            $titles = array('вопрос', 'вопроса', 'вопросов');//questions
-            if($user_info['user_group'] == 4)
-                $tpl->set('{cnt}', $count['cnt'].' '.Gramatic::declOfNum($count['cnt'], $titles));
-            else
-                $tpl->set('{cnt}', 'Вы задали '.$count['cnt'].' '.Gramatic::declOfNum($count['cnt'], $titles));
-        }else
-            $tpl->set('{cnt}', '');
+//        $tpl->load_template('support/head.tpl');
 
-        $tpl->set('{content_info}', $tpl->result['alert_info']);
-        $tpl->compile('content');
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
+//        $tpl->set('{content_info}', $tpl->result['alert_info']);
+
+
+
     }
 }

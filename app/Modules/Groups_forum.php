@@ -2,10 +2,7 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Cache;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use App\Services\Cache;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -16,8 +13,8 @@ class Groups_forum extends Module{
      * Отправка темы в БД
      */
     public function new_send($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $tpl = $params['tpl'];
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -25,7 +22,7 @@ class Groups_forum extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $act = $_GET['act'];
+//            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
 //            Tools::NoAjaxQuery();
@@ -47,7 +44,8 @@ class Groups_forum extends Module{
                 //Обновляем кол-во тем в сообществе
                 $db->query("UPDATE `communities` SET forum_num = forum_num+1 WHERE id = '{$public_id}'");
 
-                Cache::mozg_clear_cache_file("groups_forum/forum{$public_id}");
+                $Cache = Cache::initialize();
+                $Cache->delete('groups_forum/'.$public_id.'/forum'.$public_id);
 
                 echo $dbid;
 
@@ -81,7 +79,7 @@ class Groups_forum extends Module{
                 $tpl->compile('content');
 
             } else
-                msgbox('', '<br /><br />Ошибка доступа.<br /><br /><br />', 'info_2');
+                msg_box( '<br /><br />Ошибка доступа.<br /><br /><br />', 'info_2');
 
             $params['tpl'] = $tpl;
             Page::generate($params);
@@ -145,14 +143,16 @@ class Groups_forum extends Module{
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$row_owner2['muser_id']}', from_user_id = '{$user_id}', type = '6', date = '{$server_time}', text = '{$msg}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/forum{$row['public_id']}?act=view&id={$fid}'");
 
-                            Cache::mozg_create_cache("user_{$row_owner2['muser_id']}/updates", 1);
+                            $Cache = Cache::initialize();
+                            $Cache->set("users/{$row_owner2['muser_id']}/updates", 1);
 
                             //ИНАЧЕ Добавляем +1 юзеру для оповещания
                         } else {
 
-                            $cntCacheNews = Cache::mozg_cache("user_{$row_owner2['muser_id']}/new_news");
-                            Cache::mozg_create_cache("user_{$row_owner2['muser_id']}/new_news", ($cntCacheNews+1));
 
+                            $Cache = Cache::initialize();
+                            $Cache->get("users/{$row_owner2['muser_id']}/new_news");
+                            $Cache->set("users/{$row_owner2['muser_id']}/new_news", $cntCacheNews+1);
                         }
 
                     }
@@ -166,7 +166,8 @@ class Groups_forum extends Module{
 
                 }
 
-                Cache::mozg_clear_cache_file("groups_forum/forum{$row['public_id']}");
+                $Cache = Cache::initialize();
+                $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
 
                 //Обновляем данные в теме
                 $server_time = intval($_SERVER['REQUEST_TIME']);
@@ -373,8 +374,8 @@ class Groups_forum extends Module{
 
                 $db->query("UPDATE `communities_forum` SET title = '{$title}' WHERE fid = '{$fid}'");
 
-                Cache::mozg_clear_cache_file("groups_forum/forum{$row['public_id']}");
-
+                $Cache = Cache::initialize();
+                $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
             }
 
             exit();
@@ -415,11 +416,9 @@ class Groups_forum extends Module{
 
                 $db->query("UPDATE `communities_forum` SET fixed = '{$fixed}' WHERE fid = '{$fid}'");
 
-                Cache::mozg_clear_cache_file("groups_forum/forum{$row['public_id']}");
-
+                $Cache = Cache::initialize();
+                $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
             }
-
-            exit();
         }
     }
 
@@ -499,7 +498,10 @@ class Groups_forum extends Module{
                 $db->query("DELETE FROM `votes` WHERE id = '{$row['vote']}'");
                 $db->query("DELETE FROM `votes_result` WHERE vote_id = '{$row['vote']}'");
 
-                Cache::mozg_mass_clear_cache_file("votes/vote_{$row['vote']}|votes/vote_answer_cnt_{$row['vote']}|groups_forum/forum{$row['public_id']}");
+                $Cache = Cache::initialize();
+                $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
+                $Cache->delete("votes/vote_{$row['vote']}");
+                $Cache->delete("votes/vote_answer_cnt_{$row['vote']}");
 
             }
 
@@ -540,11 +542,10 @@ class Groups_forum extends Module{
                 $db->query("DELETE FROM `votes` WHERE id = '{$row['vote']}'");
                 $db->query("DELETE FROM `votes_result` WHERE vote_id = '{$row['vote']}'");
 
-                Cache::mozg_mass_clear_cache_file("votes/vote_{$row['vote']}|votes/vote_answer_cnt_{$row['vote']}");
-
+                $Cache = Cache::initialize();
+                $Cache->delete("votes/vote_{$row['vote']}");
+                $Cache->delete("votes/vote_answer_cnt_{$row['vote']}");
             }
-
-            exit();
         }
     }
 
@@ -584,11 +585,9 @@ class Groups_forum extends Module{
                 //Удаляем из ленты новостей
                 $db->query("DELETE FROM `news` WHERE action_type = '6' AND obj_id = '{$mid}' AND action_time = '{$row['mdate']}'");
 
-                Cache::mozg_clear_cache_file("groups_forum/forum{$row2['public_id']}");
-
+                $Cache = Cache::initialize();
+                $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
             }
-
-            exit();
         }
     }
 
@@ -656,8 +655,11 @@ class Groups_forum extends Module{
 
     /**
      * Просмотр темы
+     * @param $params
+     * @param $vote_result
+     * @return bool
      */
-    public function view($params){
+    public function view($params, $vote_result){
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -911,7 +913,7 @@ class Groups_forum extends Module{
                         $answer[$row_answer['answer']]['cnt'] = $row_answer['cnt'];
 
                     }
-
+                    $vote_result = '';
                     $vote_result .= "<div class=\"clear\" style=\"height:10px\"></div><div id=\"result_vote_block{$vote_id}\"><div class=\"wall_vote_title\">{$row_vote['title']}<div class=\"fl_r\"><a href=\"\" style=\"font-weight:normal\" onClick=\"Forum.VoteDelBox({$row['fid']}); return false\">Удалить опрос</a></div></div>";
 
                     for($ai = 0; $ai < sizeof($arr_answe_list); $ai++){
@@ -961,7 +963,7 @@ class Groups_forum extends Module{
                 $tpl->compile('content');
 
             } else
-                msgbox('', '<br /><br />Тема не найдена.<br /><br /><br />', 'info_2');
+                msg_box('<br /><br />Тема не найдена.<br /><br /><br />', 'info_2');
 
             $params['tpl'] = $tpl;
             Page::generate($params);
@@ -1058,7 +1060,7 @@ class Groups_forum extends Module{
 
                 } else
                     if(!$_POST['a'])
-                        msgbox('', '<br /><br />В сообществе ещё нет тем.<br /><br /><br />', 'info_2');
+                        msg_box( '<br /><br />В сообществе ещё нет тем.<br /><br /><br />', 'info_2');
 
                 //Низ
                 if(!$_POST['a'] AND $forum_num > 20){
@@ -1079,7 +1081,7 @@ class Groups_forum extends Module{
 
             } else
                 if(!$_POST['a'])
-                    msgbox('', '<br /><br />Ошибка доступа.<br /><br /><br />', 'info_2');
+                    msg_box( '<br /><br />Ошибка доступа.<br /><br /><br />', 'info_2');
 
             $tpl->clear();
             $db->free();

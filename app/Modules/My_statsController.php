@@ -2,16 +2,19 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use Exception;
 use Sura\Libs\Tools;
 
 class My_statsController extends Module{
 
+    /**
+     * @param $params
+     * @return bool|string
+     * @throws Exception
+     */
     public function index($params)
     {
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
 
         $lang = $this->get_langs();
         $db = $this->db();
@@ -32,7 +35,7 @@ class My_statsController extends Module{
 
                 if($month > 1 AND $month < 10){
 
-                    $t_date = langdate('F', strtotime($year.'-'.$month));
+//                    $t_date = langdate('F', strtotime($year.'-'.$month));
 
                     $stat_date = $year.'0'.$month;
                     $r_month = '0'.$month;
@@ -42,7 +45,7 @@ class My_statsController extends Module{
                     $stat_date = $year.$month;
                     $r_month = $month;
 
-                    $t_date = langdate('F', strtotime($year.'-'.$month));
+//                    $t_date = langdate('F', strtotime($year.'-'.$month));
 
                 }
 
@@ -52,14 +55,14 @@ class My_statsController extends Module{
                 $stat_date = date('Ym', $server_time);
                 $r_month = date('m', $server_time);
 
-                $month = date('n', $server_time);
+//                $month = date('n', $server_time);
 
-                $t_date = langdate('F', strtotime($stat_date));
+//                $t_date = langdate('F', strtotime($stat_date));
 
             }
 
             //Составляем массив для вывода за этот месяц
-            $sql_ = $db->super_query("SELECT users, views, date FROM `users_stats` WHERE user_id = '{$user_info['user_id']}' AND date_x = '{$stat_date}' ORDER by `date` ASC", 1);
+            $sql_ = $db->super_query("SELECT users, views, date FROM `users_stats` WHERE user_id = '{$user_info['user_id']}' AND date_x = '{$stat_date}' ORDER by `date` ", 1);
 
             if($sql_){
 
@@ -81,7 +84,7 @@ class My_statsController extends Module{
 
             for($i = 1; $i <= $limit_day; $i++){
 
-                if(!$arr_r_unik[$i]) $arr_r_unik[$i] = 0;
+//                if(!$arr_r_unik[$i]) $arr_r_unik[$i] = 0;
                 $r_unik .= '['.$i.', '.$arr_r_unik[$i].'],';
 
                 if(!$arr_r_money[$i]) $arr_r_money[$i] = 0;
@@ -90,12 +93,12 @@ class My_statsController extends Module{
             }
 
             //Выводим максимальное кол-во юзеров за этот месяц
-            $row_max = $db->super_query("SELECT users FROM `users_stats` WHERE user_id = '{$user_info['user_id']}' AND date_x = '{$stat_date}' ORDER by `users` DESC");
+//            $row_max = $db->super_query("SELECT users FROM `users_stats` WHERE user_id = '{$user_info['user_id']}' AND date_x = '{$stat_date}' ORDER by `users` DESC");
 
-            $rNum = round($row_max['users'] / 15);
-            if($rNum < 1) $rNum = 1;
+//            $rNum = round($row_max['users'] / 15);
+//            if($rNum < 1) $rNum = 1;
 
-            $tickSize = $rNum;
+//            $tickSize = $rNum;
 
             //Выводим максимальное кол-во просмотров за этот месяц
             $row_max_hits = $db->super_query("SELECT views FROM `users_stats` WHERE user_id = '{$user_info['user_id']}' AND date_x = '{$stat_date}' ORDER by `views` DESC");
@@ -103,25 +106,25 @@ class My_statsController extends Module{
             $rNum_moenys = round($row_max_hits['views'] / 15);
             if($rNum_moenys < 1) $rNum_moenys = 1;
 
-            $tickSize_moneys = $rNum_moenys;
+//            $tickSize_moneys = $rNum_moenys;
 
             //Загружаем шаблон
-            $tpl->load_template('/profile/profile_stats.tpl');
-
-            $tpl->set('{r_unik}', $r_unik);
-            $tpl->set('{r_moneys}', $r_moneys);
-            $tpl->set('{t-date}', $t_date);
-            $tpl->set('{tickSize}', $tickSize);
-            $tpl->set('{tickSize_moneys}', $tickSize_moneys);
-            $tpl->set('{uid}', $user_info['user_id']);
-
-            $tpl->set('{months}', installationSelected($month, '<option value="1">Январь</option><option value="2">Февраль</option><option value="3">Март</option><option value="4">Апрель</option><option value="5">Май</option><option value="6">Июнь</option><option value="7">Июль</option><option value="8">Август</option><option value="9">Сентябрь</option><option value="10">Октябрь</option><option value="11">Ноябрь</option><option value="12">Декабрь</option>'));
-            $tpl->set('{year}', installationSelected($year, '<option value="2013">2013</option><option value="2014">2014</option><option value="2015">2015</option><option value="2016">2016</option><option value="2017">2017</option><option value="2018">2018</option><option value="2019">2019</option><option value="2020">2020</option>'));
-
-            $tpl->compile('content');
-
-            $tpl->clear();
-            $db->free();
+//            $tpl->load_template('/profile/profile_stats.tpl');
+//
+//            $tpl->set('{r_unik}', $r_unik);
+//            $tpl->set('{r_moneys}', $r_moneys);
+//            $tpl->set('{t-date}', $t_date);
+//            $tpl->set('{tickSize}', $tickSize);
+//            $tpl->set('{tickSize_moneys}', $tickSize_moneys);
+//            $tpl->set('{uid}', $user_info['user_id']);
+//
+//            $tpl->set('{months}', installationSelected($month, '<option value="1">Январь</option><option value="2">Февраль</option><option value="3">Март</option><option value="4">Апрель</option><option value="5">Май</option><option value="6">Июнь</option><option value="7">Июль</option><option value="8">Август</option><option value="9">Сентябрь</option><option value="10">Октябрь</option><option value="11">Ноябрь</option><option value="12">Декабрь</option>'));
+//            $tpl->set('{year}', installationSelected($year, '<option value="2013">2013</option><option value="2014">2014</option><option value="2015">2015</option><option value="2016">2016</option><option value="2017">2017</option><option value="2018">2018</option><option value="2019">2019</option><option value="2020">2020</option>'));
+//
+//            $tpl->compile('content');
+//
+//            $tpl->clear();
+//            $db->free();
 
         } else {
             $params['title'] = $lang['no_infooo'];
@@ -129,8 +132,8 @@ class My_statsController extends Module{
             return view('info.info', $params);
         }
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
+//        $params['tpl'] = $tpl;
+//        Page::generate($params);
         return true;
     }
 }

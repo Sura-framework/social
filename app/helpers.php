@@ -1,5 +1,6 @@
 <?php
 
+use JetBrains\PhpStorm\Pure;
 use Sura\Libs\Db;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Langs;
@@ -9,7 +10,7 @@ use Sura\Libs\Settings;
 use Sura\View\Blade;
 
 if (!function_exists('GetVar')) {
-    function GetVar(string $v):string
+    function GetVar(string $v) : string
     {
         if(ini_get('magic_quotes_gpc'))
             return stripslashes($v) ;
@@ -17,89 +18,71 @@ if (!function_exists('GetVar')) {
     }
 }
 
+//#[Deprecated]
 if (!function_exists('msgbox')) {
     /**
      * alert html box (old)
-     * @param $title
      * @param $text
      * @param $tpl_name
-     * @return string|null
+     * @return false|string
      */
-    function msgbox($title, $text, $tpl_name)
+    #[Pure] function msgbox($text, $tpl_name) : string|false
     {
-        global $tpl;
-        $result = null;
-        if ($tpl_name == 'info') {
-            $result = '<div class="err_yellow">' . $text . '</div>';
-        } elseif ($tpl_name == 'info_red') {
-            $result = '<div class="err_red">' . $text . '</div>';
-        } elseif ($tpl_name == 'info_2') {
-            $result = '<div class="info_center">' . $text . '</div>';
-        } elseif ($tpl_name == 'info_box') {
-            $result = '<div class="msg_none">' . $text . '</div>';
-        } elseif ($tpl_name == 'info_search') {
-            $result = '<div class="margin_top_10"></div><div class="search_result_title" style="border-bottom:1px solid #e4e7eb">Ничего не найдено</div>
-    <div class="info_center" style="width:630px;padding-top:140px;padding-bottom:154px">Ваш запрос не дал результатов</div>';
-        } elseif ($tpl_name == 'info_yellow') {
-            $result = '<div class="err_yellow"><ul class="listing">' . $text . '</ul></div>';
-        }
-        $tpl->result['info'] .= $result;
-        return $result;
+        return msg_box($text, $tpl_name);
     }
 }
 
 if (!function_exists('msg_box')) {
     /**
      * alert html box
-     * @param $title
      * @param $text
-     * @param $tpl_name
-     * @return string|null
+     * @param $tpl
+     * @return false|string
      */
-    function msg_box($text, $tpl_name)
+    function msg_box($text, $tpl) : string|false
     {
-        $result = '';
-        if ($tpl_name == 'info') {
-            $result .= '<div class="err_yellow">' . $text . '</div>';
-        } elseif ($tpl_name == 'info_red') {
-            $result .= '<div class="err_red">' . $text . '</div>';
-        } elseif ($tpl_name == 'info_2') {
-            $result .= '<div class="info_center">' . $text . '</div>';
-        } elseif ($tpl_name == 'info_box') {
-            $result .= '<div class="msg_none">' . $text . '</div>';
-        } elseif ($tpl_name == 'info_search') {
-            $result .= '<div class="margin_top_10"></div><div class="search_result_title" style="border-bottom:1px solid #e4e7eb">Ничего не найдено</div>
+        if ($tpl == 'info') {
+            return '<div class="err_yellow">' . $text . '</div>';
+        } elseif ($tpl == 'info_red') {
+            return '<div class="err_red">' . $text . '</div>';
+        } elseif ($tpl == 'info_2') {
+            return '<div class="info_center">' . $text . '</div>';
+        } elseif ($tpl == 'info_box') {
+            return '<div class="msg_none">' . $text . '</div>';
+        } elseif ($tpl == 'info_search') {
+            return '<div class="margin_top_10"></div><div class="search_result_title" style="border-bottom:1px solid #e4e7eb">Ничего не найдено</div>
     <div class="info_center" style="width:630px;padding-top:140px;padding-bottom:154px">Ваш запрос не дал результатов</div>';
-        } elseif ($tpl_name == 'info_yellow') {
-            $result .= '<div class="err_yellow"><ul class="listing">' . $text . '</ul></div>';
+        } elseif ($tpl == 'info_yellow') {
+            return '<div class="err_yellow"><ul class="listing">' . $text . '</ul></div>';
+        }else{
+            return false;
         }
-        return $result;
     }
 }
 
 if (!function_exists('check_smartphone')) {
-    function check_smartphone()
+    #[Pure] function check_smartphone()
     {
 
         if (isset($_SESSION['mobile_enable'])) return true;
         $phone_array = array('iphone', 'android', 'pocket', 'palm', 'windows ce', 'windowsce', 'mobile windows', 'cellphone', 'opera mobi', 'operamobi', 'ipod', 'small', 'sharp', 'sonyericsson', 'symbian', 'symbos', 'opera mini', 'nokia', 'htc_', 'samsung', 'motorola', 'smartphone', 'blackberry', 'playstation portable', 'tablet browser', 'android');
         $agent = strtolower($_SERVER['HTTP_USER_AGENT']);
         foreach ($phone_array as $value) {
-            if (strpos($agent, $value) !== false) return true;
+            if (str_contains($agent, $value)) return true;
         }
         return false;
     }
 }
 
 if (!function_exists('installationSelected')) {
-    function installationSelected($id, $options)
+    function installationSelected($id, $options): array|string
     {
         return str_replace('value="' . $id . '"', 'value="' . $id . '" selected', $options);
     }
 }
 
 if (!function_exists('xfieldsdataload')) {
-    function xfieldsdataload($string)
+    function xfieldsdataload($string): array
     {
 
         $xfieldsdata = explode("||", $string);
@@ -131,7 +114,7 @@ function array_trim_end($array){
 }
 
 if (!function_exists('profileload')) {
-    function profileload()
+    function profileload(): bool|array
     {
         $path = __DIR__ . '/../config/xfields.txt';
         $filecontents = file($path);
@@ -175,7 +158,7 @@ if (!function_exists('Hacking')) {
 }
 
 if (!function_exists('user_age')) {
-    function user_age($user_year, $user_month, $user_day)
+    function user_age($user_year, $user_month, $user_day): false|string
     {
         $server_time = intval($_SERVER['REQUEST_TIME']);
 
@@ -192,17 +175,18 @@ if (!function_exists('user_age')) {
             else
                 $user_age = $current_year - $user_year - 1;
 
-            if ($user_month and $user_month and $user_day) {
+            if ($user_month and $user_day) {
                 $titles = array('год', 'года', 'лет');//c
                 return $user_age . ' ' . Gramatic::declOfNum($user_age, $titles);
             } else
                 return false;
         }
+        return false;
     }
 }
 
 if (!function_exists('langdate')) {
-    function langdate($format, $stamp)
+    function langdate($format, $stamp): string
     {
         $langdate = Langs::get_langdate();
         return strtr(@date($format, $stamp), $langdate);
@@ -210,7 +194,7 @@ if (!function_exists('langdate')) {
 }
 
 if (!function_exists('megaDate')) {
-    function megaDate($date, $func = false, $full = false)
+    function megaDate($date, $func = false, $full = false): string
     {
         $server_time = intval($_SERVER['REQUEST_TIME']);
 
@@ -230,7 +214,7 @@ if (!function_exists('megaDate')) {
 }
 
 if (!function_exists('Online')) {
-    function Online($time, $mobile = false)
+    function Online($time, $mobile = false): string
     {
         $lang = langs::get_langs();
         $config = Settings::loadsettings();
@@ -239,8 +223,10 @@ if (!function_exists('Online')) {
         $online_time = $server_time - $config['online_time'];
 
         //Если человек сидит с мобильнйо версии
-        if ($mobile) $mobile_icon = '<img src="/images/spacer.gif" class="mobile_online" />';
-        else $mobile_icon = '';
+        if ($mobile)
+            $mobile_icon = '<img src="/images/spacer.gif" class="mobile_online"  alt=""/>';
+        else
+            $mobile_icon = '';
 
         if ($time >= $online_time)
             return $lang['online'] . $mobile_icon;
@@ -430,49 +416,83 @@ if (!function_exists('AntiSpamLogInsert')) {
 
     }
 
-    /**
-     * Run the blade engine. It returns the result of the code.
-     *
-     * @param string|null $view The name of the cache. Ex: "folder.folder.view" ("/folder/folder/view.blade")
-     * @param array $variables An associative arrays with the values to display.
-     * @return string
-     * @throws Exception
-     */
-    function view($view, $variables = [])
+
+}
+
+/**
+ * Run the blade engine. It returns the result of the code.
+ *
+ * @param string|null $view The name of the cache. Ex: "folder.folder.view" ("/folder/folder/view.blade")
+ * @param array $variables An associative arrays with the values to display.
+ * @return string
+ * @throws Exception
+ */
+function view(?string $view, $variables = [])
+{
+    $views = __DIR__ . '/views';
+    $cache = __DIR__ . '/cache/views';
+
+    class myBlade extends Blade
     {
-        $views = __DIR__ . '/views';
-        $cache = __DIR__ . '/cache/views';
-        $blade = new Blade($views,$cache,Blade::MODE_AUTO); // MODE_DEBUG allows to pinpoint troubles.
-        $blade->csrfIsValid(true, '_mytoken');
-        $logged = Registry::get('logged');
-        if (!empty($logged)){
-            $blade->setAuth('johndoe','user');
-        }
-        try {
-            if (Request::ajax()){
-                $json_content = $blade->run($view, $variables);
-//                echo $blade->run($name, $data);
-               // $title = 'Sura';
-                $title = $variables['title'];
-                if (!empty($logged)){
-                    $result_ajax = array(
-                        'title' => $title,
+        use Sura\View\Lang;
+    }
+
+    $blade = new myBlade($views,$cache,Blade::MODE_AUTO); // MODE_DEBUG allows to pinpoint troubles.
+    $lang = langs::check_lang();
+    $lang_list = include __DIR__.'/lang/'.$lang.'.php';
+    $blade::$dictionary=$lang_list;
+
+
+    $variables['url'] = 'https://'.$_SERVER['HTTP_HOST'];
+    $blade->setBaseUrl('https://'.$_SERVER['HTTP_HOST']);
+
+    $blade->csrfIsValid(true, '_mytoken');
+    $logged = Registry::get('logged');
+    if (!empty($logged)){
+        $blade->setAuth('johndoe','user');
+    }
+
+    try {
+        if (Request::ajax()){
+            $json_content = $blade->run($view, $variables);
+            $title = $variables['title'];
+            if (!empty($logged)){
+                $result_ajax = array(
+                    'title' => $title,
 //                        'new_notifications' => $params['notify_count'],
-                        'content' => $json_content
-                    );
-                }else{
-                    $result_ajax = array(
-                        'title' => $title,
-                        'content' => $json_content
-                    );
-                }
-                header('Content-Type: application/json');
-                echo json_encode($result_ajax);
+                    'content' => $json_content
+                );
+            }else{
+                $result_ajax = array(
+                    'title' => $title,
+                    'content' => $json_content
+                );
+            }
+            header('Content-Type: application/json');
+            $response = json_encode($result_ajax);
 //                echo $blade->run("app.json", ['json' => $json]);
-            }else
-                echo $blade->run($view, $variables);
-        } catch (Exception $e) {
-            echo "error found ".$e->getMessage()."<br>".$e->getTraceAsString();
+        }else{
+
+            header('Access-Control-Allow-Origin: *');
+            $response = $blade->run($view, $variables);
         }
+    } catch (Exception $e) {
+        $response = "error found ".$e->getMessage()."<br>".$e->getTraceAsString();
+    }
+
+//    echo $response;
+    return _e($response);
+}
+
+if (! function_exists('_e')) {
+    /**
+     * Encode HTML special characters in a string.
+     *
+     * @param string $value
+     * @return string
+     */
+    function _e(string $value): string
+    {
+        return print($value);
     }
 }

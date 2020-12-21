@@ -4,7 +4,12 @@ namespace App\Models;
 
 class Admin
 {
-    public static function modules(){
+
+    /**
+     * @return string[][]
+     */
+    public static function modules() : array
+    {
        return array(
            array(
                 'name' =>'Настройка системы',
