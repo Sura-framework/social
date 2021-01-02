@@ -44,7 +44,7 @@
                         <div id="5" onclick="gSearch.select_type(this.id, 'по аудиозаписям');  FSE.GoSe($('#query').val()); return false">@_e('by_audios')</div>
                     </div>
                 </div>
-                <button class="btn btn-outline-light my-2 my-sm-0" style="min-width: fit-content;" onclick="gSearch.go(); return false" id="se_but">@_e('find')</button>
+                <button class="btn btn-outline-primary my-2 my-sm-0" style="min-width: fit-content;" onclick="gSearch.go(); return false" id="se_but">@_e('find')</button>
                 <div class="fast_search_bg " style="display: none;">
                     <a href="/" style="padding: 12px; background: rgb(238, 243, 245);" onclick="gSearch.go(); return false" onmouseover="FSE.ClrHovered(this.id)" id="all_fast_res_clr1">
                         <text>@_e('search')</text><b id="fast_search_txt"></b><div class="fl_r fast_search_ic"></div>

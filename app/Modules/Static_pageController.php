@@ -14,17 +14,19 @@ class Static_pageController extends Module{
      * @return string
      * @throws Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
         $tpl = $params['tpl'];
 
         $db = $this->db();
         $logged = Registry::get('logged');
         // $user_info = Registry::get('user_info');
+        $lang = $this->get_langs();
 
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $alt_name = $db->safesql(Gramatic::totranslit($_GET['page']));
+            $alt_name = $db->safesql(Gramatic::totranslit($request['page']));
             $row = $db->super_query("SELECT title, text FROM `static` WHERE alt_name = '".$alt_name."'");
             if($row){
                 $tpl->load_template('static.tpl');
@@ -37,12 +39,12 @@ class Static_pageController extends Module{
 
             $tpl->clear();
             $db->free();
-        } else {
+            return view('info.info', $params);
+        }
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
-        }
 
-        Registry::set('tpl', $tpl);
+
     }
 }

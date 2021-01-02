@@ -68,37 +68,49 @@
                                     @endif
                                     @if($owner)
 
-                                    <!--<a class="nav-link active w-100" href="/edit/" onClick="Page.Go(this.href); return false;"> -->
-                                    <a class="nav-link active w-100"  onClick="Profile_edit.Open()">
+                                        <!--<a class="nav-link active w-100" href="/edit/" onClick="Page.Go(this.href); return false;"> -->
+                                        <a class="nav-link active w-100"  onClick="Profile_edit.Open()">
                                         <svg class="bi bi-brush" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M15.213 1.018a.572.572 0 0 1 .756.05.57.57 0 0 1 .057.746C15.085 3.082 12.044 7.107 9.6 9.55c-.71.71-1.42 1.243-1.952 1.596-.508.339-1.167.234-1.599-.197-.416-.416-.53-1.047-.212-1.543.346-.542.887-1.273 1.642-1.977 2.521-2.35 6.476-5.44 7.734-6.411z"/>
                                             <path d="M7 12a2 2 0 0 1-2 2c-1 0-2 0-3.5-.5s.5-1 1-1.5 1.395-2 2.5-2a2 2 0 0 1 2 2z"/>
                                         </svg>@_e('edit')</a>
-                                        @elseif($not_owner)
+                                    @elseif(!$owner)
 
-                                        @if($no_friends_block AND  $blacklist_block AND $not_owner)
-                                    <a class="nav-link active" href="/" onClick="friends.add({{ $user_id }}); return false">
-                                        <svg class="bi bi-person-plus" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm4.5 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
-                                            <path fill-rule="evenodd" d="M13 7.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>
-                                        </svg>
-                                        <span>@_e('add')</span></a>
-                                        @endif
-                                        @if($yes_friends_block AND $not_owner)
-                                        <a class="nav-link active" href="/" onClick="friends.delet({{ $user_id }}, 1); return false">
-                                        <svg class="bi bi-person-dash" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
-                                        </svg>
-                                        <span>@_e('remove')</span></a>
-                                        @endif
-                                        @if($no_subscription_block AND  $blacklist_block AND $not_owner)
+                                        @if(!$blacklist)
+                                        @if($yes_friends == true)
+                                            <a class="nav-link active" href="/" onClick="friends.delet({{ $user_id }}, 1); return false">
+                                                <svg class="bi bi-person-dash" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                    <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
+                                                </svg>
+                                                <span>@_e('remove')</span></a>
+                                        @elseif($yesf)
+                                            <div class="alert alert-success" role="alert">
+                                                Вы уже отправили заявку, ждите, пока <p class="fw-bold">{{ $name }}</p> подтвердит ее.
+                                            </div>
+                                        @elseif($yes_friend)
+                                            <a class="nav-link active" href="/" onClick="friends.take({{ $user_id }}); return false">
+                                                <svg class="bi bi-person-plus" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                    <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm4.5 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+                                                    <path fill-rule="evenodd" d="M13 7.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>
+                                                </svg>
+                                                <span>Принять заявку в друзья</span>
+                                                <button class="btn btn-primary" onMouseDown="friends.reject({{ $row['user_id'] }}); return false">Отклонить</button>
+                                        @else
+                                            <a class="nav-link active" href="/" onClick="friends.add({{ $user_id }}); return false">
+                                                <svg class="bi bi-person-plus" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                    <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm4.5 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+                                                    <path fill-rule="evenodd" d="M13 7.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>
+                                                </svg>
+                                                <span>@_e('add')</span></a>
+                                        @endif @endif
+
+                                        @if($yes_subscription AND  !$blacklist)
                                         <a class="nav-link active" href="/" onClick="subscriptions.add({{ $user_id }}); return false" id="lnk_unsubscription"><div>
                                                 <span id="text_add_subscription">@_e('subscribe')</span>
                                                 <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" />
                                             </div>
                                         </a>
-                                        @endif
-                                        @if($yes_subscription_block AND $not_owner)
+                                        @elseif($yes_subscription AND  !$blacklist)
                                             <a class="nav-link active" href="/" onClick="subscriptions.del({{ $user_id }}); return false" id="lnk_unsubscription">
                                                 <div>
                                                     <span id="text_add_subscription">@_e('unsubscribe')</span>
@@ -106,7 +118,9 @@
                                                 </div>
                                             </a>
                                         @endif
-                                        @endif
+
+
+                                    @endif
 
                                 </div>
                                 <div class="col-2">
@@ -139,17 +153,19 @@
                                                 </svg>
                                                 <div><span id="text_add_fave">@_e('remove_fave')</span> <img src="/images/loading_mini.gif" alt="" id="addfave_load" class="no_display" /></div></a>
                                             @endif
-                                            [no-blacklist]<a href="/" class="dropdown-item" onClick="settings.addblacklist({{ $user_id }}); return false" id="addblacklist_but">
+                                            @if(!$blacklist)<a href="/" class="dropdown-item" onClick="settings.addblacklist({{ $user_id }}); return false" id="addblacklist_but">
                                                 <svg class="bi bi-exclamation-circle-fill" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                                     <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
                                                 </svg>
-                                                <span><span id="text_add_blacklist">@_e('block')</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></span></a>[/no-blacklist]
-                                            [yes-blacklist]<a href="/" class="dropdown-item" onClick="settings.delblacklist({{ $user_id }}, 1); return false" id="addblacklist_but">
+                                                <span><span id="text_add_blacklist">@_e('block')</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></span></a>
+                                            @else
+                                            <a href="/" class="dropdown-item" onClick="settings.delblacklist({{ $user_id }}, 1); return false" id="addblacklist_but">
                                                 <svg class="bi bi-exclamation-circle" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                                     <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                                                     <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
                                                 </svg>
-                                                <span><span id="text_add_blacklist">@_e('unblock')</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></span></a>[/yes-blacklist]
+                                                <span><span id="text_add_blacklist">@_e('unblock')</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></span></a>
+                                            @endif
 
                                             @if($no_friends_block AND $yes_blacklist_block)<a class="nav-link active" href="/" onClick="friends.add({{ $user_id }}); return false">
                                                 <svg class="bi bi-person-plus" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -157,27 +173,26 @@
                                                     <path fill-rule="evenodd" d="M13 7.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>
                                                 </svg>
                                                 <span>@_e('add')</span></a>@endif
-                                            @if($yes_friends_block)<a class="nav-link active" href="/" onClick="friends.delet({{ $user_id }}, 1); return false">
+                                            @if($yes_friends)<a class="nav-link active" href="/" onClick="friends.delet({{ $user_id }}, 1); return false">
                                                 <svg class="bi bi-person-dash" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                                     <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
                                                 </svg>
                                                 <span>@_e('remove')</span></a>@endif
-                                            [blacklist][no-subscription]
+                                            @if(!$blacklist AND !$yes_subscription)
                                                 <a class="nav-link active" href="/" onClick="subscriptions.add({{ $user_id }}); return false" id="lnk_unsubscription">
                                                     <div>
                                                         <span id="text_add_subscription">@_e('subscribe')</span>
                                                         <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" />
                                                     </div>
                                                 </a>
-                                                [/no-subscription][/blacklist]
-                                            [yes-subscription]
+                                                @elseif(!$blacklist AND $yes_subscription)
                                                 <a class="nav-link active" href="/" onClick="subscriptions.del({{ $user_id }}); return false" id="lnk_unsubscription">
                                                     <div>
                                                         <span id="text_add_subscription">@_e('unsubscribe')</span>
                                                         <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" />
                                                     </div>
                                                 </a>
-                                                [/yes-subscription]
+                                            @endif
 
                                             @endif
                                         </div>
@@ -193,7 +208,7 @@
                 <div class="mt-2">
                     <div class="">
                         <div class="row">
-                            @if($happy_friends_block AND $blacklist_block)
+                            @if($happy_friends_block AND !$blacklist)
                                 <div id="happyBLockSess"><div class="albtitle">@_e('happy')
                                     <span>{happy-friends-num}</span>
                                     <div class="profile_happy_hide">
@@ -203,7 +218,7 @@
                                 <div class="newmesnobg profile_block_happy_friends" style="padding:0px;padding-top:10px;">{happy-friends}<div class="clear"></div></div>
                                 <div class="cursor_pointer no_display" onMouseDown="HappyFr.Show(); return false" id="happyAllLnk"><div class="public_wall_all_comm profile_block_happy_friends_lnk">Показать все</div></div></div>
                             @endif
-                            @if($mutual_friends AND $blacklist_block)
+                            @if($mutual_friends AND !$blacklist)
                                 <div class="col-12 mt-3">
                                     <div class="card">
                                     <a href="/friends/common/{{ $user_id }}/" style="text-decoration:none" onClick="Page.Go(this.href); return false">
@@ -222,7 +237,7 @@
                                 </div>
                                 </div>
                                 @endif
-                            @if($all_friends AND $blacklist_block)
+                            @if($all_friends AND !$blacklist)
                                 <div class="col-12 mt-3">
                                     <div class="card">
                                     <a href="/friends/{{ $user_id }}/" style="text-decoration:none" onClick="Page.Go(this.href); return false">
@@ -243,7 +258,7 @@
                                 </div>
                             @endif
 
-                            @if($all_online_friends AND $blacklist_block)
+                            @if($all_online_friends AND !$blacklist)
                                 <div class="col-12 mt-3">
                                     <div class="card">
                                     <a href="/friends/online/{{ $user_id }}/" style="text-decoration:none" onClick="Page.Go(this.href); return false">
@@ -263,7 +278,7 @@
                                 </div>
                                 </div>
                             @endif
-                            @if($subscriptions AND $blacklist_block)
+                            @if($subscriptions AND !$blacklist)
                                 <div class="col-12 mt-3">
                                     <div class="card">
                                     <a href="/" style="text-decoration:none" onClick="subscriptions.all({{ $user_id }}, '', {{ $subscriptions_num }}); return false">
@@ -284,7 +299,7 @@
                                 </div>
                             @endif
 
-                            @if($groups AND $blacklist_block)
+                            @if($groups AND !$blacklist)
                                 <div class="col-12 mt-3" >
                                     <div class="card">
                                     <div class="albtitle cursor_pointer" onClick="groups.all_groups_user('{{ $user_id }}')">
@@ -292,8 +307,8 @@
                                           <div class="newmesnobg" style="padding:0px;padding-top:10px;">
                                       @if($groups)
                                         @foreach($groups as $row)
-                                            <div class="onesubscription onesubscriptio2n">
-                                                <a href="/u{{ $row['user_id'] }}" onClick="Page.Go(this.href); return false">
+                                            <div class="onesubscription onesubscriptio2n pl-3">
+                                                <a href="/{{ $row['adres'] }}" onClick="Page.Go(this.href); return false">
                                                     <img src="{{ $row['ava'] }}" alt="" />
                                                     <div class="onesubscriptiontitle">{{ $row['name'] }}</div>
                                                 </a>
@@ -305,7 +320,7 @@
                                 </div>
                                 </div>
                             @endif
-                            @if($videos AND $blacklist_block)
+                            @if($videos AND !$blacklist)
                                 <div class="col-12 mt-3">
                                     <div class="card">
                                     <a href="/videos/{{ $user_id }}/" style="text-decoration:none" onClick="Page.Go(this.href); return false">
@@ -397,7 +412,7 @@
                                         <a href="/search/?country={country-id}&city={city-id}" onClick="Page.Go(this.href); return false">{city}</a>
                                     </div></div>
                                     @endif
-                                    @if($not_all_birthday_block AND $blacklist_block)
+                                    @if($not_all_birthday_block AND !$blacklist)
                                         <div class="flpodtext">@_e('birthday'):</div> <div class="flpodinfo">{{ $birth_day }}</div>
                                     @endif
                                     @if($sp AND $privacy_info_block)
@@ -467,7 +482,7 @@
                                 @endif
                         </div>
 
-                        @if($albums AND $blacklist_block)
+                        @if($albums AND !$blacklist)
                             <a href="/albums/{{ $user_id }}" onClick="Page.Go(this.href); return false" style="text-decoration:none">
                                 <div class="albtitle" style="margin-top:5px">@_e('albums') <span>{{ $albums_num }}</span>
                                     <div><b>@_e('all')</b></div>
@@ -484,7 +499,7 @@
                             @endforeach
                         @endif
 
-                        @if($audios AND $blacklist_block)
+                        @if($audios AND !$blacklist)
                         <div id="jquery_jplayer"></div>
                         <input type="hidden" id="teck_id" value="1" />
                         <a href="/audio/{{ $user_id }}/" onClick="Page.Go(this.href); return false" style="text-decoration:none">
@@ -549,7 +564,7 @@
                         <div class="clear"></div>
                         @endif
 
-                        @if($gifts AND $blacklist_block)
+                        @if($gifts AND !$blacklist)
                             <a href="/gifts{{ $user_id }}" onClick="Page.Go(this.href); return false" style="text-decoration:none">
                                 <div class="albtitle" style="margin-top:5px">{{ $gifts_num }}<div>
                                         <b>@_e('all')</b>
@@ -659,19 +674,19 @@
                 </div>
                 @endif
                 <div id="wall_records">
-                @if($wall_rec_num_block AND $blacklist_block)
-                    @include('wall.one_record', array('wall_records' => $wall_records,))
+                @if($wall_rec_num_block AND !$blacklist)
+                    @include('wall.one_record', array('wall_records' => $wall_records))
                 @else
                    <div class="wall_none" >@_e('wall_null')</div>
                 @endif
                 </div>
-                @if($wall_link_block AND $blacklist_block)
+                @if($wall_link_block AND !$blacklist)
                 <span id="wall_all_record"></span>
                 <div onClick="wall.page('{{ $user_id }}'); return false" id="wall_l_href" class="cursor_pointer">
                     <div class="photo_all_comm_bg wall_upgwi" id="wall_link">@_e('wall_next')</div>
                 </div>
                 @endif
-                @if(!$blacklist_block)
+                @if($blacklist)
                 <div class="err_yellow" style="font-weight:normal;margin-top:5px">{{ $name }} @_e('profile_block')</div>
                 @endif
         </div>

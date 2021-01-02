@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Services\Cache;
+use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -25,50 +26,58 @@ class Groups_forum extends Module{
 //            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-//            Tools::NoAjaxQuery();
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $public_id = intval($_POST['public_id']);
-            $title = Validation::ajax_utf8(Validation::textFilter($_POST['title'], false, true));
-            $attach_files = Validation::ajax_utf8(Validation::textFilter($_POST['attach_files'], false, true));
-            $text = Validation::ajax_utf8(Validation::textFilter($_POST['text']));
+//
+
+            $public_id = (int)$request['public_id'];
+            $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
+            $attach_files = Validation::ajax_utf8(Validation::textFilter($request['attach_files'], false, true));
+            $text = Validation::ajax_utf8(Validation::textFilter($request['text']));
 
             $row = $db->super_query("SELECT ulist, discussion FROM `communities` WHERE id = '{$public_id}'");
 
             if(stripos($row['ulist'], "|{$user_id}|") !== false AND $row['discussion'] AND isset($title) AND !empty($title) AND isset($text) AND !empty($text) OR isset($attach_files) AND !empty($attach_files)){
 
                 //Вставляем тему в БД
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
                 $db->query("INSERT INTO `communities_forum` SET public_id = '{$public_id}', fuser_id = '{$user_id}', title = '{$title}', text = '{$text}', attach = '{$attach_files}', fdate = '{$server_time}', lastuser_id = '{$user_id}', lastdate = '{$server_time}', msg_num = 1");
                 $dbid = $db->insert_id();
 
                 //Обновляем кол-во тем в сообществе
                 $db->query("UPDATE `communities` SET forum_num = forum_num+1 WHERE id = '{$public_id}'");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete('groups_forum/'.$public_id.'/forum'.$public_id);
 
                 echo $dbid;
 
             }
-
-            exit();
         }
     }
 
     /**
      * Страница создания новой темы
+     * @param $params
+     * @return string
+     * @throws \Exception
      */
-    public function new($params){
+    public function new($params): string
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+//        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $public_id = intval($_GET['public_id']);
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+            $public_id = (int)$request['public_id'];
 
             $row = $db->super_query("SELECT ulist, discussion FROM `communities` WHERE id = '{$public_id}'");
 
@@ -78,17 +87,19 @@ class Groups_forum extends Module{
                 $tpl->set('{id}', $public_id);
                 $tpl->compile('content');
 
+                return view('info.info', $params);
             } else
                 msg_box( '<br /><br />Ошибка доступа.<br /><br /><br />', 'info_2');
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
      * Добавления сообщения к теме
+     * @param $params
+     * @return bool
      */
     public function add_msg($params){
         $tpl = $params['tpl'];
@@ -102,11 +113,14 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//            Tools::NoAjaxQuery();
+//
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $fid = intval($_POST['fid']);
-            $answer_id = intval($_POST['answer_id']);
-            $msg = Validation::ajax_utf8(Validation::textFilter($_POST['msg']));
+
+            $fid = (int)$request['fid'];
+            $answer_id = (int)$request['answer_id'];
+            $msg = Validation::ajax_utf8(Validation::textFilter($request['msg']));
 
             $row = $db->super_query("SELECT status, public_id FROM `communities_forum` WHERE fid = '{$fid}'");
             $row2 = $db->super_query("SELECT discussion FROM `communities` WHERE id = '{$row['public_id']}'");
@@ -129,7 +143,7 @@ class Groups_forum extends Module{
                         $msg = str_replace($check2['user_name'], "<a href=\"/u{$row_owner2['muser_id']}\" onClick=\"Page.Go(this.href); return false\">{$check2['user_name']}</a>", $msg);
 
                         //Всталвяем саму запись в БД
-                        $server_time = intval($_SERVER['REQUEST_TIME']);
+                        $server_time = \Sura\Libs\Tools::time();
                         $db->query("INSERT INTO `communities_forum_msg` SET fid = '{$fid}', muser_id = '{$user_id}', msg = '{$msg}', mdate = '{$server_time}'");
                         $dbid = $db->insert_id();
 
@@ -143,14 +157,15 @@ class Groups_forum extends Module{
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$row_owner2['muser_id']}', from_user_id = '{$user_id}', type = '6', date = '{$server_time}', text = '{$msg}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/forum{$row['public_id']}?act=view&id={$fid}'");
 
-                            $Cache = Cache::initialize();
+                            $Cache = cache_init(array('type' => 'file'));
                             $Cache->set("users/{$row_owner2['muser_id']}/updates", 1);
 
                             //ИНАЧЕ Добавляем +1 юзеру для оповещания
                         } else {
 
+                            $cntCacheNews = '';//TODO update
 
-                            $Cache = Cache::initialize();
+                            $Cache = cache_init(array('type' => 'file'));
                             $Cache->get("users/{$row_owner2['muser_id']}/new_news");
                             $Cache->set("users/{$row_owner2['muser_id']}/new_news", $cntCacheNews+1);
                         }
@@ -160,17 +175,17 @@ class Groups_forum extends Module{
                 } else {
 
                     //Всталвяем саму запись в БД
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
+                    $server_time = \Sura\Libs\Tools::time();
                     $db->query("INSERT INTO `communities_forum_msg` SET fid = '{$fid}', muser_id = '{$user_id}', msg = '{$msg}', mdate = '{$server_time}'");
                     $dbid = $db->insert_id();
 
                 }
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
 
                 //Обновляем данные в теме
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
                 $db->query("UPDATE `communities_forum` SET msg_num = msg_num+1, lastdate = '{$server_time}', lastuser_id = '{$user_id}' WHERE fid = '{$fid}'");
 
                 $tpl->load_template('forum/msg.tpl');
@@ -193,19 +208,17 @@ class Groups_forum extends Module{
                     $tpl->set('{ava}', '/images/no_ava_50.png');
 
                 $tpl->compile('content');
-
-                Tools::AjaxTpl($tpl);
-
             }
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
      * Показах предыдущих сообщений
+     * @param $params
+     * @return bool
      */
     public function prev_msg($params){
         $tpl = $params['tpl'];
@@ -219,10 +232,13 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//            Tools::NoAjaxQuery();
+//
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $id = intval($_POST['fid']);
-            $pid = intval($_POST['pid']);
+
+            $id = (int)$request['fid'];
+            $pid = (int)$request['pid'];
 
             //SQL запрос на вывод
             $row = $db->super_query("SELECT msg_num, public_id FROM `communities_forum` WHERE fid = '{$id}'");
@@ -236,8 +252,8 @@ class Groups_forum extends Module{
 
             $limit = 10;
 
-            $first_id = intval($_POST['first_id']);
-            $page_post = intval($_POST['page']);
+            $first_id = (int)$request['first_id'];
+            $page_post = (int)$request['page'];
             if($page_post <= 0) $page_post = 1;
 
             $start_limit = $row['msg_num']-($page_post*$limit)-10;
@@ -294,16 +310,14 @@ class Groups_forum extends Module{
 
             }
 
-            Tools::AjaxTpl($tpl);
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
      * Сохранение отред. данных темы
+     * @param $params
      */
     public function saveedit($params){
         $tpl = $params['tpl'];
@@ -317,10 +331,13 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//            Tools::NoAjaxQuery();
+//
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $fid = intval($_POST['fid']);
-            $text = Validation::ajax_utf8(Validation::textFilter($_POST['text']));
+
+            $fid = (int)$request['fid'];
+            $text = Validation::ajax_utf8(Validation::textFilter($request['text']));
 
             $row = $db->super_query("SELECT fuser_id, public_id FROM `communities_forum` WHERE fid = '{$fid}'");
             $row2 = $db->super_query("SELECT admin, discussion FROM `communities` WHERE id = '{$row['public_id']}'");
@@ -337,13 +354,12 @@ class Groups_forum extends Module{
                 echo $text;
 
             }
-
-            exit();
         }
     }
 
     /**
      * Сохранение отред. названия
+     * @param $params
      */
     public function savetitle($params){
         $tpl = $params['tpl'];
@@ -357,10 +373,13 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//            Tools::NoAjaxQuery();
+//
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $fid = intval($_POST['fid']);
-            $title = Validation::ajax_utf8(Validation::textFilter($_POST['title'], false, true));
+
+            $fid = (int)$request['fid'];
+            $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
 
             $row = $db->super_query("SELECT fuser_id, public_id FROM `communities_forum` WHERE fid = '{$fid}'");
             $row2 = $db->super_query("SELECT admin, discussion FROM `communities` WHERE id = '{$row['public_id']}'");
@@ -374,11 +393,9 @@ class Groups_forum extends Module{
 
                 $db->query("UPDATE `communities_forum` SET title = '{$title}' WHERE fid = '{$fid}'");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
             }
-
-            exit();
         }
     }
 
@@ -397,9 +414,12 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//            Tools::NoAjaxQuery();
+//
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $fid = intval($_POST['fid']);
+
+            $fid = (int)$request['fid'];
 
             $row = $db->super_query("SELECT fuser_id, public_id, fixed FROM `communities_forum` WHERE fid = '{$fid}'");
             $row2 = $db->super_query("SELECT admin, discussion FROM `communities` WHERE id = '{$row['public_id']}'");
@@ -416,7 +436,7 @@ class Groups_forum extends Module{
 
                 $db->query("UPDATE `communities_forum` SET fixed = '{$fixed}' WHERE fid = '{$fid}'");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
             }
         }
@@ -424,6 +444,7 @@ class Groups_forum extends Module{
 
     /**
      * Открытие - закрытие тему
+     * @param $params
      */
     public function status($params){
         $tpl = $params['tpl'];
@@ -437,9 +458,12 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//            Tools::NoAjaxQuery();
+//
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $fid = intval($_POST['fid']);
+
+            $fid = (int)$request['fid'];
 
             $row = $db->super_query("SELECT fuser_id, public_id, status FROM `communities_forum` WHERE fid = '{$fid}'");
             $row2 = $db->super_query("SELECT admin, discussion FROM `communities` WHERE id = '{$row['public_id']}'");
@@ -457,13 +481,12 @@ class Groups_forum extends Module{
                 $db->query("UPDATE `communities_forum` SET status = '{$status}' WHERE fid = '{$fid}'");
 
             }
-
-            exit();
         }
     }
 
     /**
      *  Уадаление темы
+     * @param $params
      */
     public function del($params){
         $tpl = $params['tpl'];
@@ -477,9 +500,12 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//            Tools::NoAjaxQuery();
+//
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $fid = intval($_POST['fid']);
+
+            $fid = (int)$request['fid'];
 
             $row = $db->super_query("SELECT fuser_id, public_id, vote FROM `communities_forum` WHERE fid = '{$fid}'");
             $row2 = $db->super_query("SELECT admin, discussion FROM `communities` WHERE id = '{$row['public_id']}'");
@@ -498,14 +524,12 @@ class Groups_forum extends Module{
                 $db->query("DELETE FROM `votes` WHERE id = '{$row['vote']}'");
                 $db->query("DELETE FROM `votes_result` WHERE vote_id = '{$row['vote']}'");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
                 $Cache->delete("votes/vote_{$row['vote']}");
                 $Cache->delete("votes/vote_answer_cnt_{$row['vote']}");
 
             }
-
-            exit();
         }
     }
 
@@ -524,9 +548,12 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//            Tools::NoAjaxQuery();
+//
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $fid = intval($_POST['fid']);
+
+            $fid = (int)$request['fid'];
 
             $row = $db->super_query("SELECT fuser_id, vote, public_id FROM `communities_forum` WHERE fid = '{$fid}'");
             $row2 = $db->super_query("SELECT admin, discussion FROM `communities` WHERE id = '{$row['public_id']}'");
@@ -542,7 +569,7 @@ class Groups_forum extends Module{
                 $db->query("DELETE FROM `votes` WHERE id = '{$row['vote']}'");
                 $db->query("DELETE FROM `votes_result` WHERE vote_id = '{$row['vote']}'");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("votes/vote_{$row['vote']}");
                 $Cache->delete("votes/vote_answer_cnt_{$row['vote']}");
             }
@@ -551,6 +578,7 @@ class Groups_forum extends Module{
 
     /**
      * Уадаление сообщения
+     * @param $params
      */
     public function delmsg($params){
         $tpl = $params['tpl'];
@@ -564,9 +592,12 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//            Tools::NoAjaxQuery();
+//
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $mid = intval($_POST['mid']);
+
+            $mid = (int)$request['mid'];
 
             $row = $db->super_query("SELECT muser_id, fid, mdate FROM `communities_forum_msg` WHERE mid = '{$mid}'");
             $row2 = $db->super_query("SELECT public_id FROM `communities_forum` WHERE fid = '{$row['fid']}'");
@@ -585,7 +616,7 @@ class Groups_forum extends Module{
                 //Удаляем из ленты новостей
                 $db->query("DELETE FROM `news` WHERE action_type = '6' AND obj_id = '{$mid}' AND action_time = '{$row['mdate']}'");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
             }
         }
@@ -593,6 +624,7 @@ class Groups_forum extends Module{
 
     /**
      * Прикрипление опроса
+     * @param $params
      */
     public function createvote($params){
         $tpl = $params['tpl'];
@@ -606,9 +638,12 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//            Tools::NoAjaxQuery();
+//
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $fid = intval($_POST['fid']);
+
+            $fid = (int)$request['fid'];
 
             $row = $db->super_query("SELECT fuser_id, public_id FROM `communities_forum` WHERE fid = '{$fid}'");
             $row2 = $db->super_query("SELECT admin, discussion FROM `communities` WHERE id = '{$row['public_id']}'");
@@ -621,8 +656,8 @@ class Groups_forum extends Module{
             if($user_info['user_group'] == 1 OR $public_admin OR $row['fuser_id'] == $user_id AND $row2['discussion']){
 
                 //Голосование
-                $vote_title = Validation::ajax_utf8(Validation::textFilter($_POST['vote_title'], false, true));
-                $vote_answer_1 = Validation::ajax_utf8(Validation::textFilter($_POST['vote_answer_1'], false, true));
+                $vote_title = Validation::ajax_utf8(Validation::textFilter($request['vote_title'], false, true));
+                $vote_answer_1 = Validation::ajax_utf8(Validation::textFilter($request['vote_answer_1'], false, true));
 
                 $ansers_list = array();
 
@@ -630,7 +665,7 @@ class Groups_forum extends Module{
 
                     for($vote_i = 1; $vote_i <= 10; $vote_i++){
 
-                        $vote_answer = Validation::ajax_utf8(Validation::textFilter($_POST['vote_answer_'.$vote_i], false, true));
+                        $vote_answer = Validation::ajax_utf8(Validation::textFilter($request['vote_answer_'.$vote_i], false, true));
                         $vote_answer = str_replace('|', '&#124;', $vote_answer);
 
                         if($vote_answer)
@@ -648,29 +683,31 @@ class Groups_forum extends Module{
                 }
 
             }
-
-            exit();
         }
     }
 
     /**
      * Просмотр темы
      * @param $params
-     * @param $vote_result
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function view($params, $vote_result){
+    public function view($params): string
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
+//        $ajax = (isset($request['ajax'])) ? 'yes' : 'no';
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $public_id = intval($_GET['public_id']);
-            $id = intval($_GET['id']);
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+            $public_id = (int)$request['public_id'];
+            $id = (int)$request['id'];
 
             //Выводим данные о теме
             $row = $db->super_query("SELECT tb1.fid, fixed, title, text, status, fdate, fuser_id, attach, vote, msg_num, public_id, tb2.user_search_pref, user_photo, user_last_visit, user_logged_mobile FROM `communities_forum` tb1, `users` tb2 WHERE tb1.fid = '{$id}' AND tb1.fuser_id = tb2.user_id");
@@ -961,21 +998,23 @@ class Groups_forum extends Module{
                 }
 
                 $tpl->compile('content');
-
+                return view('info.info', $params);
             } else
                 msg_box('<br /><br />Тема не найдена.<br /><br /><br />', 'info_2');
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
 
     /**
      * Вывод всех обсуждений в сообществе
+     * @param $params
+     * @return string
+     * @throws \Exception
      */
-    public function index($params)
+    public function index($params): string
     {
         $tpl = $params['tpl'];
 
@@ -991,17 +1030,20 @@ class Groups_forum extends Module{
             $user_id = $user_info['user_id'];
 
             //Если вызвана Forum.Page()
-            if($_POST['a'])
-                Tools::NoAjaxQuery();
+//            if($_POST['a'])
+//                Tools::NoAjaxQuery();
 
-            $public_id = intval($_GET['public_id']);
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+            $public_id = (int)$request['public_id'];
 
             $row = $db->super_query("SELECT forum_num, discussion, ulist FROM `communities` WHERE id = '{$public_id}'");
 
             if($row['discussion']){
 
                 //Верхушка
-                if(!$_POST['a']){
+                if(!$request['a']){
                     $tpl->load_template('forum/head.tpl');
                     $tpl->set('{id}', $public_id);
                     if(!$row['forum_num']) $row['forum_num'] = '';
@@ -1019,7 +1061,7 @@ class Groups_forum extends Module{
 
                 //SQL запрос на вывод
                 $limit = 20;
-                $page_post = intval($_POST['page']);
+                $page_post = (int)$request['page'];
                 if($page_post > 0)
                     $page = $page_post*$limit;
                 else
@@ -1059,11 +1101,11 @@ class Groups_forum extends Module{
                     }
 
                 } else
-                    if(!$_POST['a'])
+                    if(!$request['a'])
                         msg_box( '<br /><br />В сообществе ещё нет тем.<br /><br /><br />', 'info_2');
 
                 //Низ
-                if(!$_POST['a'] AND $forum_num > 20){
+                if(!$request['a'] AND $forum_num > 20){
                     $tpl->load_template('forum/bottom.tpl');
                     $tpl->set('{id}', $public_id);
                     if(!$row['forum_num']) $row['forum_num'] = '';
@@ -1072,15 +1114,15 @@ class Groups_forum extends Module{
                 }
 
                 //Если вызвана Forum.Page()
-                if($_POST['a']){
+                if($request['a']){
 
-                    Tools::AjaxTpl($tpl);
+
                     exit();
 
                 }
 
             } else
-                if(!$_POST['a'])
+                if(!$request['a'])
                     msg_box( '<br /><br />Ошибка доступа.<br /><br /><br />', 'info_2');
 
             $tpl->clear();
@@ -1092,8 +1134,6 @@ class Groups_forum extends Module{
             return view('info.info', $params);
         }
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
+        return view('info.info', $params);
     }
 }

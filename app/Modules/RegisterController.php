@@ -13,10 +13,12 @@ use Sura\Libs\Validation;
 class RegisterController extends Module{
 
     /**
+     * Завершение регистрации
+     *
      * @param $params
-     * @return bool
+     * @return string
      */
-    public function index($params)
+    public function index($params): string
     {
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -117,7 +119,7 @@ class RegisterController extends Module{
                         //Hash ID
                         $_IP = $_SERVER['REMOTE_ADDR']; //!NB
 
-                        $server_time = intval($_SERVER['REQUEST_TIME']);
+                        $server_time = \Sura\Libs\Tools::time();
                         $db->query("INSERT INTO `users` (user_email, user_password, user_name, user_lastname, user_sex, user_day, user_month, user_year, user_country, user_city, user_reg_date, user_lastdate, user_group, user_hash, user_country_city_name, user_search_pref, user_birthday, user_privacy) VALUES ('{$user_email}', '{$pass_hash}', '{$user_name}', '{$user_last_name}', '{$user_sex}', '{$user_day}', '{$user_month}', '{$user_year}', '{$user_country}', '{$user_city}', '{$server_time}', '{$server_time}', '{$user_group}', '{$pass_hash}', '{$user_country_city_name}', '{$user_search_pref}', '{$user_birthday}', 'val_msg|1||val_wall1|1||val_wall2|1||val_wall3|1||val_info|1||')");
                         $id = $db->insert_id();
 
@@ -174,21 +176,21 @@ class RegisterController extends Module{
                 echo 'error';
             }
         }echo 'error|no_val|not token';
-        die();
     }
 
     /**
-     * @param $params
+     * Signup
+     *
      * @return string
      * @throws Exception
      */
-    public function Signup($params)
+    public function Signup(): string
     {
         $title = 'Регистрация | Sura';
         /**
          * Загружаем Страны
          */
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
 
         $key = "system/all_country";
         try {

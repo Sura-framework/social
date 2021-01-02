@@ -3,9 +3,6 @@
 namespace App\Modules;
 
 use App\Services\Cache;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -13,7 +10,15 @@ use Sura\Libs\Validation;
 
 class ImController extends Module{
 
-    public function send($params){
+    /**
+     * Отправка сообщения
+     *
+     * @param $params
+     * @return string
+     * @throws \Exception
+     */
+    public function send($params): string
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -25,9 +30,8 @@ class ImController extends Module{
 
 //            AntiSpam('messages');
 
-            $for_user_id = intval($_POST['for_user_id']);
+            $for_user_id = (int)$_POST['for_user_id'];
             $msg = Validation::ajax_utf8($_POST['msg']);
-            //$attach_files = Validation::ajax_utf8($_POST['attach_files']); //what? \/
             $my_ava = Validation::ajax_utf8($_POST['my_ava'], false, true);
             $my_name = Validation::ajax_utf8($_POST['my_name'], false, true);
             $attach_files = Validation::ajax_utf8($_POST['attach_files'], false, true);
@@ -66,7 +70,7 @@ class ImController extends Module{
 
 //                        if(!Tools::CheckFriends($for_user_id)) AntiSpamLogInsert('messages');
 
-                        $server_time = intval($_SERVER['REQUEST_TIME']);
+                        $server_time = \Sura\Libs\Tools::time();
 
                         //Отправляем сообщение получателю
                         $db->query("INSERT INTO `messages` SET theme = '...', text = '".$msg."', for_user_id = '".$for_user_id."', from_user_id = '".$user_id."', date = '".$server_time."', pm_read = 'no', folder = 'inbox', history_user_id = '".$user_id."', attach = '".$attach_files."'");
@@ -106,19 +110,15 @@ class ImController extends Module{
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$for_user_id}', from_user_id = '{$user_id}', type = '8', date = '{$server_time}', text = '{$msg}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '{$msg_lnk}'");
 
-                            $key = "users/{$for_user_id}/updates";
-                            $Cache = Cache::initialize();
-                            $Cache->set($key, 1);
+                            $Cache = cache_init(array('type' => 'file'));
+                            $Cache->set("users/{$for_user_id}/updates", 1);
 
                         }
 
                         //Ответ скрипта
 //                        $tpl->load_template('im/msg.tpl');
-//                        $tpl->set('{ava}', );
                         $params['ava'] = $my_ava;
-//                        $tpl->set('{name}', );
                         $params['name'] = $my_name;
-//                        $tpl->set('{user-id}', );
                         $params['user_id'] = $user_id;
 
                         //Прикрипленные файлы
@@ -236,25 +236,21 @@ class ImController extends Module{
                             $msg = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $msg).$attach_result;
                         }
 
-//                        $tpl->set('{text}', );
                         $params['text'] = stripslashes($msg);
-
-//                        $tpl->set('{msg-id}', );
                         $params['msg_id'] = $dbid;
-//                        $tpl->set('{new}', );
                         $params['new'] = 'im_class_new';
-//                        $tpl->set('{date}', );
                         $params['date'] = langdate('H:i:s', $server_time);
-//                        $tpl->compile('content');
 
                         //Читисм кеш обновлений
-                        $Cache = Cache::initialize();
+                        $Cache = cache_init(array('type' => 'file'));
 
                         $Cache->delete("users/{$for_user_id}/im");
+
+
                         $Cache->set("users/{$for_user_id}/im_update", 1);
                         $Cache->set("users/{$for_user_id}/typograf{$user_id}", "");
 
-//                        Tools::AjaxTpl($tpl);
+//
 
                         //$params['tpl'] = $tpl;
                         //Page::generate($params);
@@ -269,6 +265,11 @@ class ImController extends Module{
         }
     }
 
+    /**
+     * Смена типа сообщений
+     *
+     * @param $params
+     */
     public function settTypeMsg($params){
         $db = $this->db();
         $user_info = $this->user_info();
@@ -289,6 +290,11 @@ class ImController extends Module{
         }
     }
 
+    /**
+     * Прочтение сообщения
+     *
+     * @param $params
+     */
     public function read($params){
         $db = $this->db();
         $user_info = $this->user_info();
@@ -311,7 +317,7 @@ class ImController extends Module{
                 $db->query("UPDATE `im` SET msg_num = msg_num-1 WHERE iuser_id = '".$user_id."' AND im_user_id = '".$check['from_user_id']."'");
 
                 //Читисм кеш обновлений
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
 
                 $Cache->delete("users/{$check['from_user_id']}/im");
 
@@ -319,6 +325,11 @@ class ImController extends Module{
         }
     }
 
+    /**
+     * Отправка инф. что набираем сообщение
+     *
+     * @param $params
+     */
     public function typograf($params){
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
@@ -330,20 +341,30 @@ class ImController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-//            Tools::NoAjaxQuery();
             $for_user_id = intval($_POST['for_user_id']);
-            if(isset($_GET['stop'] ) AND $_GET['stop'] == 1){
-                $Cache = Cache::initialize();
-                $Cache->set("users/{$for_user_id}/typograf{$user_id}", "");
+            if ($for_user_id > 0){
+                if(isset($_GET['stop'] ) AND $_GET['stop'] == 1){
+                    $Cache = cache_init(array('type' => 'file'));
+                    $Cache->set("users/{$for_user_id}/typograf{$user_id}", "");
+                }
+                else{
+                    $Cache = cache_init(array('type' => 'file'));
+                    $Cache->set("users/{$for_user_id}/typograf{$user_id}", "1");
+                }
             }
-            else{
-                $Cache = Cache::initialize();
-                $Cache->set("users/{$for_user_id}/typograf{$user_id}", "1");
-            }
+
         }
     }
 
-    public function update($params){
+    /**
+     *  Обновление окна сообщений каждые 2 сек
+     *
+     * @param $params
+     * @return string
+     * @throws \Exception
+     */
+    public function update($params): string
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -359,7 +380,7 @@ class ImController extends Module{
             $for_user_id = intval($_POST['for_user_id']);
             $last_id = intval($_POST['last_id']);
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             $sess_last_id = $Cache->get('users/'.$user_id.'/im');
             $typograf = $Cache->get("users/{$user_id}/typograf{$for_user_id}");
 
@@ -378,7 +399,7 @@ class ImController extends Module{
 
             $sql_ = $db->super_query("SELECT tb1.id, text, date, pm_read, folder, history_user_id, from_user_id, attach, tell_uid, tell_date, public, tell_comm, tb2.user_name, user_photo FROM `messages` tb1, `users` tb2 WHERE tb1.for_user_id = '{$user_id}' AND tb1.from_user_id = '{$for_user_id}' AND tb1.history_user_id = tb2.user_id ORDER by `date` ASC LIMIT ".$limit.", 20", 1);
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             $Cache->set('users/'.$user_id.'/im', $last_id);
 
             if($sql_){
@@ -389,6 +410,7 @@ class ImController extends Module{
                     $tpl->set('{folder}', $row['folder']);
                     $tpl->set('{user-id}', $row['history_user_id']);
                     $tpl->set('{msg-id}', $row['id']);
+                    $server_time = \Sura\Libs\Tools::time();
                     if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time)) $tpl->set('{date}', langdate('H:i:s', $row['date']));
                     else $tpl->set('{date}', langdate('d.m.y', $row['date']));
                     if($row['user_photo']) $tpl->set('{ava}', '/uploads/users/'.$row['history_user_id'].'/50_'.$row['user_photo']);
@@ -460,6 +482,7 @@ class ImController extends Module{
 
                                 //Музыка
                             } elseif($attach_type[0] == 'audio'){
+                                $audioId = intval($attach_type[1]);
                                 $row_audio = $db->super_query("SELECT id, oid, artist, title, url, duration FROM
 									`audio` WHERE id = '{$audioId}'");
                                 if($row_audio){
@@ -649,12 +672,19 @@ class ImController extends Module{
                         else
                             $rowUserTell = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$row['tell_uid']}'");
 
-                        if(date('Y-m-d', $row['tell_date']) == date('Y-m-d', $server_time))
-                            $dateTell = langdate('сегодня в H:i', $row['tell_date']);
-                        elseif(date('Y-m-d', $row['tell_date']) == date('Y-m-d', ($server_time-84600)))
-                            $dateTell = langdate('вчера в H:i', $row['tell_date']);
-                        else
-                            $dateTell = langdate('j F Y в H:i', $row['tell_date']);
+                        if ($row['tell_date']){
+                            if(date('Y-m-d', $row['tell_date']) == date('Y-m-d', $server_time)) {
+                                $row = langdate('сегодня в H:i', $row['tell_date']);
+                            }
+                            elseif(date('Y-m-d', $row['tell_date']) == date('Y-m-d', ($server_time-84600))) {
+                                $row = langdate('вчера в H:i', $row['tell_date']);
+                            }
+                            else {
+                                $row = langdate('j F Y в H:i', $row['tell_date']);
+                            }
+                        }else{
+                            $row = 'N/A';
+                        }
 
                         if($row['public']){
                             $rowUserTell['user_search_pref'] = stripslashes($rowUserTell['title']);
@@ -685,18 +715,22 @@ class ImController extends Module{
                     $tpl->compile('content');
                 }
 
-                Tools::AjaxTpl($tpl);
-
-//                $params['tpl'] = $tpl;
-//                Page::generate($params);
-                return true;
+                return view('info.info', $params);
             }
 
-            die();
         }
+        return view('info.info', $params);
     }
 
-    public function history($params){
+    /**
+     *  Просмотр истории сообщений с юзером
+     *
+     * @param $params
+     * @return string
+     * @throws \Exception
+     */
+    public function history($params): string
+    {
         //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -710,7 +744,7 @@ class ImController extends Module{
             $for_user_id = intval($_POST['for_user_id']);
             $first_id = intval($_POST['first_id']);
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             $Cache->set("users/{$for_user_id}/typograf{$user_id}", "");
 
             $config = Settings::loadsettings();
@@ -729,7 +763,7 @@ class ImController extends Module{
                     $db->query("UPDATE `im` SET msg_num = msg_num-{$newMSGnum} WHERE iuser_id = '".$user_id."' AND im_user_id = '".$for_user_id."'");
                     $db->query("UPDATE `users` SET user_pm_num = user_pm_num-{$newMSGnum} WHERE user_id = '".$user_id."'");
                     //Читисм кеш обновлений
-                    $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
                     $Cache->delete("users/{$for_user_id}/im");
                 }
                 $limit_msg = 5;
@@ -783,7 +817,7 @@ class ImController extends Module{
                     $sql_[$key]['user-id'] = $row['history_user_id'];
 //                    $tpl->set('{msg-id}', );
                     $sql_[$key]['msg-id'] = $row['id'];
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
+                    $server_time = \Sura\Libs\Tools::time();
                     if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time)) {
 //                        $tpl->set('{date}', );
                         $sql_[$key]['date'] = langdate('H:i:s', $row['date']);
@@ -1066,12 +1100,19 @@ class ImController extends Module{
                         else
                             $rowUserTell = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$row['tell_uid']}'");
 
-                        if(date('Y-m-d', $row['tell_date']) == date('Y-m-d', $server_time))
-                            $dateTell = langdate('сегодня в H:i', $row['tell_date']);
-                        elseif(date('Y-m-d', $row['tell_date']) == date('Y-m-d', ($server_time-84600)))
-                            $dateTell = langdate('вчера в H:i', $row['tell_date']);
-                        else
-                            $dateTell = langdate('j F Y в H:i', $row['tell_date']);
+                        if ($row['tell_date']){
+                            if(date('Y-m-d', $row['tell_date']) == date('Y-m-d', $server_time)) {
+                                $row = langdate('сегодня в H:i', $row['tell_date']);
+                            }
+                            elseif(date('Y-m-d', $row['tell_date']) == date('Y-m-d', ($server_time-84600))) {
+                                $row = langdate('вчера в H:i', $row['tell_date']);
+                            }
+                            else {
+                                $row = langdate('j F Y в H:i', $row['tell_date']);
+                            }
+                        }else{
+                            $row = 'N/A';
+                        }
 
                         if($row['public']){
                             $rowUserTell['user_search_pref'] = stripslashes($rowUserTell['title']);
@@ -1133,13 +1174,15 @@ class ImController extends Module{
                 $params['first_id'] = true;
             }
 
-//            Tools::AjaxTpl($tpl);
-
-
             return view('im.history', $params);
         }
     }
 
+    /**
+     * Обновление диалогов
+     *
+     * @param $params
+     */
     public function upDialogs($params){
         //$tpl = $params['tpl'];
         //$lang = $this->get_langs();
@@ -1155,7 +1198,7 @@ class ImController extends Module{
 
 //            Tools::NoAjaxQuery();
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             $update = $Cache->get("users/{$user_id}/im_update");
 
             if($update){
@@ -1172,7 +1215,7 @@ class ImController extends Module{
                     $user_pm_num_2 = '';
                     $doc_title = 'document.title = \'Диалоги\';';
 
-                    $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
                     $Cache->set("users/{$user_id}/im_update", "0");
                 }
 
@@ -1182,10 +1225,14 @@ class ImController extends Module{
 				'.$res.'
 				</script>';
             }
-            die();
         }
     }
 
+    /**
+     * Удаление диалога
+     *
+     * @param $params
+     */
     public function del($params){
         $db = $this->db();
         $user_info = $this->user_info();
@@ -1217,7 +1264,13 @@ class ImController extends Module{
         }
     }
 
-    public function index($params){
+    /**
+     * @param $params
+     * @return string
+     * @throws \Exception
+     */
+    public function index($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -1284,9 +1337,5 @@ class ImController extends Module{
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
         }
-
-//        $params['tpl'] = $tpl;
-//        Page::generate($params);
-//        return true;
     }
 }

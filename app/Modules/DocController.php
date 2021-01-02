@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Services\Cache;
+use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
@@ -10,6 +11,7 @@ class DocController extends Module{
 
     /**
      * Загрузка файла
+     *
      */
     public function upload(){
 //        $tpl = $params['tpl'];
@@ -20,7 +22,7 @@ class DocController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+
 
             //Получаем данные о фотографии
             $file_tmp = $_FILES['uploadfile']['tmp_name'];
@@ -44,11 +46,13 @@ class DocController extends Module{
 
                     //Если нет папки юзера, то создаём её
                     if(!is_dir($upload_dir)){
-                        @mkdir($upload_dir, 0777);
+                        if (!mkdir($upload_dir, 0777) && !is_dir($upload_dir)) {
+                            throw new \RuntimeException(sprintf('Directory "%s" was not created', $upload_dir));
+                        }
                         @chmod($upload_dir, 0777);
                     }
 
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
+                    $server_time = \Sura\Libs\Tools::time();
                     $downl_file_name = substr(md5($file_name.rand(0, 1000).$server_time), 0, 25);
 
                     //Загружаем сам файл
@@ -81,7 +85,7 @@ class DocController extends Module{
                             $file_name = substr($file_name, 0, 50).'...'.$res_type;
                         }
 
-                        $server_time = intval($_SERVER['REQUEST_TIME']);
+                        $server_time = \Sura\Libs\Tools::time();
                         //Вставляем файл в БД
                         $db->query("INSERT INTO `doc` SET duser_id = '{$user_id}', dname = '{$file_name}', dsize = '{$dsize}', ddate = '{$server_time}', ddownload_name = '{$downl_file_name}{$res_type}'");
 
@@ -91,7 +95,7 @@ class DocController extends Module{
 //                        user_{$user_id}/profile_{$user_id}|
 //                        user_{$user_id}/docs");
 
-                        $Cache = Cache::initialize();
+                        $Cache = cache_init(array('type' => 'file'));
                         $Cache->delete("users/{$user_id}/profile_{$user_id}");
                         $Cache->delete("users/{$user_id}/docs");
                     }
@@ -100,8 +104,6 @@ class DocController extends Module{
                     echo 1;
 
             }
-
-            exit;
         }
     }
 
@@ -118,9 +120,12 @@ class DocController extends Module{
             $user_id = $user_info['user_id'];
 
 
-            Tools::NoAjaxQuery();
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $did = intval($_POST['did']);
+
+
+            $did = (int)$request['did'];
 
             $row = $db->super_query("SELECT duser_id, ddownload_name FROM `doc` WHERE did = '{$did}'");
 
@@ -138,7 +143,7 @@ class DocController extends Module{
 //                user_{$user_id}/docs");
 //                Cache::mozg_clear_cache_file("wall/doc{$did}");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_id}/profile_{$user_id}");
                 $Cache->delete("users/{$user_id}/docs");
                 $Cache->delete("wall/doc{$did}");
@@ -149,6 +154,7 @@ class DocController extends Module{
 
     /**
      * Сохранение отред.данных
+     *
      */
     public function editsave($params){
 //        $tpl = $params['tpl'];
@@ -159,10 +165,11 @@ class DocController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $did = intval($_POST['did']);
-            $name = Validation::ajax_utf8(Validation::textFilter($_POST['name'], false, true));
+            $did = (int)$request['did'];
+            $name = Validation::ajax_utf8(Validation::textFilter($request['name'], false, true));
             $strLn = strlen($name);
             if($strLn > 50)
                 $name = substr($name, 0, 50);
@@ -178,7 +185,7 @@ class DocController extends Module{
 //                user_{$user_id}/docs");
 //                Cache::mozg_clear_cache_file("wall/doc{$did}");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_id}/profile_{$user_id}");
                 $Cache->delete("users/{$user_id}/docs");
                 $Cache->delete("wall/doc{$did}");
@@ -200,9 +207,12 @@ class DocController extends Module{
         if($logged){
 //            $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
 
-            $did = intval($_GET['did']);
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+
+            $did = (int)$request['did'];
 
             $row = $db->super_query("SELECT duser_id, ddownload_name, dname FROM `doc` WHERE did = '{$did}'");
 
@@ -230,7 +240,6 @@ class DocController extends Module{
             } else
                 header("Location: /index.php");
 
-            exit;
         }
     }
 
@@ -243,6 +252,10 @@ class DocController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 
@@ -250,11 +263,10 @@ class DocController extends Module{
 
             $sql_limit = 20;
 
-            if($_POST['page_cnt'] > 0) $page_cnt = intval($_POST['page_cnt'])*$sql_limit;
+            if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] *$sql_limit;
             else $page_cnt = 0;
 
-            if($page_cnt)
-                Tools::NoAjaxQuery();
+
 
             $sql_ = $db->super_query("SELECT did, dname, ddate, ddownload_name, dsize FROM `doc` WHERE duser_id = '{$user_id}' ORDER by `ddate` DESC LIMIT {$page_cnt}, {$sql_limit}", 1);
 
@@ -284,7 +296,7 @@ class DocController extends Module{
 
             if($page_cnt){
 
-                Tools::AjaxTpl($tpl);
+
                 exit;
 
             }
@@ -298,15 +310,16 @@ class DocController extends Module{
 
         }
 
-        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
+        return view('info.info', $params);
     }
 
     /**
-     * Страница всех загруженных документов для прикрипления BOX
+     * Страница всех загруженных документов для прикрепления BOX
+     * @param $params
+     * @return string
+     * @throws \Exception
      */
-    public function index($params)
+    public function index($params): string
     {
         $tpl = $params['tpl'];
 
@@ -318,11 +331,14 @@ class DocController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
+
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
 
             $sql_limit = 20;
 
-            if($_POST['page_cnt'] > 0) $page_cnt = intval($_POST['page_cnt'])*$sql_limit;
+            if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] *$sql_limit;
             else $page_cnt = 0;
 
             $sql_ = $db->super_query("SELECT did, dname, ddate, ddownload_name FROM `doc` WHERE duser_id = '{$user_id}' ORDER by `ddate` DESC LIMIT {$page_cnt}, {$sql_limit}", 1);
@@ -353,19 +369,11 @@ class DocController extends Module{
                 $tpl->load_template('doc/bottom.tpl');
                 $tpl->compile('content');
             }
-
-            Tools::AjaxTpl($tpl);
-
-            exit;
-
-//            $tpl->clear();
-//            $db->free();
+            return view('info.info', $params);
 
         } else
             echo 'no_log';
 
-        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
+        return view('info.info', $params);
     }
 }

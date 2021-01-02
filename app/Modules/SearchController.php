@@ -14,11 +14,14 @@ use Sura\Libs\Validation;
 class SearchController extends Module{
 
     /**
+     * Поиск
+     *
      * @param $params
      * @return string
      * @throws \Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
 //        Tools::NoAjaxRedirect();
 
         $lang = $this->get_langs();
@@ -35,91 +38,91 @@ class SearchController extends Module{
             $query_string = preg_replace("/&page=[0-9]+/i", '', $_SERVER['QUERY_STRING']);
             $user_id = $user_info['user_id'];
 
-            if(isset($_GET['page']) AND $_GET['page'] > 0)
-                $page = intval($_GET['page']);
+            if(isset($request['page']) AND $request['page'] > 0)
+                $page = (int)$request['page'];
             else
                 $page = 1;
             $gcount = 20;
             $limit_page =($page-1)*$gcount;
 
-            if (isset($_GET['query'])){
-//                $query = $db->safesql(Validation::ajax_utf8(Validation::strip_data(urldecode($_GET['query']))));
-                $query = Validation::strip_data(urldecode($_GET['query']));
-                if(isset($_GET['n']) AND $_GET['n'])
-                    $query = Validation::strip_data(urldecode($_GET['query']));
+            if (isset($request['query'])){
+//                $query = $db->safesql(Validation::ajax_utf8(Validation::strip_data(urldecode($request['query']))));
+                $query = Validation::strip_data(urldecode($request['query']));
+                if(isset($request['n']) AND $request['n'])
+                    $query = Validation::strip_data(urldecode($request['query']));
                 //Замеянем пробелы на проценты чтоб тоиск был точнее
                 $query = strtr($query, array(' ' => '%'));
             }else
                 $query = false;
 
 
-            if (isset($_GET['type'])){
-                $type = intval($_GET['type']);
+            if (isset($request['type'])){
+                $type = intval($request['type']);
             }else{
                 $type = 1;
             }
 
             //Задаём параметры сортировки
             $sql_sort = '';
-            if(isset($_GET['sex'])) {
-                $sex = intval($_GET['sex']);
+            if(isset($request['sex'])) {
+                $sex = intval($request['sex']);
                 $sql_sort .= "AND user_sex = '{$sex}'";
             }else{
                 $sex = '';
             }
 
-            if(isset($_GET['day'])) {
-                $day = intval($_GET['day']);
+            if(isset($request['day'])) {
+                $day = intval($request['day']);
                 $sql_sort .= "AND user_day = '{$day}'";
             }else{
                 $day = '';
             }
 
-            if(isset($_GET['month'])) {
-                $month = intval($_GET['month']);
+            if(isset($request['month'])) {
+                $month = intval($request['month']);
                 $sql_sort .= "AND user_month = '{$month}'";
             }else{
                 $month = '';
             }
 
-            if(isset($_GET['year'])) {
-                $year = intval($_GET['year']);
+            if(isset($request['year'])) {
+                $year = intval($request['year']);
                 $sql_sort .= "AND user_year = '{$year}'";
             }else{
                 $year = '';
             }
 
-            if(isset($_GET['country'])) {
-                $country = intval($_GET['country']);
+            if(isset($request['country'])) {
+                $country = intval($request['country']);
                 $sql_sort .= "AND user_country = '{$country}'";
             }else{
                 $country = 0;
             }
 
-            if(isset($_GET['city'])) {
-                $city = intval($_GET['city']);
+            if(isset($request['city'])) {
+                $city = intval($request['city']);
                 $sql_sort .= "AND user_city = '{$city}'";
             }else{
                 $city = '';
             }
 
-            if(isset($_GET['online'])) {
-                $online = intval($_GET['online']);
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+            if(isset($request['online'])) {
+                $online = intval($request['online']);
+                $server_time = \Sura\Libs\Tools::time();
                 $online_time = $server_time - 60;
                 $sql_sort .= "AND user_last_visit >= '{$online_time}'";
             }else{
                 $online = '';
             }
 
-            if(isset($_GET['user_photo'])) {
-                $user_photo = intval($_GET['user_photo']);
+            if(isset($request['user_photo'])) {
+                $user_photo = intval($request['user_photo']);
                 $sql_sort .= "AND user_photo != ''";
             }else
                 $user_photo = '';
 
-            if(isset($_GET['sp'])) {
-                $sp = intval($_GET['sp']);
+            if(isset($request['sp'])) {
+                $sp = intval($request['sp']);
                 $sql_sort .= "AND SUBSTRING(user_sp, 1, 1) regexp '[[:<:]]({$sp})[[:>:]]'";
             }else{
                 $sp = '';
@@ -264,7 +267,7 @@ class SearchController extends Module{
                     /**
                      * Загружаем Страны
                      */
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             try {
                 $item = $Cache->get("system/all_country", $default = null);
                 $item = unserialize($item);
@@ -555,10 +558,10 @@ class SearchController extends Module{
             }
 
             return view('search.search', $params);
-        } else {
+        }
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
-        }
+
     }
 }

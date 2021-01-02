@@ -8,10 +8,14 @@ use Sura\Libs\Validation;
 class SupportController extends Module{
 
     /**
+     * Страница создание нового вопроса
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function new($params){
+    public function new($params): string
+    {
         $lang = $this->get_langs();
 //        $db = $this->db();
         $user_info = $this->user_info();
@@ -22,7 +26,7 @@ class SupportController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+//            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
 //
@@ -32,13 +36,14 @@ class SupportController extends Module{
 //            $tpl->set('{uid}', $user_id);
 //            $tpl->compile('content');
 
-//            $params['tpl'] = $tpl;
-//            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
+     * Отправка нового вопроса
+     *
      * @param $params
      */
     public function send($params){
@@ -53,13 +58,13 @@ class SupportController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
             $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
 
-              $title = Validation::ajax_utf8(Validation::textFilter($_POST['title']), false, true);
-            $question = Validation::ajax_utf8(Validation::textFilter($_POST['question']));
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+              $title = Validation::ajax_utf8(Validation::textFilter($request['title']), false, true);
+            $question = Validation::ajax_utf8(Validation::textFilter($request['question']));
+            $server_time = \Sura\Libs\Tools::time();
             $limitTime = $server_time-3600;
             $rowLast = $db->super_query("SELECT COUNT(*) AS cnt FROM `support` WHERE сdate > '{$limitTime}'");
             if(!$rowLast['cnt'] AND isset($title) AND !empty($title) AND isset($question) AND !empty($question) AND $user_info['user_group'] != 4){
@@ -78,22 +83,26 @@ class SupportController extends Module{
 //                $tpl->set('{name}', $row['user_search_pref']);
 //                $tpl->set('{uid}', $user_id);
                 if($row['user_photo'])
-                    $tpl->set('{ava}', '/uploads/users/'.$user_id.'/50_'.$row['user_photo']);
+                {
+//                    $tpl->set('{ava}', '/uploads/users/'.$user_id.'/50_'.$row['user_photo']);
+                }
                 else
-                    $tpl->set('{ava}', '/images/no_ava_50.png');
+                {
+//                    $tpl->set('{ava}', '/images/no_ava_50.png');
+                }
 //                $tpl->set('{answers}', '');
 //                $tpl->compile('content');
-//                Tools::AjaxTpl($tpl);
+//
 
                 echo 'r|x'.$dbid;
             } else
                 echo 'limit';
-
-            die();
         }
     }
 
     /**
+     * Удаление вопроса
+     *
      * @param $params
      */
     public function delet($params){
@@ -107,21 +116,22 @@ class SupportController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $qid = intval($_POST['qid']);
+            $qid = intval($request['qid']);
             $row = $db->super_query("SELECT suser_id FROM `support` WHERE id = '{$qid}'");
             if($row['suser_id'] == $user_id OR $user_info['user_group'] == 4){
                 $db->query("DELETE FROM `support` WHERE id = '{$qid}'");
                 $db->query("DELETE FROM `support_answers` WHERE qid = '{$qid}'");
             }
-            die();
         }
     }
 
     /**
+     *  Удаление Ответа
+     *
      * @param $params
      */
     public function delet_answer($params){
@@ -135,20 +145,21 @@ class SupportController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $id = intval($_POST['id']);
+            $id = intval($request['id']);
             $row = $db->super_query("SELECT auser_id FROM `support_answers` WHERE id = '{$id}'");
             if($row['auser_id'] == $user_id OR $user_info['user_group'] == 4)
                 $db->query("DELETE FROM `support_answers` WHERE id = '{$id}'");
 
-            die();
         }
     }
 
     /**
+     * Закрытие вопроса
+     *
      * @param $params
      */
     public function close($params){
@@ -162,25 +173,28 @@ class SupportController extends Module{
         if($logged){
 //            $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $qid = intval($_POST['qid']);
+            $qid = intval($request['qid']);
             if($user_info['user_group'] == 4){
                 $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `support` WHERE id = '{$qid}'");
                 if($row['cnt'])
                     $db->query("UPDATE `support` SET sfor_user_id = 0 WHERE id = '{$qid}'");
             }
-            die();
         }
     }
 
     /**
+     * Отправка ответа
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function answer($params){
+    public function answer($params): string
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -192,12 +206,12 @@ class SupportController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $qid = intval($_POST['qid']);
-            $answer = Validation::ajax_utf8(Validation::textFilter($_POST['answer']));
+            $qid = intval($request['qid']);
+            $answer = Validation::ajax_utf8(Validation::textFilter($request['answer']));
             $check = $db->super_query("SELECT suser_id FROM `support` WHERE id = '{$qid}'");
             if($check['suser_id'] == $user_id OR $user_info['user_group'] == 4 AND isset($answer) AND !empty($answer)){
                 if($user_info['user_group'] == 4){
@@ -208,7 +222,7 @@ class SupportController extends Module{
 
                 $answer = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<!--link:$1--><a href="$1" target="_blank">$1</a><!--/link-->', $answer);
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
 
                 $db->query("INSERT INTO `support_answers` SET qid = '{$qid}', auser_id = '{$auser_id}', adate = '{$server_time}', answer = '{$answer}'");
                 $db->query("UPDATE `support` SET sfor_user_id = '{$auser_id}', sdate = '{$server_time}' WHERE id = '{$qid}'");
@@ -243,21 +257,22 @@ class SupportController extends Module{
                 $date = megaDate($server_time);
                 $tpl->set('{date}', $date);
                 $tpl->compile('content');
-                Tools::AjaxTpl($tpl);
-
-                $params['tpl'] = $tpl;
-                Page::generate($params);
-                return true;
+                return view('info.info', $params);
             }
-            die();
+
         }
+        return view('info.info', $params);
     }
 
     /**
+     * Просмотр вопроса
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function show($params){
+    public function show($params): string
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -269,11 +284,11 @@ class SupportController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $qid = intval($_GET['qid']);
+            $qid = intval($request['qid']);
 
             $mobile_speedbar = 'Просмотр вопроса';
 
@@ -350,18 +365,20 @@ class SupportController extends Module{
                 msg_box( $lang['support_no_quest'], 'info');
             }
 
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
+     * Просмотр всех вопросов
+     *
      * @param $params
      * @return string
      * @throws \Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
@@ -466,11 +483,11 @@ class SupportController extends Module{
             }
 
             return view('support.support', $params);
-        } else {
+        }
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
-        }
+
 
 //        $tpl->load_template('support/head.tpl');
 

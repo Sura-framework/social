@@ -2,49 +2,64 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
+use App\Contracts\Modules\HomeInterface;
 use Exception;
 use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
-class HomeController extends Module{
+class HomeController extends Module implements HomeInterface {
 
     /**
+     * Главная страница
+     *
      * @param array $params
      * @return string
      * @throws Exception
      */
-    public function index(array $params)
+    public function index(array $params): string
     {
         $logged = $this->logged();
 
-        if ($logged == true || isset($logged)){
+        if ($logged === true || isset($logged)){
             $params['title'] = 'Новости'.' | Sura';
-//            $params['title'] = 'Sura';
-
-//            var_dump($params);
-//            exit();
-            return (new FeedController)->feed($params);
-        }else{
-
-            $params['title'] = 'Sura';
             try {
-                return view('reg', $params);
+//                throw new Exception('Деление на ноль.');
+
+                // Если метод delete() из модели возвращает true
+                return (new FeedController)->feed($params);
+
             } catch (Exception $e) {
-                echo 'error';
+                // Если false - ловим брошенное из модели исключение
+                echo $e->getMessage();
+                // Или вывести в уведомление через сессию, например
+                // Session::set('error', $e->getMessage());
             }
+        }
+
+        $params['title'] = 'Sura';
+
+        try {
+            return view('reg', $params);
+        } catch (Exception $e) {
+            return  _e('err');
         }
     }
 
     /**
+     * Вход на сайт
      *
+     * @param array $params
+     * @return string
      */
-    public function login()
+    public function login(array $params): string
     {
         $logged = $this->logged();
         $db = $this->db();
-        $token = $_POST['token'].'|'.$_SERVER['REMOTE_ADDR'];
+
+        $request = (Request::getRequest()->getGlobal());
+
+        $token = $request['token'].'|'.$_SERVER['REMOTE_ADDR'];
         $check_token = false;
         if ($token == $_SESSION['_mytoken'] AND $check_token == true){
             $user_token = true;
@@ -55,7 +70,7 @@ class HomeController extends Module{
         }
 
         //Если данные поступили через пост запрос и пользователь не авторизован
-        if(isset($_POST['login']) AND $logged == false AND $user_token == true ){
+        if(isset($request['login']) AND $logged == false AND $user_token == true ){
 
             $errors = 0;
             $err = '';
@@ -63,7 +78,7 @@ class HomeController extends Module{
             //Приготавливаем данные
 
             //Проверка E-mail
-            $email = strip_tags($_POST['email']);
+            $email = strip_tags($request['email']);
             if(Validation::check_email($email) == false)
             {
                 $errors++;
@@ -71,8 +86,8 @@ class HomeController extends Module{
             }
 
             //Проверка Пароля
-            if (!empty($_POST['pass'])){
-                $password = GetVar($_POST['pass']);
+            if (!empty($request['pass'])){
+                $password = GetVar($request['pass']);
             }else{
                 $password = NUlL;
                 $errors++;
@@ -95,10 +110,10 @@ class HomeController extends Module{
                     $db->query("DELETE FROM `updates` WHERE for_user_id = '{$check_user['user_id']}'");
 
                     //Устанавливаем в сессию ИД юзера
-                    $_SESSION['user_id'] = intval($check_user['user_id']);
+                    $_SESSION['user_id'] = (int)$check_user['user_id'];
 
                     //Записываем COOKIE
-                    Tools::set_cookie("user_id", intval($check_user['user_id']), 365);
+                    Tools::set_cookie("user_id", (int)$check_user['user_id'], 365);
 //                    Tools::set_cookie("password", $password, 365);
                     Tools::set_cookie("hash", $hash, 365);
 
@@ -107,53 +122,29 @@ class HomeController extends Module{
                     $db->query("UPDATE `log` SET browser = '".$_BROWSER."', ip = '".$_IP."' WHERE uid = '".$check_user['user_id']."'");
 
                        // header('Location: /');
-                    echo 'ok|'.$check_user['user_id'];
+                    return _e('ok|'.$check_user['user_id']);
                 } else{
-                    echo 'error|no_val|no_user|'.$password;
+                    return _e( 'error|no_val|no_user|'.$password);
                     //var_dump(password_verify($password, $check_user['user_password']));
                     //msgbox('', $lang['not_loggin'].'<br /><br /><a href="/restore/" onClick="Page.Go(this.href); return false">Забыли пароль?</a>', 'info_red');
                 }
             }else{
-                echo 'error|no_val|'.$err;
+                return _e( 'error|no_val|'.$err);
             }
-        }else{
-            echo 'error|no_val|';
+        }
+        else{
+            return _e( 'error|no_val|');
         }
     }
 
     /**
+     * Test page
      *
+     * @param array $params
      */
-    public function Test()
+    public function Test(array $params): void
     {
-        $key = "system/all_country";
-        $Cache = Cache::initialize();
 
-        try {
-            $item = $Cache->get($key, $default = null);
-            print_r($item);
-
-            $Cache->delete($key);
-
-            $item2 = $Cache->get($key, $default = null);
-            echo '<br>';
-            echo '<br>';
-            print_r($item2);
-            echo '<br>end| ';
-
-            $s = 1;
-        }catch (Exception $e){
-            $db = $this->db();
-            $item = $db->super_query("SELECT * FROM `country` ORDER by `name` ", true);
-            $Cache->set($key, $item);
-            $s = 2;
-        }
-
-        echo '<br>';
-
-        print_r($item);
-
-        echo $s;
     }
 
 }

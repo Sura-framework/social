@@ -5,6 +5,7 @@ namespace App\Modules;
 use App\Models\Profile;
 use App\Services\Cache;
 use Exception;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -15,6 +16,7 @@ class EditprofileController extends Module{
 
     /**
      * Загрузка фотографии
+     *
      */
     public function upload(){
         //TODO json output
@@ -34,9 +36,13 @@ class EditprofileController extends Module{
 
             //Если нет папок юзера, то создаём её
             if(!is_dir($upload_dir.$user_id)){
-                @mkdir($upload_dir.$user_id, 0777 );
+                if (!mkdir($concurrentDirectory = $upload_dir . $user_id, 0777) && !is_dir($concurrentDirectory)) {
+                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+                }
                 @chmod($upload_dir.$user_id, 0777 );
-                @mkdir($upload_dir.$user_id.'/albums', 0777 );
+                if (!mkdir($concurrentDirectory = $upload_dir . $user_id . '/albums', 0777) && !is_dir($concurrentDirectory)) {
+                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+                }
                 @chmod($upload_dir.$user_id.'/albums', 0777 );
             }
 
@@ -46,7 +52,7 @@ class EditprofileController extends Module{
             //Получаем данные о фотографии
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $server_time = \Sura\Libs\Tools::time();
             $permitted_chars = '0123456789abcdefghijklmnopqrstuvwxyz';
 //            $image_rename = substr(md5($server_time+rand(1,100000)), 0, 15); // имя фотографии
             $image_rename = substr(str_shuffle($permitted_chars), 0, 15); // имя фотографии
@@ -118,7 +124,7 @@ class EditprofileController extends Module{
 //                        Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
 //                        Cache::mozg_clear_cache();
 
-                        $Cache = Cache::initialize();
+                        $Cache = cache_init(array('type' => 'file'));
                         $Cache->delete("users/{$user_id}/profile_{$user_id}");
                         //json!
                     } else
@@ -171,7 +177,7 @@ class EditprofileController extends Module{
 //                Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
 //                Cache::mozg_clear_cache();
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_id}/profile_{$user_id}");
             }
             //json!
@@ -213,31 +219,38 @@ class EditprofileController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $post_user_sex = intval($_POST['sex']);
-            if($post_user_sex == 1 OR $post_user_sex == 2)
+            $post_user_sex = (int)$request['sex'];
+            if($post_user_sex == 1 OR $post_user_sex == 2) {
                 $user_sex = $post_user_sex;
-            else
+            }
+            else {
                 $user_sex = false;
+            }
 
-            $user_day = intval($_POST['day']);
-            $user_month = intval($_POST['month']);
-            $user_year = intval($_POST['year']);
-            $user_country = intval($_POST['country']);
-            $user_city = intval($_POST['city']);
+            $user_day = (int)$request['day'];
+            $user_month = (int)$request['month'];
+            $user_year = (int)$request['year'];
+            $user_country = (int)$request['country'];
+            $user_city = (int)$request['city'];
             $user_birthday = $user_year.'-'.$user_month.'-'.$user_day;
 
             if($user_sex){
-                $post_sp = intval($_POST['sp']);
-                if($post_sp >= 1 AND $post_sp <= 7)
+                $post_sp = (int)$request['sp'];
+                if($post_sp >= 1 AND $post_sp <= 7) {
                     $sp = $post_sp;
-                else
+                }
+                else {
                     $sp = false;
+                }
 
                 if($sp){
-                    $sp_val = intval($_POST['sp_val']);
+                    $sp_val = (int)$request['sp_val'];
                     $user_sp = $sp.'|'.$sp_val;
                 }
             }
@@ -255,10 +268,7 @@ class EditprofileController extends Module{
 
             $db->query("UPDATE `users` SET user_sex = '{$user_sex}', user_day = '{$user_day}', user_month = '{$user_month}', user_year = '{$user_year}', user_country = '{$user_country}', user_city = '{$user_city}', user_country_city_name = '{$user_country_city_name}', user_birthday = '{$user_birthday}', user_sp = '{$user_sp}' WHERE user_id = '{$user_info['user_id']}'");
 
-//            Cache::mozg_clear_cache_file('user_'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
-//            Cache::mozg_clear_cache();
-
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             $Cache->delete("users/{$user_info['user_id']}/profile_{$user_info['user_id']}");
 
             echo 'ok';
@@ -278,15 +288,18 @@ class EditprofileController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $xfields = array();
-            $xfields['vk'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['vk'], 0, 200))));
-            $xfields['od'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['od'], 0, 200))));
-            $xfields['phone'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['phone'], 0, 200))));
-            $xfields['skype'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['skype'], 0, 200))));
-            $xfields['fb'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['fb'], 0, 200))));
-            $xfields['icq'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['icq'], 0, 200))));
-            $xfields['site'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['site'], 0, 200))));
+            $xfields['vk'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['vk'], 0, 200))));
+            $xfields['od'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['od'], 0, 200))));
+            $xfields['phone'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['phone'], 0, 200))));
+            $xfields['skype'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['skype'], 0, 200))));
+            $xfields['fb'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['fb'], 0, 200))));
+            $xfields['icq'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['icq'], 0, 200))));
+            $xfields['site'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['site'], 0, 200))));
 
             $xfieldsdata = '';
             foreach($xfields as $name => $value){
@@ -299,7 +312,7 @@ class EditprofileController extends Module{
 
 //            Cache::mozg_clear_cache_file('user_'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             $Cache->delete("users/{$user_info['user_id']}/profile_{$user_info['user_id']}");
 
             echo 'ok';
@@ -322,17 +335,20 @@ class EditprofileController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
 
             $xfields = array();
-            $xfields['activity'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['activity'], 0, 5000))));
-            $xfields['interests'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['interests'], 0, 5000))));
-            $xfields['myinfo'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['myinfo'], 0, 5000))));
-            $xfields['music'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['music'], 0, 5000))));
-            $xfields['kino'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['kino'], 0, 5000))));
-            $xfields['books'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['books'], 0, 5000))));
-            $xfields['games'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['games'], 0, 5000))));
-            $xfields['quote'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($_POST['quote'], 0, 5000))));
+            $xfields['activity'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['activity'], 0, 5000))));
+            $xfields['interests'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['interests'], 0, 5000))));
+            $xfields['myinfo'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['myinfo'], 0, 5000))));
+            $xfields['music'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['music'], 0, 5000))));
+            $xfields['kino'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['kino'], 0, 5000))));
+            $xfields['books'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['books'], 0, 5000))));
+            $xfields['games'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['games'], 0, 5000))));
+            $xfields['quote'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['quote'], 0, 5000))));
 
             $xfieldsdata = '';
             foreach($xfields as $name => $value){
@@ -345,7 +361,7 @@ class EditprofileController extends Module{
 
 //            Cache::mozg_clear_cache_file('user_'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             $Cache->delete("users/{$user_info['user_id']}/profile_{$user_info['user_id']}");
 
             echo 'ok';
@@ -367,11 +383,14 @@ class EditprofileController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
 
             $xfields = profileload();
 
-            $postedxfields = $_POST['xfields'];
+            $postedxfields = $request['xfields'];
 
             $newpostedxfields = array();
 //            $xfieldsid = '';
@@ -422,7 +441,7 @@ class EditprofileController extends Module{
 
 //            Cache::mozg_clear_cache_file('user_'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             $Cache->delete("users/{$user_info['user_id']}/profile_{$user_info['user_id']}");
 
 //            exit;
@@ -439,7 +458,7 @@ class EditprofileController extends Module{
      * @throws Exception
      */
     //TODO add Blade template
-    public function contact($params): bool|string
+    public function contact($params): string
     {
         $lang = $this->get_langs();
         $user_info = $this->user_info();
@@ -467,7 +486,7 @@ class EditprofileController extends Module{
             $params['contact'] = true;
             return view('profile.contacts', $params);
         }else
-            return false;
+            return view('info.info', $params);
     }
 
     /**
@@ -476,7 +495,7 @@ class EditprofileController extends Module{
      * @return string
      * @throws Exception
      */
-    public function interests($params): bool|string
+    public function interests($params): string
     {
         $lang = $this->get_langs();
 //        $db = $this->db();
@@ -506,7 +525,7 @@ class EditprofileController extends Module{
             $params['interests'] = true;
             return view('profile.interests', $params);
         }else
-            return false;
+            return view('info.info', $params);
     }
 
     /**
@@ -595,7 +614,7 @@ class EditprofileController extends Module{
      * @return string
      * @throws Exception
      */
-    public function miniature($params): bool|string
+    public function miniature($params): string
     {
         $lang = $this->get_langs();
         $user_info = $this->user_info();
@@ -628,6 +647,9 @@ class EditprofileController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         Tools::NoAjaxRedirect();
 
         if($logged){
@@ -635,10 +657,10 @@ class EditprofileController extends Module{
 
             $row = $db->super_query("SELECT user_photo FROM `users` WHERE user_id = '{$user_info['user_id']}'");
 
-            $i_left = intval($_POST['i_left']);
-            $i_top = intval($_POST['i_top']);
-            $i_width = intval($_POST['i_width']);
-            $i_height = intval($_POST['i_height']);
+            $i_left = (int)$request['i_left'];
+            $i_top = (int)$request['i_top'];
+            $i_width = (int)$request['i_width'];
+            $i_height = (int)$request['i_height'];
 
             $upload_dir = __DIR__."/../../public/uploads/users/{$user_info['user_id']}/";
             $image_rename = $row['user_photo'];
@@ -688,7 +710,7 @@ class EditprofileController extends Module{
             //Получаем данные о файле
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $server_time = \Sura\Libs\Tools::time();
             $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя файла
             $image_size = $_FILES['uploadfile']['size']; // размер файла
             $type = end(explode(".", $image_name)); // формат файла
@@ -902,10 +924,8 @@ class EditprofileController extends Module{
             $params['general'] = true;
 
             return view('profile.main', $params);
-        } else {
-//            $user_speedbar = 'Информация';
-//            msgbox('', $lang['not_logged'], 'info');
         }
+        return view('info.info', $params);
     }
 
     /**

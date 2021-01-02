@@ -4,7 +4,7 @@ function upClose(xnid){
 }
 function GoPage(event, p){
 	var oi = (event.target) ? event.target.id: ((event.srcElement) ? event.srcElement.id : null);
-	if(oi == 'no_ev' || oi == 'update_close' || oi == 'update_close2') return false;
+	if(oi === 'no_ev' || oi === 'update_close' || oi === 'update_close2') return false;
 	else {
 		pattern = new RegExp(/photo[0-9]/i);
 		pattern2 = new RegExp(/video[0-9]/i);
@@ -19,7 +19,7 @@ function GoPage(event, p){
 	}
 }
 $(document).ready(function(){
-	// setInterval(function(){
+	setInterval(function(){
 
             M.post("/updates/",{ // M.post or M.get
                 // query:{}, // Значение запроса
@@ -79,5 +79,5 @@ $(document).ready(function(){
             });*/
 
 
-	// }, 3000);
+	}, 3000);
 });

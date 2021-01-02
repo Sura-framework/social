@@ -2,10 +2,12 @@
 
 namespace App\Modules;
 
+use App\Libs\Wall;
 use App\Services\Cache;
 use Exception;
 use Sura\Libs\Db;
 use Sura\Libs\Registry;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -14,6 +16,8 @@ use App\Models\Profile;
 class ProfileController extends Module{
 
     /**
+     * Просмотр страницы пользователей
+     *
      * @param $params
      * @return string
      * @throws Exception
@@ -42,19 +46,21 @@ class ProfileController extends Module{
             /*
              * ID user page
              */
-            $path = explode('/', $_SERVER['REQUEST_URI']);
-            $id = str_replace('u', '', $path);
-            $id = intval($id['1']);
+            $server = Request::getRequest()->server;
 
-            $Cache = Cache::initialize();
+            $path = explode('/', $server['REQUEST_URI']);
+            $id = str_replace('u', '', $path);
+            $id = (int)$id['1'];
+
+            $Cache = cache_init(array('type' => 'file'));
             try {
                 $value = $Cache->get("users/{$id}/profile_{$id}", $default = null);
                 $row = unserialize($value);
                 $row_online = $Profile->user_online($id);
             }catch (Exception $e){
                 $dir = __DIR__.'/../cache/users/'.$id.'/';
-                if(!is_dir($dir)) {
-                    mkdir($dir, 0777, true);
+                if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
+                    throw new \Exception(sprintf('Directory "%s" was not created', $dir));
                 }
 
                 $row = $Profile->user_row($id);
@@ -70,7 +76,8 @@ class ProfileController extends Module{
                 //Profile_ban = $row['user_search_pref'];
 //                $params['title'] = $row['user_search_pref'].' | Sura';
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+//                $server_time = (int)$_SERVER['REQUEST_TIME'];
+                $server_time = \Sura\Libs\Tools::time();
 
                 //Если удалена
                 if(isset($row['user_delet']) AND $row['user_delet'] == 1){
@@ -86,6 +93,7 @@ class ProfileController extends Module{
                 //Если все хорошо, то выводим дальше
                 else {
 
+                    //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if($user_id != $id){
                         $CheckBlackList = Tools::CheckBlackList($row['user_id']);
                         $CheckFriends = Tools::CheckFriends($row['user_id']);
@@ -95,6 +103,9 @@ class ProfileController extends Module{
                         $CheckFriends = false;
 
                     }
+
+//                    var_dump($CheckFriends);
+//                    exit();
 
                     $user_privacy = xfieldsdataload($row['user_privacy']);
 
@@ -133,11 +144,6 @@ class ProfileController extends Module{
                      *
                      * @var $sql_friends_online array()
                      */
-
-
-                        //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-//                        $check_friend = Tools::CheckFriends($row['user_id']);
-
                     $online_time = $server_time - 60;
                     //Кол-во друзей в онлайне
                     if($row['user_friends_num'] > 0 AND !$CheckBlackList ){
@@ -171,7 +177,7 @@ class ProfileController extends Module{
                         if($user_id == $id){
                             $sql_privacy = "";
                             $cache_pref_videos = '';
-                        }elseif(isset($CheckFriends)){//bug: undefined
+                        }elseif($CheckFriends){
                             $sql_privacy = "AND privacy regexp '[[:<:]](1|2)[[:>:]]'";
                             $cache_pref_videos = "_friends";
                         } else {
@@ -208,7 +214,7 @@ class ProfileController extends Module{
                      */
                     if($row['user_subscriptions_num'] > 0 AND !$CheckBlackList){
                         $cache_pref_subscriptions = '/subscr_user_'.$id;
-                        if(!isset($subscriptions)){
+                        if(!$subscriptions){
                             $sql_subscriptions = $Profile->subscriptions($id, $cache_pref_subscriptions);
                             foreach($sql_subscriptions as $key => $row_subscr){
                                 $sql_subscriptions[$key]['user_id'] = $row_subscr['friend_id'];
@@ -301,9 +307,6 @@ class ProfileController extends Module{
                     }else
                         $params['wall_rec_num'] = $row['user_wall_num'];
 
-
-
-
                     $row['user_wall_num'] = $row['user_wall_num'] ? $row['user_wall_num'] : '';
                     if($row['user_wall_num'] > 10){
                         $params['wall_link_block'] = true;
@@ -323,20 +326,28 @@ class ProfileController extends Module{
 
                         //Если вызвана страница стены, не со страницы юзера
                         if(!$id){
-                            if (isset($_GET['rid']))
-                                $rid = intval($_GET['rid']);
-                            else
+                            if (isset($request['rid'])) {
+                                $rid = (int)$request['rid'];
+                            }
+                            else {
                                 $rid = null;
+                            }
 
-                            if (isset($_GET['uid']))
-                                $id = intval($_GET['uid']);
-                            else
+                            if (isset($request['uid'])) {
+                                $id = (int)$request['uid'];
+                            }
+                            else {
                                 $id = $user_id;
+                            }
 
 //                            $walluid = $id;
                             $params['title'] = $lang['wall_title'];
 
-                            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+                            if($request['page'] > 0) {
+                                $page = (int)$request['page'];
+                            } else {
+                                $page = 1;
+                            }
                             $gcount = 10;
                             $limit_page = ($page-1)*$gcount;
                             //not used row_user['user_privacy']
@@ -347,11 +358,6 @@ class ProfileController extends Module{
                                 //ЧС
                                 $CheckBlackList = Tools::CheckBlackList($id);
                                 if(!$CheckBlackList){
-                                    //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-                                    //$CheckFriends
-                    //                                    if($user_id != $id)
-                    //                                        $check_friend = Tools::CheckFriends($id);
-
 
                                     if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $CheckFriends OR $user_id == $id)
                                         $cnt_rec['cnt'] = $row['user_wall_num'];
@@ -361,18 +367,18 @@ class ProfileController extends Module{
                                     /**
                                      * record_tab
                                      */
-                                    if($_GET['type'] == 'own'){
+                                    if($request['type'] == 'own'){
                                         $params['record_tab'] = false;
                                         $cnt_rec = $Profile->cnt_rec($id);
                                         $where_sql = "AND tb1.author_user_id = '{$id}'";
 //                                        $page_type = '/wall'.$id.'_sec=own&page=';
-                                    } else if($_GET['type'] == 'record'){
+                                    } else if($request['type'] == 'record'){
                                         $params['record_tab'] = true;
                                         $where_sql = "AND tb1.id = '{$rid}'";
                                         $wallAuthorId = $Profile->author_user_id($rid);
                                     } else {
                                         $params['record_tab'] = false;
-                                        $_GET['type'] = '';
+                                        $request['type'] = '';
                                         $where_sql = '';
                     //                                        $tpl->set_block("'\\[record-tab\\](.*?)\\[/record-tab\\]'si","");
 //                                        $page_type = '/wall'.$id.'/page/';
@@ -386,7 +392,7 @@ class ProfileController extends Module{
                                     $params['wall_head']['name'] = Gramatic::gramatikName($row['user_name']);
                                     $params['wall_head']['uid'] = $id;
                                     $params['wall_head']['rec_id'] = $rid;
-                                    $params['wall_head']['activetab_'.$_GET['type']] = 'activetab';
+                                    $params['wall_head']['activetab_'.$request['type']] = 'activetab';
 
                                     if($cnt_rec['cnt'] < 1){
                                        // msgbox('', $lang['wall_no_rec'], 'info_2');
@@ -406,61 +412,53 @@ class ProfileController extends Module{
                         }
 
                         if(!$CheckBlackList){
-                            if (!isset($where_sql))
-                                $where_sql = null;
-                            if (!isset($wallAuthorId))
-                                $wallAuthorId = null;
-
-                            if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $CheckFriends OR $user_id == $id)
+                            if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $CheckFriends OR $user_id == $id) {
                                 $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
-                            elseif($wallAuthorId['author_user_id'] == $id)
+                            }
+                            elseif($wallAuthorId['author_user_id'] == $id) {
                                 $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
+                            }
                             else {
                                 $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 AND tb1.author_user_id = '{$id}' ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
-
-                                if($wallAuthorId['author_user_id'])
-                                {
-//                                    $Hacking = true;
-                                }
                             }
 
-                            $Hacking = false;//bug: undefined
 
-                            //Если вызвана страница стены, не со страницы юзера
-                            if(!$Hacking){
-                                if (isset($_GET['rid']))
-                                    $rid = intval($_GET['rid']);
-                                else
+//                                if (isset($request['rid']))
+//                                    $rid = (int)$request['rid'];
+//                                else
                                     $rid = null;
 
-                                if (isset($_GET['uid']))
-                                    $id = intval($_GET['uid']);
-                                else
-                                    $id = $user_id;
+//                                if (isset($request['uid']))
+//                                    $id = (int)$request['uid'];
+//                                else
+//                                    $id = $user_id;
 
                                 $walluid = $id;
 
-                                if($rid OR $walluid){
+                                /**
+                                 * @deprecated
+                                 */
+/*                                if($rid OR $walluid){
                                     $params['compile'] = 'content';
-                    //                                    if($cnt_rec['cnt'] > $gcount AND $_GET['type'] == '' OR $_GET['type'] == 'own'){
+                    //                                    if($cnt_rec['cnt'] > $gcount AND $_GET['type'] == '' OR $request['type'] == 'own'){
                                                             //$tpl = Tools::navigation($gcount, $cnt_rec['cnt'], $page_type, $tpl);
                                                             //bug !!!
                     //                                    }
                                 } else {
                                     $params['compile'] = 'wall';
-                                }
+                                }*/
 
-                                $server_time = intval($_SERVER['REQUEST_TIME']);
+                                $server_time = (int)$_SERVER['REQUEST_TIME'];
                                 $config = Settings::loadsettings();
 
                                 /**
                                  * wall records
                                  *
-                                 * @var $query array
                                  */
+/*
                                 foreach($query as $key => $row_wall){
                                     $query[$key]['rec_id'] = $row_wall['id']; //!
-
+                                    $query[$key]['action_type'] = 1;
                                     //КНопка Показать полностью..
                                     $expBR = explode('<br />', $row_wall['text']);
                                     $textLength = count($expBR);
@@ -741,17 +739,20 @@ class ProfileController extends Module{
                                             $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']).$attach_result;
                                         else
                                             $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']);
-                                    } else
+                                    } else {
                                         $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']);
+                                    }
 
                                     $resLinkTitle = '';
 
                                     //Если это запись с "рассказать друзьям"
                                     if($row_wall['tell_uid']){
-                                        if($row_wall['public'])
+                                        if($row_wall['public']) {
                                             $rowUserTell = $Profile->user_tell_info($row_wall['tell_uid'], 2);
-                                        else
+                                        }
+                                        else {
                                             $rowUserTell = $Profile->user_tell_info($row_wall['tell_uid'], 1);
+                                        }
 
                                         if(date('Y-m-d', $row_wall['tell_date']) == date('Y-m-d', $server_time))
                                             $dateTell = langdate('сегодня в H:i', $row_wall['tell_date']);
@@ -834,13 +835,6 @@ class ProfileController extends Module{
                                     }else{
                                         $query[$key]['type'] = '';
                                     }
-
-                                    //времменно
-                                    if (!isset($for_user_id))
-                                        $for_user_id = null;
-
-                                    if(!$id)
-                                        $id = $for_user_id;//bug: undefined
 
                                     //Тег Owner означает показ записей только для владельца страницы или для того кто оставил запись
                                     if($user_id == $row_wall['author_user_id'] OR $user_id == $id){
@@ -963,9 +957,9 @@ class ProfileController extends Module{
                     //                                    $tpl->result[$compile] .= '</div>';
                                 }
                                 $params['wall_records'] = $query;
-                            }else{
-                                $params['wall_records'] = false;
-                            }
+                                */
+                                $params['wall_records'] = Wall::build($query);
+
                         }
                     }
 
@@ -996,8 +990,6 @@ class ProfileController extends Module{
                     /**
                      * Загрузка самого профиля
                      */
-                    //                    $tpl->load_template('/profile/profile.tpl');
-
                     $params['user_id'] = $row['user_id'];
 
                     //Страна и город
@@ -1025,7 +1017,8 @@ class ProfileController extends Module{
 
                     if($row_online['user_last_visit'] >= $online_time){
                         $params['online'] = $lang['online'].$mobile_icon;
-                    }else {
+                    }
+                    else {
 
                         if ($row_online['user_last_visit'] <= 0 ){
                             $row_online['user_last_visit'] = 0;
@@ -1169,10 +1162,8 @@ class ProfileController extends Module{
                     //Показ скрытых текста только для владельца страницы
                     if($user_info['user_id'] == $row['user_id']){
                         $params['owner'] = true;
-                        $params['not_owner'] = false;
                     } else {
                         $params['owner'] = false;
-                        $params['not_owner'] = true;
                     }
 
                     // FOR MOBILE VERSION 1.0
@@ -1235,19 +1226,33 @@ class ProfileController extends Module{
                     }else
                         $params['albums'] = false;
 
-
-
                     //Делаем проверки на существования запрашиваемого юзера у себя в друзьяз, заклаках, в подписка, делаем всё это если страницу смотрет другой человек
                     if($user_id != $id){
 
+
+                        $check_yes_demands = $db->super_query("SELECT for_user_id FROM `friends_demands` WHERE for_user_id = '{$id}' AND from_user_id = '{$user_info['user_id']}'");
+                        if($check_yes_demands['for_user_id']){
+                            $params['yesf'] = true;
+                        } else {
+                            $params['yesf'] = false;
+                        }
+
+                        $check_yes_demands = $db->super_query("SELECT for_user_id FROM `friends_demands` WHERE for_user_id = '{$user_info['user_id']}' AND from_user_id = '{$id}'");
+                        if($check_yes_demands['for_user_id']){
+                            $params['yes_friend'] = true;
+                        } else {
+                            $params['yes_friend'] = false;
+                        }
+
+                        $CheckFriends = Tools::CheckFriends($row['user_id']);
+
                         //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                         if($CheckFriends == true){
-                            $params['yes_friends_block'] = true;
-                            $params['no_friends_block'] = false;
+                            $params['yes_friends'] = true;
                         } else {
-                            $params['yes_friends_block'] = false;
-                            $params['no_friends_block'] = true;
+                            $params['yes_friends'] = false;
                         }
+
 
                         //Проверка естьли запрашиваемый юзер в закладках у юзера который смотрит стр
                         $check_fave = $Profile->check_fave($id, $user_info['user_id']);
@@ -1262,20 +1267,18 @@ class ProfileController extends Module{
                         //Проверка естьли запрашиваемый юзер в подписках у юзера который смотрит стр
                         $check_subscr = $Profile->check_subscr($id, $user_info['user_id']);
                         if($check_subscr){
-                            $params['yes_subscription_block'] = false;
-                            $params['no_subscription_block'] = true;
+                            $params['yes_subscription'] = true;
                         } else {
-                            $params['yes_subscription_block'] = true;
-                            $params['no_subscription_block'] = false;
+                            $params['yes_subscription'] = false;
                         }
 
                         //Проверка естьли запрашиваемый юзер в черном списке
-                        $MyCheckBlackList = Tools::MyCheckBlackList($id);
+                        $MyCheckBlackList = Tools::CheckBlackList($id);
                         if($MyCheckBlackList){
                             $params['yes_blacklist_block'] = true;
-                            $params['no_blacklist_block'] = false;
+                            $params['no_$server_time'] = false;
                         } else {
-                            $params['yes-blacklist_block'] = false;
+                            $params['yes_blacklist_block'] = false;
                             $params['no_blacklist_block'] = true;
                         }
 
@@ -1287,7 +1290,7 @@ class ProfileController extends Module{
 
 
                     //Если человек пришел после реги, то открываем ему окно загрузи фотографии
-                    //                    if(intval($_GET['after'])){
+                    //                    if(intval($request['after'])){
                     //                        $tpl->set('[after-reg]', '');
                     //                        $tpl->set('[/after-reg]', '');
                     //                    } else
@@ -1301,7 +1304,7 @@ class ProfileController extends Module{
                                         //Статус
                     //                    $tpl->set('{status-text}', stripslashes($row['user_status']));
 
-                    if (!$CheckBlackList AND $params['not_owner']){
+                    if (!$CheckBlackList AND !$params['owner']){
                         $params['status_text'] = stripslashes($row['user_status']);
 
                     }elseif($params['owner']){
@@ -1421,12 +1424,10 @@ class ProfileController extends Module{
                     }
 
                     //ЧС
-                    if(!$CheckBlackList){
-                        $params['blacklist_block'] = true;
-                        $params['not-blacklist_block'] = false;
+                    if($CheckBlackList){
+                        $params['blacklist'] = true;
                     } else {
-                        $params['blacklist_block'] = false;
-                        $params['not_blacklist_block'] = true;
+                        $params['blacklist'] = false;
                     }
 
                     //################### Подарки ###################//
@@ -1460,6 +1461,8 @@ class ProfileController extends Module{
                             $row_groups['info'] = iconv_substr($row_groups['status_text'], 0, 24, 'utf-8');
                             //                            $groups .= '<div class="onesubscription onesubscriptio2n cursor_pointer" onClick="Page.Go(\'/'.$adres.'\')"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false"><img src="'.$ava_groups.'" /></a><div class="onesubscriptiontitle"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false">'.stripslashes($row_groups['title']).'</a></div><span class="color777 size10">'.stripslashes($row_groups['status_text']).'</span></div>';
                             $sql_groups[$key]['user_id'] = $row_groups['user_id'];
+                            $sql_groups[$key]['name'] = $row_groups['title'];
+                            $sql_groups[$key]['title'] = $row_groups['title'];
 
                         }
                         $params['groups'] = $sql_groups;
@@ -1523,9 +1526,11 @@ class ProfileController extends Module{
                     $params['rating'] = $row['user_rating'];
                     //                    $tpl->compile('content');
 
+
+                    //TODO to on
                     //Обновляем кол-во посищений на страницу, если юзер есть у меня в друзьях
-                    if($CheckFriends == true)
-                        $Profile->friend_visit($id, $user_info['user_id']);
+//                    if($CheckFriends == true)
+//                        $Profile->friend_visit($id, $user_info['user_id']);
 
                     //Вставляем в статистику
                     //!NB optimize generate users stat

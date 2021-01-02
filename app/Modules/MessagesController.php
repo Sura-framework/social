@@ -9,6 +9,12 @@ use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 
+/**
+ * Class MessagesController
+ *
+ * @deprecated
+ * @package App\Modules
+ */
 class MessagesController extends Module{
 
     /**
@@ -27,11 +33,11 @@ class MessagesController extends Module{
 
 //            AntiSpam('messages');
 
-            $for_user_id = intval($_POST['for_user_id']);
-            $theme = Validation::ajax_utf8(strip_tags($_POST['theme']));
-            $msg = Validation::ajax_utf8($_POST['msg']);
-            if (isset($_POST['attach_files'])){
-                $attach_files = Validation::ajax_utf8($_POST['attach_files']);
+            $for_user_id = (int)$request['for_user_id'];
+            $theme = Validation::ajax_utf8(strip_tags($request['theme']));
+            $msg = Validation::ajax_utf8($request['msg']);
+            if (isset($request['attach_files'])){
+                $attach_files = Validation::ajax_utf8($request['attach_files']);
                 $attach_files = str_replace('vote|', 'hack|', $attach_files);
             }else{
                 $attach_files = null;
@@ -70,7 +76,7 @@ class MessagesController extends Module{
 
                         if(!Tools::CheckFriends($for_user_id)) AntiSpamLogInsert('messages');
 
-                        $server_time = intval($_SERVER['REQUEST_TIME']);
+                        $server_time = \Sura\Libs\Tools::time();
 
                         //Отправляем сообщение получателю
                         $db->query("INSERT INTO `messages` SET theme = '{$theme}', text = '{$msg}', for_user_id = '{$for_user_id}', from_user_id = '{$user_id}', date = '{$server_time}', pm_read = 'no', folder = 'inbox', history_user_id = '{$user_id}', attach = '".$attach_files."'");
@@ -160,8 +166,8 @@ class MessagesController extends Module{
 
 //            Tools::NoAjaxQuery();
 
-            $mid = intval($_POST['mid']);
-            $folder = $db->safesql($_POST['folder']);
+            $mid = (int)$request['mid'];
+            $folder = $db->safesql($request['folder']);
 
             if($folder == 'inbox')
                 $folder = 'inbox';
@@ -203,9 +209,9 @@ class MessagesController extends Module{
 //            $limit_page = ($page-1)*$gcount;
 
 //            Tools::NoAjaxQuery();
-            $for_user_id = intval($_POST['for_user_id']);
+            $for_user_id = (int)$request['for_user_id'];
 
-            if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
+            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $limit_page = ($page-1)*$gcount;
 
             $sql_ = $db->super_query("SELECT tb1.id, text, date, pm_read, folder, history_user_id, tb2.user_name FROM `messages` tb1, `users` tb2 WHERE tb1.for_user_id = '{$user_id}' AND tb1.from_user_id = '{$for_user_id}' AND tb1.history_user_id = tb2.user_id ORDER by `date` DESC LIMIT {$limit_page}, {$gcount}", 1);
@@ -240,7 +246,7 @@ class MessagesController extends Module{
 //                    box_navigation($gcount, $msg_count['cnt'], $for_user_id, 'messages.history', '');
                 }
 
-                Tools::AjaxTpl($tpl);
+
             }
 
 //            $params['tpl'] = $tpl;
@@ -260,14 +266,14 @@ class MessagesController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
             $params['title'] = $lang['msg_view'].' | Sura';
             $user_speedbar = $lang['msg_view'];
 
-            $mid = intval($_GET['mid']);
+            $mid = intval($request['mid']);
 
             if($mid){
                 //SQL Запрос за вывод сообщения
@@ -503,12 +509,19 @@ class MessagesController extends Module{
                         else
                             $rowUserTell = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$row['tell_uid']}'");
 
-                        if(date('Y-m-d', $row['tell_date']) == date('Y-m-d', $server_time))
-                            $dateTell = langdate('сегодня в H:i', $row['tell_date']);
-                        elseif(date('Y-m-d', $row['tell_date']) == date('Y-m-d', ($server_time-84600)))
-                            $dateTell = langdate('вчера в H:i', $row['tell_date']);
-                        else
-                            $dateTell = langdate('j F Y в H:i', $row['tell_date']);
+                        if ($row['tell_date']){
+                            if(date('Y-m-d', $row['tell_date']) == date('Y-m-d', $server_time)) {
+                                $row = langdate('сегодня в H:i', $row['tell_date']);
+                            }
+                            elseif(date('Y-m-d', $row['tell_date']) == date('Y-m-d', ($server_time-84600))) {
+                                $row = langdate('вчера в H:i', $row['tell_date']);
+                            }
+                            else {
+                                $row = langdate('j F Y в H:i', $row['tell_date']);
+                            }
+                        }else{
+                            $row = 'N/A';
+                        }
 
                         if($row['public']){
                             $rowUserTell['user_search_pref'] = stripslashes($rowUserTell['title']);
@@ -596,7 +609,7 @@ class MessagesController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
@@ -623,7 +636,7 @@ class MessagesController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
@@ -631,10 +644,10 @@ class MessagesController extends Module{
             $user_speedbar = $lang['msg_outbox'];
 
             //Для поиска
-            $se_query = $db->safesql(ajax_utf8(Validation::strip_data(urldecode($_GET['se_query']))));
+            $se_query = $db->safesql(ajax_utf8(Validation::strip_data(urldecode($request['se_query']))));
             if(isset($se_query) AND !empty($se_query)){
                 $search_sql = "AND tb2.user_search_pref LIKE '%{$se_query}%'";
-                $query_string = '&se_query='.Validation::strip_data($_GET['se_query']);
+                $query_string = '&se_query='.Validation::strip_data($request['se_query']);
             } else {
                 $se_query = 'Поиск по отправленным сообщениям';
                 $search_sql = '';
@@ -752,7 +765,7 @@ class MessagesController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
@@ -809,10 +822,10 @@ class MessagesController extends Module{
 //                    msg_box('', '<script type="text/javascript">setTimeout(\'$(".err_yellow").fadeOut()\', 1500);</script>Ваше сообщение успешно отправлено.', 'info');
 
                 //Для поиска
-                $se_query = $db->safesql(Validation::ajax_utf8(Validation::strip_data(urldecode($_GET['se_query']))));
+                $se_query = $db->safesql(Validation::ajax_utf8(Validation::strip_data(urldecode($request['se_query']))));
                 if(isset($se_query) AND !empty($se_query)){
                     $search_sql = "AND tb2.user_search_pref LIKE '%{$se_query}%'";
-                    $query_string = '&se_query='.Validation::strip_data($_GET['se_query']);
+                    $query_string = '&se_query='.Validation::strip_data($request['se_query']);
                 } else {
                     $se_query = 'Поиск по полученным сообщениям';
                     $search_sql = '';

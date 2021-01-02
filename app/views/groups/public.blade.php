@@ -100,19 +100,21 @@
                         <div class="card">
                             <div class="card-body">
                                 <div class="{{--ava--}} {{--fl_r--}}" style="margin-right:0px" onMouseOver="groups.wall_like_users_five_hide()">
-                                    @if($admin)<div class="cover_newava" {{ $cover_param_7 }}>
+                                    <div class="cover_newava" {{ $cover_param_7 }}>
                                         <div id="ava" class="d-flex justify-content-center">
-                                            <img class="w-100" src="{{ $photo }}" id="ava" />
+                                            <img class="w-100" src="{{ $photo }}" id="ava"  alt="{{ $id }}"/>
                                         </div>
-                                    </div>@endif
-                                    @if(!$admin)[cover]<div class="cover_newava" {cover-param-7}>[/cover]<img src="{{ $photo }}" id="ava" />[cover]</div>[/cover]@endif
+                                    </div>
                                     <div class="menuleft" style="margin-top:5px">
                                         <a href="/" onClick="groups.inviteBox('{{ $id }}'); return false"><div>Пригласить друзей</div></a>
                                         <a href="/stats?gid={{ $id }}"><div>Статистика страницы</div></a>
                                         @if($admin)
                                         <a href="/" onClick="groups.loadphoto('{{ $id }}'); return false"><div>Изменить фотографию</div></a>
                                         <span id="del_pho_but" class="{{ $display_ava }}"><a href="/" onClick="groups.delphoto('{{ $id }}'); return false;"><div>Удалить фотографию</div></a></span>
-                                        <a href="/" onClick="groups.editform(); return false"><div>Управление страницей</div></a>@endif
+{{--                                            <a href="/" onClick="groups.editform(); return false"><div>Управление страницей</div></a>--}}
+
+                                            <a href="#" onClick="Page.Go('/public/edit/{{ $id }}'); return false"><div>Управление страницей</div></a>
+                                        @endif
                                     </div>
                                     <div class="publick_subscblock">
                                         @if(!$yes)
@@ -169,13 +171,14 @@
                                     <div id="public_editbg_container">
                                         <div class="public_editbg_container">
                                             <div class="fl_l" style="width:560px">
-                                                @if($admin)<div class="set_status_bg no_display" id="set_status_bg">
+                                                @if($admin AND isset($test))<div class="set_status_bg no_display" id="set_status_bg">
                                                     <input type="text" id="status_text" class="status_inp" value="{status-text}" style="width:500px;" maxlength="255" onKeyPress="if(event.keyCode == 13)gStatus.set('', 1)" />
                                                     <div class="fl_l status_text"><span class="no_status_text [status]no_display[/status]">Введите здесь текст статуса.</span><a href="/" class="yes_status_text [no-status]no_display[/no-status]" onClick="gStatus.set(1, 1); return false">Удалить статус</a></div>
                                                     [status]<div class="button_div_gray fl_r status_but margin_left"><button>Отмена</button></div>[/status]
                                                     <div class="button_div fl_r status_but"><button id="status_but" onClick="gStatus.set('', 1)">Сохранить</button></div>
                                                 </div>@endif
                                                 <div class="public_title" id="e_public_title">{{ $title }}</div>
+                                                @if(isset($test))
                                                 <div class="status">
                                                     <div>@if($admin)<a href="/" id="new_status" onClick="gStatus.open(); return false">@endif{{ $status_text }}@if($admin)</a>@endif</div>
                                                     @if($admin)<span id="tellBlockPos"></span>
@@ -185,6 +188,7 @@
                                                     </div>@endif
                                                     @if($admin)<a href="#" onClick="gStatus.open(); return false" id="status_link" [status]class="no_display"[/status]>установить статус</a>@endif
                                                 </div>
+                                                @endif
                                                 <div class="{{ $descr_css }}" id="descr_display"><div class="flpodtext">Описание:</div> <div class="flpodinfo" id="e_descr">{{ $descr }}</div></div>
                                                 <div class="flpodtext">Дата создания:</div> <div class="flpodinfo">{{ $date }}</div>
                                                 @if($web)<div class="flpodtext">Веб-сайт:</div> <div class="flpodinfo"><a href="{web}" target="_blank">{{ $web }}</a></div>@endif
@@ -243,21 +247,20 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card mt-3">
-                            <div class="card-body">
-                                <div class="profiewr">
+                        <div class="padcont2 mt-3 shadow2">
+                            <div class="profiewr">
 
                                     <div class="albtitle" style="border-bottom:0px">{{ $rec_num }}</div>
                                     @if($admin)<div class="newmes" id="wall_tab" style="border-bottom:0px;margin-bottom:-5px">
                                         <input type="hidden" value="Что у Вас нового?" id="wall_input_text" />
                                         <input type="text" class="wall_inpst" value="Что у Вас нового?" onMouseDown="wall.form_open(); return false" id="wall_input" style="margin:0px" />
                                         <div class="no_display" id="wall_textarea">
-                                   <textarea id="wall_text" class="wall_inpst wall_fast_opened_texta" style="width:534px"
-                                             onKeyUp="wall.CheckLinkText(this.value)"
-                                             onBlur="wall.CheckLinkText(this.value, 1)"
-                                             onKeyPress="if(event.keyCode == 10 || (event.ctrlKey && event.keyCode == 13)) groups.wall_send('{{ $id }}')"
-                                   >
-                                   </textarea>
+                                           <textarea id="wall_text" class="wall_inpst wall_fast_opened_texta" style="width:534px"
+                                                     onKeyUp="wall.CheckLinkText(this.value)"
+                                                     onBlur="wall.CheckLinkText(this.value, 1)"
+                                                     onKeyPress="if(event.keyCode == 10 || (event.ctrlKey && event.keyCode == 13)) groups.wall_send('{{ $id }}')"
+                                           >
+                                           </textarea>
                                             <div id="attach_files" class="margin_top_10 no_display"></div>
                                             <div id="attach_block_lnk" class="no_display clear">
                                                 <div class="attach_link_bg">
@@ -304,11 +307,17 @@
                                         </div>
 
                                     </div>@endif
-                                    <div id="public_wall_records">{{ $records }}</div>
+                                    <div id="public_wall_records">
+                                        @if(!$wall_rec_num_block AND !$blacklist)
+                                            @include('wall.one_record', array('wall_records' => $wall_records))
+                                        @else
+                                            <div class="wall_none" >@_e('wall_null')</div>
+                                        @endif
+
+                                        {{ $records }}</div>
                                     <div class="cursor_pointer {wall-page-display}" onClick="groups.wall_page('{{ $id }}'); return false" id="wall_all_records"><div class="public_wall_all_comm" id="load_wall_all_records" style="margin-left:0px">к предыдущим записям</div></div>
                                     <input type="hidden" id="page_cnt" value="1" />
                                 </div>
-                            </div>
                         </div>
 
                     </div>

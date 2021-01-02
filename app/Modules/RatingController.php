@@ -11,11 +11,14 @@ use Sura\Libs\Tools;
 class RatingController extends Module{
 
     /**
+     * view
+     *
      * @param $params
      * @return string
      * @throws Exception
      */
-    public function view($params){
+    public function view($params): string
+    {
         Tools::NoAjaxRedirect();
         $logged = $this->logged();
         if($logged){
@@ -42,9 +45,11 @@ class RatingController extends Module{
             }
                 return view('profile.rating.view', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
+     * add
      *
      * @param $params
      */
@@ -81,13 +86,13 @@ class RatingController extends Module{
                     $db->query("UPDATE `users` SET user_rating = user_rating + {$num} WHERE user_id = '{$for_user_id}'");
 
                     //Вставляем в лог
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
+                    $server_time = \Sura\Libs\Tools::time();
                     $db->query("INSERT INTO `users_rating` SET user_id = '{$user_id}', for_user_id = '{$for_user_id}', addnum = '{$num}', date = '{$server_time}'");
 
                     //Чистим кеш
 //                    Cache::mozg_clear_cache_file("user_{$for_user_id}/profile_{$for_user_id}");
 
-                    $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
                     $Cache->delete("users/{$for_user_id}/user_{$for_user_id}");
 
                 } else
@@ -99,11 +104,14 @@ class RatingController extends Module{
     }
 
     /**
+     * index
+     *
      * @param $params
-     * @return false|string
+     * @return string
      * @throws Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
         Tools::NoAjaxRedirect();
         $logged = $this->logged();
         if($logged){
@@ -116,6 +124,6 @@ class RatingController extends Module{
             $params['balance'] = $row['user_balance'];
             return view('profile.rating.main', $params);
         }else
-            return false;
+            return view('info.info', $params);
     }
 }

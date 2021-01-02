@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use Exception;
 use Sura\Libs\Registry;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 
@@ -11,6 +12,7 @@ class FaveController extends Module{
 
     /**
      * Добвление юзера в закладки
+     *
      * @param $params
      */
     public function add($params){
@@ -29,7 +31,10 @@ class FaveController extends Module{
 
             Tools::NoAjaxRedirect();
 
-            $fave_id = intval($_POST['fave_id']);
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+            $fave_id = (int)$request['fave_id'];
             //Проверяем на факт существования юзера которого добавляем в закладки
             $row = $db->super_query("SELECT `user_id` FROM `users` WHERE user_id = '{$fave_id}'");
             if($row AND $user_id != $fave_id){
@@ -48,6 +53,7 @@ class FaveController extends Module{
 
     /**
      * Удаление юзера из закладок
+     *
      * @param $params
      */
     public function delet($params){
@@ -58,13 +64,16 @@ class FaveController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 70;
             $params['title'] = $lang['fave'].' | Sura';
 
-            $fave_id = intval($_POST['fave_id']);
+            $fave_id = (int)$request['fave_id'];
 
             //Проверям на факт существование этого юзера в закладках, если есть то пропускаем
             $row = $db->super_query("SELECT `user_id` FROM `fave` WHERE user_id = '{$user_id}' AND fave_id = '{$fave_id}'");
@@ -78,11 +87,13 @@ class FaveController extends Module{
 
     /**
      * Вывод людей которые есть в закладках
+     *
      * @param $params
      * @return string
      * @throws Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -93,7 +104,10 @@ class FaveController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 70;
             $limit_page = ($page-1)*$gcount;
 

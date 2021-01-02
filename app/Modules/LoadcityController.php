@@ -7,16 +7,16 @@ use Sura\Libs\Tools;
 class LoadcityController extends Module{
 
     /**
-     *
+     *  Загрузка городов
      */
     public function index()
     {
         //$lang = langs::get_langs();
         $db = $this->db();
 
-        Tools::NoAjaxQuery();
 
-        $country_id = intval($_POST['country']);
+
+        $country_id = (int)$request['country'];
 
         echo '<option value="0">- Выбрать -</option>';
 

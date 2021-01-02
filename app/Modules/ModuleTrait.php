@@ -22,18 +22,25 @@ trait ModuleTrait
 //		$this->user_info = Registry::get('user_info');
 	}
 
-	function user_info(){
+    /**
+     * @return array|null
+     */
+	function user_info(): array|null
+    {
 	    return Registry::get('user_info');
     }
 
-    public static function user_info2(){
-        return Registry::get('user_info');
-    }
-
-    function logged(){
+    /**
+     * @return array|null
+     */
+    function logged(): array|null
+    {
         return Registry::get('logged');
     }
 
+    /**
+     * @return array|string|\Sura\Libs\unknown|null
+     */
     function db(){
         return Registry::get('db');
     }

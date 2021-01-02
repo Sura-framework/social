@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use Exception;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -11,10 +12,11 @@ class Group_publicController extends Module{
 
     /**
      * @param $params
-     * @return bool|string
+     * @return string
      * @throws Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
 //        $tpl = $params['tpl'];
 
         $lang = $this->get_langs();
@@ -24,12 +26,17 @@ class Group_publicController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            $pid = intval($_GET['pid']);
+            $pid = (int)$request['pid'];
 //            $mobile_speedbar = 'Сообщество';
 
-            if(preg_match("/^[a-zA-Z0-9_-]+$/", $_GET['get_adres'])) $get_adres = $db->safesql($_GET['get_adres']);
+            if(preg_match("/^[a-zA-Z0-9_-]+$/", $request['get_adres'])) {
+                $get_adres = $db->safesql($request['get_adres']);
+            }
 
             $sql_where = "id = '".$pid."'";
 
@@ -46,8 +53,8 @@ class Group_publicController extends Module{
 
             //Если страница вывзана через "к предыдущим записям"
             $limit_select = 10;
-            if($_POST['page_cnt'] > 0)
-                $page_cnt = intval($_POST['page_cnt'])*$limit_select;
+            if($request['page_cnt'] > 0)
+                $page_cnt = (int)$request['page_cnt'] *$limit_select;
             else
                 $page_cnt = 0;
 
@@ -74,8 +81,8 @@ class Group_publicController extends Module{
 
                 //Стена
                 //Если страница вывзана через "к предыдущим записям"
-                if($page_cnt)
-                    Tools::NoAjaxQuery();
+//                if($page_cnt)
+//                    Tools::NoAjaxQuery();
 
 //                include __DIR__.'/../Classes/wall.public.php';
 //                $wall = new \wall();
@@ -90,7 +97,7 @@ class Group_publicController extends Module{
                 {
 //                    $wall->compile('wall');
                 }
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
 //                $wall->select($public_admin, $server_time);
 
                 //Если страница вывзана через "к предыдущим записям"
@@ -571,14 +578,11 @@ HTML;
 
 //            $tpl->clear();
 //            $db->free();
-        } else {
+        }
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
-        }
 
-//        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
+
     }
 }

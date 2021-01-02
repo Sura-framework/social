@@ -8,6 +8,7 @@ use Sura\Libs\Settings;
 
 class Cache
 {
+    /** @var string  */
     private static string $type = 'file';
 
     /**

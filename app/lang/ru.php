@@ -1,4 +1,7 @@
 <?php
+/**
+ *
+ */
 return array(
     'lang' => 'Русский',
 
@@ -29,6 +32,7 @@ return array(
     'to_page'=>'Редактировать',
     'and'=>'и',
     'close'=>'Закрыть',
+    'online' => 'Online',
 
     //footer
     'privacy'=>'Конфиденциальность',
@@ -59,6 +63,7 @@ return array(
     'balance'=>'Баланс',
     'exit'=>'Выход',
     'view_profile'=>'Посмотреть свой профиль',
+
 
     //story
     'story_create'=>'Создать историю',
@@ -139,6 +144,7 @@ return array(
     'edit_profile'=>'Редактировать страницу',
     'add_fave'=>'Добавить в закладки',
     'remove_fave'=>'Удалить из закладок',
+    'fave' => 'Закладки',
     'block'=>'Заблокировать',
     'unblock'=>'Разблокировать',
     'profile_block'=>'ограничил(а) доступ к своей странице.',
@@ -153,6 +159,7 @@ return array(
 
     'groups'=>'Сообщества',
     'videos'=>'Видеозаписи',
+    'video'=>'Видео',
 
     'status_vallue'=>'Введите здесь текст Вашего статуса.',
     'status_public'=>'Рассказать друзьям',
@@ -186,10 +193,12 @@ return array(
 
     //audio
     'audio'							=> 'Аудиозаписи',
+    'music' => 'Музыка',
     'audio_none'					=> 'У Вас еще нет аудиозаписей',
     'audio_box_none'				=> '<div class="text-center" style="padding-top:10px;color:#777777;font-size:13px;">У Вас еще нет аудиозаписей.</div>',
 
     'albums'=>'Альбомы',
+    'menu_albums'=>'Фотографии',
 
     //chats
     'chats'=>'Чаты',
@@ -202,6 +211,7 @@ return array(
     'friends_common'=>'Общие друзья',
     'friends_common_not'=>'У Вас с этим пользователем нет общих друзей.',
     'friend_remove'=>'Убрать из друзей',
+    'no_requests' => 'no_requests',
 
     //balance
     'balance_status' => 'Состояние личного счёта',
@@ -247,10 +257,7 @@ return array(
     'yes_page'=>'Да, это нужная страница',
     'restore_to_email'=>'На ваш электронный ящик были высланы инструкции по восстановлению пароля.',
 
-    'Cat'=>'Gato',
-    'Cat'=>'Gato',
-    'Cat'=>'Gato',
-    'Cat'=>'Gato',
+
     'Cats'=>'Gatos', // plural
     '%s is a nice cat'=>'%s es un buen gato',
 );

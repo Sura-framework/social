@@ -7,6 +7,7 @@ use Exception;
 use Intervention\Image\ImageManager;
 use Sura\Libs\Langs;
 use Sura\Libs\Registry;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -40,6 +41,9 @@ class AlbumsController extends Module{
         $logged = $this->logged();
 //        $lang = $this->get_langs();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         Tools::NoAjaxRedirect();
 
         if($logged){
@@ -59,7 +63,7 @@ class AlbumsController extends Module{
                 if($row['user_albums_num'] < $config['max_albums']){
                     //hash
                     $_IP = '';
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
+                    $server_time = \Sura\Libs\Tools::time();
                     $hash = md5(md5($server_time).$name.$descr.md5($user_info['user_id']).md5($user_info['user_email']).$_IP);
                     $date_create = date('Y-m-d H:i:s', $server_time);
 
@@ -67,7 +71,7 @@ class AlbumsController extends Module{
                     $id = $db->insert_id();
                     $db->query("UPDATE `users` SET user_albums_num = user_albums_num+1 WHERE user_id = '{$user_info['user_id']}'");
 
-                    $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
                     $Cache->delete("users/{$user_info['user_id']}/albums");
                     $Cache->delete("users/{$user_info['user_id']}/albums_all");
                     $Cache->delete("users/{$user_info['user_id']}/albums_friends");
@@ -89,6 +93,8 @@ class AlbumsController extends Module{
 
     /**
      * Страница добавление фотографий в альбом
+     * @param $params
+     * @return bool
      */
     public function add($params){
         $tpl = Registry::get('tpl');
@@ -176,7 +182,7 @@ class AlbumsController extends Module{
                     //Получаем данные о фотографии
                     $image_tmp = $_FILES['uploadfile']['tmp_name'];
                     $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
+                    $server_time = \Sura\Libs\Tools::time();
                     $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя фотографии
                     $image_size = $_FILES['uploadfile']['size']; // размер файла
                     $image_name_arr = explode(".", $image_name);
@@ -237,7 +243,7 @@ class AlbumsController extends Module{
 
                                 $photos_num = null; // bug !!!
 
-                                $Cache = Cache::initialize();
+                                $Cache = cache_init(array('type' => 'file'));
 
                                 //Удаляем кеш позиций фотографий
                                 if(!$photos_num)
@@ -285,11 +291,14 @@ class AlbumsController extends Module{
      * Удаление фотографии из альбома
      */
     public function del_photo($params){
-        $tpl = Registry::get('tpl');
+//        $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
 
         Tools::NoAjaxRedirect();
 
@@ -338,7 +347,7 @@ class AlbumsController extends Module{
 //                user_{$user_info['user_id']}/albums_friends|
 //                user_{$row['user_id']}/position_photos_album_{$row['album_id']}");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_info['user_id']}/albums");
                 $Cache->delete("users/{$user_info['user_id']}/albums_all");
                 $Cache->delete("users/{$user_info['user_id']}/albums_friends");
@@ -355,8 +364,6 @@ class AlbumsController extends Module{
                 //Удаляем оценки
                 $db->query("DELETE FROM `photos_rating` WHERE photo_id = '".$id."'");
             }
-
-            die();
         }
     }
 
@@ -364,11 +371,14 @@ class AlbumsController extends Module{
      * Установка новой обложки для альбома
      */
     public function set_cover($params){
-        $tpl = Registry::get('tpl');
+//        $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         $lang = $this->get_langs();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
 
         Tools::NoAjaxRedirect();
 
@@ -387,7 +397,7 @@ class AlbumsController extends Module{
 //                user_{$user_info['user_id']}/albums_all|
 //                user_{$user_info['user_id']}/albums_friends");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_info['user_id']}/albums");
                 $Cache->delete("users/{$user_info['user_id']}/albums_all");
                 $Cache->delete("users/{$user_info['user_id']}/albums_friends");
@@ -408,8 +418,10 @@ class AlbumsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
 
-            $id = intval($_POST['id']);
+            $id = (int)$request['id'];
             $user_id = $user_info['user_id'];
             $descr = Validation::ajax_utf8(Validation::textFilter($_POST['descr']));
 
@@ -421,7 +433,6 @@ class AlbumsController extends Module{
                 //Ответ скрипта
                 echo stripslashes(myBr(htmlspecialchars(Validation::ajax_utf8(trim($_POST['descr'])))));
             }
-            die();
         }
     }
 
@@ -438,7 +449,10 @@ class AlbumsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $id = intval($_GET['id']);
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+            $id = (int)$request['id'];
             $user_id = $user_info['user_id'];
             $row = $db->super_query("SELECT descr FROM `photos` WHERE id = '{$id}' AND user_id = '{$user_id}'");
             if($row)
@@ -480,7 +494,7 @@ class AlbumsController extends Module{
 //                user_{$user_info['user_id']}/albums|
 //                user_{$user_info['user_id']}/albums_all|
 //                user_{$user_info['user_id']}/albums_friends");
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_info['user_id']}/albums");
                 $Cache->delete("users/{$user_info['user_id']}/albums_all");
                 $Cache->delete("users/{$user_info['user_id']}/albums_friends");
@@ -522,7 +536,7 @@ class AlbumsController extends Module{
 //                    Cache::mozg_create_cache('
 //                    user_'.$user_info['user_id'].'/position_photos_album_'.$row['album_id'], $photo_info);
 
-                    $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
                     $Cache->set("users/{$user_info['user_id']}/position_photos_album_{$row['album_id']}", $photo_info);
                 }
             }
@@ -531,8 +545,12 @@ class AlbumsController extends Module{
 
     /**
      * Страница редактирование альбома
+     * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function edit_page($params){
+    public function edit_page($params): string
+    {
         $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
@@ -557,14 +575,13 @@ class AlbumsController extends Module{
                 $tpl->set('{privacy-comment}', $album_privacy[1]);
                 $tpl->set('{privacy-comment-text}', strtr($album_privacy[1], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я')));
                 $tpl->compile('content');
-                Tools::AjaxTpl($tpl);
 
-                $params['tpl'] = $tpl;
-                Page::generate($params);
-                return true;
+
             }
-            die();
+            //FIXME update tpl
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
@@ -606,7 +623,7 @@ class AlbumsController extends Module{
 //                    user_{$user_id}/albums_cnt_friends|
 //                    user_{$user_id}/albums_cnt_all");
 
-                    $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
                     $Cache->delete("users/{$user_id}/albums");
                     $Cache->delete("users/{$user_id}/albums_all");
                     $Cache->delete("users/{$user_id}/albums_friends");
@@ -620,8 +637,12 @@ class AlbumsController extends Module{
 
     /**
      * Страница изминения обложки
+     * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function edit_cover($params){
+    public function edit_cover($params): string
+    {
         $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
@@ -680,18 +701,16 @@ class AlbumsController extends Module{
                     $tpl->set_block("'\\[top\\](.*?)\\[/top\\]'si","");
                     $tpl->compile('content');
 
-                    Tools::AjaxTpl($tpl);
-
-                    $params['tpl'] = $tpl;
-                    Page::generate($params);
-                    return true;
+                    //FIXME update tpl
+                    return view('info.info', $params);
                 } else
                     echo $lang['no_photo_alnumx'];
             } else
                 Hacking();
 
-            die();
+
         }
+        return view('info.info', $params);
     }
 
     /**
@@ -757,11 +776,9 @@ class AlbumsController extends Module{
                 $tpl->set_block("'\\[top\\](.*?)\\[/top\\]'si","");
                 $tpl->compile('content');
 
-                Tools::AjaxTpl($tpl);
 
-                $params['tpl'] = $tpl;
-                Page::generate($params);
-                return true;
+                //FIXME update tpl
+                return view('info.info', $params);
             } else {
                 if($notes)
                     $scrpt_insert = "response[1] = response[1].replace('/c_', '/');wysiwyg.boxPhoto(response[1], 0, 0);";
@@ -796,10 +813,12 @@ class AlbumsController extends Module{
                         </script>
                         HTML;
                 echo $lang['no_photo_alnumx'].'<br /><br /><div class="button_div_gray fl_l" style="margin-left:205px"><button id="upload">Загрузить новую фотографию</button></div>';
+               //FIXME update tpl
+                return view('info.info', $params);
             }
 
-            die();
         }
+        return view('info.info', $params);
     }
 
     /**
@@ -864,8 +883,12 @@ class AlbumsController extends Module{
 
     /**
      * Просмотр всех комментариев к альбому
+     * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function all_comments($params){
+    public function all_comments($params): string
+    {
         $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
@@ -1051,30 +1074,29 @@ class AlbumsController extends Module{
                     $titles = array('комментарий', 'комментария', 'комментариев');
                     $user_speedbar = $row_album['all_comm_num'].' '.Gramatic::declOfNum($row_album['all_comm_num'], $titles);
 
-                    $params['tpl'] = $tpl;
-                    Page::generate($params);
-                    return true;
+                    return view('info.info', $params);
                 } else
-                    msg_box( $lang['no_comments'], 'info_2');
+//                    msg_box( $lang['no_comments'], 'info_2');
 
-                    $params['tpl'] = $tpl;
-                    Page::generate($params);
-                    return true;
+                return view('info.info', $params);
             } else {
-                $user_speedbar = $lang['title_albums'];
-                msg_box( $lang['no_notes'], 'info');
+//                $user_speedbar = $lang['title_albums'];
+//                msg_box( $lang['no_notes'], 'info');
 
-                $params['tpl'] = $tpl;
-                Page::generate($params);
-                return true;
+                return view('info.info', $params);
             }
         }
+        return view('info.info', $params);
     }
 
     /**
      * Страница изминения порядка фотографий
+     * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function edit_pos_photos($params){
+    public function edit_pos_photos($params): string
+    {
         $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
@@ -1135,34 +1157,33 @@ class AlbumsController extends Module{
                     //Конец ID для Drag-N-Drop jQuery
                     $tpl->result['content'] .= '</div></ul>';
 
-                    $params['tpl'] = $tpl;
-                    Page::generate($params);
-                    return true;
+                    return view('info.info', $params);
                 } else{
-                    msg_box($lang['no_photos'], 'info_2');
+//                    msg_box($lang['no_photos'], 'info_2');
 
-                    $params['tpl'] = $tpl;
-                    Page::generate($params);
-                    return true;
+                    return view('info.info', $params);
                 }
 
             } else {
                 //$params['title'] = $lang['hacking'];
                 $params['title'] = $lang['hacking'].' | Sura';
                 $user_speedbar = $lang['no_infooo'];
-                msg_box( $lang['hacking'], 'info_2');
+//                msg_box( $lang['hacking'], 'info_2');
 
-                $params['tpl'] = $tpl;
-                Page::generate($params);
-                return true;
+                return view('info.info', $params);
             }
         }
+        return view('info.info', $params);
     }
 
     /**
      * Просмотр альбома
+     * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function view($params){
+    public function view($params): string
+    {
         $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
@@ -1278,29 +1299,29 @@ class AlbumsController extends Module{
                     if(!$check_pos)
                         GenerateAlbumPhotosPosition($row_album['user_id'], $aid);
                 } else {
-                    $user_speedbar = $lang['error'];
-                    msg_box($lang['no_notes'], 'info');
+//                    $user_speedbar = $lang['error'];
+//                    msg_box($lang['no_notes'], 'info');
                 }
 
-                $params['tpl'] = $tpl;
-                Page::generate($params);
-                return true;
-
+                return view('info.info', $params);
             } else {
-                $user_speedbar = $lang['title_albums'];
-                msg_box($lang['no_notes'], 'info');
+//                $user_speedbar = $lang['title_albums'];
+//                msg_box($lang['no_notes'], 'info');
 
-                $params['tpl'] = $tpl;
-                Page::generate($params);
-                return true;
+                return view('info.info', $params);
             }
         }
+        return view('info.info', $params);
     }
 
     /**
      * Страница с новыми фотографиями
+     * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function new_photos($params){
+    public function new_photos($params): string
+    {
         $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
@@ -1310,8 +1331,9 @@ class AlbumsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**

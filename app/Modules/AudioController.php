@@ -7,12 +7,14 @@ use Exception;
 use getID3;
 use Sura\Libs\Langs;
 use Sura\Libs\Gramatic;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Validation;
 
 class AudioController extends Module{
 
     /**
+     *
      * @param $params
      */
     public function upload_box(&$params){
@@ -69,18 +71,27 @@ class AudioController extends Module{
 
     /**
      * @param $params
+     * @return string
+     * @throws \JsonException
      */
-    public function loadFriends(&$params){
+    public function loadFriends($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
 //            $count = 40;
-            if (isset($_REQUEST['page']))
-                $page = intval($_REQUEST['page']);
-            else
+            if (isset($request['page'])) {
+                $page = (int)$request['page'];
+            }
+            else {
                 $page = 1;
+            }
             $params['title'] = $lang['audio'].' | Sura';
 
             $res = array();
@@ -94,14 +105,18 @@ class AudioController extends Module{
                 $row['user_photo'] = ($row['user_photo']) ? $config['home_url'].'uploads/users/'.$row['friend_id'].'/50_'.$row['user_photo'] : '/images/no_ava_50.png';
                 $res[] = array('count' => $row['user_audio'],'fid' => $row['friend_id'], 'uid' => $row['friend_id'], 'name' => $row['user_search_pref'], 'ava' => $row['user_photo'], 'js' => 'audio');
             }
-            if($res)
-                echo json_encode(array('res' => $res, 'count' => $sql_count_['cnt']));
-            else
-                echo json_encode(array('reset' => 1,'res' => $res, 'count' => $sql_count_['cnt']));
+            if($res) {
+                return _e( json_encode(array('res' => $res, 'count' => $sql_count_['cnt']), JSON_THROW_ON_ERROR) );
+            }
+            else {
+                return _e( json_encode(array('reset' => 1, 'res' => $res, 'count' => $sql_count_['cnt']), JSON_THROW_ON_ERROR) );
+            }
         }
     }
 
     /**
+     * Удаление песни из БД
+     *
      * @param $params
      */
     public function del_audio($params){
@@ -117,15 +132,18 @@ class AudioController extends Module{
 //            $act = $_REQUEST['act'];
             $params['title'] = $lang['audio'].' | Sura';
 
-            $id = intval($_POST['id']);
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+            $id = (int)$request['id'];
             $check = $db->super_query("SELECT oid, url, filename, original, public FROM `audio` WHERE id = '{$id}'");
             if($check['public']) $info = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$check['oid']}'");
-            if(!$check['public'] && $check['oid'] == $user_info['user_id'] || stripos($info['admin'], "u{$user_info['user_id']}|") !== false){
+            if((!$check['public'] && $check['oid'] == $user_info['user_id']) || stripos($info['admin'], "u{$user_info['user_id']}|") !== false){
                 $db->query("DELETE FROM `audio` WHERE id = '{$id}'");
                 if(!$check['public'])
                 {
                     $db->query("UPDATE `users` SET user_audio = user_audio - 1 WHERE user_id = '{$user_info['user_id']}'");
-                    $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
                     $Cache->delete('users/'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
                 } else $db->query("UPDATE `communities` SET audio_num = audio_num - 1 WHERE id = '{$check['oid']}'");
                 if($check['original'])
@@ -135,6 +153,8 @@ class AudioController extends Module{
     }
 
     /**
+     * Отправление песни в БД
+     *
      * @param $params
      */
     public function add($params){
@@ -143,23 +163,30 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $id = intval($_POST['id']);
+
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+            $id = (int)$request['id'];
             $check = $db->super_query("SELECT url, artist, title, duration, filename FROM `audio` WHERE id = '{$id}'");
             if($check){
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
                 $db->query("INSERT INTO `audio` SET filename = '{$check['filename']}', original = '{$id}', duration = '{$check['duration']}',oid = '{$user_info['user_id']}', url = '{$db->safesql($check['url'])}', artist = '{$db->safesql($check['artist'])}', title = '{$db->safesql($check['title'])}', date = '{$server_time}'");
 //                $dbid = $db->insert_id();
                 $db->query("UPDATE `users` SET user_audio = user_audio + 1 WHERE user_id = '{$user_info['user_id']}'");
                 $db->query("UPDATE `audio` SET add_count = add_count + 1 WHERE id = '{$id}'");
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete('users/'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
             }
         }
     }
 
     /**
+     * Вывод всех аудио (BOX)
+     *
      * @param $params
      * @return bool
+     * @throws Exception
      */
     public function allMyAudiosBox($params): bool
     {
@@ -167,15 +194,23 @@ class AudioController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $count = 40;
-            $page = intval($_REQUEST['page']);
+            $page = (int)$request['page'];
 //            $offset = $count * $page;
 //            $act = $_REQUEST['act'];
             $params['title'] = $lang['audio'].' | Sura';
 
             $gcount = 20;
-            if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
+            if($request['page'] > 0) {
+                $page = (int)$request['page'];
+            } else {
+                $page = 1;
+            }
             $limit_page = ($page-1)*$gcount;
 
             $sql_ = $db->super_query("SELECT id, url, oid, artist, title, duration FROM `audio` WHERE oid = '{$user_info['user_id']}' and public = '0' ORDER by `id` DESC LIMIT {$limit_page}, {$gcount}", 1);
@@ -259,14 +294,15 @@ class AudioController extends Module{
 //                $tpl->compile('content');
 //                Tools::AjaxTpl($tpl);
 //
-//                $params['tpl'] = $tpl;
-//                Page::generate($params);
-                return true;
+                return view('info.info', $params);
             } else echo $lang['audio_box_none'];
         }
+        return view('info.info', $params);
     }
 
     /**
+     * Сохранение отредактированых данных
+     *
      * @param $params
      */
     public function save_edit($params){
@@ -275,6 +311,10 @@ class AudioController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
 //            $count = 40;
 //            $page = intval($_REQUEST['page']);
@@ -282,27 +322,35 @@ class AudioController extends Module{
 //            $act = $_REQUEST['act'];
             $params['title'] = $lang['audio'].' | Sura';
 
-            $id = intval($_POST['id']);
-            $genre = intval($_POST['genre']);
+            $id = (int)$request['id'];
+            $genre = (int)$request['genre'];
             $artist = Validation::textfilter($_POST['artist']);
             $title = Validation::textfilter($_POST['name']);
             $text = Validation::textfilter($_POST['text']);
-            if($genre > -1 && $genre < 18) $access = true;
+            if($genre > -1 && $genre < 18) {
+                $access = true;
+            }
             $row = $db->super_query("SELECT id, oid, public FROM `audio` WHERE id = '{$id}'");
-            if(!$row['public'] && $row['oid'] == $user_info['user_id'] && $access) $db->query("UPDATE `audio` SET artist = '{$artist}', title = '{$title}', text = '{$text}', genre = '{$genre}' WHERE id = '{$id}'");
+            if(!$row['public'] && $row['oid'] == $user_info['user_id'] && $access) {
+                $db->query("UPDATE `audio` SET artist = '{$artist}', title = '{$title}', text = '{$text}', genre = '{$genre}' WHERE id = '{$id}'");
+            }
             else if($row['public'] == 1){
                 $info = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$row['oid']}'");
-                if(stripos($info['admin'], "u{$user_info['user_id']}|") !== false && $access)
+                if(stripos($info['admin'], "u{$user_info['user_id']}|") !== false && $access) {
                     $db->query("UPDATE `audio` SET artist = '{$artist}', title = '{$title}', text = '{$text}', genre = '{$genre}' WHERE id = '{$id}'");
+                }
             }
-            die();
         }
     }
 
     /**
+     * Загрузка с компьютера
+     *
      * @param $params
+     * @return string
      */
-    public function upload($params){
+    public function upload($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -319,7 +367,7 @@ class AudioController extends Module{
             $getID3 = new getID3;
             $file_tmp = $_FILES['file']['tmp_name'];
             $file_name = Gramatic::totranslit($_FILES['file']['name']);
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $server_time = \Sura\Libs\Tools::time();
             $file_rename = substr(md5($server_time+rand(1,100000)), 0, 15);
             $file_size = $_FILES['file']['size'];
             $tmp = explode('.', $file_name);
@@ -353,41 +401,46 @@ class AudioController extends Module{
 //                        $dbid = $db->insert_id();
                         $db->query("UPDATE `users` SET user_audio = user_audio + 1 WHERE user_id = '{$user_info['user_id']}'");
 
-                        $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
                         $Cache->delete('users/'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
 
-                        echo json_encode(array('status' => 1));
+                    return _e( json_encode(array('status' => 1)) );
 //                    }else{
 //                        echo json_encode(array('status' => 0));
 //                    }
 
                     //@unlink(ROOT_DIR.'/uploads/audio/'.$file_rename.'.mp3');
 
-                } else json_encode(array('status' => 0));
-            } else json_encode(array('status' => 0));
+                } return _e( json_encode(array('status' => 0)) );
+            } return _e( json_encode(array('status' => 0)) );
         }
     }
 
     /**
      * @param $params
+     * @return string
      */
-    public function search_all($params)
+    public function search_all($params): string
     {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if ($logged) {
             $count = 40;
-            $page = intval($_REQUEST['page']);
+            $page = (int)$request['page'];
             $offset = $count * $page;
 //            $act = $_REQUEST['act'];
             $params['title'] = $lang['audio'] . ' | Sura';
 
-            $pid = intval($_POST['pid']);
+            $pid = (int)$request['pid'];
             $audios = array();
 
-            $query = $db->safesql(Validation::strip_data(urldecode($_POST['q'])));
+            $query = $db->safesql(Validation::strip_data(urldecode($request['q'])));
             $query = strtr($query, array(' ' => '%'));
 
             if ($pid) $info = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$pid}'");
@@ -445,22 +498,27 @@ class AudioController extends Module{
                     $audios_res = '';
                     $audios_res .= $res;
                 }
-                echo json_encode(array('search_cnt' => $sql_count_['cnt'], 'audios' => $audios, 'search' => $audios_res));
+                return _e(json_encode(array('search_cnt' => $sql_count_['cnt'], 'audios' => $audios, 'search' => $audios_res)));
             }
         }
     }
 
     /**
      * @param $params
+     * @throws \JsonException
      */
     public function load_all($params){
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $params['title'] = $lang['audio'].' | Sura';
-            $uid = intval($_REQUEST['uid']);
+            $uid = (int)$request['uid'];
             $audios = array();
             if(!$uid) $uid = $user_info['user_id'];
             $sql_ = $db->super_query("SELECT id, oid, url, artist, title, duration, text FROM `audio` WHERE oid = '{$uid}' ORDER by `id` DESC", 1);
@@ -469,8 +527,12 @@ class AudioController extends Module{
                 if(!$row['title']) $row['title'] = 'Без названия';
                 $audios['a_'.$row['id']] = array($row['oid'], $row['id'], $row['url'], $row['artist'], $row['title'], $row['duration'], gmdate("i:s", $row['duration']), 'audios'.$row['oid'], 'user_audios', ($row['text']) ? 1 : 0);
             }
-            if($audios) echo json_encode(array('loaded' => 1, 'res' => $audios));
-            else echo json_encode(array('loaded' => 0));
+            if($audios) {
+                return _e( json_encode(array('loaded' => 1, 'res' => $audios), JSON_THROW_ON_ERROR) );
+            }
+            else {
+                return _e( json_encode(array('loaded' => 0), JSON_THROW_ON_ERROR) );
+            }
         }
     }
 
@@ -482,6 +544,10 @@ class AudioController extends Module{
         $db = $this->db();
 //        $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
 //            $count = 40;
 //            $page = intval($_REQUEST['page']);
@@ -490,7 +556,7 @@ class AudioController extends Module{
             $params['title'] = $lang['audio'].' | Sura';
 
             $audios = array();
-            $data = explode('_', $_POST['data']);
+            $data = explode('_', $request['data']);
 //            $id = $data[0];
             $uid = $data[1];
             $plname = $data[2];
@@ -507,14 +573,18 @@ class AudioController extends Module{
                 $pname = 'Сейчас играют аудиозаписи '.$user['user_search_pref'].' | '.$user['user_audio'].' '.Gramatic::declOfNum($user['user_audio'], array('аудиозапись','аудиозаписи','аудиозаписей'));
                 $sql_dop = "and public = '0'";
             }
-            if($plname == 'popular') $sql_ = $db->super_query("SELECT id, oid, url, artist, title, duration, text FROM `audio` ORDER by `add_count` DESC", 1);
-            else $sql_ = $db->super_query("SELECT id, oid, url, artist, title, duration, text FROM `audio` WHERE oid = '{$uid}' {$sql_dop} ORDER by `id` DESC", 1);
+            if($plname == 'popular') {
+                $sql_ = $db->super_query("SELECT id, oid, url, artist, title, duration, text FROM `audio` ORDER by `add_count` DESC", 1);
+            }
+            else {
+                $sql_ = $db->super_query("SELECT id, oid, url, artist, title, duration, text FROM `audio` WHERE oid = '{$uid}' {$sql_dop} ORDER by `id` DESC", 1);
+            }
             foreach($sql_ as $row){
                 if(!$row['artist']) $row['artist'] = 'Неизвестный исполнитель';
                 if(!$row['title']) $row['title'] = 'Без названия';
                 $audios[] = array($row['oid'], $row['id'], $row['url'], $row['artist'], $row['title'], $row['duration'], gmdate("i:s", $row['duration']), $plname, 'user_audios', ($row['text']) ? 1 : 0);
             }
-            echo json_encode(array('playList' => $audios, 'plname' => 'user_audios', 'pname' => $pname));
+            return _e( json_encode(array('playList' => $audios, 'plname' => 'user_audios', 'pname' => $pname)) );
         }
     }
 
@@ -527,6 +597,10 @@ class AudioController extends Module{
         $db = $this->db();
 //        $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
 //            $count = 40;
 //            $page = intval($_REQUEST['page']);
@@ -534,36 +608,43 @@ class AudioController extends Module{
 //            $act = $_REQUEST['act'];
             $params['title'] = $lang['audio'].' | Sura';
 
-            $data = explode('_', $_POST['id']);
+            $data = explode('_', $request['id']);
             $id = $data[0];
             $row = $db->super_query("SELECT text FROM `audio` WHERE id = '{$id}'");
-            echo $row['text'];
-            die();
+            return _e( $row['text']);
         }
     }
 
     /**
      * @param $params
      */
-    public function get_info($params){
+    public function get_info($params): string
+    {
 //        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
 //        $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $count = 40;
-            $page = intval($_REQUEST['page']);
+            $page = (int)$request['page'];
 //            $offset = $count * $page;
 //            $act = $_REQUEST['act'];
             $params['title'] = $lang['audio'].' | Sura';
 
-            $id = intval($_POST['id']);
+            $id = (int)$request['id'];
             $genres = array(array(0,"Other"),array(1,"Rock"),array(2,"Pop"),array(3,"Rap & Hip-Hop"),array(4,"House & Dance"),array(5,"Alternative"),array(6,"Instrumental"),array(7,"Easy Listening"),array(8,"Metal"),array(9,"Dubstep"),array(10,"Indie Pop"),array(11,"Drum & Bass"),array(12,"Trance"),array(13,"Ethnic"),array(14,"Acoustic & Vocal"),array(15,"Reggae"),array(16,"Classical"),array(17,"Electropop & Disco"));
             $row = $db->super_query("SELECT id, artist, title, text, genre FROM `audio` WHERE id = '{$id}'");
-            if($row) echo json_encode(array('artist' => $row['artist'],'name' => $row['title'],'genre' => $row['genre'],'text' => $row['text'],'genres' => $genres));
-            else echo json_encode(array('error' => 1));
-            die();
+            if($row) {
+                return _e( json_encode(array('artist' => $row['artist'],'name' => $row['title'],'genre' => $row['genre'],'text' => $row['text'],'genres' => $genres)) );
+            }
+            else {
+                return _e( json_encode(array('error' => 1)) );
+            }
         }
     }
 
@@ -575,25 +656,29 @@ class AudioController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $count = 40;
-            if (isset($_REQUEST['page']))
-                $page = intval($_REQUEST['page']);
-            else
+            if (isset($request['page'])) {
+                $page = (int)$request['page'];
+            }
+            else {
                 $page = 0;
+            }
             $offset = $count * $page;
             $params['title'] = $lang['audio'].' | Sura';
             $path = explode('/', $_SERVER['REQUEST_URI']);
             $uid = ($path['2']);
-            if(isset($path['2']) ){
-                $type = $path['2'];
-            }else{
-                $type = null;
+            $type = $path['2'] ?? null;
+            if (isset($request['uid'])) {
+                $uid = (int)$request['uid'];
             }
-            if (isset($_REQUEST['uid']))
-                $uid = intval($_REQUEST['uid']);
-            else
+            else {
                 $uid = $user_info['user_id'];
+            }
 
             $sql_dop = "WHERE oid = '{$uid}' and public = '0' ORDER by `id`";
             $plname = 'audios'.$uid;
@@ -671,15 +756,15 @@ class AudioController extends Module{
                 if($uid != $user_info['user_id'])
                     $title = '<div class="audio_page_title">У '.$user['user_search_pref'].' '.$sql_count_['cnt'].' '.Gramatic::declOfNum($sql_count_['cnt'], array('аудиозапись','аудиозаписи','аудиозаписей')).'</div>';
 
-            if(isset($_POST['doload']) AND $_POST['doload']){
+            if(isset($request['doload']) AND $request['doload']){
 
-                echo json_encode(array(
+                return _e( json_encode(array(
                     'result' => $audios_res,
                     'playList' => $audios, '
                     pname' => $pname,
                     'title' => $title,
                     'plname' => $plname,
-                    'but' => ($sql_count_['cnt'] > $count+$offset) ? '<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>' : ''));
+                    'but' => ($sql_count_['cnt'] > $count+$offset) ? '<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>' : '')) );
             }else{
                 $params['is_user'] = true;
                 $params['friends_block'] = true;
@@ -691,7 +776,7 @@ class AudioController extends Module{
                 $params['audios_res'] = $audios_res;
                 $params['public'] = false;
                 $params['user_name'] = $user['user_search_pref'];
-                $params['init'] = json_encode($audio_json);
+                $params['init'] = json_encode($audio_json, JSON_THROW_ON_ERROR);
                 return view('audio.audio', $params);
             }
 
@@ -711,12 +796,18 @@ class AudioController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $count = 40;
-            if (isset($_REQUEST['page']))
-                $page = intval($_REQUEST['page']);
-            else
+            if (isset($request['page'])) {
+                $page = (int)$request['page'];
+            }
+            else {
                 $page = 0;
+            }
             $offset = $count * $page;
             $params['title'] = $lang['audio'].' | Sura';
             $path = explode('/', $_SERVER['REQUEST_URI']);
@@ -726,8 +817,8 @@ class AudioController extends Module{
             }else{
                 $type = null;
             }
-            if (isset($_REQUEST['uid']))
-                $uid = intval($_REQUEST['uid']);
+            if (isset($request['uid']))
+                $uid = (int)$_REQUEST['uid'];
             else
                 $uid = $user_info['user_id'];
 
@@ -809,13 +900,13 @@ class AudioController extends Module{
 
             if(isset($_POST['doload']) AND $_POST['doload']){
 
-                echo json_encode(array(
+                return _e( json_encode(array(
                     'result' => $audios_res,
                     'playList' => $audios, '
                     pname' => $pname,
                     'title' => $title,
                     'plname' => $plname,
-                    'but' => ($sql_count_['cnt'] > $count+$offset) ? '<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>' : ''));
+                    'but' => ($sql_count_['cnt'] > $count + $offset) ? '<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>' : ''), JSON_THROW_ON_ERROR) );
             }else{
                 $params['is_user'] = true;
                 $params['friends_block'] = true;
@@ -827,7 +918,7 @@ class AudioController extends Module{
                 $params['audios_res'] = $audios_res;
                 $params['public'] = false;
                 $params['user_name'] = $user['user_search_pref'];
-                $params['init'] = json_encode($audio_json);
+                $params['init'] = json_encode($audio_json, JSON_THROW_ON_ERROR);
                 return view('audio.audio', $params);
             }
 
@@ -847,10 +938,14 @@ class AudioController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $count = 40;
-            if (isset($_REQUEST['page']))
-                $page = intval($_REQUEST['page']);
+            if (isset($request['page']))
+                $page = (int)$request['page'];
             else
                 $page = 0;
             $offset = $count * $page;
@@ -862,8 +957,8 @@ class AudioController extends Module{
             }else{
                 $type = null;
             }
-            if (isset($_REQUEST['uid']))
-                $uid = intval($_REQUEST['uid']);
+            if (isset($request['uid']))
+                $uid = (int)$request['uid'];
             else
                 $uid = $user_info['user_id'];
 
@@ -943,15 +1038,15 @@ class AudioController extends Module{
                 if($uid != $user_info['user_id'])
                     $title = '<div class="audio_page_title">У '.$user['user_search_pref'].' '.$sql_count_['cnt'].' '.Gramatic::declOfNum($sql_count_['cnt'], array('аудиозапись','аудиозаписи','аудиозаписей')).'</div>';
 
-            if(isset($_POST['doload']) AND $_POST['doload']){
+            if(isset($request['doload']) AND $request['doload']){
 
-                echo json_encode(array(
+                return _e( json_encode(array(
                     'result' => $audios_res,
                     'playList' => $audios, '
                     pname' => $pname,
                     'title' => $title,
                     'plname' => $plname,
-                    'but' => ($sql_count_['cnt'] > $count+$offset) ? '<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>' : ''));
+                    'but' => ($sql_count_['cnt'] > $count+$offset) ? '<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>' : '')) );
             }else{
                 $params['is_user'] = true;
                 $params['friends_block'] = true;
@@ -986,10 +1081,14 @@ class AudioController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $count = 40;
-            if (isset($_REQUEST['page']))
-                $page = intval($_REQUEST['page']);
+            if (isset($request['page']))
+                $page = (int)$request['page'];
             else
                 $page = 0;
             $offset = $count * $page;
@@ -1001,8 +1100,8 @@ class AudioController extends Module{
             }else{
                 $type = null;
             }
-            if (isset($_REQUEST['uid']))
-                $uid = intval($_REQUEST['uid']);
+            if (isset($request['uid']))
+                $uid = (int)$request['uid'];
             else
                 $uid = $user_info['user_id'];
 
@@ -1083,15 +1182,15 @@ class AudioController extends Module{
                 else
                     $title = 'N/A';
 
-            if(isset($_POST['doload']) AND $_POST['doload']){
+            if(isset($request['doload']) AND $request['doload']){
 
-                echo json_encode(array(
+                return _e( json_encode(array(
                     'result' => $audios_res,
                     'playList' => $audios, '
                     pname' => $pname,
                     'title' => $title,
                     'plname' => $plname,
-                    'but' => ($sql_count_['cnt'] > $count+$offset) ? '<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>' : ''));
+                    'but' => ($sql_count_['cnt'] > $count+$offset) ? '<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>' : '')) );
             }else{
                 $params['is_user'] = true;
                 $params['friends_block'] = true;
@@ -1119,6 +1218,8 @@ class AudioController extends Module{
     }
 
     /**
+     * Вывод всех аудио
+     *
      * @param $params
      * @return string
      * @throws Exception
@@ -1130,11 +1231,14 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
 
             $count = 40;
-            if (isset($_REQUEST['page']))
-                $page = intval($_REQUEST['page']);
+            if (isset($request['page']))
+                $page = (int)$request['page'];
             else
                 $page = 0;
 
@@ -1152,8 +1256,8 @@ class AudioController extends Module{
                 $type = null;
             }
 
-            if (isset($_REQUEST['uid']))
-                $uid = intval($_REQUEST['uid']);
+            if (isset($request['uid']))
+                $uid = (int)$_REQUEST['uid'];
             else
                 $uid = $user_info['user_id'];
 
@@ -1183,7 +1287,7 @@ class AudioController extends Module{
             if ($sql_count_['cnt'] !== $user['user_audio']){
                 $db->query("UPDATE `users` SET user_audio = '{$sql_count_['cnt']}' WHERE user_id = '{$uid}'");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete('users/'.$uid.'/profile_'.$uid);
             }
 
@@ -1253,15 +1357,15 @@ class AudioController extends Module{
                 if($uid != $user_info['user_id'])
                     $title = '<div class="audio_page_title">У '.$user['user_search_pref'].' '.$sql_count_['cnt'].' '.Gramatic::declOfNum($sql_count_['cnt'], array('аудиозапись','аудиозаписи','аудиозаписей')).'</div>';
 
-            if(isset($_POST['doload']) AND $_POST['doload']){
+            if(isset($request['doload']) AND $request['doload']){
 
-                echo json_encode(array(
+                return _e( json_encode(array(
                     'result' => $audios_res,
                     'playList' => $audios, '
                     pname' => $pname,
                     'title' => $title,
                     'plname' => $plname,
-                    'but' => ($sql_count_['cnt'] > $count+$offset) ? '<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>' : ''));
+                    'but' => ($sql_count_['cnt'] > $count+$offset) ? '<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>' : '')) );
             }
 
 

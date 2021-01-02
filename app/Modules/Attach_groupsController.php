@@ -3,21 +3,29 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
+use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
 class Attach_groupsController extends Module{
 
-    public function index()
+    /**
+     * Загрузка картинок при прикреплении файлов со стены,
+     * заметок, или сообщений -> Сообщества
+     *
+     * @return string
+     */
+    public function index(): string
     {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxQuery();
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
 
         if($logged){
-            $public_id = intval($_GET['public_id']);
+            $public_id = (int)$request['public_id'];
 
             $rowPublic = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$public_id}'");
 
@@ -31,7 +39,7 @@ class Attach_groupsController extends Module{
                 //Получаем данные о фотографии
                 $image_tmp = $_FILES['uploadfile']['tmp_name'];
                 $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
                 $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя фотографии
                 $image_size = $_FILES['uploadfile']['size']; // размер файла
                 $array = explode(".", $image_name);
@@ -68,16 +76,14 @@ class Attach_groupsController extends Module{
                             echo $image_rename.$res_type;
 
                         } else
-                            echo 'big_size';
+                            return _e('big_size');
                     } else
-                        echo 'big_size';
+                        return _e( 'big_size');
                 } else
-                    echo 'bad_format';
+                    return _e( 'bad_format');
             }
         } else
-            echo 'no_log';
-
-        die();
+            return _e( 'no_log');
 
     }
 }

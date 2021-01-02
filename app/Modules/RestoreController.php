@@ -13,6 +13,8 @@ use Sura\Libs\Validation;
 class RestoreController extends Module{
 
     /**
+     * Отправка данных на почту на воостановления
+     *
      * @param $params
      */
     public function send($params){
@@ -25,11 +27,11 @@ class RestoreController extends Module{
         if(!$logged){
             $params['title'] = $lang['restore_title'].' | Sura';
 
-//            Tools::NoAjaxQuery();
-            $email = Validation::ajax_utf8($_POST['email']);
+//
+            $email = Validation::ajax_utf8($request['email']);
             $check = $db->super_query("SELECT user_name FROM `users` WHERE user_email = '{$email}'");
 
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $server_time = \Sura\Libs\Tools::time();
 
             if($check){
                 //Удаляем все предыдущие запросы на воостановление
@@ -41,6 +43,8 @@ class RestoreController extends Module{
                     $rand_lost .= $salt[rand(0, 33)];
                 }
                 $hash = md5($server_time.$email.rand(0, 100000).$rand_lost.$check['user_name']);
+
+                $_IP = $_SERVER['REMOTE_ADDR'];
 
                 //Вставляем в базу
                 $db->query("INSERT INTO `restore` SET email = '{$email}', hash = '{$hash}', ip = '{$_IP}'");
@@ -67,9 +71,14 @@ class RestoreController extends Module{
     }
 
     /**
+     *  Страница смены пароля
+     *
      * @param $params
+     * @return string
+     * @throws \Exception
      */
-    public function prefinish($params){
+    public function prefinish($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -79,7 +88,7 @@ class RestoreController extends Module{
         if(!$logged){
             $params['title'] = $lang['restore_title'].' | Sura';
 
-            $hash = $db->safesql(Validation::strip_data($_GET['h']));
+            $hash = $db->safesql(Validation::strip_data($request['h']));
             $row = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$hash}' AND ip = '{$_IP}'");
             if($row){
                 $info = $db->super_query("SELECT user_name FROM `users` WHERE user_email = '{$row['email']}'");
@@ -91,26 +100,27 @@ class RestoreController extends Module{
                 for($i = 0; $i < 15; $i++){
                     $rand_lost .= $salt[rand(0, 33)];
                 }
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
 
                 $newhash = md5($server_time.$row['email'].rand(0, 100000).$rand_lost);
 //                $tpl->set('{hash}', $newhash);
                 $db->query("UPDATE `restore` SET hash = '{$newhash}' WHERE email = '{$row['email']}'");
 
 //                $tpl->compile('content');
-            } else {
+                return view('info.info', $params);
+            }
                 $speedbar = $lang['no_infooo'];
                 msg_box($lang['restore_badlink'], 'info');
-            }
 
-//            $params['tpl'] = $tpl;
-//            Page::generate($params);
-//            return true;
-            echo 'error';
+
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
+     * Смена пароля
+     *
      * @param $params
      */
     public function finish($params){
@@ -123,32 +133,33 @@ class RestoreController extends Module{
         if(!$logged){
             $params['title'] = $lang['restore_title'].' | Sura';
 
-//            Tools::NoAjaxQuery();
-            $hash = $db->safesql(Validation::strip_data($_POST['hash']));
+//
+            $hash = $db->safesql(Validation::strip_data($request['hash']));
             $row = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$hash}' AND ip = '{$_IP}'");
             if($row){
 
-                $_POST['new_pass'] = Validation::ajax_utf8($_POST['new_pass']);
-                $_POST['new_pass2'] = Validation::ajax_utf8($_POST['new_pass2']);
+                $request['new_pass'] = Validation::ajax_utf8($request['new_pass']);
+                $request['new_pass2'] = Validation::ajax_utf8($request['new_pass2']);
 
-                $new_pass = md5(md5($_POST['new_pass']));
-                $new_pass2 = md5(md5($_POST['new_pass2']));
+                $new_pass = md5(md5($request['new_pass']));
+                $new_pass2 = md5(md5($request['new_pass2']));
 
                 if(strlen($new_pass) >= 6 AND $new_pass == $new_pass2){
                     $db->query("UPDATE `users` SET user_password = '{$new_pass}' WHERE user_email = '{$row['email']}'");
                     $db->query("DELETE FROM `restore` WHERE email = '{$row['email']}'");
                 }
             }
-            die();
         }
     }
 
     /**
+     * Восстановление доступа к странице
+     *
      * @param $params
      * @return string
      * @throws \Exception
      */
-    public function index($params)
+    public function index($params): string
     {
         $lang = $this->get_langs();
 //        $db = $this->db();
@@ -172,6 +183,8 @@ class RestoreController extends Module{
     }
 
     /**
+     * Проверка данных на воостановления
+     *
      * @param $params
      */
     public function next($params){
@@ -186,8 +199,8 @@ class RestoreController extends Module{
         if(!$logged) {
             $meta_tags['title'] = $lang['restore_title'];
 
-            Tools::NoAjaxQuery();
-            $email = Validation::ajax_utf8($_POST['email']);
+
+            $email = Validation::ajax_utf8($request['email']);
             $check = $db->super_query("SELECT user_id, user_search_pref, user_photo FROM `users` WHERE user_email = '{$email}'");
             if($check){
                 if($check['user_photo'])

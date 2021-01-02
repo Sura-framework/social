@@ -9,8 +9,9 @@ use Sura\Libs\Validation;
 class StatusController extends Module{
 
     /**
-     *
+     * @deprecated
      */
+    //#[Deprecated]
     public function index(){
         $db = $this->db();
         $user_info = $this->user_info();
@@ -20,7 +21,7 @@ class StatusController extends Module{
 
         if($logged){
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
 
             $user_id = $user_info['user_id'];
             $text = Validation::ajax_utf8(Validation::textFilter($_POST['text'], false, true));

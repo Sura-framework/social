@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Services\Cache;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -12,6 +13,7 @@ class GiftsController extends Module{
 
     /**
      * Страница всех подарков
+     *
      */
     public function view(){
 //        $tpl = $params['tpl'];
@@ -22,11 +24,14 @@ class GiftsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 
 //            Tools::NoAjaxQuery();
-            $for_user_id = intval($_POST['user_id']);
+            $for_user_id = (int)$request['user_id'];
 
             $sql_ = $db->super_query("SELECT gid, img, price FROM `gifts_list` ORDER by `gid` DESC", 1);
 
@@ -47,13 +52,12 @@ class GiftsController extends Module{
             $row = $db->super_query("SELECT user_balance FROM `users` WHERE user_id = '{$user_id}'");
 
             echo "<style>#box_bottom_left_text{padding-top:6px;float:left}</style><script>$('#box_bottom_left_text').html('У Вас <b>{$row['user_balance']} голос.</b>&nbsp;');</script><div class=\"clr\"></div>";
-
-            die();
         }
     }
 
     /**
      * Отправка подарка в БД
+     *
      */
     public function send(){
 //        $tpl = $params['tpl'];
@@ -64,22 +68,25 @@ class GiftsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 
 //            Tools::NoAjaxQuery();
-            $for_user_id = intval($_POST['for_user_id']);
-            $gift = intval($_POST['gift']);
-            $privacy = intval($_POST['privacy']);
+            $for_user_id = (int)$request['for_user_id'];
+            $gift = (int)$request['gift'];
+            $privacy = (int)$request['privacy'];
             if($privacy < 0 OR $privacy > 3) $privacy = 1;
-            $msg = Validation::ajax_utf8(Validation::textFilter($_POST['msg']));
+            $msg = Validation::ajax_utf8(Validation::textFilter($request['msg']));
             $gifts = $db->super_query("SELECT price FROM `gifts_list` WHERE img = '".$gift."'");
 
             //Выводим текущий баланс свой
             $row = $db->super_query("SELECT user_balance FROM `users` WHERE user_id = '{$user_id}'");
             if($gifts['price'] AND $user_id != $for_user_id){
                 if($row['user_balance'] >= $gifts['price']){
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
+                    $server_time = \Sura\Libs\Tools::time();
                     $db->query("INSERT INTO `gifts` SET uid = '{$for_user_id}', gift = '{$gift}', msg = '{$msg}', privacy = '{$privacy}', gdate = '{$server_time}', from_uid = '{$user_id}', status = 1");
                     $db->query("UPDATE `users` SET user_balance = user_balance-{$gifts['price']} WHERE user_id = '{$user_id}'");
                     $db->query("UPDATE `users` SET user_gifts = user_gifts+1 WHERE user_id = '{$for_user_id}'");
@@ -106,7 +113,7 @@ class GiftsController extends Module{
 
 //                        Cache::mozg_create_cache("user_{$for_user_id}/updates", 1);
 
-                        $Cache = Cache::initialize();
+                        $Cache = cache_init(array('type' => 'file'));
                         $Cache->delete("users/{$for_user_id}/updates");
 
                         //ИНАЧЕ Добавляем +1 юзеру для оповещания
@@ -115,7 +122,7 @@ class GiftsController extends Module{
 //                        $cntCacheNews = Cache::mozg_cache("user_{$for_user_id}/new_gift");
 //                        Cache::mozg_create_cache("user_{$for_user_id}/new_gift", ($cntCacheNews+1));
 
-                        $Cache = Cache::initialize();
+                        $Cache = cache_init(array('type' => 'file'));
                         $cntCacheNews = $Cache->get("users/{$for_user_id}/new_gift");
                         $Cache->set("users/{$for_user_id}/new_gift", $cntCacheNews+1);
                     }
@@ -173,6 +180,7 @@ class GiftsController extends Module{
 
     /**
      * Удаление подарка
+     *
      */
     public function del(){
 //        $tpl = $params['tpl'];
@@ -183,11 +191,14 @@ class GiftsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 
 //            Tools::NoAjaxQuery();
-            $gid = intval($_POST['gid']);
+            $gid = (int)$request['gid'];
             $row = $db->super_query("SELECT uid FROM `gifts` WHERE gid = '{$gid}'");
             if($user_id == $row['uid']){
                 $db->query("DELETE FROM `gifts` WHERE gid = '{$gid}'");
@@ -195,7 +206,7 @@ class GiftsController extends Module{
 //                Cache::mozg_mass_clear_cache_file("
 //                user_{$user_id}/profile_{$user_id}|
 //                user_{$user_id}/gifts");
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_id}/profile_{$user_id}");
                 $Cache->delete("users/{$user_id}/gifts");
             }
@@ -204,8 +215,10 @@ class GiftsController extends Module{
 
     /**
      * Всех подарков пользователя
+     *
      */
-    public function index(){
+    public function index(): string
+    {
 //        $tpl = $params['tpl'];
 
         $lang = $this->get_langs();
@@ -215,13 +228,16 @@ class GiftsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 
             $params['title'] = $lang['gifts'].' | Sura';
-            $uid = intval($_GET['uid']);
+            $uid = (int)$request['uid'];
 
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 15;
             $limit_page = ($page-1)*$gcount;
 
@@ -252,18 +268,19 @@ class GiftsController extends Module{
 //                $tpl->set_block("'\\[yes\\](.*?)\\[/yes\\]'si","");
             }
 
-            if($_GET['new'] AND $user_id == $uid){
+            if($request['new'] AND $user_id == $uid){
 //                $tpl->set('[new]', '');
 //                $tpl->set('[/new]', '');
 //                $tpl->set_block("'\\[no-new\\](.*?)\\[/no-new\\]'si","");
                 $sql_where = "AND status = 1";
                 $gcount = 50;
 
-                $Cache = Cache::initialize();
-                $Cache->set("users/{$user_id}/new_gift")
+                $Cache = cache_init(array('type' => 'file'));
+                $Cache->set("users/{$user_id}/new_gift", '');
 
 //                Cache::mozg_create_cache("user_{$user_id}/new_gift", '');
             } else {
+                $sql_where = '';
 //                $tpl->set('[no-new]', '');
 //                $tpl->set('[/no-new]', '');
 //                $tpl->set_block("'\\[new\\](.*?)\\[/new\\]'si","");
@@ -333,14 +350,11 @@ class GiftsController extends Module{
             }
 //            $tpl->clear();
 //            $db->free();
-        } else {
+            return view('info.info', $params);
+        }
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
-        }
 
-//        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
     }
 }

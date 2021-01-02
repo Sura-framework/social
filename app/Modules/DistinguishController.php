@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Services\Cache;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
@@ -10,6 +11,8 @@ use Sura\Libs\Validation;
 class DistinguishController extends Module{
 
     /**
+     * Отмечаем человека на фото
+     *
      * @param $params
      */
     public function mark($params){
@@ -18,17 +21,20 @@ class DistinguishController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $i_left = intval($_POST['i_left']); if($i_left < 0) $i_left = 0;
-            $i_top = intval($_POST['i_top']); if($i_top < 0) $i_top = 0;
-            $i_width = intval($_POST['i_width']); if($i_width < 0) $i_width = 0;
-            $i_height = intval($_POST['i_height']); if($i_height < 0) $i_height = 0;
-            $photo_id = intval($_POST['photo_id']);
-            $muser_id = intval($_POST['user_id']);
-            $mphoto_name = Validation::ajax_utf8(Validation::strip_data(Validation::textFilter($_POST['user_name'], false, true)));
+            $i_left = (int)$request['i_left']; if($i_left < 0) $i_left = 0;
+            $i_top = (int)$request['i_top']; if($i_top < 0) $i_top = 0;
+            $i_width = (int)$request['i_width']; if($i_width < 0) $i_width = 0;
+            $i_height = (int)$request['i_height']; if($i_height < 0) $i_height = 0;
+            $photo_id = (int)$request['photo_id'];
+            $muser_id = (int)$request['user_id'];
+            $mphoto_name = Validation::ajax_utf8(Validation::strip_data(Validation::textFilter($request['user_name'], false, true)));
             $msettings_pos = $i_left.", ".$i_top.", ".$i_width.", ".$i_height;
             if($user_id == $muser_id) $approve = 1;
             else $approve = 0;
@@ -43,8 +49,8 @@ class DistinguishController extends Module{
             elseif($row_no['cnt'])
                 $db->query("UPDATE `photos_mark` SET msettings_pos = '".$msettings_pos."' WHERE mphoto_id = '".$photo_id."' AND mphoto_name = '".$mphoto_name."'");
             else
-                if($_POST['user_ok'] == 'yes')
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
+                if($request['user_ok'] == 'yes')
+                    $server_time = \Sura\Libs\Tools::time();
             $db->query("INSERT INTO `photos_mark` SET muser_id = '".$muser_id."', mphoto_id = '".$photo_id."', mdate = '".$server_time."', msettings_pos = '".$msettings_pos."', mapprove = '".$approve."', mmark_user_id = '".$user_id."'");
 
             if($user_id != $muser_id){
@@ -53,12 +59,14 @@ class DistinguishController extends Module{
                 $db->query("INSERT INTO `photos_mark` SET muser_id = '" . rand(0, 100000) . "', mphoto_id = '" . $photo_id . "', mdate = '" . $server_time . "', msettings_pos = '" . $msettings_pos . "', mphoto_name = '" . $mphoto_name . "', mmark_user_id = '" . $user_id . "', mapprove = 1");
             }
 //            Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             $Cache->delete('photos/photos_mark/p'.$photo_id);
         }
     }
 
     /**
+     *  Удаление отметки
+     *
      * @param $params
      */
     public function mark_del($params){
@@ -67,13 +75,16 @@ class DistinguishController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $photo_id = intval($_POST['photo_id']);
-            $muser_id = intval($_POST['user_id']);
-            $mphoto_name = Validation::ajax_utf8(Validation::strip_data(Validation::textFilter($_POST['user_name'], false, true)));
+            $photo_id = (int)$request['photo_id'];
+            $muser_id = (int)$request['user_id'];
+            $mphoto_name = Validation::ajax_utf8(Validation::strip_data(Validation::textFilter($request['user_name'], false, true)));
             $row = $db->super_query("SELECT user_id FROM `photos` WHERE id = '".$photo_id."'");
 
             if($mphoto_name AND $muser_id == 0)
@@ -91,13 +102,15 @@ class DistinguishController extends Module{
                         $db->query("UPDATE `users` SET user_new_mark_photos = user_new_mark_photos-1 WHERE user_id = '".$muser_id."'");
                 }
 //                Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete('photos/photos_mark/p'.$photo_id);
             }
         }
     }
 
     /**
+     * Подтверждение отметки
+     *
      * @param $params
      */
     public function mark_ok($params){
@@ -106,23 +119,28 @@ class DistinguishController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $photo_id = intval($_POST['photo_id']);
+            $photo_id = (int)$request['photo_id'];
             $row = $db->super_query("SELECT mapprove FROM `photos_mark` WHERE mphoto_id = '".$photo_id."' AND muser_id = '".$user_id."'");
             if($row AND !$row['mapprove']){
                 $db->query("UPDATE `photos_mark` SET mapprove = '1' WHERE mphoto_id = '".$photo_id."' AND muser_id = '".$user_id."'");
                 $db->query("UPDATE `users` SET user_new_mark_photos = user_new_mark_photos-1 WHERE user_id = '".$user_id."'");
 //                Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete('photos/photos_mark/p'.$photo_id);
             }
         }
     }
 
     /**
+     * Загрузка 110 друзей из списка
+     *
      * @param $params
      */
     public function load_friends($params){
@@ -131,13 +149,16 @@ class DistinguishController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $photo_id = intval($_POST['photo_id']);
+            $photo_id = (int)$request['photo_id'];
             $all_limit = 110;
-            if($_POST['page'] == 2) $limit = $all_limit.", ".($all_limit*2);
+            if($request['page'] == 2) $limit = $all_limit.", ".($all_limit*2);
             else $limit = "0, ".$all_limit;
 
             $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.user_search_pref FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '".$user_id."' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 0 ORDER by `user_search_pref` LIMIT ".$limit, 1);
@@ -151,7 +172,7 @@ class DistinguishController extends Module{
                     $cnt++;
                 }
 
-                if($cnt == $all_limit AND !$_POST['page'])
+                if($cnt == $all_limit AND !$request['page'])
                     $added_script = "setTimeout('Distinguish.FriendPage(2, ".$photo_id."')', 2500)";
 
             }
@@ -169,28 +190,5 @@ class DistinguishController extends Module{
                     </table>
                     HTML;
         }
-    }
-
-    /**
-     * @param $params
-     */
-    public function index($params){
-        $tpl = $params['tpl'];
-
-//        $lang = $this->get_langs();
-        $db = $this->db();
-//        $user_info = $this->user_info();
-        $logged = $this->logged();
-
-        Tools::NoAjaxQuery();
-
-        if($logged){
-//            $user_id = $user_info['user_id'];
-            $tpl->clear();
-            $db->free();
-        } else
-            echo 'no_log';
-
-        die();
     }
 }

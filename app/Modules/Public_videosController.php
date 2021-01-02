@@ -3,8 +3,6 @@
 namespace  App\Modules;
 
 use App\Services\Cache;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -13,6 +11,8 @@ use Sura\Libs\Validation;
 class Public_videosController extends Module{
 
     /**
+     * Добавление видеозаписи в сообщество
+     *
      * @param $params
      */
     public function add($params){
@@ -25,11 +25,11 @@ class Public_videosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
+            //$act = $request['act'];
             $user_id = $user_info['user_id'];
 
-            $pid = intval($_POST['pid']);
-            $id = intval($_POST['id']);
+            $pid = intval($request['pid']);
+            $id = intval($request['id']);
 
             $infoGroup = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$pid}'");
 
@@ -66,13 +66,15 @@ class Public_videosController extends Module{
                 $db->query("UPDATE `communities` SET videos_num = videos_num + 1 WHERE id = '{$pid}'");
 
 //                Cache::mozg_clear_cache_file("groups/video{$pid}");
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("groups/{$pid}/video{$pid}");
             }
         }
     }
 
     /**
+     * Удаление видео
+     *
      * @param $params
      */
     public function del($params){
@@ -85,11 +87,11 @@ class Public_videosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
+            //$act = $request['act'];
             $user_id = $user_info['user_id'];
 
-            $pid = intval($_POST['pid']);
-            $id = intval($_POST['id']);
+            $pid = intval($request['pid']);
+            $id = intval($request['id']);
 
             $infoGroup = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$pid}'");
 
@@ -111,19 +113,21 @@ class Public_videosController extends Module{
                 $db->query("UPDATE `communities` SET videos_num = videos_num - 1 WHERE id = '{$pid}'");
 
 //                Cache::mozg_clear_cache_file("groups/video{$pid}");
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("groups/{$pid}/video{$pid}");
             }
-
-            die();
         }
     }
 
     /**
+     *  Окно редактирования видео
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function edit($params){
+    public function edit($params): string
+    {
         $tpl = $params['tpl'];
         //$config = Settings::loadsettings();
         $db = $this->db();
@@ -133,11 +137,11 @@ class Public_videosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
+            //$act = $request['act'];
             $user_id = $user_info['user_id'];
 
-            $pid = intval($_POST['pid']);
-            $id = intval($_POST['id']);
+            $pid = intval($request['pid']);
+            $id = intval($request['id']);
 
             $infoGroup = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$pid}'");
 
@@ -152,18 +156,15 @@ class Public_videosController extends Module{
                 $tpl->set('{title}', stripslashes($row['title']));
                 $tpl->set('{descr}', myBrRn(stripslashes($row['descr'])));
                 $tpl->compile('content');
-
-                Tools::AjaxTpl($tpl);
-
             }
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
+     * Сохранение отред. данных
+     *
      * @param $params
      */
     public function edit_save($params){
@@ -179,11 +180,11 @@ class Public_videosController extends Module{
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            $pid = intval($_POST['pid']);
-            $id = intval($_POST['id']);
+            $pid = intval($request['pid']);
+            $id = intval($request['id']);
 
-            $title = Validation::ajax_utf8(Validation::textFilter($_POST['title'], false, true));
-            $descr = Validation::ajax_utf8(Validation::textFilter($_POST['descr'], 3000));
+            $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
+            $descr = Validation::ajax_utf8(Validation::textFilter($request['descr'], 3000));
 
             $infoGroup = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$pid}'");
 
@@ -199,17 +200,21 @@ class Public_videosController extends Module{
                 echo stripslashes($descr);
 
 //                Cache::mozg_clear_cache_file("groups/video{$pid}");
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("groups/{$pid}/video{$pid}");
             }
         }
     }
 
     /**
+     *  Поиск по видеозаписям
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function search($params){
+    public function search($params): string
+    {
         $tpl = $params['tpl'];
         $config = Settings::loadsettings();
         $db = $this->db();
@@ -219,20 +224,20 @@ class Public_videosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
+            //$act = $request['act'];
             $user_id = $user_info['user_id'];
 
             $sql_limit = 20;
 
-            if($_POST['page'] > 0) $page_cnt = intval($_POST['page'])*$sql_limit;
+            if($request['page'] > 0) $page_cnt = intval($request['page'])*$sql_limit;
             else $page_cnt = 0;
 
-            $pid = intval($_POST['pid']);
+            $pid = intval($request['pid']);
 
-            $query = $db->safesql(Validation::ajax_utf8(Validation::strip_data($_POST['query'])));
+            $query = $db->safesql(Validation::ajax_utf8(Validation::strip_data($request['query'])));
             $query = strtr($query, array(' ' => '%')); //Замеянем пробелы на проценты чтоб тоиск был точнее
 
-            $adres = strip_tags($_POST['adres']);
+            $adres = strip_tags($request['adres']);
 
             $row_count = $db->super_query("SELECT COUNT(*) AS cnt FROM `videos` WHERE title LIKE '%{$query}%' AND public_id = '0'");
 
@@ -298,20 +303,20 @@ class Public_videosController extends Module{
 
                 }
             }
-
-            Tools::AjaxTpl($tpl);
-
-            $params['tpl'] = $tpl;
-            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
+     *  Страница всех видео
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
         $tpl = $params['tpl'];
 
         //$config = Settings::loadsettings();
@@ -326,11 +331,11 @@ class Public_videosController extends Module{
 
             $params['title'] = 'Видеозаписи сообщества'.' | Sura';
 
-            $pid = intval($_GET['pid']);
+            $pid = intval($request['pid']);
 
             $sql_limit = 20;
 
-            if($_POST['page'] > 0) $page_cnt = intval($_POST['page']) * $sql_limit;
+            if($request['page'] > 0) $page_cnt = intval($request['page']) * $sql_limit;
             else $page_cnt = 0;
 
             if($page_cnt)
@@ -431,23 +436,18 @@ class Public_videosController extends Module{
 
             if($page_cnt){
 
-                Tools::AjaxTpl($tpl);
+
                 die();
 
             }
 
-            $tpl->clear();
-            $db->free();
 
-        } else {
+            return view('info.info', $params);
+        }
             include __DIR__.'/../lang/'.$checkLang.'/site.lng';
             $user_speedbar = 'Информация';
             msg_box($lang['not_logged'], 'info');
 
-        }
-
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
+        return view('info.info', $params);
     }
 }

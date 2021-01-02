@@ -10,16 +10,17 @@ use Sura\Libs\Gramatic;
 class AttachController extends Module{
 
     /**
-     *
+     * Загрузка картинок при прикреплении файлов со стены,
+     * заметок, или сообщений
      */
-    public function index()
+    public function index(): string
     {
 //        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxQuery();
+
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -27,7 +28,9 @@ class AttachController extends Module{
             //Если нет папки альбома, то создаём её
             $upload_dir = __DIR__."/../../public/uploads/attach/{$user_id}/";
             if(!is_dir($upload_dir)){
-                @mkdir($upload_dir, 0777);
+                if (!mkdir($upload_dir, 0777) && !is_dir($upload_dir)) {
+                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $upload_dir));
+                }
                 @chmod($upload_dir, 0777);
             }
 
@@ -37,7 +40,7 @@ class AttachController extends Module{
             //Получаем данные о фотографии
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $server_time = \Sura\Libs\Tools::time();
             $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
             $array = explode(".", $image_name);
@@ -75,15 +78,12 @@ class AttachController extends Module{
                         //Результат для ответа
                         echo $image_rename.$res_type.'|||'.$img_url.'|||'.$user_id;
                     } else
-                        echo 'big_size';
+                        return _e('big_size');
                 } else
-                    echo 'big_size';
+                    return _e( 'big_size');
             } else
-                echo 'bad_format';
+                return _e( 'bad_format');
         } else
-            echo 'no_log';
-
-        die();
-
+            return _e( 'no_log');
     }
 }

@@ -14,10 +14,13 @@ class Photo_editorController extends Module{
 
     /**
      * Отмена редактирования
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function close($params){
+    public function close($params): string
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
 //        $db = $this->db();
@@ -27,23 +30,25 @@ class Photo_editorController extends Module{
 //            $user_id = $user_info['user_id'];
 
 //            $tpl->load_template('photos/editor_close.tpl');
-//            $tpl->set('{photo}', $_GET['image']);
+//            $tpl->set('{photo}', $request['image']);
 //            $tpl->compile('content');
 
 //            Tools::AjaxTpl($tpl);
 
-//            $params['tpl'] = $tpl;
-//            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
-     * Сохранение отредактированой фотки
+     * Сохранение отредактированной фотки
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
 //        $tpl = $params['tpl'];
 
 //        $lang = $this->get_langs();
@@ -60,12 +65,12 @@ class Photo_editorController extends Module{
             //Разришенные форматы
             $allowed_files = explode(', ', $config['photo_format']);
 
-            $res_image = $_GET['image'];
+            $res_image = $request['image'];
             $array = explode('.', $res_image);
             $format = end($array);
-            $pid = $_GET['pid'];
+            $pid = $request['pid'];
 
-            if(stripos($_SERVER['HTTP_REFERER'], 'pixlr.com') !== false AND $pid AND $format){
+            if(stripos($request['HTTP_REFERER'], 'pixlr.com') !== false AND $pid AND $format){
 
                 //Выодим информацию о фото
                 $row = $db->super_query("SELECT photo_name, album_id FROM `photos` WHERE user_id = '{$user_id}' AND id = '{$pid}'");
@@ -91,18 +96,17 @@ class Photo_editorController extends Module{
                     $image->save($upload_dir.'c_'.$image_rename, 90);
 
 //                    $tpl->load_template('photos/editor.tpl');
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
+                    $server_time = \Sura\Libs\Tools::time();
 //                    $tpl->set('{photo}', "/uploads/users/{$user_id}/albums/{$row['album_id']}/{$row['photo_name']}?{$server_time}");
 //                    $tpl->compile('content');
 
 //                    Tools::AjaxTpl($tpl);
 
-//                    $params['tpl'] = $tpl;
-//                    Page::generate($params);
-                    return true;
+                    return view('info.info', $params);
                 }
             } else
-                echo 'Hacking attempt!';
+                return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 }

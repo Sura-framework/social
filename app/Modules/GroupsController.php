@@ -2,36 +2,40 @@
 
 namespace App\Modules;
 
+use App\Contracts\Modules\GroupsInterface;
+use App\Libs\Wall;
 use App\Models\Menu;
-use App\Services\Cache;
 use Exception;
 use Intervention\Image\ImageManager;
-use Sura\Libs\Langs;
 use Sura\Libs\Registry;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
-use Sura\Menu\Html;
-use Sura\Menu\Link;
 
-class GroupsController extends Module{
+class GroupsController extends Module implements GroupsInterface
+{
 
     /**
      * Отправка сообщества БД
+     *
      */
     public function send(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         Tools::NoAjaxRedirect();
+
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            $title = Validation::ajax_utf8(Validation::textFilter($_POST['title'], false, true));
+            $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
 
             AntiSpam('groups');
 
-            if(isset($_POST['title']) AND !empty($_POST['title'])){
+            if(isset($request['title']) AND !empty($request['title'])){
 
                 AntiSpamLogInsert('groups');
                 $db->query("INSERT INTO `communities` SET title = '{$title}', type = 1, traf = 1, ulist = '|{$user_id}|', date = NOW(), admin = 'u{$user_id}|', real_admin = '{$user_id}', comments = 1");
@@ -39,33 +43,42 @@ class GroupsController extends Module{
                 $db->query("INSERT INTO `friends` SET friend_id = '{$cid}', user_id = '{$user_id}', friends_date = NOW(), subscriptions = 2");
                 $db->query("UPDATE `users` SET user_public_num = user_public_num+1 WHERE user_id = '{$user_id}'");
 
-                mkdir(__DIR__.'/../../public/uploads/groups/'.$cid.'/', 0777);
+                if (!mkdir($concurrentDirectory = __DIR__ . '/../../public/uploads/groups/' . $cid . '/', 0777) && !is_dir($concurrentDirectory)) {
+                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+                }
                 chmod(__DIR__.'/../../public/uploads/groups/'.$cid.'/', 0777);
 
-                mkdir(__DIR__.'/../../public/uploads/groups/'.$cid.'/photos/', 0777);
+                if (!mkdir($concurrentDirectory = __DIR__ . '/../../public/uploads/groups/' . $cid . '/photos/', 0777) && !is_dir($concurrentDirectory)) {
+                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+                }
                 chmod(__DIR__.'/../../public/uploads/groups/'.$cid.'/photos/', 0777);
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_id}/profile_{$user_id}");
                 echo $cid;
-            } else
+            } else {
                 echo 'err';
+            }
         }
     }
 
     /**
      *  Выход из сообщества
+     *
      */
-    public function exit(){
+    public function logout(){
+        //FIXME rename function name
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            $id = intval($_POST['id']);
+            $id = (int)$request['id'];
             $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `friends` WHERE friend_id = '{$id}' AND user_id = '{$user_id}' AND subscriptions = 2");
             if($check['cnt']){
                 $db->query("DELETE FROM `friends` WHERE friend_id = '{$id}' AND user_id = '{$user_id}' AND subscriptions = 2");
@@ -73,7 +86,7 @@ class GroupsController extends Module{
                 $db->query("UPDATE `communities` SET traf = traf-1, ulist = REPLACE(ulist, '|{$user_id}|', '') WHERE id = '{$id}'");
 
                 //Записываем в статистику "Вышедшие участники"
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = Tools::time();
                 $stat_date = date('Y-m-d', $server_time);
                 $stat_x_date = date('Y-m', $server_time);
                 $stat_date = strtotime($stat_date);
@@ -90,13 +103,13 @@ class GroupsController extends Module{
                     }
                     $db->query("INSERT INTO `communities_stats_log` SET user_id = '{$user_info['user_id']}', date = '{$stat_date}', act = '3', gid = '{$id}'");
                 }
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_id}/profile_{$user_id}");
                 $Cache->delete("public/{$id}/profile_{$id}");
                 echo 'true';
             }else{
                 $user_id = $user_info['user_id'];
-                $id = intval($_POST['id']);
+                $id = (int)$request['id'];
                 $db->query("DELETE FROM `friends` WHERE friend_id = '{$id}' AND user_id = '{$user_id}' AND subscriptions = 2");
                 echo 'false';
             }
@@ -107,50 +120,44 @@ class GroupsController extends Module{
 
     /**
      * Страница загрузки главного фото сообщества
+     *
+     * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function loadphoto_page($params){
-//        $lang = $this->get_langs();
-//        $user_info = $this->user_info();
+    public function load_photo_page($params): string
+    {
+        $lang = $this->get_langs();
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
 
         if($logged){
-//            $user_id = $user_info['user_id'];
-//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-//            $gcount = 20;
-//            $limit_page = ($page-1)*$gcount;
-//            $params['title'] = $lang['communities'].' | Sura';
-
-//            Tools::NoAjaxQuery();
-//            $tpl->load_template('groups/load_photo.tpl');
-//            $tpl->set('{id}', $_POST['id']);
+            $params['title'] = $lang['communities'].' | Sura';
             $params['id'] = $_POST['id'];
-            return true;
+            return view('news.load_photo', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
      * Загрузка и изминение главного фото сообщества
+     *
+     * @throws Exception
      */
     public function loadphoto($params){
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
-
-//            Tools::NoAjaxQuery();
-
-            $id = intval($_GET['id']);
+            $id = (int)$request['id'];
 
             //Проверка на то, что фото обновляет адмиH
             $row = $db->super_query("SELECT admin, photo, del, ban FROM `communities` WHERE id = '{$id}'");
@@ -162,8 +169,8 @@ class GroupsController extends Module{
                 //Получаем данные о фотографии
                 $image_tmp = $_FILES['uploadfile']['tmp_name'];
                 $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-                $server_time = intval($_SERVER['REQUEST_TIME']);
-                $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя фотографии
+                $server_time = Tools::time();
+                $image_rename = substr(md5($server_time+random_int(1,100000)), 0, 20); // имя фотографии
                 $image_size = $_FILES['uploadfile']['size']; // размер файла
                 $array = explode(".", $image_name);
                 $type = end($array); // формат файла
@@ -206,7 +213,7 @@ class GroupsController extends Module{
                             //Результат для ответа
                             echo $image_rename.$res_type;
 
-                            $Cache = Cache::initialize();
+                            $Cache = cache_init(array('type' => 'file'));
                             $Cache->delete("wall/group{$id}");
                          } else
                             echo 'big_size';
@@ -220,24 +227,27 @@ class GroupsController extends Module{
 
     /**
      * Удаление фото сообщества
+     * @param $params
      */
     public function delphoto($params){
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
+//            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
+//            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
 //            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $id = intval($_POST['id']);
+            $id = (int)$request['id'];
 
             //Проверка на то, что фото удалет админ
             $row = $db->super_query("SELECT photo, admin FROM `communities` WHERE id = '{$id}'");
@@ -248,7 +258,7 @@ class GroupsController extends Module{
                 unlink($upload_dir.'100_'.$row['photo']);
                 $db->query("UPDATE `communities` SET photo = '' WHERE id = '{$id}'");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("wall/group{$id}");
             }
         }
@@ -256,6 +266,7 @@ class GroupsController extends Module{
 
     /**
      * Вступление в сообщество
+     *
      */
     public function login(){
         $db = $this->db();
@@ -264,10 +275,12 @@ class GroupsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            if (isset($_POST['id']))
-                $id = intval($_POST['id']);
+            if (isset($request['id']))
+                $id = (int)$request['id'];
             else{
                 throw new \Exception('item not found');
             }
@@ -285,7 +298,7 @@ class GroupsController extends Module{
                 $db->query("INSERT INTO `friends` SET friend_id = '{$id}', user_id = '{$user_id}', friends_date = NOW(), subscriptions = 2");
 
                 //Записываем в статистику "Новые участники"
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = Tools::time();
                 $stat_date = date('Y-m-d', $server_time);
                 $stat_x_date = date('Y-m', $server_time);
                 $stat_date = strtotime($stat_date);
@@ -318,7 +331,7 @@ class GroupsController extends Module{
                 $db->query("UPDATE `users` SET user_public_num = user_public_num + 1 {$appSQLDel} WHERE user_id = '{$user_id}'");
 
                 //Чистим кеш
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_id}/profile_{$user_id}");
                 $Cache->delete("public/{$id}/profile_{$id}");
                 echo 'true';
@@ -330,54 +343,58 @@ class GroupsController extends Module{
 
     /**
      * Страница добавления контактов
+     *
+     * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function addfeedback_pg($params){
+    public function addfeedback_pg($params): string
+    {
         $lang = $this->get_langs();
-//        $db = $this->db();
         $logged = Registry::get('logged');
-        $user_info = Registry::get('user_info');
-
-        Tools::NoAjaxRedirect();
-
+        $request = (Request::getRequest()->getGlobal());
         if($logged){
-            $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
-//            Tools::NoAjaxQuery();
 //            $tpl->load_template('groups/addfeedback_pg.tpl');
-//            $tpl->set('{id}', $_POST['id']);
-            $params['id'] = $_POST['id'];
-            return true;
+            $params['id'] = $request['id'];
+            return view('groups.all_feedback', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
      * Добавления контакт в БД
+     *
+     * @param $params
      */
     public function addfeedback_db($params){
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            if($request['page'] > 0) {
+//                $page = (int)$request['page'];
+//            } else {
+//                $page = 1;
+//            }
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $id = intval($_POST['id']);
-            $upage = intval($_POST['upage']);
-            $office = Validation::ajax_utf8(Validation::textFilter($_POST['office'], false, true));
-            $phone = Validation::ajax_utf8(Validation::textFilter($_POST['phone'], false, true));
-            $email = Validation::ajax_utf8(Validation::textFilter($_POST['email'], false, true));
+            $id = (int)$request['id'];
+            $upage = (int)$request['upage'];
+            $office = Validation::ajax_utf8(Validation::textFilter($request['office'], false, true));
+            $phone = Validation::ajax_utf8(Validation::textFilter($request['phone'], false, true));
+            $email = Validation::ajax_utf8(Validation::textFilter($request['email'], false, true));
 
             //Проверка на то, что действиие делает админ
             $checkAdmin = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$id}'");
@@ -390,7 +407,7 @@ class GroupsController extends Module{
 
             if($row['cnt'] AND stripos($checkAdmin['admin'], "u{$user_id}|") !== false AND !$checkSec['cnt']){
                 $db->query("UPDATE `communities` SET feedback = feedback+1 WHERE id = '{$id}'");
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = Tools::time();
                 $db->query("INSERT INTO `communities_feedback` SET cid = '{$id}', fuser_id = '{$upage}', office = '{$office}', fphone = '{$phone}', femail = '{$email}', fdate = '{$server_time}'");
             } else
                 echo 1;
@@ -399,25 +416,33 @@ class GroupsController extends Module{
 
     /**
      * Удаление контакта из БД
+     *
+     * @param $params
      */
     public function delfeedback($params){
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            if($request['page'] > 0) {
+//                $page = (int)$request['page'];
+//            } else {
+//                $page = 1;
+//            }
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $id = intval($_POST['id']);
-            $uid = intval($_POST['uid']);
+            $id = (int)$request['id'];
+            $uid = (int)$request['uid'];
 
             //Проверка на то, что действиие делает админ
             $checkAdmin = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$id}'");
@@ -434,53 +459,67 @@ class GroupsController extends Module{
 
     /**
      * Выводим фотографию юзера при указании ИД страницы
+     *
+     * @param $params
      */
     public function checkFeedUser($params){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
-        $user_info = Registry::get('user_info');
+//        $user_info = Registry::get('user_info');
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
-            $user_id = $user_info['user_id'];
+//            $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $id = intval($_POST['id']);
+            $id = (int)$request['id'];
             $row = $db->super_query("SELECT user_photo, user_search_pref FROM `users` WHERE user_id = '{$id}'");
-            if($row) echo $row['user_search_pref']."|".$row['user_photo'];
+            if($row) {
+                echo $row['user_search_pref'] . "|" . $row['user_photo'];
+            }
         }
     }
 
     /**
      * Сохранение отредактированых данных контакт в БД
+     *
+     * @param $params
      */
     public function editfeeddave($params){
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
 
-        Tools::NoAjaxRedirect();
+//        Tools::NoAjaxRedirect();
+
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            if($request['page'] > 0) {
+//                $page = (int)$request['page'];
+//            } else {
+//                $page = 1;
+//            }
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $id = intval($_POST['id']);
-            $upage = intval($_POST['uid']);
-            $office = Validation::ajax_utf8(Validation::textFilter($_POST['office'], false, true));
-            $phone = Validation::ajax_utf8(Validation::textFilter($_POST['phone'], false, true));
-            $email = Validation::ajax_utf8(Validation::textFilter($_POST['email'], false, true));
+            $id = (int)$request['id'];
+            $upage = (int)$request['uid'];
+            $office = Validation::ajax_utf8(Validation::textFilter($request['office'], false, true));
+            $phone = Validation::ajax_utf8(Validation::textFilter($request['phone'], false, true));
+            $email = Validation::ajax_utf8(Validation::textFilter($request['email'], false, true));
 
             //Проверка на то, что действиие делает админ
             $checkAdmin = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$id}'");
@@ -490,33 +529,41 @@ class GroupsController extends Module{
 
             if(stripos($checkAdmin['admin'], "u{$user_id}|") !== false AND $checkSec['cnt']){
                 $db->query("UPDATE `communities_feedback` SET office = '{$office}', fphone = '{$phone}', femail = '{$email}' WHERE fuser_id = '{$upage}' AND cid = '{$id}'");
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("wall/group{$id}");
-            } else
+            } else {
                 echo 1;
+            }
         }
     }
 
     /**
      * Все контакты (БОКС)
+     *
+     * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function allfeedbacklist($params){
-        $lang = $this->get_langs();
+    public function allfeedbacklist($params): string
+    {
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
 
-        Tools::NoAjaxRedirect();
+//        Tools::NoAjaxRedirect();
+
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $id = intval($_POST['id']);
+            $id = (int)$request['id'];
 
             //Выводим ИД админа
             $owner = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$id}'");
@@ -526,47 +573,58 @@ class GroupsController extends Module{
             if($sql_){
                 foreach($sql_ as $key => $row){
 //                    $tpl->set('{id}', $id);
-
+                    $sql_[$key]['id'] = $id;
 //                    $tpl->set('{name}', $row['user_search_pref']);
-//                    $tpl->set('{office}', stripslashes($row['office']));
-//                    $tpl->set('{phone}', stripslashes($row['fphone']));
-//                    $tpl->set('{user-id}', $row['fuser_id']);
+                    $sql_[$key]['name'] = $row['user_search_pref'];
+//                    $tpl->set('{office}', );
+                    $sql_[$key]['office'] = stripslashes($row['office']);
+//                    $tpl->set('{phone}', );
+                    $sql_[$key]['phone'] = stripslashes($row['fphone']);
+//                    $tpl->set('{user-id}', );
+                    $sql_[$key]['user_id'] = $row['fuser_id'];
                     if($row['fphone'] AND $row['femail']) {
-//                        $tpl->set('{email}', ', '.stripslashes($row['femail']));
-
+//                        $tpl->set('{email}', );
+                        $sql_[$key]['email'] = ', '.stripslashes($row['femail']);
                     }
                     else{
-//                        $tpl->set('{email}', stripslashes($row['femail']));
-
+//                        $tpl->set('{email}', );
+                        $sql_[$key]['email'] = stripslashes($row['femail']);
                     }
                     if($row['user_photo']) {
-//                        $tpl->set('{ava}', '/uploads/users/'.$row['fuser_id'].'/50_'.$row['user_photo']);
-
+//                        $tpl->set('{ava}', );
+                        $sql_[$key]['ava'] = '/uploads/users/'.$row['fuser_id'].'/50_'.$row['user_photo'];
                     }
                     else {
-//                        $tpl->set('{ava}', '/images/no_ava_50.png');
+                        $sql_[$key]['ava'] = '/images/no_ava_50.png';
+//                        $tpl->set('{ava}', );
                     }
                     if(stripos($owner['admin'], "u{$user_id}|") !== false){
+                        $sql_[$key]['admin'] = true;
 //                        $tpl->set('[admin]', '');
 //                        $tpl->set('[/admin]', '');
                     } else
                     {
+                        $sql_[$key]['admin'] = false;
 //                        $tpl->set_block("'\\[admin\\](.*?)\\[/admin\\]'si","");
                     }
 //                    $tpl->compile('content');
+                    $params['sql_'] = $sql_;
                 }
 //                Tools::AjaxTpl();
             } else
-                echo '<div align="center" style="padding-top:10px;color:#777;font-size:13px;">Список контактов пуст.</div>';
+                echo '<div class="text-center" style="padding-top:10px;color:#777;font-size:13px;">Список контактов пуст.</div>';
 
             if(stripos($owner['admin'], "u{$user_id}|") !== false)
                 echo "<style>#box_bottom_left_text{padding-top:6px;float:left}</style><script>$('#box_bottom_left_text').html('<a href=\"/\" onClick=\"groups.addcontact({$id}); return false\">Добавить контакт</a>');</script>";
-
+            return view('groups.all_feedback_box', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
-     * Сохранение отредактированых данных группы
+     * Сохранение отредактированных данных группы
+     *
+     * @param $params
      */
     public function saveinfo($params){
         $lang = $this->get_langs();
@@ -576,6 +634,8 @@ class GroupsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
@@ -584,15 +644,15 @@ class GroupsController extends Module{
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $id = intval($_POST['id']);
-            $comments = intval($_POST['comments']);
-            $discussion = intval($_POST['discussion']);
-            $title = Validation::ajax_utf8(Validation::textFilter($_POST['title'], false, true));
-            $adres_page = Validation::ajax_utf8(strtolower(Validation::textFilter($_POST['adres_page'], false, true)));
-            $descr = Validation::ajax_utf8(Validation::textFilter($_POST['descr'], 5000));
+            $id = (int)$request['id'];
+            $comments = (int)$request['comments'];
+            $discussion = (int)$request['discussion'];
+            $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
+            $adres_page = Validation::ajax_utf8(strtolower(Validation::textFilter($request['adres_page'], false, true)));
+            $descr = Validation::ajax_utf8(Validation::textFilter($request['descr'], 5000));
 
-            $_POST['web'] = str_replace(array('"', "'"), '', $_POST['web']);
-            $web = Validation::ajax_utf8(Validation::textFilter($_POST['web'], false, true));
+            $request['web'] = str_replace(array('"', "'"), '', $request['web']);
+            $web = Validation::ajax_utf8(Validation::textFilter($request['web'], false, true));
 
             if(!preg_match("/^[a-zA-Z0-9_-]+$/", $adres_page)) $adress_ok = false;
             else $adress_ok = true;
@@ -617,14 +677,17 @@ class GroupsController extends Module{
                 } else
                     echo 'err_adres';
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("wall/group{$id}");
             }
         }
     }
 
     /**
-     * Выводим информацию о пользователе которого будем делать админом
+     * Выводим информацию о пользователе которого
+     * будем делать админом
+     *
+     * @param $params
      */
     public function new_admin($params){
         $lang = $this->get_langs();
@@ -634,52 +697,56 @@ class GroupsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $new_admin_id = intval($_POST['new_admin_id']);
+            $new_admin_id = (int)$request['new_admin_id'];
             $row = $db->super_query("SELECT tb1.user_id, tb2.user_photo, user_search_pref, user_sex FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$new_admin_id}' AND tb1.user_id = tb2.user_id AND tb1.subscriptions = 2");
             if($row AND $user_id != $new_admin_id){
-                $config = Settings::loadsettings();
+//                $config = Settings::loadsettings();
 
                 if($row['user_photo']) $ava = "/uploads/users/{$new_admin_id}/100_{$row['user_photo']}";
-                else $ava = "/templates/{$config['temp']}/images/100_no_ava.png";
+                else $ava = "/images/100_no_ava.png";
                 if($row['user_sex'] == 1) $gram = 'был';
                 else $gram = 'была';
                 echo "<div style=\"padding:15px\"><img src=\"{$ava}\" align=\"left\" style=\"margin-right:10px\" id=\"adm_ava\" />Вы хотите чтоб <b id=\"adm_name\">{$row['user_search_pref']}</b> {$gram} одним из руководителей страницы?</div>";
             } else
                 echo "<div style=\"padding:15px\"><div class=\"err_red\">Пользователь с таким адресом страницы не подписан на эту страницу.</div></div><script>$('#box_but').hide()</script>";
-
-//            die();
         }
     }
 
     /**
      * Запись нового админа в БД
+     *
+     * @param $params
      */
     public function send_new_admin($params){
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            $limit_page = ($page-1)*$gcount;
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $id = intval($_POST['id']);
-            $new_admin_id = intval($_POST['new_admin_id']);
+            $id = (int)$request['id'];
+            $new_admin_id = (int)$request['new_admin_id'];
             $row = $db->super_query("SELECT admin, ulist FROM `communities` WHERE id = '{$id}'");
             if(stripos($row['admin'], "u{$user_id}|") !== false AND stripos($row['admin'], "u{$new_admin_id}|") === false AND stripos($row['ulist'], "|{$user_id}|") !== false){
                 $admin = $row['admin']."u{$new_admin_id}|";
@@ -690,6 +757,7 @@ class GroupsController extends Module{
 
     /**
      * Удаление админа из БД
+     * @param $params
      */
     public function deladmin($params){
         $lang = $this->get_langs();
@@ -699,6 +767,8 @@ class GroupsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
@@ -707,8 +777,8 @@ class GroupsController extends Module{
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $id = intval($_POST['id']);
-            $uid = intval($_POST['uid']);
+            $id = (int)$request['id'];
+            $uid = (int)$request['uid'];
             $row = $db->super_query("SELECT admin, ulist, real_admin FROM `communities` WHERE id = '{$id}'");
             if(stripos($row['admin'], "u{$user_id}|") !== false AND stripos($row['admin'], "u{$uid}|") !== false AND $uid != $row['real_admin']){
                 $admin = str_replace("u{$uid}|", '', $row['admin']);
@@ -719,14 +789,20 @@ class GroupsController extends Module{
 
     /**
      * Добавление записи на стену
+     *
+     * @param $params
+     * @return string
      */
-    public function wall_send($params){
+    public function wall_send($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
 
         Tools::NoAjaxRedirect();
+
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             //$act = $_GET['act'];
@@ -737,22 +813,25 @@ class GroupsController extends Module{
 
             //Если страница вывзана через "к предыдущим записям"
             $limit_select = 10;
-            if($_POST['page_cnt'] > 0)
-                $page_cnt = intval($_POST['page_cnt'])*$limit_select;
-            else
+            if($request['page_cnt'] > 0) {
+                $page_cnt = (int)$request['page_cnt'] * $limit_select;
+            }
+            else {
                 $page_cnt = 0;
+            }
 
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $id = intval($_POST['id']);
-            $wall_text = Validation::ajax_utf8(Validation::textFilter($_POST['wall_text']));
-            $attach_files = Validation::ajax_utf8(Validation::textFilter($_POST['attach_files'], false, true));
+            $id = (int)$request['id'];
+            $wall_text = Validation::ajax_utf8(Validation::textFilter($request['wall_text']));
+            $attach_files = Validation::ajax_utf8(Validation::textFilter($request['attach_files'], false, true));
 
             //Проверка на админа
             $row = $db->super_query("SELECT admin, del, ban FROM `communities` WHERE id = '{$id}'");
-            if(stripos($row['admin'], "u{$user_id}|") === false)
-                die();
+            if(stripos($row['admin'], "u{$user_id}|") === false) {
+                return _e('err');
+            }
 
             if(isset($wall_text) AND !empty($wall_text) OR isset($attach_files) AND !empty($attach_files) AND $row['del'] == 0 AND $row['ban'] == 0){
 
@@ -769,7 +848,7 @@ class GroupsController extends Module{
                             $rImgUrl = str_replace("\\", "/", $rImgUrl);
                             $img_name_arr = explode(".", $rImgUrl);
                             $img_format = Gramatic::totranslit(end($img_name_arr));
-                            $server_time = intval($_SERVER['REQUEST_TIME']);
+                            $server_time = Tools::time();
                             $image_rename = substr(md5($server_time.md5($rImgUrl)), 0, 15);
                             $res_type = '.'.$img_format;
                             //Разришенные форматы
@@ -783,7 +862,9 @@ class GroupsController extends Module{
 
                                 //Если нет папки юзера, то создаём её
                                 if(!is_dir($upload_dir)){
-                                    mkdir($upload_dir, 0777);
+                                    if (!mkdir($upload_dir, 0777) && !is_dir($upload_dir)) {
+                                        throw new \RuntimeException(sprintf('Directory "%s" was not created', $upload_dir));
+                                    }
                                     chmod($upload_dir, 0777);
                                 }
 
@@ -805,12 +886,11 @@ class GroupsController extends Module{
                     }
                 }
 
-                $attach_files = str_replace('vote|', 'hack|', $attach_files);
-                $attach_files = str_replace(array('&amp;#124;', '&amp;raquo;', '&amp;quot;'), array('&#124;', '&raquo;', '&quot;'), $attach_files);
+                $attach_files = str_replace(array('vote|', '&amp;#124;', '&amp;raquo;', '&amp;quot;'), array('hack|', '&#124;', '&raquo;', '&quot;'), $attach_files);
 
                 //Голосование
-                $vote_title = Validation::ajax_utf8(Validation::textFilter($_POST['vote_title'], false, true));
-                $vote_answer_1 = Validation::ajax_utf8(Validation::textFilter($_POST['vote_answer_1'], false, true));
+                $vote_title = Validation::ajax_utf8(Validation::textFilter($request['vote_title'], false, true));
+                $vote_answer_1 = Validation::ajax_utf8(Validation::textFilter($request['vote_answer_1'], false, true));
 
                 $ansers_list = array();
 
@@ -818,11 +898,12 @@ class GroupsController extends Module{
 
                     for($vote_i = 1; $vote_i <= 10; $vote_i++){
 
-                        $vote_answer = Validation::ajax_utf8(Validation::textFilter($_POST['vote_answer_'.$vote_i], false, true));
+                        $vote_answer = Validation::ajax_utf8(Validation::textFilter($request['vote_answer_'.$vote_i], false, true));
                         $vote_answer = str_replace('|', '&#124;', $vote_answer);
 
-                        if($vote_answer)
+                        if($vote_answer) {
                             $ansers_list[] = $vote_answer;
+                        }
 
                     }
 
@@ -831,12 +912,12 @@ class GroupsController extends Module{
                     //Вставляем голосование в БД
                     $db->query("INSERT INTO `votes` SET title = '{$vote_title}', answers = '{$sql_answers_list}'");
 
-                    $attach_files = $attach_files."vote|{$db->insert_id()}||";
+                    $attach_files .= "vote|{$db->insert_id()}||";
 
                 }
 
                 //Вставляем саму запись в БД
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = Tools::time();
                 $db->query("INSERT INTO `communities_wall` SET public_id = '{$id}', text = '{$wall_text}', attach = '{$attach_files}', add_date = '{$server_time}'");
                 $dbid = $db->insert_id();
                 $db->query("UPDATE `communities` SET rec_num = rec_num+1 WHERE id = '{$id}'");
@@ -844,556 +925,28 @@ class GroupsController extends Module{
                 //Вставляем в ленту новотсей
                 $db->query("INSERT INTO `news` SET ac_user_id = '{$id}', action_type = 11, action_text = '{$wall_text}', obj_id = '{$dbid}', action_time = '{$server_time}'");
 
-                //Загружаем все записи
-                if(stripos($row['admin'], "u{$user_id}|") !== false)
-                    $public_admin = true;
-                else
-                    $public_admin = false;
 
-                $limit_select = 10;
-                //$pid = $id;
+                $Cache = cache_init(array('type' => 'file'));
+                $Cache->delete("public/{$id}/profile_{$id}");
+                $query = $db->super_query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, fixed, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = '{$row['id']}' AND tb1.public_id = tb2.id AND fast_comm_id = 0 ORDER by `fixed` DESC, `add_date` DESC LIMIT {$page_cnt}, {$limit_select}", true);
 
-                $query = $db->super_query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, fixed, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = '{$row['id']}' AND tb1.public_id = tb2.id AND fast_comm_id = 0 ORDER by `fixed` DESC, `add_date` DESC LIMIT {$page_cnt}, {$limit_select}", 1);
-//                $tpl->load_template('groups/record.tpl');
-                $compile = 'content';
+                $params['wall_records'] = Wall::build($query);
 
-                foreach($query as $key => $row_wall){
-//                    $tpl->set('{rec-id}', $row_wall['id']);
-
-                    //Закрепить запись
-                    if($row_wall['fixed']){
-
-//                        $tpl->set('{styles-fasten}', 'style="opacity:1"');
-//                        $tpl->set('{fasten-text}', 'Закрепленная запись');
-//                        $tpl->set('{function-fasten}', 'wall_unfasten');
-
-                    } else {
-
-//                        $tpl->set('{styles-fasten}', '');
-//                        $tpl->set('{fasten-text}', 'Закрепить запись');
-//                        $tpl->set('{function-fasten}', 'wall_fasten');
-
-                    }
-
-                    //КНопка Показать полностью..
-                    $expBR = explode('<br />', $row_wall['text']);
-                    $textLength = count($expBR);
-                    $strTXT = strlen($row_wall['text']);
-                    if($textLength > 9 OR $strTXT > 600)
-                        $row_wall['text'] = '<div class="wall_strlen" id="hide_wall_rec'.$row_wall['id'].'">'.$row_wall['text'].'</div><div class="wall_strlen_full" onMouseDown="wall.FullText('.$row_wall['id'].', this.id)" id="hide_wall_rec_lnk'.$row_wall['id'].'">Показать полностью..</div>';
-
-                    $config = Settings::loadsettings();
-
-                    //Прикрипленные файлы
-                    if($row_wall['attach']){
-                        $attach_arr = explode('||', $row_wall['attach']);
-                        $cnt_attach = 1;
-                        $cnt_attach_link = 1;
-                        //$jid = 0;
-                        $attach_result = '';
-                        $attach_result .= '<div class="clear"></div>';
-                        foreach($attach_arr as $attach_file){
-                            $attach_type = explode('|', $attach_file);
-
-                            //Фото со стены сообщества
-                            if($row_wall['tell_uid'])
-                                $globParId = $row_wall['tell_uid'];
-                            else
-                                $globParId = $row_wall['public_id'];
-
-                            if($attach_type[0] == 'photo' AND file_exists(__DIR__."/../../public/uploads/groups/{$globParId}/photos/c_{$attach_type[1]}")){
-                                if($cnt_attach < 2)
-                                    $attach_result .= "<div class=\"profile_wall_attach_photo cursor_pointer page_num{$row_wall['id']}\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$globParId}', '{$attach_type[1]}', '{$cnt_attach}')\"><img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$globParId}/photos/{$attach_type[1]}\" align=\"left\" /></div>";
-                                else
-                                    $attach_result .= "<img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$globParId}/photos/c_{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$globParId}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row_wall['id']}\" />";
-
-                                $cnt_attach++;
-
-                                $resLinkTitle = '';
-
-                                //Фото со стены юзера
-                            } elseif($attach_type[0] == 'photo_u'){
-                                $attauthor_user_id = $row_wall['tell_uid'];
-
-                                if($attach_type[1] == 'attach' AND file_exists(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}")){
-                                    if($cnt_attach < 2)
-                                        $attach_result .= "<div class=\"profile_wall_attach_photo cursor_pointer page_num{$row_wall['id']}\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$attauthor_user_id}', '{$attach_type[1]}', '{$cnt_attach}', 'photo_u')\"><img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/{$attach_type[2]}\" align=\"left\" /></div>";
-                                    else
-                                        $attach_result .= "<img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}\" style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row_wall['id']}\" />";
-
-                                    $cnt_attach++;
-                                } elseif(file_exists(__DIR__."/../../public/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}")){
-                                    if($cnt_attach < 2)
-                                        $attach_result .= "<div class=\"profile_wall_attach_photo cursor_pointer page_num{$row_wall['id']}\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$attauthor_user_id}', '{$attach_type[1]}', '{$cnt_attach}', 'photo_u')\"><img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/{$attach_type[1]}\" align=\"left\" /></div>";
-                                    else
-                                        $attach_result .= "<img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$row_wall['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row_wall['id']}\" />";
-
-                                    $cnt_attach++;
-                                }
-
-                                $resLinkTitle = '';
-
-                                //Видео
-                            } elseif($attach_type[0] == 'video' AND file_exists(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}")){
-
-                                $for_cnt_attach_video = explode('video|', $row_wall['attach']);
-                                $cnt_attach_video = count($for_cnt_attach_video)-1;
-
-                                if($cnt_attach_video == 1 AND preg_match('/(photo|photo_u)/i', $row_wall['attach']) == false){
-
-                                    $video_id = intval($attach_type[2]);
-
-                                    $row_video = $db->super_query("SELECT video, title FROM `videos` WHERE id = '{$video_id}'", false, "wall/video{$video_id}");
-                                    $row_video['title'] = stripslashes($row_video['title']);
-                                    $row_video['video'] = stripslashes($row_video['video']);
-                                    $row_video['video'] = strtr($row_video['video'], array('width="770"' => 'width="390"', 'height="420"' => 'height="310"'));
-
-                                    $attach_result .= "<div class=\"cursor_pointer clear\" id=\"no_video_frame{$video_id}\" onClick=\"$('#'+this.id).hide();$('#video_frame{$video_id}').show();\">
-							        <div class=\"video_inline_icon\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px\" width=\"390\" height=\"310\" /></div><div id=\"video_frame{$video_id}\" class=\"no_display\" style=\"padding-top:3px\">{$row_video['video']}</div><div class=\"video_inline_vititle\"></div><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><b>{$row_video['title']}</b></a>";
-
-                                } else {
-
-                                    $attach_result .= "<div class=\"fl_l\"><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><div class=\"video_inline_icon video_inline_icon2\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" align=\"left\" /></a></div>";
-
-                                }
-
-                                $resLinkTitle = '';
-
-                                //Музыка
-                            } elseif($attach_type[0] == 'audio'){
-                                $data = explode('_', $attach_type[1]);
-                                $audioId = intval($data[0]);
-                                $row_audio = $db->super_query("SELECT id, oid, artist, title, url, duration FROM`audio` WHERE id = '{$audioId}'");
-                                if($row_audio){
-                                    $stime = gmdate("i:s", $row_audio['duration']);
-                                    if(!$row_audio['artist']) $row_audio['artist'] = 'Неизвестный исполнитель';
-                                    if(!$row_audio['title']) $row_audio['title'] = 'Без названия';
-                                    $plname = 'wall';
-                                    if($row_audio['oid'] != $user_info['user_id']) $q_s = <<<HTML
-                                    <div class="audioSettingsBut"><li class="icon-plus-6"
-                                    onClick="gSearch.addAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}')"
-                                    onmouseover="showTooltip(this, {text: 'Добавить в мой список', shift: [6,5,0]});"
-                                    id="no_play"></li><div class="clear"></div></div>
-                                    HTML;
-                                    else $q_s = '';
-                                    $qauido = "<div class=\"audioPage audioElem search search_item\"
-                                    id=\"audio_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
-                                    onclick=\"playNewAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}', event);\"><div
-                                    class=\"area\"><table cellspacing=\"0\" cellpadding=\"0\"
-                                    width=\"100%\"><tbody><tr><td><div class=\"audioPlayBut new_play_btn\"><div
-                                    class=\"bl\"><div class=\"figure\"></div></div></div><input type=\"hidden\"
-                                    value=\"{$row_audio['url']},{$row_audio['duration']},page\"
-                                    id=\"audio_url_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"></td><td
-                                    class=\"info\"><div class=\"audioNames\" style=\"width: 275px;\"><b class=\"author\"
-                                    onclick=\"Page.Go('/?go=search&query=&type=5&q='+this.innerHTML);\"
-                                    id=\"artist\">{$row_audio['artist']}</b> – <span class=\"name\"
-                                    id=\"name\">{$row_audio['title']}</span> <div class=\"clear\"></div></div><div
-                                    class=\"audioElTime\"
-                                    id=\"audio_time_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\">{$stime}</div>{$q_s}</td
-                                    ></tr></tbody></table><div id=\"player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
-                                    class=\"audioPlayer player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\" border=\"0\"
-                                    cellpadding=\"0\"><table cellspacing=\"0\" cellpadding=\"0\" width=\"100%\"><tbody><tr><td
-                                    style=\"width: 100%;\"><div class=\"progressBar fl_l\" style=\"width: 100%;\"
-                                    onclick=\"cancelEvent(event);\" onmousedown=\"audio_player.progressDown(event, this);\"
-                                    id=\"no_play\" onmousemove=\"audio_player.playerPrMove(event, this)\"
-                                    onmouseout=\"audio_player.playerPrOut()\"><div class=\"audioTimesAP\"
-                                    id=\"main_timeView\"><div class=\"audioTAP_strlka\">100%</div></div><div
-                                    class=\"audioBGProgress\"></div><div class=\"audioLoadProgress\"></div><div
-                                    class=\"audioPlayProgress\" id=\"playerPlayLine\"><div
-                                    class=\"audioSlider\"></div></div></div></td><td><div class=\"audioVolumeBar fl_l ml-2\"
-                                    onclick=\"cancelEvent(event);\" onmousedown=\"audio_player.volumeDown(event, this);\"
-                                    id=\"no_play\"><div class=\"audioTimesAP\"><div
-                                    class=\"audioTAP_strlka\">100%</div></div><div class=\"audioBGProgress\"></div><div
-                                    class=\"audioPlayProgress\" id=\"playerVolumeBar\"><div
-                                    class=\"audioSlider\"></div></div></div> </td></tr></tbody></table></div></div></div>";
-                                    $attach_result .= $qauido;
-                                }
-                                $resLinkTitle = '';
-                                //Смайлик
-                            } elseif($attach_type[0] == 'smile' AND file_exists(__DIR__."/../../public/uploads/smiles/{$attach_type[1]}")){
-                                $attach_result .= '<img src=\"/uploads/smiles/'.$attach_type[1].'\" style="margin-right:5px" />';
-
-                                $resLinkTitle = '';
-
-                                //Если ссылка
-                            } elseif($attach_type[0] == 'link' AND preg_match('/http:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1 AND stripos(str_replace('http://www.', 'http://', $attach_type[1]), $config['home_url']) === false){
-                                $count_num = count($attach_type);
-                                $domain_url_name = explode('/', $attach_type[1]);
-                                $rdomain_url_name = str_replace('http://', '', $domain_url_name[2]);
-
-                                $attach_type[3] = stripslashes($attach_type[3]);
-                                $attach_type[3] = iconv_substr($attach_type[3], 0, 200, 'utf-8');
-
-                                $attach_type[2] = stripslashes($attach_type[2]);
-                                $str_title = iconv_substr($attach_type[2], 0, 55, 'utf-8');
-
-                                if(stripos($attach_type[4], '/uploads/attach/') === false){
-                                    $attach_type[4] = '/images/no_ava_groups_100.gif';
-                                    $no_img = false;
-                                } else
-                                    $no_img = true;
-
-                                if(!$attach_type[3]) $attach_type[3] = '';
-
-                                if($no_img AND $attach_type[2]){
-                                    if($row_wall['tell_comm']) $no_border_link = 'border:0px';
-
-                                    $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0px"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div><div class="clear"></div><div class="wall_show_block_link" style="'.$no_border_link.'"><a href="/away.php?url='.$attach_type[1].'" target="_blank"><div style="width:108px;height:80px;float:left;text-align:center"><img src="'.$attach_type[4].'" /></div></a><div class="attatch_link_title"><a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$str_title.'</a></div><div style="max-height:50px;overflow:hidden">'.$attach_type[3].'</div></div></div>';
-
-                                    $resLinkTitle = $attach_type[2];
-                                    $resLinkUrl = $attach_type[1];
-                                } else if($attach_type[1] AND $attach_type[2]){
-                                    $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0px"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div></div><div class="clear"></div>';
-
-                                    $resLinkTitle = $attach_type[2];
-                                    $resLinkUrl = $attach_type[1];
-                                }
-
-                                $cnt_attach_link++;
-
-                                //Если документ
-                            } elseif($attach_type[0] == 'doc'){
-
-                                $doc_id = intval($attach_type[1]);
-
-                                $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false, "wall/doc{$doc_id}");
-
-                                if($row_doc){
-
-                                    $attach_result .= '<div style="margin-top:5px;margin-bottom:5px" class="clear"><div class="doc_attach_ic fl_l" style="margin-top:4px;margin-left:0px"></div><div class="attach_link_block_te"><div class="fl_l">Файл <a href="/index.php?go=doc&act=download&did='.$doc_id.'" target="_blank" onMouseOver="myhtml.title(\''.$doc_id.$cnt_attach.$row_wall['id'].'\', \'<b>Размер файла: '.$row_doc['dsize'].'</b>\', \'doc_\')" id="doc_'.$doc_id.$cnt_attach.$row_wall['id'].'">'.$row_doc['dname'].'</a></div></div></div><div class="clear"></div>';
-
-                                    $cnt_attach++;
-                                }
-
-                                //Если опрос
-                            } elseif($attach_type[0] == 'vote'){
-
-                                $vote_id = intval($attach_type[1]);
-
-                                $row_vote = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false, "votes/vote_{$vote_id}");
-
-                                if($vote_id){
-
-                                    $checkMyVote = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$vote_id}'", false, "votes/check{$user_id}_{$vote_id}");
-
-                                    $row_vote['title'] = stripslashes($row_vote['title']);
-
-                                    if(!$row_wall['text'])
-                                        $row_wall['text'] = $row_vote['title'];
-
-                                    $arr_answe_list = explode('|', stripslashes($row_vote['answers']));
-                                    $max = $row_vote['answer_num'];
-
-                                    $sql_answer = $db->super_query("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$vote_id}' GROUP BY answer", 1, "votes/vote_answer_cnt_{$vote_id}");
-                                    $answer = array();
-                                    foreach($sql_answer as $row_answer){
-
-                                        $answer[$row_answer['answer']]['cnt'] = $row_answer['cnt'];
-
-                                    }
-
-                                    $attach_result .= "<div class=\"clear\" style=\"height:10px\"></div><div id=\"result_vote_block{$vote_id}\"><div class=\"wall_vote_title\">{$row_vote['title']}</div>";
-
-                                    for($ai = 0; $ai < sizeof($arr_answe_list); $ai++){
-
-                                        if(!$checkMyVote['cnt']){
-
-                                            $attach_result .= "<div class=\"wall_vote_oneanswe\" onClick=\"Votes.Send({$ai}, {$vote_id})\" id=\"wall_vote_oneanswe{$ai}\"><input type=\"radio\" name=\"answer\" /><span id=\"answer_load{$ai}\">{$arr_answe_list[$ai]}</span></div>";
-
-                                        } else {
-
-                                            $num = $answer[$ai]['cnt'];
-
-                                            if(!$num ) $num = 0;
-                                            if($max != 0) $proc = (100 * $num) / $max;
-                                            else $proc = 0;
-                                            $proc = round($proc, 2);
-
-                                            $attach_result .= "<div class=\"wall_vote_oneanswe cursor_default\">
-									{$arr_answe_list[$ai]}<br />
-									<div class=\"wall_vote_proc fl_l\"><div class=\"wall_vote_proc_bg\" style=\"width:".intval($proc)."%\"></div><div style=\"margin-top:-16px\">{$num}</div></div>
-									<div class=\"fl_l\" style=\"margin-top:-1px\"><b>{$proc}%</b></div>
-									</div><div class=\"clear\"></div>";
-
-                                        }
-
-                                    }
-                                    $titles = array('человек', 'человека', 'человек');//fave
-                                    if($row_vote['answer_num']) $answer_num_text = Gramatic::declOfNum($row_vote['answer_num'], $titles);
-                                    else $answer_num_text = 'человек';
-
-                                    if($row_vote['answer_num'] <= 1) $answer_text2 = 'Проголосовал';
-                                    else $answer_text2 = 'Проголосовало';
-
-                                    $attach_result .= "{$answer_text2} <b>{$row_vote['answer_num']}</b> {$answer_num_text}.<div class=\"clear\" style=\"margin-top:10px\"></div></div>";
-
-                                }
-
-                            } else
-
-                                $attach_result .= '';
-
-                        }
-
-                        if($resLinkTitle AND $row_wall['text'] == $resLinkUrl OR !$row_wall['text'])
-                            $row_wall['text'] = $resLinkTitle.$attach_result;
-                        else if($attach_result)
-                            $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']).$attach_result;
-                        else
-                            $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']);
-                    } else
-                        $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']);
-
-                    $resLinkTitle = '';
-
-                    //Если это запись с "рассказать друзьям"
-                    if($row_wall['tell_uid']){
-                        if($row_wall['public'])
-                            $rowUserTell = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$row_wall['tell_uid']}'", false, "wall/group{$row_wall['tell_uid']}");
-                        else
-                            $rowUserTell = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$row_wall['tell_uid']}'");
-
-                        if(date('Y-m-d', $row_wall['tell_date']) == date('Y-m-d', $server_time))
-                            $dateTell = langdate('сегодня в H:i', $row_wall['tell_date']);
-                        elseif(date('Y-m-d', $row_wall['tell_date']) == date('Y-m-d', ($server_time-84600)))
-                            $dateTell = langdate('вчера в H:i', $row_wall['tell_date']);
-                        else
-                            $dateTell = langdate('j F Y в H:i', $row_wall['tell_date']);
-
-                        if($row_wall['public']){
-                            $rowUserTell['user_search_pref'] = stripslashes($rowUserTell['title']);
-                            $tell_link = 'public';
-                            if($rowUserTell['photo'])
-                                $avaTell = '/uploads/groups/'.$row_wall['tell_uid'].'/50_'.$rowUserTell['photo'];
-                            else
-                                $avaTell = '/images/no_ava_50.png';
-                        } else {
-                            $tell_link = 'u';
-                            if($rowUserTell['user_photo'])
-                                $avaTell = '/uploads/users/'.$row_wall['tell_uid'].'/50_'.$rowUserTell['user_photo'];
-                            else
-                                $avaTell = '/images/no_ava_50.png';
-                        }
-
-                        if($row_wall['tell_comm']) $border_tell_class = 'wall_repost_border'; else $border_tell_class = 'wall_repost_border2';
-
-                        $row_wall['text'] = <<<HTML
-                        {$row_wall['tell_comm']}
-                        <div class="{$border_tell_class}">
-                        <div class="wall_tell_info"><div class="wall_tell_ava"><a href="/{$tell_link}{$row_wall['tell_uid']}" onClick="Page.Go(this.href); return false"><img src="{$avaTell}" width="30" /></a></div><div class="wall_tell_name"><a href="/{$tell_link}{$row_wall['tell_uid']}" onClick="Page.Go(this.href); return false"><b>{$rowUserTell['user_search_pref']}</b></a></div><div class="wall_tell_date">{$dateTell}</div></div>{$row_wall['text']}
-                        <div class="clear"></div>
-                        </div>
-                        HTML;
-                    }
-
-//                    $tpl->set('{text}', stripslashes($row_wall['text']));
-//                    $tpl->set('{name}', $row_wall['title']);
-
-//                    $tpl->set('{user-id}', $row_wall['public_id']);
-                    if($row_wall['adres']) {
-//                        $tpl->set('{adres-id}', $row_wall['adres']);
-                    }
-                    else {
-//                        $tpl->set('{adres-id}', 'public'.$row_wall['public_id']);
-                    }
-
-                    $date = megaDate(strtotime($row_wall['add_date']));
-//                    $tpl->set('{date}', $date);
-
-                    if($row_wall['photo'])
-                    {
-//                        $tpl->set('{ava}', '/uploads/groups/'.$row_wall['public_id'].'/50_'.$row_wall['photo']);
-                    }
-                    else
-                    {
-//                        $tpl->set('{ava}', '/images/no_ava_50.png');
-                    }
-
-                    //Мне нравится
-                    if(stripos($row_wall['likes_users'], "u{$user_id}|") !== false){
-//                        $tpl->set('{yes-like}', 'public_wall_like_yes');
-//                        $tpl->set('{yes-like-color}', 'public_wall_like_yes_color');
-//                        $tpl->set('{like-js-function}', 'groups.wall_remove_like('.$row_wall['id'].', '.$user_id.')');
-                    } else {
-//                        $tpl->set('{yes-like}', '');
-//                        $tpl->set('{yes-like-color}', '');
-//                        $tpl->set('{like-js-function}', 'groups.wall_add_like('.$row_wall['id'].', '.$user_id.')');
-                    }
-
-                    if($row_wall['likes_num']){
-//                        $tpl->set('{likes}', $row_wall['likes_num']);
-//                        $tpl->set('{likes-text}', '<span id="like_text_num'.$row_wall['id'].'">'.$row_wall['likes_num'].'</span> '.Gramatic::declOfNum($row_wall['likes_num'], 'like'));
-                    } else {
-//                        $tpl->set('{likes}', '');
-//                        $tpl->set('{likes-text}', '<span id="like_text_num'.$row_wall['id'].'">0</span> человеку');
-                    }
-
-                    //Выводим информцию о том кто смотрит страницу для себя
-//                    $tpl->set('{viewer-id}', $user_id);
-                    if($user_info['user_photo'])
-                    {
-//                        $tpl->set('{viewer-ava}', '/uploads/users/'.$user_id.'/50_'.$user_info['user_photo']);
-                    }
-                    else
-                    {
-//                        $tpl->set('{viewer-ava}', '/images/no_ava_50.png');
-                    }
-
-                    //Админ
-                    if($public_admin){
-//                        $tpl->set('[owner]', '');
-//                        $tpl->set('[/owner]', '');
-                    } else
-                    {
-//                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
-                    }
-
-                    //Если есть комменты к записи, то выполняем след. действия / Приватность
-                    if($row_wall['fasts_num'])
-                    {
-//                        $tpl->set_block("'\\[comments-link\\](.*?)\\[/comments-link\\]'si","");
-                    }
-                    else {
-//                        $tpl->set('[comments-link]', '');
-//                        $tpl->set('[/comments-link]', '');
-                    }
-
-//                    $tpl->set('{public-id}', $row['id']);
-
-                    //Приватность комментирования записей
-                    if($row_wall['comments'] OR $public_admin){
-//                        $tpl->set('[privacy-comment]', '');
-//                        $tpl->set('[/privacy-comment]', '');
-                    } else
-                    {
-//                        $tpl->set_block("'\\[privacy-comment\\](.*?)\\[/privacy-comment\\]'si","");
-                    }
-
-//                    $tpl->set('[record]', '');
-//                    $tpl->set('[/record]', '');
-//                    $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-//                    $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-//                    $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-//
-//                    $tpl->compile($compile);
-
-                    //Если есть комменты к записи, то открываем форму ответа уже в развернутом виде и выводим комменты к записи
-                    if($row_wall['comments'] OR $public_admin){
-                        if($row_wall['fasts_num']){
-
-                            //Помещаем все комменты в id wall_fast_block_{id} это для JS
-//                            $tpl->result[$compile] .= '<div id="wall_fast_block_'.$row_wall['id'].'" class="public_wall_rec_comments">';
-
-                            if($row_wall['fasts_num'] > 3)
-                                $comments_limit = $row_wall['fasts_num']-3;
-                            else
-                                $comments_limit = 0;
-
-                            $sql_comments = $db->super_query("SELECT tb1.id, public_id, text, add_date, tb2.user_photo, user_search_pref FROM `communities_wall` tb1, `users` tb2 WHERE tb1.public_id = tb2.user_id AND tb1.fast_comm_id = '{$row_wall['id']}' ORDER by `add_date` ASC LIMIT {$comments_limit}, 3", 1);
-
-                            //Загружаем кнопку "Показать N запсии"
-                            $titles1 = array('предыдущий', 'предыдущие', 'предыдущие');//prev
-                            $titles2 = array('комментарий', 'комментария', 'комментариев');//comments
-//                            $tpl->set('{gram-record-all-comm}', Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles1).' '.($row_wall['fasts_num']-3).' '.Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles2));
-                            if($row_wall['fasts_num'] < 4)
-                            {
-//                                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                            }
-                            else {
-//                                $tpl->set('{rec-id}', $row_wall['id']);
-//                                $tpl->set('[all-comm]', '');
-//                                $tpl->set('[/all-comm]', '');
-                            }
-//                            $tpl->set('{public-id}', $row['id']);
-//                            $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-//                            $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-//                            $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-//                            $tpl->compile($compile);
-
-                            //Сообственно выводим комменты
-                            foreach($sql_comments as $key => $row_comments){
-//                                $tpl->set('{public-id}', $row['id']);
-//                                $tpl->set('{name}', $row_comments['user_search_pref']);
-                                if($row_comments['user_photo'])
-                                {
-//                                    $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comments['public_id'].'/50_'.$row_comments['user_photo']);
-                                }
-                                else
-                                {
-//                                    $tpl->set('{ava}', '/images/no_ava_50.png');
-                                }
-
-//                                $tpl->set('{rec-id}', $row_wall['id']);
-//                                $tpl->set('{comm-id}', $row_comments['id']);
-//                                $tpl->set('{user-id}', $row_comments['public_id']);
-
-                                $expBR2 = explode('<br />', $row_comments['text']);
-                                $textLength2 = count($expBR2);
-                                $strTXT2 = strlen($row_comments['text']);
-                                if($textLength2 > 6 OR $strTXT2 > 470)
-                                    $row_comments['text'] = '<div class="wall_strlen" id="hide_wall_rec'.$row_comments['id'].'" style="max-height:102px"">'.$row_comments['text'].'</div><div class="wall_strlen_full" onMouseDown="wall.FullText('.$row_comments['id'].', this.id)" id="hide_wall_rec_lnk'.$row_comments['id'].'">Показать полностью..</div>';
-
-                                //Обрабатываем ссылки
-                                $row_comments['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row_comments['text']);
-
-//                                $tpl->set('{text}', stripslashes($row_comments['text']));
-
-                                $date = megaDate(strtotime($row_comments['add_date']));
-//                                $tpl->set('{date}', $date);
-                                if($public_admin OR $user_id == $row_comments['public_id']){
-//                                    $tpl->set('[owner]', '');
-//                                    $tpl->set('[/owner]', '');
-                                } else
-                                {
-//                                    $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
-                                }
-
-                                if($user_id == $row_comments['public_id'])
-
-                                {
-//                                    $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
-                                }
-//
-                                else {
-
-//                                    $tpl->set('[not-owner]', '');
-//                                    $tpl->set('[/not-owner]', '');
-
-                                }
-
-//                                $tpl->set('[comment]', '');
-//                                $tpl->set('[/comment]', '');
-//                                $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-//                                $tpl->set_block("'\\[comment-form\\](.*?)\\[/comment-form\\]'si","");
-//                                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-//                                $tpl->compile($compile);
-                            }
-
-                            //Загружаем форму ответа
-//                            $tpl->set('{rec-id}', $row_wall['id']);
-//                            $tpl->set('{user-id}', $row_wall['public_id']);
-//                            $tpl->set('[comment-form]', '');
-//                            $tpl->set('[/comment-form]', '');
-//                            $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-//                            $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-//                            $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-//                            $tpl->compile($compile);
-
-                            //Закрываем блок для JS
-//                            $tpl->result[$compile] .= '</div>';
-                        }
-                    }
-                }
-
+                return _e('true');
             }
+
+            return _e('err');
         }
+
+        return _e('err');
     }
 
     /**
      * Добавление комментария к записи
+     *
      * @param $params
      */
-    public function wall_send_comm(&$params){
+    public function wall_send_comm($params){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1401,21 +954,23 @@ class GroupsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+//            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
 
             AntiSpam('comments');
 
-            $rec_id = intval($_POST['rec_id']);
-            $public_id = intval($_POST['public_id']);
-            $wall_text = Validation::ajax_utf8(Validation::textFilter($_POST['wall_text']));
-            $answer_comm_id = intval($_POST['answer_comm_id']);
+            $rec_id = (int)$request['rec_id'];
+            $public_id = (int)$request['public_id'];
+            $wall_text = Validation::ajax_utf8(Validation::textFilter($request['wall_text']));
+            $answer_comm_id = (int)$request['answer_comm_id'];
 
             //Проверка на админа и проверяем включены ли комменты
             $row = $db->super_query("SELECT tb1.fasts_num, public_id, tb2.admin, comments FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = tb2.id AND tb1.id = '{$rec_id}'");
@@ -1440,7 +995,7 @@ class GroupsController extends Module{
                         $wall_text = str_replace($check2['user_name'], "<a href=\"/u{$row_owner2['public_id']}\" onClick=\"Page.Go(this.href); return false\" class=\"newcolor000\">{$check2['user_name']}</a>", $wall_text);
 
                         //Вставляем в ленту новостей
-                        $server_time = intval($_SERVER['REQUEST_TIME']);
+                        $server_time = Tools::time();
                         $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 6, action_text = '{$wall_text}', obj_id = '{$answer_comm_id}', for_user_id = '{$row_owner2['public_id']}', action_time = '{$server_time}', answer_text = '{$answer_text}', link = '/wallgroups{$row['public_id']}_{$rec_id}'");
 
                         //Вставляем событие в моментальные оповещания
@@ -1450,12 +1005,12 @@ class GroupsController extends Module{
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$row_owner2['public_id']}', from_user_id = '{$user_id}', type = '5', date = '{$server_time}', text = '{$wall_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/news/notifications'");
 
-                            $Cache = Cache::initialize();
+                            $Cache = cache_init(array('type' => 'file'));
                             $Cache->set("users/{$row_owner2['public_id']}/updates", 1);
                             //ИНАЧЕ Добавляем +1 юзеру для оповещания
                         } else {
 
-                            $Cache = Cache::initialize();
+                            $Cache = cache_init(array('type' => 'file'));
                             $cntCacheNews = $Cache->get("users/{$row_owner2['public_id']}/new_news");
                             $Cache->set("users/{$row_owner2['public_id']}/new_news", ($cntCacheNews+1));
                         }
@@ -1465,7 +1020,7 @@ class GroupsController extends Module{
                 }
 
                 //Вставляем саму запись в БД
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = Tools::time();
                 $db->query("INSERT INTO `communities_wall` SET public_id = '{$user_id}', text = '{$wall_text}', add_date = '{$server_time}', fast_comm_id = '{$rec_id}'");
                 $db->query("UPDATE `communities_wall` SET fasts_num = fasts_num+1 WHERE id = '{$rec_id}'");
 
@@ -1543,7 +1098,7 @@ class GroupsController extends Module{
 
 //                    $tpl->set('{text}', );
                     $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
-                    $date = megaDate(strtotime($row['add_date']));
+                    $date = megaDate($row['add_date']);
 //                    $tpl->set('{date}', $date);
                     $sql_comments[$key]['date'] = $date;
                     if(stripos($row['admin'], "u{$user_id}|") !== false OR $user_id == $row_comments['public_id']){
@@ -1603,6 +1158,7 @@ class GroupsController extends Module{
 
     /**
      * Удаление записи
+     *
      * @param $params
      */
     public function wall_del($params){
@@ -1613,16 +1169,18 @@ class GroupsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $rec_id = intval($_POST['rec_id']);
-            $public_id = intval($_POST['public_id']);
+            $rec_id = (int)$request['rec_id'];
+            $public_id = (int)$request['public_id'];
 
             //Проверка на админа и проверяем включены ли комменты
             if($public_id){
@@ -1663,6 +1221,7 @@ class GroupsController extends Module{
 
     /**
      * Показ всех комментариев к записи
+     *
      * @param $params
      */
     public function all_comm($params){
@@ -1673,16 +1232,18 @@ class GroupsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $rec_id = intval($_POST['rec_id']);
-            $public_id = intval($_POST['public_id']);
+            $rec_id = (int)$request['rec_id'];
+            $public_id = (int)$request['public_id'];
 
             //Проверка на админа и проверяем включены ли комменты
             $row = $db->super_query("SELECT tb2.admin, comments FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = tb2.id AND tb1.id = '{$rec_id}'");
@@ -1692,6 +1253,7 @@ class GroupsController extends Module{
 //                $tpl->load_template('groups/record.tpl');
                 //Сообственно выводим комменты
                 $config = Settings::loadsettings();
+
                 foreach($sql_comments as $key => $row_comments){
 //                    $tpl->set('{public-id}', );
                     $sql_comments[$key]['public_id'] = $public_id;
@@ -1764,79 +1326,83 @@ class GroupsController extends Module{
                     $sql_comments[$key]['all_comm'] = false;
 //                    $tpl->compile('content');
                 }
-
+                $query = $sql_comments;
                 //Загружаем форму ответа
 //                $tpl->load_template('groups/record.tpl');
 //                $tpl->set('{rec-id}', );
-                $params['rec_id'] = $rec_id;
+//                $params['rec_id'] = $rec_id;
 //                $tpl->set('{user-id}', $public_id);
-                $params['user_id'] = $public_id;
+//                $params['user_id'] = $public_id;
 //                $tpl->set('[comment-form]', '');
 //                $tpl->set('[/comment-form]', '');
-                $params['comment_form'] = true;
+//                $params['comment_form'] = true;
 //                $tpl->set_block("'\\[record\\](.*?)\\[/record\\]'si","");
-                $params['record'] = false;
+//                $params['record'] = false;
 //                $tpl->set_block("'\\[comment\\](.*?)\\[/comment\\]'si","");
-                $params['comment'] = false;
+//                $params['comment'] = false;
 //                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
-                $params['all_comm'] = false;
+//                $params['all_comm'] = false;
+
+                $params['wall_records'] = Wall::build($query);
             }
         }
     }
 
     /**
      * Страница загрузки фото в сообщество
+     *
      * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function photos($params){
-        $lang = $this->get_langs();
+    public function photos($params): string
+    {
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
 
         Tools::NoAjaxRedirect();
 
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            if($request['page'] > 0) {
+//                $page = (int)$request['page'];
+//            } else {
+//                $page = 1;
+//            }
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $public_id = intval($_POST['public_id']);
+            $public_id = (int)$request['public_id'];
             $rowPublic = $db->super_query("SELECT admin, photos_num FROM `communities` WHERE id = '{$public_id}'");
             if(stripos($rowPublic['admin'], "u{$user_id}|") !== false){
 
-                if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
+                if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
                 $gcount = 36;
                 $limit_page = ($page-1)*$gcount;
 
                 //HEAD
 //                $tpl->load_template('public/photos/head.tpl');
                 $titles = array('фотография', 'фотографии', 'фотографий');//photos
-//                $tpl->set('{photo-num}', );
                 $params['photo_num'] = $rowPublic['photos_num'].' '.Gramatic::declOfNum($rowPublic['photos_num'], $titles);
-//                $tpl->set('{public_id}', );
                 $params['public_id'] = $public_id;
-//                $tpl->set('[top]', '');
-//                $tpl->set('[/top]', '');
                 $params['top'] = true;
-//                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
                 $params['bottom'] = false;
-//                $tpl->compile('info');
 
                 //Выводим фотографии
                 if($rowPublic['photos_num']){
                     $sql_ = $db->super_query("SELECT photo FROM `attach` WHERE public_id = '{$public_id}' ORDER by `add_date` DESC LIMIT {$limit_page}, {$gcount}", 1);
 //                    $tpl->load_template('public/photos/photo.tpl');
                     foreach($sql_ as $key => $row){
-//                        $tpl->set('{photo}', );
                         $sql_[$key]['photo'] = $row['photo'];
-//                        $tpl->set('{public-id}', );
                         $sql_[$key]['public_id'] = $public_id;
-//                        $tpl->compile('content');
                     }
+
 //                    box_navigation($gcount, $rowPublic['photos_num'], $page, 'groups.wall_attach_addphoto', $public_id);
                 } else
                 {
@@ -1845,20 +1411,19 @@ class GroupsController extends Module{
 
                 //BOTTOM
 //                $tpl->load_template('public/photos/head.tpl');
-//                $tpl->set('[bottom]', '');
-//                $tpl->set('[/bottom]', '');
                 $params['bottom'] = true;
-//                $tpl->set_block("'\\[top\\](.*?)\\[/top\\]'si","");
                 $params['top'] = false;
             }
         }
+        return view('info.info', $params);
     }
 
     /**
-     * Выводим инфу о видео при прикриплении видео на стену
+     * Выводим инфу о видео при прикреплении видео на стену
+     *
      * @param $params
      */
-    public function select_video_info(&$params){
+    public function select_video_info($params){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1867,92 +1432,88 @@ class GroupsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $user_id = $user_info['user_id'];
+            $request = (Request::getRequest()->getGlobal());
+
+//            $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $video_id = intval($_POST['video_id']);
+            $video_id = (int)$request['video_id'];
             $row = $db->super_query("SELECT photo FROM `videos` WHERE id = '".$video_id."'");
             if($row){
                 $array = explode('/', $row['photo']);
-                $photo = end($array);
-                echo $photo;
-            } else
+                echo end($array);
+            } else {
                 echo '1';
+            }
         }
     }
 
     /**
      * Ставим мне нравится
+     *
      * @param $params
+     * @return string
      */
-    public function wall_like_yes(&$params){
-        $lang = $this->get_langs();
+    public function wall_like_yes($params): string
+    {
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-
-        Tools::NoAjaxRedirect();
-
         if($logged){
-            //$act = $_GET['act'];
+            $request = (Request::getRequest()->getGlobal());
             $user_id = $user_info['user_id'];
-//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-//            $gcount = 20;
-            //$limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
-
-//            Tools::NoAjaxQuery();
-            $rec_id = intval($_POST['rec_id']);
+            $rec_id = (int)$request['rec_id'];
             $row = $db->super_query("SELECT likes_users FROM `communities_wall` WHERE id = '".$rec_id."'");
             if($row AND stripos($row['likes_users'], "u{$user_id}|") === false){
                 $likes_users = "u{$user_id}|".$row['likes_users'];
                 $db->query("UPDATE `communities_wall` SET likes_num = likes_num+1, likes_users = '{$likes_users}' WHERE id = '".$rec_id."'");
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = Tools::time();
                 $db->query("INSERT INTO `communities_wall_like` SET rec_id = '".$rec_id."', user_id = '".$user_id."', date = '".$server_time."'");
+                return _e('true');
             }
         }
+        return _e('err');
     }
 
     /**
      * Убераем мне нравится
+     *
      * @param $params
+     * @return string
      */
-    public function wall_like_remove(&$params){
-        $lang = $this->get_langs();
+    public function wall_like_remove($params): string
+    {
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-
-        Tools::NoAjaxRedirect();
-
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
             $user_id = $user_info['user_id'];
-//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-//            $gcount = 20;
-//            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
-
-//            Tools::NoAjaxQuery();
-            $rec_id = intval($_POST['rec_id']);
+            $rec_id = (int)$request['rec_id'];
             $row = $db->super_query("SELECT likes_users FROM `communities_wall` WHERE id = '".$rec_id."'");
             if(stripos($row['likes_users'], "u{$user_id}|") !== false){
                 $likes_users = str_replace("u{$user_id}|", '', $row['likes_users']);
                 $db->query("UPDATE `communities_wall` SET likes_num = likes_num-1, likes_users = '{$likes_users}' WHERE id = '".$rec_id."'");
                 $db->query("DELETE FROM `communities_wall_like` WHERE rec_id = '".$rec_id."' AND user_id = '".$user_id."'");
+                return _e('true');
             }
         }
+        return _e('err');
     }
 
     /**
-     * Выводим последних 7 юзеров кто поставил "Мне нравится"
+     * Выводим последних 7 юзеров кто
+     * поставил "Мне нравится"
+     *
      * @param $params
      */
-    public function wall_like_users_five(&$params){
-        $lang = $this->get_langs();
+    public function wall_like_users_five($params){
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -1960,109 +1521,102 @@ class GroupsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $user_id = $user_info['user_id'];
+            $request = (Request::getRequest()->getGlobal());
+
+//            $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $rec_id = intval($_POST['rec_id']);
+            $rec_id = (int)$request['rec_id'];
             $sql_ = $db->super_query("SELECT tb1.user_id, tb2.user_photo FROM `communities_wall_like` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND tb1.rec_id = '{$rec_id}' ORDER by `date` DESC LIMIT 0, 7", 1);
             if($sql_){
                 $config = Settings::loadsettings();
                 foreach($sql_ as $row){
-                    if($row['user_photo']) $ava = '/uploads/users/'.$row['user_id'].'/50_'.$row['user_photo'];
-                    else $ava = '/templates/'.$config['temp'].'/images/no_ava_50.png';
+                    if($row['user_photo']) {
+                        $ava = '/uploads/users/' . $row['user_id'] . '/50_' . $row['user_photo'];
+                    }
+                    else {
+                        $ava = '/images/no_ava_50.png';
+                    }
                     echo '<a href="/u'.$row['user_id'].'" id="Xlike_user'.$row['user_id'].'_'.$rec_id.'" onClick="Page.Go(this.href); return false"><img src="'.$ava.'" width="32" /></a>';
                 }
             }
-//            die();
         }
     }
 
     /**
-     * Выводим всех юзеров которые поставили "мне нравится"
+     * Выводим всех юзеров которые
+     * поставили "мне нравится"
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws Exception
      */
-    public function all_liked_users($params){
-        $lang = $this->get_langs();
+    public function all_liked_users($params): string
+    {
         $db = $this->db();
-        $logged = Registry::get('logged');
-        $user_info = Registry::get('user_info');
-
-        Tools::NoAjaxRedirect();
+        $logged = $this->logged();
 
         if($logged){
-            $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
-
-//            Tools::NoAjaxQuery();
-            $rid = intval($_POST['rid']);
-            $liked_num = intval($_POST['liked_num']);
-
-            if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
+            $request = (Request::getRequest()->getGlobal());
+            $rid = (int)$request['rid'];
+            $liked_num = (int)$request['liked_num'];
+            if($request['page'] > 0) {
+                $page = (int)$request['page'];
+            } else {
+                $page = 1;
+            }
             $gcount = 24;
             $limit_page = ($page-1)*$gcount;
 
-            if(!$liked_num)
+            if(!$liked_num) {
                 $liked_num = 24;
+            }
 
             if($rid AND $liked_num){
                 $sql_ = $db->super_query("SELECT tb1.user_id, tb2.user_photo, user_search_pref FROM `communities_wall_like` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND tb1.rec_id = '{$rid}' ORDER by `date` DESC LIMIT {$limit_page}, {$gcount}", 1);
 
                 if($sql_){
+                    $params['top'] = true;
 //                    $tpl->load_template('/profile/profile_subscription_box_top.tpl');
-//                    $tpl->set('[top]', '');
-//                    $tpl->set('[/top]', '');
-                    $params['top'] =
                     $titles = array('человеку', 'людям', 'людям');//like
-//                    $tpl->set('{subcr-num}', 'Понравилось '.$liked_num.' '.Gramatic::declOfNum($liked_num, $titles));
-                    $params['subcr_num'] =
-//                    $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
-                    $params['bottom'] =
-//                    $tpl->compile('content');
-
+                    $params['subcr_num'] = 'Понравилось '.$liked_num.' '.Gramatic::declOfNum($liked_num, $titles);
+                    $params['bottom'] = false;
 //                    $tpl->result['content'] = str_replace('Всего', '', $tpl->result['content']);
-
 //                    $tpl->load_template('profile_friends.tpl');
                     $config = Settings::loadsettings();
                     foreach($sql_ as $key => $row){
                         if($row['user_photo'])
                         {
-//                            $tpl->set('{ava}', );
                             $sql_[$key]['ava'] = $config['home_url'].'uploads/users/'.$row['user_id'].'/50_'.$row['user_photo'];
                         }
                         else
                         {
-//                            $tpl->set('{ava}',);
                             $sql_[$key]['ava'] =  '/images/no_ava_50.png';
                         }
                         $friend_info_online = explode(' ', $row['user_search_pref']);
-//                        $tpl->set('{user-id}', );
                         $sql_[$key]['user_id'] = $row['user_id'];
-//                        $tpl->set('{name}', );
                         $sql_[$key]['name'] = $friend_info_online[0];
-//                        $tpl->set('{last-name}', );
                         $sql_[$key]['last_name'] = $friend_info_online[1];
-//                        $tpl->compile('content');
                     }
-//                    box_navigation($gcount, $liked_num, $rid, 'groups.wall_all_liked_users', $liked_num);
+                    $params['sql_'] = $sql_;
+                    $navigation = Tools::box_navigation($gcount, $liked_num, $rid, 'wall.all_liked_users', $liked_num);
+                    $params['navigation'] = $navigation;
+                    return view('profile.profile_subscription_box_top', $params);
                 }
             }
-//            return true;
         }
+        return _e('');
     }
 
     /**
      * Рассказать друзьям "Мне нравится"
+     *
      * @param $params
      */
-    public function wall_tell(&$params){
+    public function wall_tell($params){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2071,6 +1625,8 @@ class GroupsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
@@ -2078,7 +1634,7 @@ class GroupsController extends Module{
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-            $rid = intval($_POST['rec_id']);
+            $rid = (int)$request['rec_id'];
 
             //Проверка на существование записи
             $row = $db->super_query("SELECT add_date, text, public_id, attach, tell_uid, tell_date, public FROM `communities_wall` WHERE fast_comm_id = 0 AND id = '{$rid}'");
@@ -2098,7 +1654,7 @@ class GroupsController extends Module{
                     $row['attach'] = $db->safesql($row['attach']);
 
                     //Всталвяем себе на стену
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
+                    $server_time = Tools::time();
                     $db->query("INSERT INTO `wall` SET author_user_id = '{$user_id}', for_user_id = '{$user_id}', text = '{$row['text']}', add_date = '{$server_time}', fast_comm_id = 0, tell_uid = '{$row['public_id']}', tell_date = '{$row['add_date']}', public = '{$row['public']}', attach = '".$row['attach']."'");
                     $dbid = $db->insert_id();
                     $db->query("UPDATE `users` SET user_wall_num = user_wall_num+1 WHERE user_id = '{$user_id}'");
@@ -2107,21 +1663,27 @@ class GroupsController extends Module{
                     $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 1, action_text = '{$row['text']}', obj_id = '{$dbid}', action_time = '{$server_time}'");
 
                     //Чистим кеш
-                    $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
                     $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                } else
+                } else {
                     echo 1;
-            } else
+                }
+            } else {
                 echo 1;
+            }
         }
     }
 
     /**
-     * Показ всех подпискок
+     * Показ всех подписок
+     *
      * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function all_people($params){
-        $tpl = $params['tpl'];
+    public function all_people($params): string
+    {
+//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2130,69 +1692,62 @@ class GroupsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
+            $request = (Request::getRequest()->getGlobal());
+
+//            $user_id = $user_info['user_id'];
+//            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
 
-            if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
+            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 24;
             $limit_page = ($page-1)*$gcount;
 
-            $public_id = intval($_POST['public_id']);
-            $subscr_num = intval($_POST['num']);
+            $public_id = (int)$request['public_id'];
+            $subscr_num = (int)$request['num'];
 
             $sql_ = $db->super_query("SELECT tb1.user_id, tb2.user_name, user_lastname, user_photo FROM `friends` tb1, `users` tb2 WHERE tb1.friend_id = '{$public_id}' AND tb1.user_id = tb2.user_id AND tb1.subscriptions = 2 ORDER by `friends_date` DESC LIMIT {$limit_page}, {$gcount}", 1);
 
             if($sql_){
 //                $tpl->load_template('/profile/profile_subscription_box_top.tpl');
-//                $tpl->set('[top]', '');
-//                $tpl->set('[/top]', '');
                 $params['top'] = true;
                 $titles = array('подписчик', 'подписчика', 'подписчиков');//subscribers
-//                $tpl->set('{subcr-num}', );
                 $params['subcr_num'] = $subscr_num.' '.Gramatic::declOfNum($subscr_num, $titles);
-//                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
                 $params['bottom'] = false;
-//                $tpl->compile('content');
-//
 //                $tpl->load_template('profile_friends.tpl');
                 foreach($sql_ as $key => $row){
                     if($row['user_photo'])
                     {
-//                        $tpl->set('{ava}', );
                         $sql_[$key]['ava'] = '/uploads/users/'.$row['user_id'].'/50_'.$row['user_photo'];
                     }
                     else
                     {
-//                        $tpl->set('{ava}', );
                         $sql_[$key]['ava'] = '/images/no_ava_50.png';
                     }
-//                    $tpl->set('{user-id}', );
                     $sql_[$key]['user_id'] = $row['user_id'];
-//                    $tpl->set('{name}', );
                     $sql_[$key]['name'] = $row['user_name'];
-//                    $tpl->set('{last-name}', );
-                    $sql_[$key]['last-name'] = $row['user_lastname'];
-//                    $tpl->compile('content');
+                    $sql_[$key]['last_name'] = $row['user_lastname'];
                 }
-
 //                box_navigation($gcount, $subscr_num, $public_id, 'groups.all_people', $subscr_num);
-
             }
-
-//            return true;
+            return view('groups.subscription_box', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
-     * Показ всех сообщества юзера на которые он подписан (BOX)
+     * Показ всех сообщества юзера
+     * на которые он подписан (BOX)
+     *
      * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function all_groups_user($params){
+    public function all_groups_user($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2201,89 +1756,82 @@ class GroupsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            $params['title'] = $lang['communities'].' | Sura';
 
-            if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
+            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $for_user_id = intval($_POST['for_user_id']);
-            $subscr_num = intval($_POST['num']);
+            $for_user_id = (int)$request['for_user_id'];
+            $subscr_num = (int)$request['num'];
 
             $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.id, title, photo, traf, adres FROM `friends` tb1, `communities` tb2 WHERE tb1.user_id = '{$for_user_id}' AND tb1.friend_id = tb2.id AND tb1.subscriptions = 2 ORDER by `traf` DESC LIMIT {$limit_page}, {$gcount}", 1);
 
             if($sql_){
 //                $tpl->load_template('/profile/profile_subscription_box_top.tpl');
-//                $tpl->set('[top]', '');
-//                $tpl->set('[/top]', '');
                 $params['top'] = true;
                 $titles = array('подписка', 'подписки', 'подписок');//subscr
-//                $tpl->set('{subcr-num}', );
                 $params['subcr_num'] = $subscr_num.' '.Gramatic::declOfNum($subscr_num, $titles);
-//                $tpl->set_block("'\\[bottom\\](.*?)\\[/bottom\\]'si","");
                 $params['bottom'] = false;
-//                $tpl->compile('content');
-//
 //                $tpl->load_template('/profile/profile_group.tpl');
                 foreach($sql_ as $key => $row){
                     if($row['photo']) {
-//                        $tpl->set('{ava}', );
                         $sql_[$key]['ava'] = '/uploads/groups/'.$row['id'].'/50_'.$row['photo'];
                     }
                     else {
-//                        $tpl->set('{ava}', );
                         $sql_[$key]['ava'] = '/images/no_ava_50.png';
                     }
-//                    $tpl->set('{name}', );
                     $sql_[$key]['name'] = stripslashes($row['title']);
-//                    $tpl->set('{public-id}', $row['id']);
                     $sql_[$key]['public_id'] =
                     $titles = array('подписчик', 'подписчика', 'подписчиков');//subscribers
-//                    $tpl->set('{num}', );
                     $sql_[$key]['num'] = '<span id="traf">'.$row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles);
                     if($row['adres']) {
-//                        $tpl->set('{adres}', );
                         $sql_[$key]['adres'] = $row['adres'];
                     }
                     else {
-//                        $tpl->set('{adres}', );
                         $sql_[$key]['adres'] = 'public'.$row['id'];
                     }
-//                    $tpl->compile('content');
                 }
-
 //                Tools::box_navigation($gcount, $subscr_num, $for_user_id, 'groups.all_groups_user', $subscr_num, $tpl);
-
             }
-
+            return view('groups.subscription_box', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
      * Одна запись со стены
+     *
      * @param $params
+     * @return string
+     * @throws Exception
      */
-    public function wallgroups($params){
+    public function wallgroups($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
-        $user_info = Registry::get('user_info');
+//        $user_info = Registry::get('user_info');
 
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $user_id = $user_info['user_id'];
+            $request = (Request::getRequest()->getGlobal());
+
+//            $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
             $params['title'] = $lang['communities'].' | Sura';
 
-            $id = intval($_GET['id']);
-            $pid = intval($_GET['pid']);
+            $id = (int)$request['id'];
+            $pid = (int)$request['pid'];
 
             $row = $db->super_query("SELECT id, adres, del, ban FROM `communities` WHERE id = '{$pid}'");
 
@@ -2291,27 +1839,30 @@ class GroupsController extends Module{
 
 //                $tpl->load_template('groups/wall_head.tpl');
 //                $tpl->set('{id}', $id);
-//                $params['id'] =
+                $params['id'] = $id;
 //                $tpl->set('{pid}', $pid);
-//                $params['pid'] =
+                $params['pid'] = $pid;
                 if($row['adres'])
                 {
 //                    $tpl->set('{adres}', $row['adres']);
-//                    $params['adres'] =
+                    $params['adres'] = $row['adres'];
                 }
                 else
                 {
 //                    $tpl->set('{adres}', 'public'.$pid);
-//                    $params['adres'] =
+                    $params['adres'] = 'public'.$pid;
                 }
 //                $tpl->compile('info');
 
-                include __DIR__.'/../Classes/wall.public.php';
-                $wall = new \wall();
-                $wall->query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.id = '{$id}' AND tb1.public_id = tb2.id AND fast_comm_id = 0");
-                $wall->template('groups/record.tpl');
-                $wall->compile('content');
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+//                include __DIR__.'/../Classes/wall.public.php';
+//                $wall = new \wall();
+//                $wall->query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.id = '{$id}' AND tb1.public_id = tb2.id AND fast_comm_id = 0");
+//                $wall->template('groups/record.tpl');
+//                $wall->compile('content');
+//                $server_time = Tools::time();
+
+                $query = $db->super_query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.id = '{$id}' AND tb1.public_id = tb2.id AND fast_comm_id = 0", true);
+                $params['wall_records'] = Wall::build($query);
 //                $wall->select($public_admin, $server_time);
 
 //                $tpl->result['content'] = str_replace('width:500px;', 'width:710px;', $tpl->result['content']);
@@ -2326,15 +1877,20 @@ class GroupsController extends Module{
 //                msgbox('', '<br /><br />Запись не найдена.<br /><br /><br />', 'info_2');
             }
 
+            //FIXME rename tpl
+            return view('groups.one_wall', $params);
         }
+        //FIXME rename tpl
+        return view('info.info', $params);
     }
 
     /**
-     * Закрипление записи
+     * Закривление записи
+     *
      * @param $params
      */
     public function fasten($params){
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2342,6 +1898,8 @@ class GroupsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
@@ -2349,7 +1907,7 @@ class GroupsController extends Module{
 
 //            Tools::NoAjaxQuery();
 
-            $rec_id = intval($_POST['rec_id']);
+            $rec_id = (int)$request['rec_id'];
 
             //Выводим ИД группы
             $row = $db->super_query("SELECT public_id FROM `communities_wall` WHERE id = '{$rec_id}'");
@@ -2372,6 +1930,7 @@ class GroupsController extends Module{
 
     /**
      * Убераем фиксацию
+     *
      * @param $params
      */
     public function unfasten($params){
@@ -2383,15 +1942,16 @@ class GroupsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
             $user_id = $user_info['user_id'];
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
+//            $gcount = 20;
+//            $limit_page = ($page-1)*$gcount;
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
 
-            $rec_id = intval($_POST['rec_id']);
+            $rec_id = (int)$request['rec_id'];
 
             //Выводим ИД группы
             $row = $db->super_query("SELECT public_id FROM `communities_wall` WHERE id = '{$rec_id}'");
@@ -2411,7 +1971,9 @@ class GroupsController extends Module{
 
     /**
      * Загрузка обложки
+     *
      * @param $params
+     * @throws Exception
      */
     public function upload_cover($params){
         $lang = $this->get_langs();
@@ -2422,15 +1984,17 @@ class GroupsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
 
-            $public_id = intval($_GET['id']);
+            $public_id = (int)$request['id'];
 
             //Проверка на админа
             $row_pub = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$public_id}'");
@@ -2440,8 +2004,8 @@ class GroupsController extends Module{
                 //Получаем данные о файле
                 $image_tmp = $_FILES['uploadfile']['tmp_name'];
                 $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-                $server_time = intval($_SERVER['REQUEST_TIME']);
-                $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя файла
+                $server_time = Tools::time();
+                $image_rename = substr(md5($server_time+random_int(1,100000)), 0, 20); // имя файла
                 $image_size = $_FILES['uploadfile']['size']; // размер файла
                 $array = explode(".", $image_name);
                 $type = end($array); // формат файла
@@ -2507,6 +2071,7 @@ class GroupsController extends Module{
 
     /**
      * Сохранение новой позиции обложки
+     *
      * @param $params
      */
     public function savecoverpos($params){
@@ -2518,22 +2083,23 @@ class GroupsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
             $user_id = $user_info['user_id'];
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
 
-            $public_id = intval($_GET['id']);
+            $public_id = (int)$request['id'];
 
             //Проверка на админа
             $row_pub = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$public_id}'");
 
             if(stripos($row_pub['admin'], "u{$user_id}|") !== false){
 
-                $pos = intval($_POST['pos']);
+                $pos = (int)$request['pos'];
                 if($pos < 0) $pos = 0;
 
                 $db->query("UPDATE `communities` SET cover_pos = '{$pos}' WHERE id = '{$public_id}'");
@@ -2543,6 +2109,11 @@ class GroupsController extends Module{
         }
     }
 
+    /**
+     *
+     * @deprecated
+     * @param $params
+     */
     public function delcover($params){
         $lang = $this->get_langs();
         $db = $this->db();
@@ -2556,11 +2127,11 @@ class GroupsController extends Module{
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-
-            $public_id = intval($_GET['id']);
+            $request = (Request::getRequest()->getGlobal());
+            $public_id = (int)$request['id'];
 
             //Проверка на админа
             $row_pub = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$public_id}'");
@@ -2583,7 +2154,15 @@ class GroupsController extends Module{
         }
     }
 
-    public function invitebox($params){
+    /**
+     * invite box
+     *
+     * @param $params
+     * @return string
+     * @throws Exception
+     */
+    public function invitebox($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2596,14 +2175,14 @@ class GroupsController extends Module{
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-
-            $pub_id = intval($_POST['id']);
+            $request = (Request::getRequest()->getGlobal());
+            $pub_id = (int)$request['id'];
 
             $limit_friends = 20;
-            if($_POST['page_cnt'] > 0) $page_cnt = intval($_POST['page_cnt']) * $limit_friends;
+            if($_POST['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_friends;
             else $page_cnt = 0;
 
             //Выводим список участников группы
@@ -2620,59 +2199,41 @@ class GroupsController extends Module{
 
                     if($row['user_photo'])
                     {
-//                        $tpl->set('{ava}', );
                         $sql_[$key]['ava'] = $config['home_url'].'uploads/users/'.$row['friend_id'].'/50_'.$row['user_photo'];
                     }
                     else
                     {
-//                        $tpl->set('{ava}', );
                         $sql_[$key]['ava'] = "/images/100_no_ava.png";
                     }
 
-//                    $tpl->set('{user-id}', );
                     $sql_[$key]['user_id'] = $row['friend_id'];
-//                    $tpl->set('{name}', );
                     $sql_[$key]['name'] = $row['user_search_pref'];
-
 
                     //Проверка, юзер есть в сообществе или нет
                     if(stripos($rowPub['ulist'], '|'.$row['friend_id'].'|') !== false){
-
-//                        $tpl->set('{yes-group}', );
                         $sql_[$key]['yes_group'] = 'grInviteYesed';
-//                        $tpl->set('{yes-text}',);
                         $sql_[$key]['yes_text']  =  '<div class="fl_r online grInviteOk">в сообществе</div>';
-//                        $tpl->set('{function}', '');
                         $sql_[$key]['function'] = true;
-
                     } else {
 
                         //Проверка, юзеру отправлялось приглашение или нет
                         $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_join` WHERE for_user_id = '{$row['friend_id']}' AND public_id = '{$pub_id}'");
 
                         if($check['cnt']){
-//                            $tpl->set('{yes-group}', );
                             $sql_[$key]['yes_group'] = 'grInviteYesed';
                             if($row['user_sex'] == 2)
                             {
-//                                $tpl->set('{yes-text}', );
                                 $sql_[$key]['yes_text'] = '<div class="fl_r online grInviteOk">приглашена</div>';
                             }
                             else
                             {
-//                                $tpl->set('{yes-text};
                                 $sql_[$key]['yes_text'] = '<div class="fl_r online grInviteOk">приглашен</div>';
                             }
-
-//                            $tpl->set('{function}', '');
                             $sql_[$key]['function'] = true;
 
                         } else {
-//                            $tpl->set('{yes-group}', ;
                             $sql_[$key]['yes_group'] = 'grIntiveUser';
-//                            $tpl->set('{yes-text}', '');
                             $sql_[$key]['yes_text'] = true;
-//                            $tpl->set('{function}', );
                             $sql_[$key]['function'] = 'groups.inviteSet';
                         }
                     }
@@ -2684,40 +2245,30 @@ class GroupsController extends Module{
 //                $tpl->load_template('groups/invitebox.tpl');
 //                $tpl->set('{friends}', $tpl->result['friends']);
                 $params['friends'] = 'friends';
-//                $tpl->set('{id}', );
                 $params['id'] = $pub_id;
 
                 if($numFr == $limit_friends){
-
-//                    $tpl->set('[but]', '');
-//                    $tpl->set('[/but]', '');
                     $params['but'] = true;
-
                 } else
-
                 {
-//                    $tpl->set_block("'\\[but\\](.*?)\\[/but\\]'si","");
                     $params['but'] = false;
                 }
-
-//                $tpl->compile('content');
-
             } else {
-
-                {
 //                    $tpl->result['content'] = $tpl->result['friends'];
-                }
-
             }
-
-//            Tools::AjaxTpl($tpl);
-//
+            return view('groups.invite_box', $params);
         }
+        return view('info.info', $params);
     }
 
+    /**
+     * invite send
+     *
+     * @param $params
+     */
     public function invitesend($params){
 //        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2730,15 +2281,15 @@ class GroupsController extends Module{
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
 //            Tools::NoAjaxQuery();
-
-            $pub_id = intval($_POST['id']);
+            $request = (Request::getRequest()->getGlobal());
+            $pub_id = (int)$request['id'];
             $limit = 50; #лимит в день
 
             //Выводим список участников группы
             $rowPub = $db->super_query("SELECT id, ulist FROM `communities` WHERE id = '{$pub_id}'");
 
             //Дата заявки
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $server_time = Tools::time();
             $newData = date('Y-m-d', $server_time);
 
             //Считаем сколько заявок было отправлено за последние сутки
@@ -2754,11 +2305,11 @@ class GroupsController extends Module{
                 if($rowPub['id']){
 
                     //Получаем список, которых надо пригласить и формируем его
-                    $arr_list = explode('|', $_POST['ulist']);
+                    $arr_list = explode('|', $request['ulist']);
 
                     foreach($arr_list as $ruser_id){
 
-                        $ruser_id = intval($ruser_id);
+                        $ruser_id = (int)$ruser_id;
 
                         if($ruser_id AND $user_id != $ruser_id AND $i < $limit){
 
@@ -2774,7 +2325,7 @@ class GroupsController extends Module{
                                     $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_join` WHERE for_user_id = '{$ruser_id}' AND public_id = '{$pub_id}'");
 
                                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-                                    $check_friend = CheckFriends($ruser_id);
+                                    $check_friend = Tools::CheckFriends($ruser_id);
 
                                     //Если нет приглашения, то отправляем приглашение
                                     if(!$check['cnt'] AND $check_friend){
@@ -2804,7 +2355,15 @@ class GroupsController extends Module{
         }
     }
 
-    public function invites($params){
+    /**
+     * invites
+     *
+     * @param $params
+     * @return string
+     * @throws Exception
+     */
+    public function invites($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2817,7 +2376,7 @@ class GroupsController extends Module{
 //            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
-            $params['title'] = $lang['communities'].' | Sura';
+//            $params['title'] = $lang['communities'].' | Sura';
 
             //Если подгружаем
 //            if($page_cnt){
@@ -2825,39 +2384,26 @@ class GroupsController extends Module{
 //                Tools::NoAjaxQuery();
 
 //            }
-
+            $request = (Request::getRequest()->getGlobal());
             $limit_num = 20;
-            if($_POST['page_cnt'] > 0) $page_cnt = intval($_POST['page_cnt']) * $limit_num;
+            if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_num;
             else $page_cnt = 0;
 
             //Загружаем верхушку
             if(!$page_cnt){
-
 //                $tpl->load_template('groups/invites_head.tpl');
-
                 if($user_info['invties_pub_num']){
-
-//                    $tpl->set('{num}', );
                         $params['num'] = $user_info['invties_pub_num'].' '.declOfNum($user_info['invties_pub_num'], array('приглашение', 'приглашения', 'приглашений'));
-//                    $tpl->set('[yes]', '');
-//                    $tpl->set('[/yes]', '');
                     $params['yes'] = true;
-//                    $tpl->set_block("'\\[no\\](.*?)\\[/no\\]'si","");
                     $params['no'] = false;
-
                 } else {
-//                    $tpl->set('[no]', '');
-//                    $tpl->set('[/no]', '');
                     $params['no'] = true;
-//                    $tpl->set_block("'\\[yes\\](.*?)\\[/yes\\]'si","");
                     $params['yes'] = false;
                 }
 //                $tpl->compile('info');
             }
-
             //Выводим сообщества
             if($user_info['invties_pub_num']){
-
                 //SQL Запрос на вывод
                 $sql_ = $db->super_query("SELECT tb1.user_id, tb2.id, title, photo, traf, adres, tb3.user_search_pref, user_photo FROM `communities_join` tb1, `communities` tb2, `users` tb3 WHERE tb1.for_user_id = '{$user_id}' AND tb1.public_id = tb2.id AND tb1.user_id = tb3.user_id ORDER by `id` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
                 if($sql_){
@@ -2865,46 +2411,33 @@ class GroupsController extends Module{
                     foreach($sql_ as $key => $row){
                         if($row['photo'])
                         {
-//                            $tpl->set('{photo}', );
                             $sql_[$key]['photo'] = "/uploads/groups/{$row['id']}/100_{$row['photo']}";
                         }
                         else
                         {
-//                            $tpl->set('{photo}', );
                             $sql_[$key]['photo'] = "/images/no_ava_groups_100.gif";
                         }
-
-//                        $tpl->set('{name}', );
                         $sql_[$key]['name'] = stripslashes($row['title']);
-//                        $tpl->set('{traf}', );
                         $sql_[$key]['traf'] = $row['traf'].' '.declOfNum($row['traf'], array('участник', 'участника', 'участников'));
-//                        $tpl->set('{id}',);
                         $sql_[$key]['id'] =  $row['id'];
 
                         if($row['adres'])
                         {
-//                            $tpl->set('{adres}', );
                             $sql_[$key]['adres'] = $row['adres'];
                         }
                         else
                         {
-//                            $tpl->set('{adres}', );
                             $sql_[$key]['adres'] = 'public'.$row['id'];
                         }
-
-//                        $tpl->set('{inviter-name}', );
                         $sql_[$key]['inviter_name'] = $row['user_search_pref'];
-//                        $tpl->set('{inviter-id}', );
                         $sql_[$key]['inviter_id'] = $row['user_id'];
 
                         if($row['user_photo'])
                         {
-//                            $tpl->set('{inviter-ava}', );
                             $sql_[$key]['inviter_ava'] = '/uploads/users/'.$row['user_id'].'/50_'.$row['user_photo'];
                         }
                         else
                         {
-//                            $tpl->set('{inviter-ava}', );
                             $sql_[$key]['inviter_ava'] = '/images/100_no_ava.png';
                         }
                     }
@@ -2920,15 +2453,18 @@ class GroupsController extends Module{
 
             //Если подгружаем
             if($page_cnt){
-
 //                Tools::AjaxTpl($tpl);
-//
-
-
             }
+            return view('groups.invite', $params);
         }
+        return view('info.info', $params);
     }
 
+    /**
+     * invite_no
+     *
+     * @param $params
+     */
     public function invite_no($params){
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2944,8 +2480,8 @@ class GroupsController extends Module{
 //            $params['title'] = $lang['communities'].' | Sura';
 
 //            Tools::NoAjaxQuery();
-
-            $id = intval($_POST['id']);
+            $request = (Request::getRequest()->getGlobal());
+            $id = (int)$request['id'];
 
             //Проверка на приглашению юзеру
             $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_join` WHERE for_user_id = '{$user_id}' AND public_id = '{$id}'");
@@ -2965,6 +2501,7 @@ class GroupsController extends Module{
 
     /**
      * Вывод всех сообществ
+     *
      * @param $params
      * @return string
      * @throws Exception
@@ -2982,9 +2519,9 @@ class GroupsController extends Module{
             //$act = $_GET['act'];
             $act = '';
             $user_id = $user_info['user_id'];
-
-            if(isset($_GET['page']) AND $_GET['page'] > 0) {
-                $page = intval($_GET['page']);
+            $request = (Request::getRequest()->getGlobal());
+            if(isset($request['page']) AND $request['page'] > 0) {
+                $page = (int)$request['page'];
             }else {
                 $page = 1;
             }
@@ -3063,6 +2600,7 @@ class GroupsController extends Module{
 
     /**
      * Вывод всех сообществ
+     *
      * @param $params
      * @return bool|string
      * @throws Exception
@@ -3080,9 +2618,9 @@ class GroupsController extends Module{
             //$act = $_GET['act'];
             $act = '';
             $user_id = $user_info['user_id'];
-
-            if(isset($_GET['page']) AND $_GET['page'] > 0)
-                $page = intval($_GET['page']);
+            $request = (Request::getRequest()->getGlobal());
+            if(isset($request['page']) AND $request['page'] > 0)
+                $page = (int)$request['page'];
             else
                 $page = 1;
             $gcount = 20;
@@ -3111,44 +2649,33 @@ class GroupsController extends Module{
 
 //                $tpl->load_template('groups/group.tpl');
                 foreach($sql_ as $key => $row){
-//                    $tpl->set('{id}', );
                     $sql_[$key]['id'] = $row['id'];
                     if($row['adres']) {
-//                        $tpl->set('{adres}', );
                         $sql_[$key]['adres'] = $row['adres'];
                     }
                     else {
-//                        $tpl->set('{adres}', );
                         $sql_[$key]['adres'] = 'public'.$row['id'];
                     }
 
-//                    $tpl->set('{name}', );
                     $sql_[$key]['name'] = stripslashes($row['title']);
                     $titles = array('участник', 'участника', 'участников');//groups_users
-//                    $tpl->set('{traf}', );
                     $sql_[$key]['traf'] = $row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles);
 
                     if($act != 'admin'){
-//                        $tpl->set('[admin]', '');
-//                        $tpl->set('[/admin]', '');
                         $sql_[$key]['admin'] = true;
                     } else
                     {
-//                        $tpl->set_block("'\\[admin\\](.*?)\\[/admin\\]'si","");
                         $sql_[$key]['admin'] = false;
                     }
 
                     if($row['photo'])
                     {
-//                        $tpl->set('{photo}', );
                         $sql_[$key]['photo'] = "/uploads/groups/{$row['id']}/100_{$row['photo']}";
                     }
                     else
                     {
-//                        $tpl->set('{photo}', );
                         $sql_[$key]['photo'] = "/images/no_ava_groups_100.gif";
                     }
-
 //                    $tpl->compile('content');
                 }
                 $params['groups'] = $sql_;
@@ -3167,6 +2694,12 @@ class GroupsController extends Module{
         }
     }
 
+    /**
+     * edit main
+     *
+     * @return string
+     * @throws Exception
+     */
     public function edit_main(): string
     {
         $path = explode('/', $_SERVER['REQUEST_URI']);
@@ -3178,8 +2711,8 @@ class GroupsController extends Module{
         $row = $db->super_query("SELECT id, admin, title, descr, ban_reason, traf, ulist, photo, date, data_del, feedback, comments, discussion, links_num, videos_num, real_admin, rec_num, del, ban, adres, audio_num, type_public, web, date_created, privacy FROM `communities` WHERE id = '{$id}'", false);
 
         if(stripos($row['admin'], "u{$user_id}|") !== false){
-            $explode_type = explode('-',$row['type_public']);
-            $explode_created = explode('-',$row['date_created']);
+//            $explode_type = explode('-',$row['type_public']);
+//            $explode_created = explode('-',$row['date_created']);
 
             $params['pid'] = $id;
             $params['title'] = stripslashes($row['title']);
@@ -3229,7 +2762,12 @@ class GroupsController extends Module{
         return view('groups.edit', $params);
     }
 
-    public function edit_users()
+    /**
+     * edit users
+     * @return string
+     * @throws Exception
+     */
+    public function edit_users(): string
     {
         $path = explode('/', $_SERVER['REQUEST_URI']);
         if (isset($path['4'])) $id = $path['4']; else $id = $path['3'];
@@ -3239,24 +2777,25 @@ class GroupsController extends Module{
         $user_id = $user_info['user_id'];
         $db = $this->db();
         $row = $db->super_query("SELECT id, admin, title, descr, ban_reason, traf, ulist, photo, date, data_del, feedback, comments, discussion, links_num, videos_num, real_admin, rec_num, del, ban, adres, audio_num, type_public, web, date_created, privacy FROM `communities` WHERE id = '{$id}'", false);
-
-        if(isset($_GET['tab']))
-        $tab = $_GET['tab'];
+        $request = (Request::getRequest()->getGlobal());
+        if(isset($request['tab'])) {
+            $tab = $request['tab'];
+        }
         else{
             $tab = false;
         }
         if(stripos($row['admin'], "u{$user_id}|") !== false) {
 
-            if(!isset($_POST['page_cnt']))
+            if(!isset($request['page_cnt']))
                 $page_cnt = 10;
             else
-                $page_cnt = $_POST['page_cnt']*10;
+                $page_cnt = $request['page_cnt']*10;
             $explode_admins = array_slice(str_replace('|', '', explode('u', $row['admin'])), 0, $page_cnt);
             unset($explode_admins[0]);
             $explode_users = array_slice(str_replace('|','',explode('||', $row['ulist'])), 0, $page_cnt);
 
             $metatags['title'] = 'Участники';
-            if(!isset($_POST['page_cnt'])) {
+            if(!isset($request['page_cnt'])) {
 //                $tpl->load_template('epage/users.tpl');
                 $params['pid'] = $id;
                 if($tab == 'admin') {
@@ -3295,10 +2834,13 @@ class GroupsController extends Module{
 
 //            if(!$_POST['page_cnt']) {
 //                $tpl->result['content'] .= '<table><tbody><tr><td id="all_users">';
-            if(!$tab == 'admin')
-                $foreach = $explode_users;
-            else
+            if($tab == 'admin') {
                 $foreach = $explode_admins;
+
+            }
+            else {
+                $foreach = $explode_users;
+            }
                         $users = array();
             foreach($foreach as $key => $user) {
                 $user = (string)($user);
@@ -3321,7 +2863,7 @@ class GroupsController extends Module{
                     $users[$key]['tags'] = '';
                 }
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = Tools::time();
                 $online_time = $server_time - 60;
                 if($p_user['user_last_visit'] >= $online_time) {
                     $users[$key]['online'] = true;
@@ -3372,6 +2914,12 @@ class GroupsController extends Module{
         return view('groups.edit_users', $params);
     }
 
+    /**
+     * edit
+     *
+     * @return string
+     * @throws Exception
+     */
     public function edit(): string
     {
         $path = explode('/', $_SERVER['REQUEST_URI']);

@@ -4,10 +4,6 @@ namespace App\Modules;
 
 use App\Services\Cache;
 use Intervention\Image\ImageManager;
-use Sura\Libs\Thumb;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -15,9 +11,14 @@ use Sura\Libs\Gramatic;
 class PhotoController extends Module{
 
     /**
+     * Добавления комментария
+     *
      * @param $params
+     * @return string
+     * @throws \Exception
      */
-    public function addcomm($params){
+    public function addcomm($params): string
+    {
 //        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -28,9 +29,9 @@ class PhotoController extends Module{
 
             Tools::NoAjaxRedirect();
 
-            $pid = intval($_POST['pid']);
-            $comment = ajax_utf8(textFilter($_POST['comment']));
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $pid = intval($request['pid']);
+            $comment = ajax_utf8(textFilter($request['comment']));
+            $server_time = \Sura\Libs\Tools::time();
             $date = date('Y-m-d H:i:s', $server_time);
             $hash = md5($user_id.$server_time.$_IP.$user_info['user_email'].rand(0, 1000000000)).$comment.$pid;
 
@@ -88,7 +89,7 @@ class PhotoController extends Module{
                     $row_userOW = $db->super_query("SELECT user_last_visit FROM `users` WHERE user_id = '{$check_photo['user_id']}'");
                     $update_time = $server_time - 70;
 
-                    $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
 
                     if($row_userOW['user_last_visit'] >= $update_time){
 
@@ -125,19 +126,22 @@ class PhotoController extends Module{
 //                |user_{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_all|
 //                user_{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_friends");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm");
                 $Cache->delete("users/{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_all");
                 $Cache->delete("users/{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_friends");
 
 
-//                Tools::AjaxTpl($tpl);
+                return view('info.info', $params);
             } else
-                echo 'err_privacy';
+                return _e('err_privacy');
         }
+        return view('info.info', $params);
     }
 
     /**
+     * Удаление комментария
+     *
      * @param $params
      */
     public function del_comm($params){
@@ -151,7 +155,7 @@ class PhotoController extends Module{
 
             Tools::NoAjaxRedirect();
 
-            $hash = $db->safesql(substr($_POST['hash'], 0, 32));
+            $hash = $db->safesql(substr($request['hash'], 0, 32));
             $check_comment = $db->super_query("SELECT id, pid, album_id, owner_id FROM `photos_comments` WHERE hash = '{$hash}'");
             if($check_comment){
                 $db->query("DELETE FROM `photos_comments` WHERE hash = '{$hash}'");
@@ -165,7 +169,7 @@ class PhotoController extends Module{
 //                user_{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_all|
 //                user_{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_friends");
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm");
                 $Cache->delete("users/{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_all");
                 $Cache->delete("users/{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_friends");
@@ -174,6 +178,8 @@ class PhotoController extends Module{
     }
 
     /**
+     * Помещение фотографии на свою страницу
+     *
      * @param $params
      */
     public function crop($params){
@@ -187,15 +193,15 @@ class PhotoController extends Module{
 
             Tools::NoAjaxRedirect();
 
-            $pid = intval($_POST['pid']);
-            $i_left = intval($_POST['i_left']);
-            $i_top = intval($_POST['i_top']);
-            $i_width = intval($_POST['i_width']);
-            $i_height = intval($_POST['i_height']);
+            $pid = intval($request['pid']);
+            $i_left = intval($request['i_left']);
+            $i_top = intval($request['i_top']);
+            $i_width = intval($request['i_width']);
+            $i_height = intval($request['i_height']);
             $check_photo = $db->super_query("SELECT photo_name, album_id FROM `photos` WHERE id = '{$pid}' AND user_id = '{$user_id}'");
             if($check_photo AND $i_width >= 100 AND $i_height >= 100 AND $i_left >= 0 AND $i_height >= 0){
                 $imgInfo = explode('.', $check_photo['photo_name']);
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
                 $image_rename = substr(md5($server_time.$check_photo['check_photo']), 0, 15).".".$imgInfo[1];
                 $upload_dir = __DIR__."/../../public/uploads/users/{$user_id}/";
 
@@ -243,17 +249,21 @@ class PhotoController extends Module{
 //                Cache::mozg_clear_cache_file("user_{$user_id}/profile_{$user_id}");
 //                Cache::mozg_clear_cache();
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_id}/profile_{$user_id}");
             }
         }
     }
 
     /**
+     *  Показ всех комментариев
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function all_comm($params){
+    public function all_comm($params): string
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -264,8 +274,8 @@ class PhotoController extends Module{
 
             Tools::NoAjaxRedirect();
 
-            $pid = intval($_POST['pid']);
-            $num = intval($_POST['num']);
+            $pid = intval($request['pid']);
+            $num = intval($request['num']);
             if($num > 7){
                 $limit = $num-3;
                 $sql_comm = $db->super_query("SELECT tb1.user_id,text,date,id,hash,pid, tb2.user_search_pref, user_photo, user_last_visit, user_logged_mobile FROM `photos_comments` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND tb1.pid = '{$pid}' ORDER by `date` ASC LIMIT 0, {$limit}", 1);
@@ -299,20 +309,21 @@ class PhotoController extends Module{
 
                     $tpl->compile('content');
                 }
-                Tools::AjaxTpl($tpl);
 
-                $params['tpl'] = $tpl;
-                Page::generate($params);
-                return true;
+                return view('info.info', $params);
             }
         }
+        return view('info.info', $params);
     }
 
     /**
+     * Просмотр ПРОСТОЙ фотографии не из альбома
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function profile($params)
+    public function profile($params): string
     {
 //        $tpl = $params['tpl'];
         //$lang = $this->get_langs();
@@ -320,11 +331,11 @@ class PhotoController extends Module{
         //$user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $uid = intval($_POST['uid']);
-            if($_POST['type'])
-                $photo = __DIR__."/../../public/uploads/attach/{$uid}/c_{$_POST['photo']}";
+            $uid = intval($request['uid']);
+            if($request['type'])
+                $photo = __DIR__."/../../public/uploads/attach/{$uid}/c_{$request['photo']}";
             else
-                $photo = __DIR__."/../../public/uploads/users/{$uid}/o_{$_POST['photo']}";
+                $photo = __DIR__."/../../public/uploads/users/{$uid}/o_{$request['photo']}";
 
             if(!file_exists($photo)){
                 $photo = '/../../public/images/no_ava_50.png';
@@ -332,25 +343,28 @@ class PhotoController extends Module{
             if(file_exists($photo)){
 //                $tpl->load_template('photos/photo_profile.tpl');
                 $params['uid'] = $uid;
-                if($_POST['type'])
+                if($request['type'])
                 {
-                    $params['photo'] = "/uploads/attach/{$uid}/{$_POST['photo']}";
+                    $params['photo'] = "/uploads/attach/{$uid}/{$request['photo']}";
                 }
                 else {
-                    $params['photo'] = "/uploads/users/{$uid}/o_{$_POST['photo']}";
+                    $params['photo'] = "/uploads/users/{$uid}/o_{$request['photo']}";
                 }
-                $params['close_link'] = $_POST['close_link'];
+                $params['close_link'] = $request['close_link'];
                 return view('photos.photo_profile', $params);
             } else
                 $params['photo'] = '/images/no_ava_50.png';
             $params['uid'] = $uid;
-            $params['close_link'] = $_POST['close_link'];
+            $params['close_link'] = $request['close_link'];
 
             return view('photos.photo_profile', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
+     * Поворот фотографии
+     *
      * @param $params
      */
     public function rotation($params){
@@ -362,14 +376,14 @@ class PhotoController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $id = intval($_POST['id']);
+            $id = intval($request['id']);
             $row = $db->super_query("SELECT photo_name, album_id, user_id FROM `photos` WHERE id = '".$id."'");
 
-            if($row['photo_name'] AND $_POST['pos'] == 'left' OR $_POST['pos'] == 'right' AND $user_id == $row['user_id']){
+            if($row['photo_name'] AND $request['pos'] == 'left' OR $request['pos'] == 'right' AND $user_id == $row['user_id']){
                 $filename = __DIR__.'/../../public/uploads/users/'.$user_id.'/albums/'.$row['album_id'].'/'.$row['photo_name'];
 
-                if($_POST['pos'] == 'right') $degrees = -90;
-                if($_POST['pos'] == 'left') $degrees = 90;
+                if($request['pos'] == 'right') $degrees = -90;
+                if($request['pos'] == 'left') $degrees = 90;
 
                 $source = imagecreatefromjpeg($filename);
                 $rotate = imagerotate($source, $degrees, 0);
@@ -388,6 +402,8 @@ class PhotoController extends Module{
     }
 
     /**
+     * add rating
+     *
      * @param $params
      */
     public function addrating($params){
@@ -403,9 +419,9 @@ class PhotoController extends Module{
 
             Tools::NoAjaxRedirect();
 
-            $rating = intval($_POST['rating']);
+            $rating = intval($request['rating']);
             if($rating <= 0 OR $rating > 6) $rating = 5;
-            $pid = intval($_POST['pid']);
+            $pid = intval($request['pid']);
 
             //Проверка на существование фото в базе
             $row = $db->super_query("SELECT user_id, album_id, photo_name FROM `photos` WHERE id = '{$pid}'");
@@ -438,7 +454,7 @@ class PhotoController extends Module{
                 }
 
                 //Вставляем в лог, что юзер поставил оценку
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
                 $db->query("INSERT INTO `photos_rating` SET photo_id = '{$pid}', user_id = '{$user_id}', date = '{$server_time}', rating = '{$rating}', owner_user_id = '{$row['user_id']}'");
                 $id = $db->insert_id();
 
@@ -459,7 +475,7 @@ class PhotoController extends Module{
                 $row_owner = $db->super_query("SELECT user_last_visit FROM `users` WHERE user_id = '{$row['user_id']}'");
                 $update_time = $server_time - 70;
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 if($row_owner['user_last_visit'] >= $update_time){
 
                     $db->query("INSERT INTO `updates` SET for_user_id = '{$row['user_id']}', from_user_id = '{$user_info['user_id']}', type = '9', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/photo{$row['user_id']}_{$pid}_{$row['album_id']}'");
@@ -473,16 +489,17 @@ class PhotoController extends Module{
                 }
 
             }
-
-            exit();
         }
     }
 
     /**
+     * view rating
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function view_rating($params){
+    public function view_rating($params): string
+    {
         $tpl = $params['tpl'];
         //$lang = $this->get_langs();
         $db = $this->db();
@@ -494,8 +511,8 @@ class PhotoController extends Module{
 
             Tools::NoAjaxRedirect();
 
-            $pid = intval($_POST['pid']);
-            $lid = intval($_POST['lid']);
+            $pid = intval($request['pid']);
+            $lid = intval($request['lid']);
 
             //Проверка на то, что есть фото
             $check = $db->super_query("SELECT rating_all FROM `photos` WHERE user_id = '{$user_info['user_id']}' AND id = '{$pid}'");
@@ -555,19 +572,16 @@ class PhotoController extends Module{
                     $tpl->result['content'] = $tpl->result['rates_users'];
 
                 }
-
-                Tools::AjaxTpl($tpl);
-
-                $params['tpl'] = $tpl;
-                Page::generate($params);
-                return true;
+                return view('info.info', $params);
             }
 
-            exit();
         }
+        return view('info.info', $params);
     }
 
     /**
+     * del rate
+     *
      * @param $params
      */
     public function del_rate($params){
@@ -582,7 +596,7 @@ class PhotoController extends Module{
 
             Tools::NoAjaxRedirect();
 
-            $id = intval($_POST['id']);
+            $id = intval($request['id']);
 
             //Выводим ИД фото и проверяем на админа фотки
             $row = $db->super_query("SELECT photo_id, rating FROM `photos_rating` WHERE id = '{$id}' AND owner_user_id = '{$user_info['user_id']}'");
@@ -601,12 +615,12 @@ class PhotoController extends Module{
                 $db->query("UPDATE `photos` SET rating_num = rating_num-{$row['rating']}, rating_all = rating_all-1 {$rating_max} WHERE id = '{$row['photo_id']}'");
 
             }
-
-            exit();
         }
     }
 
     /**
+     * Просмотр фотографии
+     *
      * @param $params
      * @return bool
      */
@@ -619,17 +633,17 @@ class PhotoController extends Module{
         $logged = $this->logged();
 
         if($logged){
-            //$act = $_GET['act'];
+            //$act = $request['act'];
             //$user_id = $user_info['user_id'];
 
             //################### Просмотр фотографии ###################//
 
             Tools::NoAjaxRedirect();
 
-            $uid = intval($_POST['uid']);
-            $photo_id = intval($_POST['pid']);
-            $fuser = intval($_POST['fuser']);
-            $section = $_POST['section'];
+            $uid = intval($request['uid']);
+            $photo_id = intval($request['pid']);
+            $fuser = intval($request['fuser']);
+            $section = $request['section'];
 
             $config = Settings::loadsettings();
 
@@ -645,7 +659,7 @@ class PhotoController extends Module{
                     //Проверяем на наличии файла с позициям только для этого фоток
 //                    $check_pos = Cache::mozg_cache('
 //                    user_'.$uid.'/position_photos_album_'.$check_album['album_id']);
-                    $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
                     $check_pos = $Cache->get("users/{$uid}/position_photos_album_{$check_album['album_id']}");
 
                     //Если нету, то вызываем функцию генерации
@@ -719,7 +733,7 @@ class PhotoController extends Module{
 
                         //Сама фотография
                         $tpl->load_template('photo_view.tpl');
-                        $server_time = intval($_SERVER['REQUEST_TIME']);
+                        $server_time = \Sura\Libs\Tools::time();
                         $tpl->set('{photo}', $config['home_url'].'uploads/users/'.$row['user_id'].'/albums/'.$check_album['album_id'].'/'.$row['photo_name'].'?'.$server_time);
                         $sizephoto = getimagesize(__DIR__.'/../../public/uploads/users/'.$row['user_id'].'/albums/'.$check_album['album_id'].'/'.$row['photo_name']);
                         $tpl->set('{height}', $sizephoto[1]);
@@ -926,14 +940,11 @@ class PhotoController extends Module{
 
                         $tpl->compile('content');
 
-                        Tools::AjaxTpl($tpl);
+
 
                         if($config['gzip'] == 'yes')
                             GzipOut();
 
-                        $params['tpl'] = $tpl;
-                        Page::generate($params);
-                        return true;
 
                     } else
                         echo 'err_privacy';

@@ -8,11 +8,13 @@ use Sura\Libs\Tools;
 class My_statsController extends Module{
 
     /**
+     * Статистика моей страницы
+     *
      * @param $params
-     * @return bool|string
+     * @return string
      * @throws Exception
      */
-    public function index($params)
+    public function index($params): string
     {
 //        $tpl = $params['tpl'];
 
@@ -25,10 +27,10 @@ class My_statsController extends Module{
 
         if($logged){
 
-            $month = intval($_GET['m']);
+            $month = intval($request['m']);
             if($month AND $month <= 0 OR $month > 12) $month = 1;
 
-            $year = intval($_GET['y']);
+            $year = intval($request['y']);
             if($year AND $year < 2013 OR $year > 2020) $year = 2013;
 
             if($month AND $year){
@@ -51,7 +53,7 @@ class My_statsController extends Module{
 
             } else {
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
                 $stat_date = date('Ym', $server_time);
                 $r_month = date('m', $server_time);
 
@@ -125,15 +127,11 @@ class My_statsController extends Module{
 //
 //            $tpl->clear();
 //            $db->free();
-
-        } else {
+            return view('info.info', $params);
+        }
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
-        }
 
-//        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
     }
 }

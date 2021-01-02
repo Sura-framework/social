@@ -95,7 +95,7 @@ class Menu
                 ->setActive($_SERVER['REQUEST_URI'])
                 ->wrap('div', ['class' => 'wrapper'])
                 ->render();
-        }else{
+        }
             return \Sura\Menu\Menu::new()
                 ->addClass('navigation nav text-left pl-2')
                 ->add(Link::to('/friends/'.$id, $lang['friends_all'])->setAttribute('onClick', $go))
@@ -105,9 +105,5 @@ class Menu
                 ->setActive($_SERVER['REQUEST_URI'])
                 ->wrap('div', ['class' => 'wrapper'])
                 ->render();
-        }
-
-
-
     }
 }

@@ -10,6 +10,8 @@ use Sura\Libs\Validation;
 class Public_audioController extends Module{
 
     /**
+     * upload box
+     *
      * @param $params
      */
     public function upload_box($params){
@@ -20,11 +22,11 @@ class Public_audioController extends Module{
         $logged = $this->logged();
         if($logged){
             $count = 40;
-            $page = intval($_REQUEST['page']);
+            $page = intval($request['page']);
             $offset = $count * $page;
-            $act = $_REQUEST['act'];
+            $act = $request['act'];
 
-            $pid = intval($_GET['pid']);
+            $pid = intval($request['pid']);
             echo <<<HTML
                     <div class="audio_upload_cont">
                     <div class="upload_limits_title" dir="auto">Ограничения</div>
@@ -59,11 +61,12 @@ class Public_audioController extends Module{
                     </div>
                     </div>
                     HTML;
-            die();
         }
     }
 
     /**
+     * upload
+     *
      * @param $params
      */
     public function upload($params){
@@ -74,11 +77,11 @@ class Public_audioController extends Module{
         $logged = $this->logged();
         if($logged){
             $count = 40;
-            $page = intval($_REQUEST['page']);
+            $page = intval($request['page']);
             $offset = $count * $page;
-            $act = $_REQUEST['act'];
+            $act = $request['act'];
 
-            $pid = intval($_GET['pid']);
+            $pid = intval($request['pid']);
             $info = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$pid}'");
 
 
@@ -90,7 +93,7 @@ class Public_audioController extends Module{
 
                 $file_tmp = $_FILES['file']['tmp_name'];
                 $file_name = Gramatic::totranslit($_FILES['file']['name']);
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
                 $file_rename = substr(md5($server_time+rand(1,100000)), 0, 15);
                 $file_size = $_FILES['file']['size'];
                 $tmp = explode('.', $file_name);
@@ -136,6 +139,8 @@ class Public_audioController extends Module{
     }
 
     /**
+     * add
+     *
      * @param $params
      */
     public function add($params){
@@ -146,31 +151,33 @@ class Public_audioController extends Module{
         $logged = $this->logged();
         if($logged){
             $count = 40;
-            $page = intval($_REQUEST['page']);
+            $page = intval($request['page']);
             $offset = $count * $page;
-            $act = $_REQUEST['act'];
+            $act = $request['act'];
 
             if(!$logged) die();
-            $id = intval($_POST['id']);
-            $pid = intval($_POST['pid']);
+            $id = intval($request['id']);
+            $pid = intval($request['pid']);
             $info = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$pid}'");
             $check = $db->super_query("SELECT url, artist, title, duration FROM `audio` WHERE id = '{$id}'");
             if(stripos($info['admin'], "u{$user_info['user_id']}|") !== false && $check){
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
                 $db->query("INSERT INTO `audio` SET original = '{$id}', duration = '{$check['duration']}',oid = '{$pid}', public = '1', url = '{$db->safesql($check['url'])}', artist = '{$db->safesql($check['artist'])}', title = '{$db->safesql($check['title'])}', date = '{$server_time}'");
                 $db->query("UPDATE `communities` SET audio_num = audio_num + 1 WHERE id = '{$pid}'");
                 $db->query("UPDATE `audio` SET add_count = add_count + 1 WHERE id = '{$id}'");
             }
-            die();
         }
     }
 
     /**
+     * Страница всех аудио
+     *
      * @param $params
-     * @return bool|string
+     * @return string
      * @throws Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
         $tpl = $params['tpl'];
 
         $config = Settings::loadsettings();
@@ -181,13 +188,13 @@ class Public_audioController extends Module{
 
         if($logged){
             $count = 40;
-            $page = intval($_REQUEST['page']);
+            $page = intval($request['page']);
             $offset = $count * $page;
 
-            $act = $_REQUEST['act'];
+            $act = $request['act'];
 
             $audios = array();
-            $pid = intval($_GET['pid']);
+            $pid = intval($request['pid']);
             $params['title'] = 'Аудиозаписи сообщества'.' | Sura';
 
             $plname = 'publicaudios'.$pid;
@@ -254,7 +261,7 @@ class Public_audioController extends Module{
                 $title = '<div class="audio_page_title">В сообществе '.$info['audio_num'].' '.declOfNum($info['audio_num'], array('аудиозапись','аудиозаписи','аудиозаписей')).'</div>';
 
 
-                if($_POST['doload']){
+                if($request['doload']){
 
                     echo json_encode(array('result' => $audios_res, 'playList' => $audios, 'pname' => $pname,'title' => $title,'plname' => $plname, 'but' => ($info['audio_num'] > $count+$offset) ? '<div class="audioLoadBut" style="margin-top:10px" onClick="audio.loadMore()" id="audio_more_but">Показать больше</div>' : ''));
                     die();
@@ -309,15 +316,11 @@ class Public_audioController extends Module{
 
             $tpl->clear();
             $db->free();
-
-        } else {
+            return view('info.info', $params);
+        }
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
-        }
 
-        $params['tpl'] = $tpl;
-        Page::generate($params);
-        return true;
     }
 }

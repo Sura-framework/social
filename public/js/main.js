@@ -130,13 +130,13 @@ var Page = {
 		Page.Loading('start');
 		$.post(h, {ajax: 'yes'}, function(res){
 			// var d = JSON.parse(res);
-			const d = res;
+			// const d = res;
 
-			history.pushState({link:h}, d.title, h);
+			history.pushState({link:h}, res.title, h);
 
-			document.title = d.title;
+			document.title = res.title;
 
-			$('#page').html(d.content);
+			$('#page').html(res.content);
 
 			Page.Loading('stop');
 			$('html, body').scrollTop(0);
@@ -171,7 +171,7 @@ var Page = {
 			// $('#requests_link').attr('href', '/friends'+d.requests_link);
 			// $('#new_groups').html(d.new_groups);
 			// $('#new_groups_lnk').attr('href', d.new_groups_lnk);
-			$('#new_notifications').attr('href', d.new_groups_lnk);
+			$('#new_notifications').attr('href', res.new_groups_lnk);
 
 		});
 	},

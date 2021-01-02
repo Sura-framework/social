@@ -93,7 +93,7 @@ class Profile
      */
     public function videos_online_cnt(int $id, string $sql_privacy, string $cache_pref_videos) : array
     {
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $row = $Cache->get("users/{$id}/videos_num{$cache_pref_videos}", $default = null);
             $value = unserialize($row);
@@ -114,7 +114,7 @@ class Profile
      */
     public function videos_online(int $id, string $sql_privacy, string $cache_pref_videos) : array
     {
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $row = $Cache->get("users/{$id}/page_videos_user{$cache_pref_videos}", $default = null);
             $value = unserialize($row);
@@ -134,7 +134,7 @@ class Profile
      */
     public function subscriptions(int $id, string $cache_pref_subscriptions) : array
     {
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $row = $Cache->get("users/{$id}/".$cache_pref_subscriptions, $default = null);
             $value = unserialize($row);
@@ -172,10 +172,10 @@ class Profile
      */
     public function groups(int $id): array
     {
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $row = $Cache->get("users/{$id}/groups_".$id, $default = null);
-            $value = unserialize($row);
+            $value = unserialize($row, $options = []);
         }catch (Exception $e){
             $db = Db::getDB();
             $row = $db->super_query("SELECT tb1.friend_id, tb2.id, title, photo, adres, status_text FROM `friends` tb1, `communities` tb2 WHERE tb1.user_id = '{$id}' AND tb1.friend_id = tb2.id AND tb1.subscriptions = 2 ORDER by `traf` DESC LIMIT 0, 5", true);
@@ -191,7 +191,7 @@ class Profile
      */
     public function gifts(int $id) : array
     {
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $row = $Cache->get("users/{$id}/gifts", $default = null);
             $value = unserialize($row);
@@ -248,7 +248,7 @@ class Profile
      */
     public function row_video(int $id) : array
     {
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $row = $Cache->get("wall/video{$id}", $default = null);
             $value = unserialize($row);
@@ -276,7 +276,7 @@ class Profile
      */
     public function row_doc(int $id) : array
     {
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $row = $Cache->get("wall/doc{$id}", $default = null);
             $value = unserialize($row);
@@ -295,7 +295,7 @@ class Profile
      */
     public function row_vote(int $id) : array
     {
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $row = $Cache->get("votes/vote_{$id}", $default = null);
             $value = unserialize($row);
@@ -315,13 +315,13 @@ class Profile
      */
     public function vote_check(int $id, int $user_id) : array
     {
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $row = $Cache->get("users/{$user_id}/votes_check_{$id}", $default = null);
             $value = unserialize($row);
         }catch (Exception $e){
             $db = Db::getDB();
-            $value = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$id}'", false);
+            $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$id}'", false);
             $value = serialize($row);
             $Cache->set("users/{$user_id}/votes_check_{$id}", $value);
         }
@@ -334,7 +334,7 @@ class Profile
      */
     public function vote_answer(int $id) : array
     {
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $row = $Cache->get("votes/vote_answer_cnt_{$id}", $default = null);
             $value = unserialize($row);
@@ -364,21 +364,21 @@ class Profile
     public function user_tell_info(int $user_id, int $type) : array
     {
         $db = Db::getDB();
-        if ($type == 1){
+        if ($type === 1){
             return $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$user_id}'");
-        }else{
-            $Cache = Cache::initialize();
-            try {
-                $row = $Cache->get("user_{$user_id}/wall/group{$user_id}", $default = null);
-                $value = unserialize($row);
-            }catch (Exception $e){
-                $db = Db::getDB();
-                $row = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$user_id}'", false);
-                $value = serialize($row);
-                $Cache->set("user_{$user_id}/wall/group{$user_id}", $value);
-            }
-            return $value;
         }
+
+        $Cache = cache_init(array('type' => 'file'));
+        try {
+            $value = $Cache->get("user_{$user_id}/wall/group{$user_id}", $default = null);
+            $row = unserialize($value);
+        }catch (Exception $e){
+            $db = Db::getDB();
+            $row = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$user_id}'", false);
+            $value = serialize($row);
+            $Cache->set("user_{$user_id}/wall/group{$user_id}", $value);
+        }
+        return $row;
     }
 
     /**
@@ -419,8 +419,8 @@ class Profile
      */
     public function albums_count(int $id, string $albums_privacy, int $type) : array
     {
-        if ($type == 1){
-            $Cache = Cache::initialize();
+        if ($type === 1){
+            $Cache = cache_init(array('type' => 'file'));
             try {
                 $row = $Cache->get("users/{$id}/albums_cnt_friends", $default = null);
                 $value = unserialize($row);
@@ -431,30 +431,30 @@ class Profile
                 $Cache->set("users/{$id}/albums_cnt_friends", $value);
             }
             return $value;
-        }else{
-            $Cache = Cache::initialize();
-            try {
-                $row = $Cache->get("users/{$id}/albums_cnt_all", $default = null);
-                $value = unserialize($row);
-            }catch (Exception $e){
-                $db = Db::getDB();
-                $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `albums` WHERE user_id = '{$id}' {$albums_privacy}", false);
-                $value = serialize($row);
-                $Cache->set("users/{$id}/albums_cnt_all", $value);
-            }
-            return $value;
         }
+
+        $Cache = cache_init(array('type' => 'file'));
+        try {
+            $row = $Cache->get("users/{$id}/albums_cnt_all", $default = null);
+            $value = unserialize($row);
+        }catch (Exception $e){
+            $db = Db::getDB();
+            $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `albums` WHERE user_id = '{$id}' {$albums_privacy}", false);
+            $value = serialize($row);
+            $Cache->set("users/{$id}/albums_cnt_all", $value);
+        }
+        return $value;
     }
 
     /**
-     * @param $id
-     * @param $albums_privacy
+     * @param int $id
+     * @param string $albums_privacy
      * @param $cache_pref
-     * @return array|string
+     * @return array|string|null
      */
     public function row_albums(int $id, string $albums_privacy, $cache_pref) : array|string|null
     {
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $value = $Cache->get("users/{$id}/albums{$cache_pref}", $default = null);
             $row = unserialize($value);
@@ -474,6 +474,10 @@ class Profile
      */
     public function friend_visit(int $id, int $user_id) : array
     {
-        return $this->db->super_query("UPDATE LOW_PRIORITY `friends` SET views = views+1 WHERE user_id = '{$user_id}' AND friend_id = '{$id}' AND subscriptions = 0", false);
+        try {
+            return $this->db->super_query("UPDATE LOW_PRIORITY `friends` SET views = views+1 WHERE user_id = '{$user_id}' AND friend_id = '{$id}' AND subscriptions = 0", false);
+        }catch (Exception $e){
+            return array();
+        }
     }
 }

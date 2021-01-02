@@ -14,10 +14,10 @@ class OfflineController extends Module
 {
 
     /**
-     *
+     * offline
      */
-	public static function index()
-	{
+	public static function index(): string
+    {
         $tpl = new Templates();
         $config = Settings::loadsettings();
         $tpl->dir = __DIR__.'/../templates/'.$config['temp'];
@@ -29,5 +29,6 @@ class OfflineController extends Module
 			$tpl->set('{reason}', nl2br($config['offline_msg']));
 			$tpl->compile('main');
 			echo $tpl->result['main'];
+        return view('info.info', $params);
 	}
 }

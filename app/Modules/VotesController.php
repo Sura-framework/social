@@ -9,6 +9,8 @@ use Sura\Libs\Gramatic;
 class VotesController extends Module{
 
     /**
+     * Опросы
+     *
      * @param $params
      */
     public function index($params){
@@ -22,8 +24,8 @@ class VotesController extends Module{
 
             $user_id = $user_info['user_id'];
 
-            $vote_id = intval($_POST['vote_id']);
-            $answer_id = intval($_POST['answer_id']);
+            $vote_id = intval($request['vote_id']);
+            $answer_id = intval($request['answer_id']);
 
             $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$vote_id}'");
 
@@ -35,9 +37,9 @@ class VotesController extends Module{
 
 
                 //TODO update cache system
-                Cache::mozg_mass_clear_cache_file("
-                votes/vote_{$vote_id}|
-                votes/vote_answer_cnt_{$vote_id}|votes/check{$user_id}_{$vote_id}");
+//                Cache::mozg_mass_clear_cache_file("
+//                votes/vote_{$vote_id}|
+//                votes/vote_answer_cnt_{$vote_id}|votes/check{$user_id}_{$vote_id}");
 
                 //Составляем новый ответ
                 Cache::mozg_create_cache("votes/check{$user_id}_{$vote_id}", "a:1:{s:3:\"cnt\";s:1:\"1\";}");
@@ -88,8 +90,5 @@ class VotesController extends Module{
 
         } else
             echo 'no_log';
-
-        exit;
-
     }
 }

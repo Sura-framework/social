@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -9,6 +10,8 @@ use Sura\Libs\Validation;
 class Fast_searchController extends Module{
 
     /**
+     * Быстрый поиск
+     *
      * @param $params
      * @return string
      * @throws \Exception
@@ -21,14 +24,17 @@ class Fast_searchController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
 //            $user_id = $user_info['user_id'];
 
             $limit_sql = 7;
 
-            $query = $db->safesql(Validation::ajax_utf8(Validation::strip_data($_POST['query'])));
+            $query = $db->safesql(Validation::ajax_utf8(Validation::strip_data($request['query'])));
             $query = strtr($query, array(' ' => '%')); //Замеянем пробелы на проценты чтоб тоиск был точнее
-            $type = intval($_POST['se_type']);
+            $type = (int)$request['se_type'];
 
             if(isset($query) AND !empty($query)){
 

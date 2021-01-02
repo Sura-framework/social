@@ -12,6 +12,8 @@ use Sura\Libs\Validation;
 class RepostController extends Module{
 
     /**
+     * Если выбрано "Друзья и подписчики"
+     *
      * @param $params
      */
     public function for_wall($params){
@@ -23,16 +25,16 @@ class RepostController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            //$act = $_GET['act'];
+            //$act = $request['act'];
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
 
-            $rid = intval($_POST['rec_id']);
-            $comm = Validation::ajax_utf8(Validation::textFilter($_POST['comm']));
+
+            $rid = intval($request['rec_id']);
+            $comm = Validation::ajax_utf8(Validation::textFilter($request['comm']));
 
             //Проверка на существование записи
-            if($_POST['g_tell'] == 1){
+            if($request['g_tell'] == 1){
                 $row = $db->super_query("SELECT add_date, text, public_id, attach, tell_uid, tell_date, public FROM `communities_wall` WHERE fast_comm_id = 0 AND id = '{$rid}'");
                 if($row['tell_uid'])
                     $row['author_user_id'] = $row['tell_uid'];
@@ -44,7 +46,7 @@ class RepostController extends Module{
                     if($row['tell_uid']){
                         $row['add_date'] = $row['tell_date'];
                         $row['author_user_id'] = $row['tell_uid'];
-                    } elseif($_POST['g_tell'] == 1){
+                    } elseif($request['g_tell'] == 1){
                         $row['public'] = 1;
                         $row['author_user_id'] = $row['public_id'];
                     }
@@ -56,7 +58,7 @@ class RepostController extends Module{
                         $row['attach'] = $db->safesql($row['attach']);
 
                         //Всталвяем себе на стену
-                        $server_time = intval($_SERVER['REQUEST_TIME']);
+                        $server_time = \Sura\Libs\Tools::time();
                         $db->query("INSERT INTO `wall` SET author_user_id = '{$user_id}', for_user_id = '{$user_id}', text = '{$row['text']}', add_date = '{$server_time}', fast_comm_id = 0, tell_uid = '{$row['author_user_id']}', tell_date = '{$row['add_date']}', public = '{$row['public']}', attach = '{$row['attach']}', tell_comm = '{$comm}'");
                         $dbid = $db->insert_id();
                         $db->query("UPDATE `users` SET user_wall_num = user_wall_num+1 WHERE user_id = '{$user_id}'");
@@ -67,7 +69,7 @@ class RepostController extends Module{
                         //Чистим кеш
 //                        Cache::mozg_clear_cache_file("user_{$user_id}/profile_{$user_id}");
 
-                        $Cache = Cache::initialize();
+                        $Cache = cache_init(array('type' => 'file'));
                         $Cache->delete("users/{$user_id}/profile_{$user_id}");
 
                     } else
@@ -75,11 +77,12 @@ class RepostController extends Module{
                 } else
                     echo 1;
             }
-            die();
         }
     }
 
     /**
+     * Если выбрано "Подписчики сообщества"
+     *
      * @param $params
      */
     public function groups($params){
@@ -93,11 +96,11 @@ class RepostController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
 
-            $rid = intval($_POST['rec_id']);
-            $sel_group = intval($_POST['sel_group']);
-            $comm = Validation::ajax_utf8(Validation::textFilter($_POST['comm']));
+
+            $rid = intval($request['rec_id']);
+            $sel_group = intval($request['sel_group']);
+            $comm = Validation::ajax_utf8(Validation::textFilter($request['comm']));
 
             //Проверка на существование записи
             $row = $db->super_query("SELECT add_date, text, author_user_id, tell_uid, tell_date, public, attach FROM `wall` WHERE fast_comm_id = '0' AND id = '{$rid}'");
@@ -113,7 +116,7 @@ class RepostController extends Module{
             else
                 $check_IdGR = '';
 
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $server_time = \Sura\Libs\Tools::time();
 
             //Проверка на админа
             $rowGroup = $db->super_query("SELECT admin, del, ban FROM `communities` WHERE id = '{$sel_group}'");
@@ -134,12 +137,12 @@ class RepostController extends Module{
                 $db->query("INSERT INTO `news` SET ac_user_id = '{$sel_group}', action_type = 11, action_text = '{$row['text']}', obj_id = '{$dbid}', action_time = '{$server_time}'");
             } else
                 echo 1;
-
-            die();
         }
     }
 
     /**
+     * Если выбрано "Подписчики сообщества" из СООБЩЕСТВ
+     *
      * @param $params
      */
     public function groups_2($params){
@@ -154,11 +157,11 @@ class RepostController extends Module{
 
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
 
-            $rid = intval($_POST['rec_id']);
-            $sel_group = intval($_POST['sel_group']);
-            $comm = Validation::ajax_utf8(Validation::textFilter($_POST['comm']));
+
+            $rid = intval($request['rec_id']);
+            $sel_group = intval($request['sel_group']);
+            $comm = Validation::ajax_utf8(Validation::textFilter($request['comm']));
 
             //Проверка на существование записи
             $row = $db->super_query("SELECT add_date, text, public_id, attach, tell_uid, tell_date, public FROM `communities_wall` WHERE fast_comm_id = 0 AND id = '{$rid}'");
@@ -185,6 +188,8 @@ class RepostController extends Module{
                 $row['text'] = $db->safesql($row['text']);
                 $row['attach'] = $db->safesql($row['attach']);
 
+                $server_time = \Sura\Libs\Tools::time();
+
                 //Вставляем саму запись в БД
                 $db->query("INSERT INTO `communities_wall` SET public_id = '{$sel_group}', text = '{$row['text']}', attach = '{$row['attach']}', add_date = '{$server_time}', tell_uid = '{$tell_uid}', tell_date = '{$tell_date}', public = '{$row['public']}', tell_comm = '{$comm}'");
                 $dbid = $db->insert_id();
@@ -195,12 +200,12 @@ class RepostController extends Module{
 
             } else
                 echo 1;
-
-            die();
         }
     }
 
     /**
+     * Если выбрано " Отправить личным сообщением"
+     *
      * @param $params
      */
     public function message($params){
@@ -214,11 +219,11 @@ class RepostController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            Tools::NoAjaxQuery();
 
-            $for_user_id = intval($_POST['for_user_id']);
-            $tell_comm = Validation::ajax_utf8(Validation::textFilter($_POST['comm']));
-            $rid = intval($_POST['rec_id']);
+
+            $for_user_id = intval($request['for_user_id']);
+            $tell_comm = Validation::ajax_utf8(Validation::textFilter($request['comm']));
+            $rid = intval($request['rec_id']);
 
             if($user_id != $for_user_id){
 
@@ -244,7 +249,7 @@ class RepostController extends Module{
                     if($xPrivasy){
 
                         //Выводим данные о записи
-                        if($_POST['g_tell'] == 1)
+                        if($request['g_tell'] == 1)
 
                             $row_rec = $db->super_query("SELECT add_date, text, public_id, attach, tell_uid, tell_date, public FROM `communities_wall` WHERE fast_comm_id = 0 AND id = '{$rid}'");
 
@@ -264,7 +269,7 @@ class RepostController extends Module{
 
                             } else {
 
-                                if($_POST['g_tell'] == 1){
+                                if($request['g_tell'] == 1){
 
                                     $row_rec['author_user_id'] = $row_rec['public_id'];
                                     $row_rec['public'] = 1;
@@ -276,7 +281,7 @@ class RepostController extends Module{
 
                             }
 
-                            $server_time = intval($_SERVER['REQUEST_TIME']);
+                            $server_time = \Sura\Libs\Tools::time();
 
                             //Отправляем сообщение получателю
                             $db->query("INSERT INTO `messages` SET theme = '{$theme}', text = '{$msg}', for_user_id = '{$for_user_id}', from_user_id = '{$user_id}', date = '{$server_time}', pm_read = 'no', folder = 'inbox', history_user_id = '{$user_id}', attach = '".$attach_files."', tell_uid = '{$tell_uid}', tell_date = '{$tell_date}', public = '{$row_rec['public']}', tell_comm = '{$tell_comm}'");
@@ -306,7 +311,7 @@ class RepostController extends Module{
 //                            Cache::mozg_clear_cache_file('user_'.$for_user_id.'/im');
 //                            Cache::mozg_create_cache('user_'.$for_user_id.'/im_update', '1');
 
-                            $Cache = Cache::initialize();
+                            $Cache = cache_init(array('type' => 'file'));
                             $Cache->delete("users/{$for_user_id}/im");
                             $Cache->set("users/{$for_user_id}/im_update", 1);
 
@@ -335,16 +340,17 @@ class RepostController extends Module{
                     echo 'no_user';
             } else
                 echo 'max_strlen';
-
-            die();
         }
     }
 
     /**
+     * Страница отправки
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function index($params)
+    public function index($params): string
     {
         $tpl = $params['tpl'];
 
@@ -356,7 +362,7 @@ class RepostController extends Module{
 
         if($logged){
 
-            //$act = $_GET['act'];
+            //$act = $request['act'];
             $user_id = $user_info['user_id'];
 
             //Выводим сообщества
@@ -397,14 +403,13 @@ class RepostController extends Module{
 
             $tpl->compile('content');
 
-            Tools::AjaxTpl($tpl);
+
 
 
             $tpl->clear();
             $db->free();
-
+            return view('info.info', $params);
         }
-
-        return true;
+        return view('info.info', $params);
     }
 }

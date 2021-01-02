@@ -11,7 +11,7 @@ class AntibotController extends Module{
     /**
      * создание капчи
      */
-    public function index()
+    public function index(): bool
     {
 
         //session_start();
@@ -46,7 +46,7 @@ class AntibotController extends Module{
         $cod = [];
         for($i=0; $i < $let_amount; $i++){
             $color = imagecolorallocatealpha($src, $foreground_color['0'], $foreground_color['1'], $foreground_color['2'], rand(20,40)); //Цвет шрифта
-            $letter = $letters[rand(0,sizeof($letters)-1)];
+            $letter = $letters[rand(0,count($letters)-1)];
             $size = rand(25,34);
             $x = ($i+1)*$font_size + rand(5,9); //даем каждому символу случайное смещение
             $y = (($height*2)/3) + rand(0,7);
@@ -65,15 +65,16 @@ class AntibotController extends Module{
 
         header("Content-type: image/gif"); //выводим готовую картинку
 
+        $_SESSION['sec_code'] = $cod; //Добавляем код в сессию
         imagegif($src);
 
-        $_SESSION['sec_code'] = $cod; //Добавляем код в сессию
+        return true;
     }
 
     /**
      *  проверка капчи
      */
-    public static function code()
+    public static function code(): string
     {
         session_start();
 //        error_reporting(E_ALL ^ E_WARNING ^ E_NOTICE);
@@ -82,9 +83,9 @@ class AntibotController extends Module{
 //            die("Hacking attempt!");
 
         if($_GET['user_code'] == $_SESSION['sec_code']){
-            echo 'ok';
+            return _e('ok');
         } else {
-            echo 'no';
+            return _e( 'no');
         }
     }
 }

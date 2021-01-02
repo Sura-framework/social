@@ -12,22 +12,19 @@ class Support
 {
 
     /**
-     * @return bool
+     * @return string
      */
     public function head_script_uId() : string
     {
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
 
-        if (isset($logged))
-            if (isset($user_info)){
-                return '<script>var kj = {uid:\''.$user_info['user_id'].'\'}</script>';
+        if (isset($logged, $user_info)) {
+            return '<script>var kj = {uid:\'' . $user_info['user_id'] . '\'}</script>';
 
-            }else{
-                return '';
-            }
-        else
-            return '';
+        }
+
+        return '';
     }
 
     /**
@@ -39,17 +36,20 @@ class Support
         $lang = Langs::check_lang();
         $url = 'https://'.$_SERVER['HTTP_HOST'];
 
-        if (isset($logged))
-            return '<script type="text/javascript" src="'.$url.'/js/jquery.lib.js?=3"></script>
-            <script type="text/javascript" src="'.$url.'/js/'.$lang.'/lang.js?=3"></script>
-            <script type="text/javascript" src="'.$url.'/js/main.js?=3"></script>
-            <script type="text/javascript" src="'.$url.'/js/profile.js?=3"></script>
-            <script type="text/javascript" src="'.$url.'/js/ads.js?=3"></script>';
-        else
-            return '<script type="text/javascript" src="'.$url.'/js/jquery.lib.js?=3"></script>
-        <script type="text/javascript" src="'.$url.'/js/'.$lang.'/lang.js?=3"></script>
-        <script type="text/javascript" src="'.$url.'/js/main.js?=3"></script>
-        <script type="text/javascript" src="'.$url.'/js/auth.js?=3"></script>';
+        $v = 7;
+
+        if (isset($logged)) {
+            return '<script type="text/javascript" src="' . $url . '/js/jquery.lib.js?='.$v.'"></script>
+            <script type="text/javascript" src="' . $url . '/js/' . $lang . '/lang.js?='.$v.'"></script>
+            <script type="text/javascript" src="' . $url . '/js/main.js?='.$v.'"></script>
+            <script type="text/javascript" src="' . $url . '/js/profile.js?='.$v.'"></script>
+            <script type="text/javascript" src="' . $url . '/js/ads.js?='.$v.'"></script>';
+        }
+
+        return '<script type="text/javascript" src="' . $url . '/js/jquery.lib.js?='.$v.'"></script>
+    <script type="text/javascript" src="' . $url . '/js/' . $lang . '/lang.js?='.$v.'"></script>
+    <script type="text/javascript" src="' . $url . '/js/main.js?='.$v.'"></script>
+    <script type="text/javascript" src="' . $url . '/js/auth.js?='.$v.'"></script>';
     }
 
     /**
@@ -57,8 +57,9 @@ class Support
      */
     public function header() : string
     {
-        if (empty($meta_tags['title']))
+        if (empty($meta_tags['title'])) {
             $meta_tags['title'] = 'Sura';
+        }
 
         return '<title>'.$meta_tags['title'].'</title><meta name="generator" content="QD2.RU" /><meta http-equiv="content-type" content="text/html; charset=utf-8" />';
     }
@@ -69,10 +70,11 @@ class Support
     public function logged() : bool
     {
         $logged = Registry::get('logged');
-        if (!empty($logged))
+        if (!empty($logged)) {
             return true;
-        else
-            return false;
+        }
+
+        return false;
     }
 
     /**
@@ -91,8 +93,8 @@ class Support
     {
         if (isset($_GET['query'])){
             return Validation::strip_data(urldecode($_GET['query']));
-        }else{
-            return '';
         }
+
+        return '';
     }
 }

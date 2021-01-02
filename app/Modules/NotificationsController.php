@@ -11,6 +11,8 @@ use Exception;
 class NotificationsController extends Module{
 
     /**
+     * settings
+     *
      * @param $params
      */
     public function settings($params){
@@ -19,7 +21,7 @@ class NotificationsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-//            $act = $_POST['act'];
+//            $act = $request['act'];
 
             if(stripos($user_info['notifications_list'], "settings_likes_posts|") === false) $settings_likes_posts = 'html_checked';
             else $settings_likes_posts = '';
@@ -38,6 +40,8 @@ class NotificationsController extends Module{
     }
 
     /**
+     * save settings
+     *
      * @param $params
      */
     public function save_settings($params){
@@ -45,10 +49,10 @@ class NotificationsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $settings_likes_posts = intval($_POST['settings_likes_posts']);
-            $settings_likes_photos = intval($_POST['settings_likes_photos']);
-            $settings_likes_compare = intval($_POST['settings_likes_compare']);
-            $settings_likes_gifts = intval($_POST['settings_likes_gifts']);
+            $settings_likes_posts = intval($request['settings_likes_posts']);
+            $settings_likes_photos = intval($request['settings_likes_photos']);
+            $settings_likes_compare = intval($request['settings_likes_compare']);
+            $settings_likes_gifts = intval($request['settings_likes_gifts']);
             $notifications_list = '';
             if($settings_likes_posts) $notifications_list .= '|settings_likes_posts|';
             if($settings_likes_photos) $notifications_list .= '|settings_likes_photos|';
@@ -60,6 +64,8 @@ class NotificationsController extends Module{
     }
 
     /**
+     * del
+     *
      * @param $params
      */
     public function del($params){
@@ -67,9 +73,9 @@ class NotificationsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
-            $act = $_POST['act'];
+            $act = $request['act'];
 
-            $id = intval($_POST['id']);
+            $id = intval($request['id']);
             if($id){
                 $sql_ = $db->super_query("SELECT COUNT(*) as cnt FROM `news` WHERE ac_id = '{$id}' AND action_type IN (7,20,21,22) AND for_user_id = '{$user_info['user_id']}'");
                 if($sql_){
@@ -81,10 +87,14 @@ class NotificationsController extends Module{
     }
 
     /**
+     * notification
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws Exception
      */
-    public function notification($params){
+    public function notification($params): string
+    {
         $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -93,7 +103,7 @@ class NotificationsController extends Module{
         if($logged){
 //            $act = $_POST['act'];
 
-            $id = intval($_POST['id']);
+            $id = intval($request['id']);
             if($id){
                 $row = $db->super_query("SELECT ac_id, action_text, action_time, action_type, obj_id FROM `news` WHERE ac_id = '{$id}' AND action_type IN (7,20,21,22) AND for_user_id = '{$user_info['user_id']}'");
                 if($row){
@@ -131,17 +141,18 @@ class NotificationsController extends Module{
                             $tpl->compile('content');
                         }
                     }
-                    Tools::AjaxTpl($tpl);
+
                 }
             }
 
-//            $params['tpl'] = $tpl;
-//            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
+     * index
+     *
      * @param $params
      */
     public function index($params){
@@ -153,13 +164,13 @@ class NotificationsController extends Module{
 //        $logged = $this->logged();
 
         $limit_news = 15;
-        $last_id = intval($_POST['last_id']);
+        $last_id = intval($request['last_id']);
 //        $CacheNews = Cache::mozg_cache('user_'.$_SESSION['user_id'].'/new_news');
 //        if($CacheNews) {
 //            Cache::mozg_create_cache('user_'.$user_info['user_id'].'/new_news', '');
 //        }
 
-        $Cache = Cache::initialize();
+        $Cache = cache_init(array('type' => 'file'));
         try {
             $Cache->get("users/{$_SESSION['user_id']}/new_news");
         }catch (Exception $e){
@@ -245,13 +256,15 @@ class NotificationsController extends Module{
 
             if(!$last_id && $count['cnt'] > $limit_news) $tpl->result['content'] .= '<div class="show_all_button" onclick="QNotifications.MoreShow();">Показать больше уведомлений</div>';
 
-        } else if(!$last_id && !$_POST['page_cnt'])
+        } else if(!$last_id && !$request['page_cnt'])
             msg_box('Нет оповещений.', 'info_2');
 
         if($last_id){
             $config = Settings::loadsettings();
             echo json_encode(array('content' => str_replace('{theme}', '/templates/'.$config['temp'], $tpl->result['content']), 'count' => $count['cnt']));
-        } else Tools::AjaxTpl($tpl);
+        } else {
+
+        }
 
     }
 }

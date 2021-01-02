@@ -1497,20 +1497,20 @@ var wall = {
 		$.post('/wall/delet/', {rid: rid});
 	},
 	page: function(for_user_id){
-		if($('#wall_link').text() == 'к предыдущим записям'){
+		// if($('#wall_link').text() == 'к предыдущим записям'){
 			textLoad('wall_link');
 			$('#wall_l_href').attr('onClick', '');
 			last_id = $('.wallrecord:last').attr('id').replace('wall_record_', '');
 			rec_num = parseInt($('#wall_rec_num').text());
-			$.post('/wall/page/', {last_id: last_id, for_user_id: for_user_id}, function(data){
-				$('#wall_all_record').append(data);
+			$.post('/wall/page/', {last_id: last_id, for_user_id: for_user_id, ajax: 'yes'}, function(d){
+				$('#wall_all_record').append(d.content);
 				$('#wall_l_href').attr('onClick', 'wall.page('+for_user_id+'); return false');
 				$('#wall_link').html(lang_wall_all_lnk);
 				count_record = $('.wallrecord').size();
 				if(count_record >= rec_num)
 					$('#wall_l_href').hide();
 			});
-		}
+		// }
 	},
 	open_fast_form: function(rid){
 		val = $('.wall_fast_text').val();
@@ -1583,12 +1583,13 @@ var wall = {
 		});
 	},
 	all_liked_users: function(rid, page_num, liked_num){
-		if(page_num)
-			page = '&page='+page_num;
-		else {
-			page = '';
-			page_num = 1;
-		}
+		// if(page_num)
+		// 	page = '&page='+page_num;
+		// else {
+		// 	page = '';
+		// 	page_num = 1;
+		// }
+		var page = '&page=' + page_num;
 			
 		Box.Page('/wall/all_liked_users/', 'rid='+rid+'&liked_num='+liked_num+page, 'all_liked_users_'+rid+page_num, 525, lang_wall_liked_users, lang_msg_close, 0, 0, 345, 1, 1, 1, 0, 1);
 	},
@@ -2093,6 +2094,25 @@ var news = {
 			});
 		}
 	},
+	load: function(){
+		$('#wall_l_href_news').attr('onClick', '');
+		if($('#loading_news').text() === 'Показать предыдущие новости'){
+			textLoad('loading_news');
+			$.post('/news/next/', {page: 1, page_cnt: page_cnt}, function(d){
+				// var d = JSON.parse(d);
+				console.log(d.content);
+				if(d.content !== 'no_news'){
+					$('#news').append(d.content);
+					$('#wall_l_href_news').attr('onClick', 'news.load()');
+					$('#loading_news').html('Показать предыдущие новости');
+					page_cnt++;
+				} else
+				{
+					$('#wall_l_href_news').hide();
+				}
+			});
+		}
+	},
 	showWallText: function(id){
 		var wh2 = $('#2href_text_'+id).width();
 		var wh = $('#href_text_'+id).width()-wh2-40;
@@ -2588,22 +2608,22 @@ var groups = {
 	saveinfo: function(id){
 		var title = $('#title').val();
 		var descr = $('#descr').val();
-		var adres_page = $('#adres_page').val();
+		var addres_page = $('#adres_page').val();
 		var comments = $('#comments').val();
 		$('#e_public_title').text(title);
 		if(descr != 0){
 			$('#descr_display').show();
 			$('#e_descr').html(descr);
 		}
-		if(!adres_page)	var adres_page = 'public'+id;
+		if(!adres_page)	var addres_page = 'public'+id;
 		var pattern = new RegExp(/^[a-zA-Z0-9_-]+$/);
-		if(pattern.test(adres_page)){
+		if(pattern.test(addres_page)){
 			butloading('pubInfoSave', 55, 'disabled');
-			$.post('/groups/saveinfo/', {id: id, title: title, descr: descr, comments: comments, adres_page: adres_page, discussion: $('#discussion').val(), web: $('#web').val()}, function(d){
+			$.post('/groups/saveinfo/', {id: id, title: title, descr: descr, comments: comments, addres_page: addres_page, discussion: $('#discussion').val(), web: $('#web').val()}, function(d){
 				if(d == 'err_adres')
 					Box.Info('err', 'Ошибка', 'Такой адрес уже занят', 130, 1500);
 				else
-					if(adres_page != 'public'+id)
+					if(addres_page != 'public'+id)
 						Page.Go('/public'+id);
 					else
 						Page.Go('/'+adres_page);
@@ -2771,10 +2791,10 @@ var groups = {
 		if(count > 9)
 			$('#wall_attach').hide();
 	},
-	wall_photo_view: function(rec_id, public_id, src, pos, type){
+	wall_photo_view: function(rec_id, public_id, src, pos){
 		var photo = $('#photo_wall_'+rec_id+'_'+pos).attr('src').replace('c_', '');
 		var size = $('.page_num'+rec_id).size();
-		if(size == 1){
+		if(size === 1){
 			var topTxt = 'Просмотр фотографии';
 			var next = 'Photo.Close(\'\'); return false';
 		} else {
@@ -2871,11 +2891,11 @@ var groups = {
 		
 		$('#wall_like_cnt'+rec_id).html(wall_like_cnt).css('color', '#2f5879');
 		$('#wall_active_ic'+rec_id).addClass('public_wall_like_yes');
-		$('#wall_like_link'+rec_id).attr('onClick', 'groups.wall_remove_like('+rec_id+', '+user_id+', \''+type+'\')');
+		$('#wall_like_link'+rec_id).attr('onClick', 'groups.wall_remove_like('+rec_id+', '+user_id+', '+type+')');
 		$('#like_user'+user_id+'_'+rec_id).show();
 		updateNum('#like_text_num'+rec_id, 1);
 		
-		if(type == 'uPages')
+		if(type == '1')
 			$.post('/wall/like_yes/', {rid: rec_id});
 		else
 			$.post('/groups/wall_like_yes/', {rec_id: rec_id});
@@ -2889,12 +2909,12 @@ var groups = {
 		
 		$('#wall_like_cnt'+rec_id).html(wall_like_cnt).css('color', '#95adc0');
 		$('#wall_active_ic'+rec_id).removeClass('public_wall_like_yes');
-		$('#wall_like_link'+rec_id).attr('onClick', 'groups.wall_add_like('+rec_id+', '+user_id+', \''+type+'\')');
+		$('#wall_like_link'+rec_id).attr('onClick', 'groups.wall_add_like('+rec_id+', '+user_id+', '+type+')');
 		$('#Xlike_user'+user_id+'_'+rec_id).hide();
 		$('#like_user'+user_id+'_'+rec_id).hide();
 		updateNum('#like_text_num'+rec_id);
 
-		if(type == 'uPages')
+		if(type == '1')
 			$.post('/wall/like_no/', {rid: rec_id});
 		else
 			$.post('/groups/wall_like_remove/', {rec_id: rec_id});
@@ -2902,7 +2922,7 @@ var groups = {
 	wall_like_users_five: function(rec_id, type){		
 		$('.public_likes_user_block').hide();
 		if(!ge('like_cache_block'+rec_id) && $('#wall_like_cnt'+rec_id).text() && $('#update_like'+rec_id).val() == 0){
-			if(type == 'uPages'){
+			if(type == '1'){
 				$.post('/wall/liked_users/', {rid: rec_id}, function(data){
 					$('#likes_users'+rec_id).html(data+'<span id="like_cache_block'+rec_id+'"></span>');
 					$('#public_likes_user_block'+rec_id).show();
@@ -2932,7 +2952,7 @@ var groups = {
 		if(!liked_num)
 			liked_num = 1;
 			
-		Box.Page('/groups/all_liked_users', 'rid='+rid+'&liked_num='+liked_num+page, 'all_liked_users_'+rid+page_num, 525, lang_wall_liked_users, lang_msg_close, 0, 0, 345, 1, 1, 1, 0, 1);
+		Box.Page('/groups/all_liked_users/', 'rid='+rid+'&liked_num='+liked_num+page, 'all_liked_users_'+rid+page_num, 525, lang_wall_liked_users, lang_msg_close, 0, 0, 345, 1, 1, 1, 0, 1);
 	},
 	wall_tell: function(rec_id){
 		$('#wall_tell_'+rec_id).hide();

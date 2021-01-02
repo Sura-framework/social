@@ -528,9 +528,6 @@ class AdsController extends Module{
                 $tpl->set('{age}', InstallationSelectedNew(0, '<li onmousemove="Select.itemMouseMove(3, 0)" val="0" class="">Любой</li>'.$textage));
                 $tpl->compile('content');
             }
-            Tools::AjaxTpl($tpl);
-            die();
-
         }
     }
 
@@ -620,9 +617,6 @@ class AdsController extends Module{
 //            Tools::NoAjaxQuery();
             $tpl->load_template('ads/uploadimg.tpl');
             $tpl->compile('content');
-            Tools::AjaxTpl($tpl);
-            die();
-
         }
     }
 
@@ -667,7 +661,7 @@ class AdsController extends Module{
             //Получаем данные о фотографии
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $server_time = \Sura\Libs\Tools::time();
             $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
             $array = explode(".", $image_name);
@@ -903,7 +897,7 @@ class AdsController extends Module{
                 $tpl->set('{traf}', $traf.' '.Gramatic::declOfNum($traf, $titles));
                 $tpl->compile('content');
             }
-            Tools::AjaxTpl($tpl);
+
             die();
         }else{
             $user_sex = 0;
@@ -948,8 +942,7 @@ class AdsController extends Module{
                 $tpl->set('{click}', "ads.clickgo('{$ad['id']}');");
                 $tpl->compile('content');
             }
-            Tools::AjaxTpl($tpl);
-            die();
+
         }
 
 

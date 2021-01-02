@@ -1,6 +1,8 @@
 <?php
 
+use JetBrains\PhpStorm\Deprecated;
 use JetBrains\PhpStorm\Pure;
+
 use Sura\Libs\Db;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Langs;
@@ -10,7 +12,11 @@ use Sura\Libs\Settings;
 use Sura\View\Blade;
 
 if (!function_exists('GetVar')) {
-    function GetVar(string $v) : string
+    /**
+     * @param string $v
+     * @return string
+     */
+    #[Pure] function GetVar(string $v) : string
     {
         if(ini_get('magic_quotes_gpc'))
             return stripslashes($v) ;
@@ -26,7 +32,11 @@ if (!function_exists('msgbox')) {
      * @param $tpl_name
      * @return false|string
      */
-    #[Pure] function msgbox($text, $tpl_name) : string|false
+    #[Pure] #[Deprecated(
+        reason: 'since Sura 9.0, use msg_box() instead',
+        replacement: 'msg_box(!%parameter0%, !%parameter1%)'
+    )]
+    function msgbox($text, $tpl_name) : string|false
     {
         return msg_box($text, $tpl_name);
     }
@@ -39,7 +49,7 @@ if (!function_exists('msg_box')) {
      * @param $tpl
      * @return false|string
      */
-    function msg_box($text, $tpl) : string|false
+    function msg_box(string $text, string $tpl) : string|false
     {
         if ($tpl == 'info') {
             return '<div class="err_yellow">' . $text . '</div>';
@@ -61,14 +71,18 @@ if (!function_exists('msg_box')) {
 }
 
 if (!function_exists('check_smartphone')) {
-    #[Pure] function check_smartphone()
+    #[Pure] function check_smartphone(): bool
     {
 
-        if (isset($_SESSION['mobile_enable'])) return true;
+        if (isset($_SESSION['mobile_enable'])) {
+            return true;
+        }
         $phone_array = array('iphone', 'android', 'pocket', 'palm', 'windows ce', 'windowsce', 'mobile windows', 'cellphone', 'opera mobi', 'operamobi', 'ipod', 'small', 'sharp', 'sonyericsson', 'symbian', 'symbos', 'opera mini', 'nokia', 'htc_', 'samsung', 'motorola', 'smartphone', 'blackberry', 'playstation portable', 'tablet browser', 'android');
         $agent = strtolower($_SERVER['HTTP_USER_AGENT']);
         foreach ($phone_array as $value) {
-            if (str_contains($agent, $value)) return true;
+            if (str_contains($agent, $value)) {
+                return true;
+            }
         }
         return false;
     }
@@ -84,20 +98,13 @@ if (!function_exists('installationSelected')) {
 if (!function_exists('xfieldsdataload')) {
     function xfieldsdataload($string): array
     {
-
-        $xfieldsdata = explode("||", $string);
-        $xfieldsdata = array_trim_end($xfieldsdata);
-
-
+        $x_fields_data = array_trim_end(explode("||", $string));
         $data = [];
-        foreach ($xfieldsdata as $xfielddata) {
-
-            list ($xfielddataname, $xfielddatavalue) = explode("|", $xfielddata);
-            $xfielddataname = str_replace("&#124;", "|", $xfielddataname);
-            $xfielddataname = str_replace("__NEWL__", "\r\n", $xfielddataname);
-            $xfielddatavalue = str_replace("&#124;", "|", $xfielddatavalue);
-            $xfielddatavalue = str_replace("__NEWL__", "\r\n", $xfielddatavalue);
-            $data[$xfielddataname] = $xfielddatavalue;
+        foreach ($x_fields_data as $x_field_data) {
+            list ($x_field_data_name, $x_field_data_value) = explode("|", $x_field_data);
+            $x_field_data_name = str_replace(array("&#124;", "__NEWL__"), array("|", "\r\n"), $x_field_data_name);
+            $x_field_data_value = str_replace(array("&#124;", "__NEWL__"), array("|", "\r\n"), $x_field_data_value);
+            $data[$x_field_data_name] = $x_field_data_value;
         }
         return $data;
     }
@@ -106,7 +113,7 @@ if (!function_exists('xfieldsdataload')) {
 function array_trim_end($array){
 
     $num=count($array);
-    $num=$num-1;
+    --$num;
     if (empty($array[$num]))
         unset($array[$num]);
 
@@ -126,8 +133,7 @@ if (!function_exists('profileload')) {
         foreach ($filecontents as $name => $value) {
             $filecontents[$name] = explode("|", trim($value));
             foreach ($filecontents[$name] as $name2 => $value2) {
-                $value2 = str_replace("&#124;", "|", $value2);
-                $value2 = str_replace("__NEWL__", "\r\n", $value2);
+                $value2 = str_replace(array("&#124;", "__NEWL__"), array("|", "\r\n"), $value2);
                 $filecontents[$name][$name2] = $value2;
             }
         }
@@ -160,7 +166,7 @@ if (!function_exists('Hacking')) {
 if (!function_exists('user_age')) {
     function user_age($user_year, $user_month, $user_day): false|string
     {
-        $server_time = intval($_SERVER['REQUEST_TIME']);
+        $server_time = (int)$_SERVER['REQUEST_TIME'];
 
         if ($user_year) {
             $current_year = date('Y', $server_time);
@@ -188,28 +194,34 @@ if (!function_exists('user_age')) {
 if (!function_exists('langdate')) {
     function langdate($format, $stamp): string
     {
-        $langdate = Langs::get_langdate();
-        return strtr(@date($format, $stamp), $langdate);
+        $lang_date = Langs::get_langdate();
+        return strtr(@date($format, $stamp), $lang_date);
     }
 }
 
 if (!function_exists('megaDate')) {
-    function megaDate($date, $func = false, $full = false): string
+    /**
+     * @param int $timestamp - date
+     * @param false|string $func - no_year
+     * @param bool $full - full
+     * @return string
+     */
+    function megaDate(int $timestamp, false|string $func = false, bool $full = false): string
     {
-        $server_time = intval($_SERVER['REQUEST_TIME']);
-
-        if (date('Y-m-d', $date) == date('Y-m-d', $server_time))
-            return $date = langdate('сегодня в H:i', $date);
-        elseif (date('Y-m-d', $date) == date('Y-m-d', ($server_time - 84600)))
-            return $date = langdate('вчера в H:i', $date);
-        else
-            if ($func == 'no_year')
-                return $date = langdate('j M в H:i', $date);
-            else
-                if ($full)
-                    return $date = langdate('j F Y в H:i', $date);
-                else
-                    return $date = langdate('j M Y в H:i', $date);
+        $server_time = (int)$_SERVER['REQUEST_TIME'];
+        if (date('Y-m-d', $timestamp) == date('Y-m-d', $server_time)) {
+            return langdate('сегодня в H:i', $timestamp);
+        }
+        if (date('Y-m-d', $timestamp) == date('Y-m-d', ($server_time - 84600))) {
+            return langdate('вчера в H:i', $timestamp);
+        }
+        if ($func == 'no_year') {
+            return langdate('j M в H:i', $timestamp);
+        }
+        if ($full) {
+            return langdate('j F Y в H:i', $timestamp);
+        }
+        return langdate('j M Y в H:i', $timestamp);
     }
 }
 
@@ -427,21 +439,21 @@ if (!function_exists('AntiSpamLogInsert')) {
  * @return string
  * @throws Exception
  */
-function view(?string $view, $variables = [])
+function view(?string $view, $variables = []): string
 {
     $views = __DIR__ . '/views';
     $cache = __DIR__ . '/cache/views';
 
+    /**
+     * Class myBlade
+     */
     class myBlade extends Blade
     {
         use Sura\View\Lang;
     }
 
     $blade = new myBlade($views,$cache,Blade::MODE_AUTO); // MODE_DEBUG allows to pinpoint troubles.
-    $lang = langs::check_lang();
-    $lang_list = include __DIR__.'/lang/'.$lang.'.php';
-    $blade::$dictionary=$lang_list;
-
+    $blade::$dictionary = langs::get_langs();
 
     $variables['url'] = 'https://'.$_SERVER['HTTP_HOST'];
     $blade->setBaseUrl('https://'.$_SERVER['HTTP_HOST']);
@@ -449,7 +461,7 @@ function view(?string $view, $variables = [])
     $blade->csrfIsValid(true, '_mytoken');
     $logged = Registry::get('logged');
     if (!empty($logged)){
-        $blade->setAuth('johndoe','user');
+        $blade->setAuth('john_doe','user');
     }
 
     try {
@@ -469,8 +481,8 @@ function view(?string $view, $variables = [])
                 );
             }
             header('Content-Type: application/json');
-            $response = json_encode($result_ajax);
-//                echo $blade->run("app.json", ['json' => $json]);
+            $json = json_encode($result_ajax, JSON_THROW_ON_ERROR);
+            $response =  $blade->run("app.json", ['json' => $json]);
         }else{
 
             header('Access-Control-Allow-Origin: *');
@@ -494,5 +506,30 @@ if (! function_exists('_e')) {
     function _e(string $value): string
     {
         return print($value);
+    }
+}
+
+if (! function_exists('cache_init')) {
+    /**
+     * Cache initialize
+     * @param array $config
+     * @return \Sura\Cache\Cache
+     */
+    function cache_init(array $config): \Sura\Cache\Cache
+    {
+        if ($config['type'] == 'file')
+        {
+            $Cache = new \Sura\Cache\Adapter\FileAdapter();
+        }elseif ($config['type'] == 'memcache'){
+
+            $config = Settings::loadsettings();
+
+            $Cache = new \Sura\Cache\Adapter\MemcachedAdapter();
+            $Cache->init($config);
+        }else{
+            $Cache = new \Sura\Cache\Adapter\FileAdapter();
+        }
+
+        return new \Sura\Cache\Cache($Cache);
     }
 }

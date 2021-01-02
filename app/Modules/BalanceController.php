@@ -5,6 +5,7 @@ namespace App\Modules;
 use App\Services\Cache;
 use Exception;
 use Sura\Libs\Gramatic;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 
@@ -12,39 +13,49 @@ class BalanceController extends Module{
 
     /**
      * @param $params
+     * @return string
      */
-    public function code($params){
+    public function code($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxRedirect();
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
 
-            $code=$_POST['code'];
+            $code=$request['code'];
             $res = $db->super_query("SELECT COUNT(*) FROM `codes` WHERE code = '{$code}' LIMIT 1");
             $row = $db->super_query("SELECT * FROM `codes` WHERE code = '{$code}' LIMIT 1");
             if($res['COUNT(*)'] !=0){
                 if($row['activate'] == 0 AND $row['user_id'] == 0){
                     $db->super_query("UPDATE `users` SET user_balance=user_balance+'{$row['fbm']}', balance_rub=balance_rub+'{$row['rub']}', user_rating=user_rating+'{$row['rating']}' WHERE user_id='{$user_id}'");
                     $db->super_query("UPDATE `codes` SET activate = 1, user_id ='{$user_id}' WHERE code='{$code}'");
-                    echo 'ok';
-                } else echo '2';
+                    return _e('ok');
+                } else {
+                    return _e('2');
+                }
 
-            } else echo '1';
+            } else {
+                return _e('1');
+            }
         }
     }
 
     /**
+     * Страница приглашения дурга
+     *
      * @param $params
      * @return string
      * @throws Exception
      */
-    public function invite($params){
+    public function invite($params): string
+    {
         $lang = $this->get_langs();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -61,14 +72,18 @@ class BalanceController extends Module{
 
             return view('balance.invite', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
+     *  Страница приглашённых друзей
+     *
      * @param $params
      * @return string
      * @throws Exception
      */
-    public function invited($params){
+    public function invited($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -126,11 +141,11 @@ class BalanceController extends Module{
             } else{
                 $params['invited'] = false;
             }
+            $params['menu'] = \App\Models\Menu::settings();
+
+            return view('balance.invited', $params);
         }
-
-        $params['menu'] = \App\Models\Menu::settings();
-
-        return view('balance.invited', $params);
+        return view('info.info', $params);
     }
 
     /**
@@ -169,7 +184,7 @@ class BalanceController extends Module{
 
             $tpl->compile('content');
 
-            Tools::AjaxTpl($tpl);
+
 
             $params['tpl'] = $tpl;
 //            Page::generate($params);
@@ -210,7 +225,7 @@ class BalanceController extends Module{
 
             $tpl->compile('content');
 
-            Tools::AjaxTpl($tpl);
+
 
             $params['tpl'] = $tpl;
 //            Page::generate($params);
@@ -228,14 +243,15 @@ class BalanceController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxRedirect();
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
 //            $mobile_speedbar = $lang['balance'];
 
-            $num = intval($_POST['num']);
+            $num = (int)$request['num'];
             if($num <= 0) $num = 0;
 
             $config = Settings::loadsettings();
@@ -258,11 +274,12 @@ class BalanceController extends Module{
 
     /**
      * Вывод текущего счета
+     *
      * @param $params
      * @return string
      * @throws Exception
      */
-    public function index($params)
+    public function index($params): string
     {
         $lang = $this->get_langs();
         $db = $this->db();
@@ -275,7 +292,7 @@ class BalanceController extends Module{
             $user_id = $id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             try {
                 $value = $Cache->get("users/{$id}/balance", $default = null);
                 $row = $owner = unserialize($value);

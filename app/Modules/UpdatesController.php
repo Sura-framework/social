@@ -9,24 +9,25 @@ use Sura\Libs\Tools;
 class UpdatesController extends Module {
 
     /**
+     * Моментальные оповещания
      *
+     * @throws \JsonException
      */
-    public function index(){
+    public function index(): string
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxQuery();
-
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             try {
                 $cntCacheUp = $Cache->get("users/{$user_id}/updates", $default = null);
 
                 if($cntCacheUp){
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
+                    $server_time = (int)$_SERVER['REQUEST_TIME'];
                     $update_time = $server_time - 70;
                     $row = $db->super_query("SELECT id, type, from_user_id, text, lnk, user_search_pref, user_photo FROM `updates` WHERE for_user_id = '{$user_id}' AND date > '{$update_time}' ORDER by `date`");
                     if($row){
@@ -47,7 +48,7 @@ class UpdatesController extends Module {
                             'link' => $row['lnk'], 
                         );
                         header('Content-Type: application/json');
-                        echo json_encode(array('res' => $res));
+                        return _e( json_encode(array('res' => $res), JSON_THROW_ON_ERROR));
 
                         // echo $row['type'].'|'.$row['user_search_pref'].'|'.$row['from_user_id'].'|'.stripslashes($row['text']).'|'.$server_time.'|'.$ava.'|'.$row['lnk'];
                         $db->query("DELETE FROM `updates` WHERE id = '{$row['id']}'");
@@ -55,14 +56,15 @@ class UpdatesController extends Module {
                         $Cache->set("users/{$user_id}/updates", '');
 
                         header('Content-Type: application/json');
-                        echo json_encode(array( 'error' => 'error'));
+                        return _e( json_encode(array('error' => 'error'), JSON_THROW_ON_ERROR) );
                     }
                 }
             }catch (Exception $e){
                 header('Content-Type: application/json');
-                echo json_encode(array( 'error' => 'error'));
+                return _e( json_encode(array('error' => 'error'), JSON_THROW_ON_ERROR) );
             }
         }
-        exit();
+        header('Content-Type: application/json');
+        return _e( json_encode(array('error' => 'error'), JSON_THROW_ON_ERROR) );
     }
 }

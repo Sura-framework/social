@@ -10,6 +10,8 @@ use Sura\Libs\Gramatic;
 class SubscriptionsController extends Module{
 
     /**
+     * Добвление юзера в подписки
+     *
      * @param $params
      */
     public function add($params){
@@ -22,7 +24,7 @@ class SubscriptionsController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $for_user_id = intval($_POST['for_user_id']);
+            $for_user_id = intval($request['for_user_id']);
 
             //Проверка на существование юзера в подписках
             $check = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$for_user_id}' AND subscriptions = 1");
@@ -37,11 +39,11 @@ class SubscriptionsController extends Module{
                 //Вставляем событие в моментальные оповещания
                 $row_owner = $db->super_query("SELECT user_last_visit, user_sex FROM `users` WHERE user_id = '{$for_user_id}'");
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
 
                 $update_time = $server_time - 70;
 
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
 
                 if($row_owner['user_last_visit'] >= $update_time){
 
@@ -72,6 +74,7 @@ class SubscriptionsController extends Module{
     }
 
     /**
+     * Удаление юзера из подписок
      *
      */
     public function del(){
@@ -84,9 +87,9 @@ class SubscriptionsController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $del_user_id = intval($_POST['del_user_id']);
+            $del_user_id = intval($request['del_user_id']);
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
 
             //Проверка на существование юзера в подписках
             $check = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$del_user_id}' AND subscriptions = 1");
@@ -105,10 +108,14 @@ class SubscriptionsController extends Module{
     }
 
     /**
+     * Показ всех подпискок юзера
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
         $tpl = $params['tpl'];
 
         $db = $this->db();
@@ -121,11 +128,11 @@ class SubscriptionsController extends Module{
             $user_id = $user_info['user_id'];
 
             //################### Показ всех подпискок юзера ###################//
-            if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
+            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
             $gcount = 24;
             $limit_page = ($page-1)*$gcount;
-            $for_user_id = intval($_POST['for_user_id']);
-            $subscr_num = intval($_POST['subscr_num']);
+            $for_user_id = intval($request['for_user_id']);
+            $subscr_num = intval($request['subscr_num']);
 
             $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.user_search_pref, user_photo, user_country_city_name, user_status FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$for_user_id}' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 1 ORDER by `friends_date` DESC LIMIT {$limit_page}, {$gcount}", 1);
 
@@ -157,11 +164,9 @@ class SubscriptionsController extends Module{
 //            $tpl->clear();
 //            $db->free();
 
-//            $params['tpl'] = $tpl;
-//            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         } else
-            echo 'no_log';
+            return view('info.info', $params);
 
 
     }

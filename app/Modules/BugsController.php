@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
+use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
@@ -10,21 +11,23 @@ class BugsController extends Module
 {
     /**
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    function add_box($params){
+    function add_box($params): string
+    {
         $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $row = $this->user_info();
 
-        Tools::NoAjaxQuery();
+
         $tpl->load_template('bugs/add.tpl');
 //        $row = $db->super_query("SELECT user_id, user_photo FROM `users` WHERE user_id = '{$user_id}'");
         if($row['user_photo']) $tpl->set('{photo}', '/uploads/users/'.$row['user_id'].'/'.$row['user_photo']);
         else $tpl->set('{photo}', '/images/no_ava.gif');
         $tpl->compile('content');
-        Tools::AjaxTpl($tpl);
-        return true;
+
+        return view('info.info', $params);
     }
 
     /**
@@ -33,11 +36,13 @@ class BugsController extends Module
     function create(){
         $db = $this->db();
 
-        Tools::NoAjaxQuery();
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
 //        Tools::AntiSpam('bugs');
-        $title = Validation::textFilter($_POST['title']);
-        $text = Validation::textFilter($_POST['text']);
-        $file = Validation::textFilter($_POST['file']);
+        $title = Validation::textFilter($request['title']);
+        $text = Validation::textFilter($request['text']);
+        $file = Validation::textFilter($request['file']);
 
         if(!$file){
 //            die();//////}
@@ -47,24 +52,23 @@ class BugsController extends Module
         $user_info = $this->user_info();
         $user_id = $user_info['user_id'];
 
-        $server_time = intval($_SERVER['REQUEST_TIME']);
+        $server_time = \Sura\Libs\Tools::time();
 
         $db->query("INSERT INTO `bugs` (uids, title, text, date, images) VALUES ('{$user_id}', '{$title}', '{$text}', '{$server_time}', '{$file}')");
 //        Tools::AntiSpamLogInsert('bugs');
 //        $iid = $db->insert_id();
 
-        die();
     }
 
     /**
      * @param $params
      */
     function load_img($params){
-        Tools::NoAjaxQuery();
+
 
         $image_tmp = $_FILES['uploadfile']['tmp_name'];
         $image_name = totranslit($_FILES['uploadfile']['name']);
-        $server_time = intval($_SERVER['REQUEST_TIME']);
+        $server_time = \Sura\Libs\Tools::time();
         $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20);
         $image_size = $_FILES['uploadfile']['size'];
         $exp = explode(".", $image_name);
@@ -81,7 +85,9 @@ class BugsController extends Module
                 $upload_dir = __DIR__.'/../../public/uploads/bugs/'.$user_id.'/';
 
                 if(!is_dir($upload_dir)){
-                    @mkdir($upload_dir, 0777);
+                    if (!mkdir($upload_dir, 0777) && !is_dir($upload_dir)) {
+                        throw new \RuntimeException(sprintf('Directory "%s" was not created', $upload_dir));
+                    }
                     @chmod($upload_dir, 0777);
                 }
 
@@ -119,8 +125,10 @@ class BugsController extends Module
     function delete($params){
         $db = $this->db();
 
-        Tools::NoAjaxQuery();
-        $id = intval($_POST['id']);
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
+        $id = (int)$request['id'];
 
         $row = $db->super_query("SELECT uids, images FROM `bugs` WHERE id = '{$id}'");
 
@@ -138,20 +146,23 @@ class BugsController extends Module
         $db->query("DELETE FROM `bugs` WHERE id = '{$id}'");
 
         echo 'ok';
-
-        die();
     }
 
     /**
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    function open($params){
+    function open($params): string
+    {
         $tpl = $params['tpl'];
         $db = $this->db();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         $limit_num = 10;
-        if($_GET['page_cnt'] > 0) $page_cnt = intval($_GET['page_cnt']) * $limit_num;
+        if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_num;
         else $page_cnt = 0;
 
         $where = "AND status = '1'";
@@ -167,7 +178,7 @@ class BugsController extends Module
                 $tpl->set('{title}', stripslashes($row['title']));
                 $tpl->set('{text}', stripslashes($row['text']));
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
 
                 //Выводим даты сообщения//
                 if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time))
@@ -219,21 +230,24 @@ class BugsController extends Module
 //        Tools::navigation($page_cnt, $limit_num, '/index.php'.$query.'&page_cnt=');
         $tpl->compile('content');
 
-        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
+        return view('info.info', $params);
     }
 
     /**
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    function complete($params){
+    function complete($params): string
+    {
         $tpl = $params['tpl'];
         $db = $this->db();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         $limit_num = 10;
-        if($_GET['page_cnt'] > 0) $page_cnt = intval($_GET['page_cnt']) * $limit_num;
+        if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_num;
         else $page_cnt = 0;
 
         $where = "AND status = '2'";
@@ -249,7 +263,7 @@ class BugsController extends Module
                 $tpl->set('{title}', stripslashes($row['title']));
                 $tpl->set('{text}', stripslashes($row['text']));
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
 
                 //Выводим даты сообщения//
                 if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time))
@@ -301,9 +315,7 @@ class BugsController extends Module
 //        Tools::navigation($page_cnt, $limit_num, '/index.php'.$query.'&page_cnt=');
         $tpl->compile('content');
 
-        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
+        return view('info.info', $params);
     }
 
     /**
@@ -314,8 +326,11 @@ class BugsController extends Module
         $tpl = $params['tpl'];
         $db = $this->db();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         $limit_num = 10;
-        if($_GET['page_cnt'] > 0) $page_cnt = intval($_GET['page_cnt']) * $limit_num;
+        if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_num;
         else $page_cnt = 0;
 
         $where = "AND status = '3'";
@@ -331,7 +346,7 @@ class BugsController extends Module
                 $tpl->set('{title}', stripslashes($row['title']));
                 $tpl->set('{text}', stripslashes($row['text']));
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
 
                 //Выводим даты сообщения//
                 if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time))
@@ -383,9 +398,7 @@ class BugsController extends Module
 //        Tools::navigation($page_cnt, $limit_num, '/index.php'.$query.'&page_cnt=');
         $tpl->compile('content');
 
-        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
+        return view('info.info', $params);
     }
 
     /**
@@ -396,8 +409,11 @@ class BugsController extends Module
         $tpl = $params['tpl'];
         $db = $this->db();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         $limit_num = 10;
-        if($_GET['page_cnt'] > 0) $page_cnt = intval($_GET['page_cnt']) * $limit_num;
+        if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_num;
         else $page_cnt = 0;
 
         $user_info = $this->user_info();
@@ -416,7 +432,7 @@ class BugsController extends Module
                 $tpl->set('{title}', stripslashes($row['title']));
                 $tpl->set('{text}', stripslashes($row['text']));
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
 
                 //Выводим даты сообщения//
                 if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time))
@@ -468,9 +484,7 @@ class BugsController extends Module
 //        Tools::navigation($page_cnt, $limit_num, '/index.php'.$query.'&page_cnt=');
         $tpl->compile('content');
 
-        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
+        return view('info.info', $params);
     }
 
     /**
@@ -481,9 +495,10 @@ class BugsController extends Module
         $tpl = $params['tpl'];
         $db = $this->db();
 
-        Tools::NoAjaxQuery();
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
 
-        $id = intval($_POST['id']);
+        $id = (int)$request['id'];
 
         $row = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.id = '{$id}' AND tb1.uids = tb2.user_id");
         $bugs = $db->super_query("SELECT admin_id, admin_text FROM `bugs` WHERE admin_id = '{$row['user_id']}'");
@@ -513,7 +528,7 @@ class BugsController extends Module
         else
             $tpl->set('{admin}', $row['user_search_pref']);
 
-        $server_time = intval($_SERVER['REQUEST_TIME']);
+        $server_time = \Sura\Libs\Tools::time();
 
         //Выводим даты сообщения//
         if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time))
@@ -550,11 +565,7 @@ class BugsController extends Module
         $tpl->set('{name}', $row['user_search_pref']);
         $tpl->compile('content');
 
-        Tools::AjaxTpl($tpl);
-
-        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
+        return view('info.info', $params);
     }
 
     /**
@@ -562,12 +573,18 @@ class BugsController extends Module
      * @return bool
      */
     function index($params){
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
         $db = $this->db();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         $limit_num = 10;
-        if($_GET['page_cnt'] > 0) $page_cnt = intval($_GET['page_cnt']) * $limit_num;
+        if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_num;
         else $page_cnt = 0;
+
+        $where_sql = '';
+        $where_cat = '';
 
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id {$where_sql} {$where_cat} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
 
@@ -580,7 +597,7 @@ class BugsController extends Module
                 $tpl->set('{title}', stripslashes($row['title']));
                 $tpl->set('{text}', stripslashes($row['text']));
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
 
                 //Выводим даты сообщения//
                 if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time))
@@ -632,8 +649,6 @@ class BugsController extends Module
 //        Tools::navigation($page_cnt, $limit_num, '/index.php'.$query.'&page_cnt=');
         $tpl->compile('content');
 
-        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
+        return view('info.info', $params);
     }
 }

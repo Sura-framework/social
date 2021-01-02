@@ -3,6 +3,7 @@
 return array(
     // Главная
     '/'                                           => 'Home@Index',
+//    '/2'                                           => array('method' => 'Home@Index'),
 
     // Регистрация
     '/reg/'                                       => 'Home@Index',
@@ -200,10 +201,10 @@ return array(
 
     //Новости
     '/news/'                                      => 'Feed@feed',
-    '/news/updates/'                              => 'News@Index',
-    '/news/photos/'                               => 'News@Index',
-    '/news/videos/'                               => 'News@Index',
-    '/news/notifications/'                        => 'News@Index',
+    '/news/updates/'                              => 'Feed@Index',
+    '/news/photos/'                               => 'Feed@Index',
+    '/news/videos/'                               => 'Feed@Index',
+    '/news/notifications/'                        => 'Feed@Index',
     '/news/next/'                                 => 'Feed@Next',
 
     //Сообщения
@@ -240,7 +241,7 @@ return array(
     '/wall/:num/own/'                             => 'Wall@Index',
     '/wall/:num/own/:num/'                        => 'Wall@Index',
     '/wall/:num/:num/'                            => 'Wall@Index',
-    '/wall/delet/'                                => 'Wall@delet',
+    '/wall/delet/'                                => 'Wall@delete',
     '/wall/send/'                                 => 'Wall@send',
     '/wall/page/'                                 => 'Wall@page',
     '/wall/all_comm/'                             => 'Wall@all_comm',
@@ -249,6 +250,7 @@ return array(
     '/wall/parse_link/'                           => 'Wall@parse_link',
     '/wall/like_yes/'                             => 'Wall@like_yes',
     '/wall/like_no/'                              => 'Wall@like_no',
+    '/wall/like_remove/'                          => 'Wall@like_no',
     '/wall/liked_users/'                          => 'Wall@liked_users',
 
     //Настройки
@@ -304,9 +306,9 @@ return array(
     '/groups/'                                    => 'Groups@Index',
     '/groups/admin/'                              => 'Groups@admin',
     '/groups/send/'                               => 'Groups@send',
-    '/groups/exit/'                               => 'Groups@exit',
+    '/groups/exit/'                               => 'Groups@logout',
     '/groups/login/'                              => 'Groups@login',
-    '/groups/loadphoto_page/'                     => 'Groups@loadphoto_page',
+    '/groups/loadphoto_page/'                     => 'Groups@load_photo_page',
     '/groups/delphoto/'                           => 'Groups@delphoto',
     '/groups/addfeedback_pg/'                     => 'Groups@addfeedback_pg',
     '/groups/allfeedbacklist/'                    => 'Groups@allfeedbacklist',
@@ -338,6 +340,8 @@ return array(
     '/forum:num/view/:num/'                     => 'Groups_forum@view',
     '/groups/loadphoto/:num/'                     => 'Groups@loadphoto',
     '/wallgroups/:num/:num/'                      => 'Groups@wallgroups',
+
+    '/groups/all_liked_users/'                      => 'Groups@all_liked_users',
 
     //Сообщества -> Публичные страницы -> Обсуждения
     '/public/forum/:num/'                         => 'None@Index',
@@ -479,5 +483,6 @@ return array(
     '/admin/ads/'                                    => 'Admin@main',
 
     '/api/'                                    => 'Api@main',
+    '/sitemap/'                                    => 'Sitemap@main',
 );
 

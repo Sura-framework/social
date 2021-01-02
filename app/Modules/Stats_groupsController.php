@@ -8,11 +8,14 @@ use Sura\Libs\Tools;
 class Stats_groupsController extends Module{
 
     /**
+     * Статистика сообщества
+     *
      * @param $params
-     * @return bool|string
+     * @return string
      * @throws Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
         $tpl = $params['tpl'];
 
         $db = $this->db();
@@ -23,12 +26,12 @@ class Stats_groupsController extends Module{
 
         if($logged){
             //################### Выводим статистику ###################//
-            $gid = intval($_GET['gid']);
+            $gid = intval($request['gid']);
 
-            $month = intval($_GET['m']);
+            $month = intval($request['m']);
             if($month AND $month <= 0 OR $month > 12) $month = 2;
 
-            $year = intval($_GET['y']);
+            $year = intval($request['y']);
             if($year AND $year < 2013 OR $year > 2020) $year = 2013;
 
             //Выводим админа сообщества
@@ -37,7 +40,7 @@ class Stats_groupsController extends Module{
             //ПРоверка на админа
             if(strpos($owner['admin'], "u{$user_info['user_id']}|") !== false){
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = \Sura\Libs\Tools::time();
 
                 if($month AND $year){
 
@@ -157,16 +160,11 @@ class Stats_groupsController extends Module{
 
             $tpl->clear();
             $db->free();
-
-        } else {
+            return view('info.info', $params);
+        }
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
 
-        }
-
-//        $params['tpl'] = $tpl;
-//        Page::generate($params);
-        return true;
     }
 }

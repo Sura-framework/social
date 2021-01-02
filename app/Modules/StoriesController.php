@@ -16,10 +16,12 @@ class StoriesController  extends Module
      * Open pop-up box to add stories img
      *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function addbox($params)
+    public function addbox($params): string
     {
+        //FIXME add logged
         $tpl = $params['tpl'];
 
         Tools::NoAjaxRedirect();
@@ -30,11 +32,12 @@ class StoriesController  extends Module
 
         $tpl->compile('content');
 
-        Tools::AjaxTpl($tpl);
-        return true;
+        return view('info.info', $params);
     }
 
     /**
+     * upload
+     *
      * @param $params
      */
     public function upload($params)
@@ -68,7 +71,7 @@ class StoriesController  extends Module
             //Получаем данные о фотографии
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $server_time = \Sura\Libs\Tools::time();
             $image_rename = substr(md5($server_time+rand(1,100000)), 0, 15); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
             $array = explode(".", $image_name);
@@ -130,24 +133,25 @@ class StoriesController  extends Module
                     echo 'big_size';
             } else
                 echo 'bad_format';
-
-            die();
         }
     }
 
     /**
+     * show
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function show($params)
+    public function show($params): string
     {
         $db = $this->db();
         $tpl = $params['tpl'];
         $user_info = $params['user']['user_info'];
         $user_id = $user_info['user_id'];
 
-        if (isset($_POST['user'])){
-            $user_id = $_POST['user'];
+        if (isset($request['user'])){
+            $user_id = $request['user'];
         }
 
         Tools::NoAjaxRedirect('/news/');
@@ -172,7 +176,7 @@ class StoriesController  extends Module
         $stories = $db->super_query("SELECT * FROM `stories` WHERE user_id = '{$user_id}' ORDER by `add_date` DESC LIMIT {$num}, 1 ");
 
         //Удаляем историю спустя сутки
-//        $server_time = intval($_SERVER['REQUEST_TIME']);
+//        $server_time = \Sura\Libs\Tools::time();
 //        $online_time = $server_time - 86400;//сутки
 //        if ($stories['add_date'] <= $online_time){
 //            $db->query("DELETE FROM `stories` WHERE id = '{$stories['id']}'");
@@ -189,16 +193,17 @@ class StoriesController  extends Module
 
         //$tpl->set('{langs}', $langs);
 
-        $tpl->compile('content');
-
-        Tools::AjaxTpl($tpl);
-        return true;
+        return view('info.info', $params);
     }
 
     /**
-     * @return bool
+     * show next
+     *
+     * @param $params
+     * @return string
+     * @throws \Exception
      */
-    public function show_next()
+    public function show_next($params): string
     {
         $db = $this->db();
 //        $user_info = $params['user']['user_info'];
@@ -227,7 +232,7 @@ class StoriesController  extends Module
             $stories_url = str_replace('stories/', 'stories/o_', $stories['url']);
 
             //Удаляем историю спустя сутки
-            $server_time = intval($_SERVER['REQUEST_TIME']);
+            $server_time = \Sura\Libs\Tools::time();
             $online_time = $server_time - 86400;//сутки
             if ($stories['add_date'] <= $online_time){
                 $db->query("DELETE FROM `stories` WHERE id = '{$stories['id']}'");
@@ -255,50 +260,49 @@ class StoriesController  extends Module
         }
 
 
-if (isset($stories['url'])){
-    echo "
-<link media=\"screen\" href=\"/style/style.css\" type=\"text/css\" rel=\"stylesheet\">
-<link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css\" integrity=\"sha384-r4NyP46KrjDleawBgD5tp8Y7UzmLA05oM1iAEQ17CSuDqnUK2+k9luXQOfXJCJ4I\" crossorigin=\"anonymous\">
-
-<div class=\"kv0 ss_m\">".$progress_full."</div>
-<div class='row '>
-    <div class='col-1 m-auto'>
-        <div  class='text-center' onclick=\"prevstori()\">
-            <svg width=\"3em\" height=\"3em\" viewBox=\"0 0 16 16\" class=\"bi bi-arrow-left\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\">
-          <path fill-rule=\"evenodd\" d=\"M5.854 4.646a.5.5 0 0 1 0 .708L3.207 8l2.647 2.646a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 0 1 .708 0z\"/>
-          <path fill-rule=\"evenodd\" d=\"M2.5 8a.5.5 0 0 1 .5-.5h10.5a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z\"/>
-            </svg>
+        if (isset($stories['url'])){
+            echo "
+        <link media=\"screen\" href=\"/style/style.css\" type=\"text/css\" rel=\"stylesheet\">
+        <link rel=\"stylesheet\" href=\"https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css\" integrity=\"sha384-r4NyP46KrjDleawBgD5tp8Y7UzmLA05oM1iAEQ17CSuDqnUK2+k9luXQOfXJCJ4I\" crossorigin=\"anonymous\">
+        
+        <div class=\"kv0 ss_m\">".$progress_full."</div>
+        <div class='row '>
+            <div class='col-1 m-auto'>
+                <div  class='text-center' onclick=\"prevstori()\">
+                    <svg width=\"3em\" height=\"3em\" viewBox=\"0 0 16 16\" class=\"bi bi-arrow-left\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\">
+                  <path fill-rule=\"evenodd\" d=\"M5.854 4.646a.5.5 0 0 1 0 .708L3.207 8l2.647 2.646a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 0 1 .708 0z\"/>
+                  <path fill-rule=\"evenodd\" d=\"M2.5 8a.5.5 0 0 1 .5-.5h10.5a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z\"/>
+                    </svg>
+                </div>
+            
+            </div>
+            <div class='col-10'>
+                                    <div class=\"p-2\">
+                                    <svg width=\"1em\" height=\"1em\" viewBox=\"0 0 16 16\" class=\"bi bi-eye\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\">
+                                        <path fill-rule=\"evenodd\" d=\"M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.134 13.134 0 0 0 1.66 2.043C4.12 11.332 5.88 12.5 8 12.5c2.12 0 3.879-1.168 5.168-2.457A13.134 13.134 0 0 0 14.828 8a13.133 13.133 0 0 0-1.66-2.043C11.879 4.668 10.119 3.5 8 3.5c-2.12 0-3.879 1.168-5.168 2.457A13.133 13.133 0 0 0 1.172 8z\"/>
+                                        <path fill-rule=\"evenodd\" d=\"M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z\"/>
+                                    </svg> 0
+                                </div>
+                                <img class=\"card-img-top\" src=\"".$stories_url."\" alt=\"\">
+            </div>
+            <div class='col-1 m-auto'>
+                <div class='text-center' onclick=\"nextstori()\">
+                    <svg width=\"3em\" height=\"3em\" viewBox=\"0 0 16 16\" class=\"bi bi-arrow-right\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\">
+                      <path fill-rule=\"evenodd\" d=\"M10.146 4.646a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L12.793 8l-2.647-2.646a.5.5 0 0 1 0-.708z\"/>
+                      <path fill-rule=\"evenodd\" d=\"M2 8a.5.5 0 0 1 .5-.5H13a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 8z\"/>
+                    </svg>
+                </div >
+        
+            </div >
+        
         </div>
-    
-    </div>
-    <div class='col-10'>
-                            <div class=\"p-2\">
-                            <svg width=\"1em\" height=\"1em\" viewBox=\"0 0 16 16\" class=\"bi bi-eye\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\">
-                                <path fill-rule=\"evenodd\" d=\"M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.134 13.134 0 0 0 1.66 2.043C4.12 11.332 5.88 12.5 8 12.5c2.12 0 3.879-1.168 5.168-2.457A13.134 13.134 0 0 0 14.828 8a13.133 13.133 0 0 0-1.66-2.043C11.879 4.668 10.119 3.5 8 3.5c-2.12 0-3.879 1.168-5.168 2.457A13.133 13.133 0 0 0 1.172 8z\"/>
-                                <path fill-rule=\"evenodd\" d=\"M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z\"/>
-                            </svg> 0
-                        </div>
-                        <img class=\"card-img-top\" src=\"".$stories_url."\" alt=\"\">
-    </div>
-    <div class='col-1 m-auto'>
-        <div class='text-center' onclick=\"nextstori()\">
-            <svg width=\"3em\" height=\"3em\" viewBox=\"0 0 16 16\" class=\"bi bi-arrow-right\" fill=\"currentColor\" xmlns=\"http://www.w3.org/2000/svg\">
-              <path fill-rule=\"evenodd\" d=\"M10.146 4.646a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L12.793 8l-2.647-2.646a.5.5 0 0 1 0-.708z\"/>
-              <path fill-rule=\"evenodd\" d=\"M2 8a.5.5 0 0 1 .5-.5H13a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 8z\"/>
-            </svg>
-        </div >
+        
+                        ";
+        }else{
+            echo 'exit';
+        }
 
-    </div >
-
-</div>
-
-                ";
-}else{
-    echo 'exit';
-}
-
-        //Tools::AjaxTpl($tpl);
-        return true;
+        return view('info.info', $params);
     }
 
 }

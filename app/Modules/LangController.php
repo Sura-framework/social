@@ -12,12 +12,12 @@ class LangController extends Module{
      * @return string
      * @throws \Exception
      */
-    public static function index($params)
+    public static function index($params): string
     {
         Tools::NoAjaxRedirect();
 
         if (isset($_COOKIE['lang']) AND $_COOKIE['lang'] > 0)
-            $useLang = intval($_COOKIE['lang']);
+            $useLang = (int)$_COOKIE['lang'];
         else
             $useLang = 0;
 
@@ -70,33 +70,5 @@ class LangController extends Module{
         }
         $params['lang'] = $lang;
         return view('lang', $params);
-    }
-
-    /**
-     *
-     */
-    //#[Deprecated]
-    public static function change_lang(){
-        //Смена языка
-//        if($_GET['act'] == 'chage_lang'){
-        $path = explode('/', $_SERVER['REQUEST_URI']);
-
-        if (isset($path['3'])){
-            $langId = $path['3'];
-
-            $Lang_List = Langs::lang_list();
-
-            $num_Lang = count($Lang_List);
-            if($langId >= 0 AND $langId <= $num_Lang){
-                //Меняем язык
-                Tools::set_cookie("lang", $langId, 365);
-            }
-            $langReferer = $_SERVER['HTTP_REFERER'];
-            return  header("Location: {$langReferer}");
-        }else
-            echo 'error';
-
-//        }
-
     }
 }

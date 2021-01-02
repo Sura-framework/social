@@ -2,9 +2,11 @@
 
 namespace App\Modules;
 
+use App\Libs\Wall;
 use App\Services\Cache;
 use Exception;
 use Sura\Libs\Gramatic;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
@@ -12,11 +14,14 @@ use Sura\Libs\Validation;
 class PublicController extends Module{
 
     /**
+     *  Сообщества -> Публичные страницы
+     *
      * @param $params
      * @return string
      * @throws Exception
      */
-    public function index($params){
+    public function index($params): string
+    {
 
         $lang = $this->get_langs();
         $db = $this->db();
@@ -24,10 +29,13 @@ class PublicController extends Module{
         $logged = $this->logged();
         $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
 
+        $request = (Request::getRequest()->getGlobal());
+
         $config = Settings::loadsettings();
 
-        if($ajax == 'yes')
+        if($ajax == 'yes') {
             Tools::NoAjaxRedirect();
+        }
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -38,8 +46,8 @@ class PublicController extends Module{
              */
             $path = explode('/', $_SERVER['REQUEST_URI']);
             $id = str_replace('public', '', $path);
-            $pid = intval($id['1']);
-            $id = intval($id['1']);
+            $pid = (int)$id['1'];
+            $id = (int)$id['1'];
 
 //            $mobile_speedbar = 'Сообщество';
 
@@ -62,9 +70,9 @@ class PublicController extends Module{
 
             //Если страница вывзана через "к предыдущим записям"
             $limit_select = 10;
-            if(isset($_POST['page_cnt']) AND $_POST['page_cnt'] > 0)
-                $page_cnt = intval($_POST['page_cnt'])*$limit_select;
-            else
+//            if(isset($request['page_cnt']) AND $request['page_cnt'] > 0)
+//                $page_cnt = (int)$request['page_cnt'] *$limit_select;
+//            else
                 $page_cnt = 0;
 
             if($page_cnt){
@@ -75,14 +83,16 @@ class PublicController extends Module{
 //                $row = $db->super_query("SELECT id, title, descr, traf, ulist, photo, date, admin, feedback, comments, real_admin, rec_num, del, ban, adres, audio_num, forum_num, discussion, status_text, web, videos_num, cover, cover_pos FROM `communities` WHERE ".$sql_where);
             }
 
-            $Cache = Cache::initialize();
+            $Cache = cache_init(array('type' => 'file'));
             try {
                 $value = $Cache->get("public/{$id}/profile_{$id}", $default = null);
-                $row = unserialize($value);
+                $row = unserialize($value, $options = []);
             }catch (Exception $e){
                 $dir = __DIR__.'/../cache/public/'.$id.'/';
                 if(!is_dir($dir)) {
-                    mkdir($dir, 0777, true);
+                    if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
+                        throw new \RuntimeException(sprintf('Directory "%s" was not created', $dir));
+                    }
                 }
 
                 $row = $db->super_query("SELECT id, title, descr, traf, ulist, photo, date, admin, feedback, comments, real_admin, rec_num, del, ban, adres, audio_num, forum_num, discussion, status_text, web, videos_num, cover, cover_pos FROM `communities` WHERE ".$sql_where);
@@ -100,40 +110,50 @@ class PublicController extends Module{
             } elseif($row){
                 $params['title'] = stripslashes($row['title']).' | Sura';
 
-                if(stripos($row['admin'], "u{$user_id}|") !== false)
+                if(stripos($row['admin'], "u{$user_id}|") !== false) {
                     $public_admin = true;
-                else
+                }
+                else {
                     $public_admin = false;
+                }
 
                 //Стена
                 //Если страница вывзана через "к предыдущим записям"
-                if($page_cnt)
-                    Tools::NoAjaxQuery();
+//                if($page_cnt)
+//                    Tools::NoAjaxQuery();
 
                 // include __DIR__.'/../Classes/Public_wall.php';
 
 
                 //$wall = new Public_wall();
-                $query = $db->super_query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, fixed, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = '{$row['id']}' AND tb1.public_id = tb2.id AND fast_comm_id = 0 ORDER by `fixed` DESC, `add_date` DESC LIMIT {$page_cnt}, {$limit_select}", 1);
-                //$tpl = $wall->template('groups/record.tpl', $tpl);
-//                $tpl->load_template('groups/record.tpl');
+                $query = $db->super_query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, fixed, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = '{$row['id']}' AND tb1.public_id = tb2.id AND fast_comm_id = 0 ORDER by `fixed` DESC, `add_date` DESC LIMIT {$page_cnt}, {$limit_select}", true);
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = Tools::time();
 
                 //Если страница вывзана через "к предыдущим записям"
-                if($page_cnt){
-                    $compile = 'content';
-                    //$tpl = $wall->compile('content', $tpl);
-                }else{
-                    $compile = 'wall';
-                    //$tpl = $wall->compile('wall', $tpl);
-                }
+//                if($page_cnt){
+//                    $compile = 'content';
+//                    //$tpl = $wall->compile('content', $tpl);
+//                }else{
+//                    $compile = 'wall';
+//                    //$tpl = $wall->compile('wall', $tpl);
+//                }
 
                 $user_id = $user_info['user_id'];
 
-
+                /*
                 foreach($query as $key => $row_wall){
+
+                    $query[$key]['action_type'] = 2;
                     $query[$key]['rec_id'] = $row_wall['id'];
+
+
+                    if ($query[$key]['action_type'] == 1) {
+                        $query[$key]['address'] = 'u'.$row_wall['author_user_id'];
+                    }else{
+                        $query[$key]['address'] = 'public'.$row_wall['public_id'];
+                    }
+
                     //Закрепить запись
                     if($row_wall['fixed']){
                         $query[$key]['styles_fasten'] = 'style="opacity:1"';
@@ -164,16 +184,20 @@ class PublicController extends Module{
                             $attach_type = explode('|', $attach_file);
 
                             //Фото со стены сообщества
-                            if($row_wall['tell_uid'])
+                            if($row_wall['tell_uid']) {
                                 $globParId = $row_wall['tell_uid'];
-                            else
+                            }
+                            else {
                                 $globParId = $row_wall['public_id'];
+                            }
 
                             if($attach_type[0] == 'photo' AND file_exists(__DIR__."/../../public/uploads/groups/{$globParId}/photos/c_{$attach_type[1]}")){
-                                if($cnt_attach < 2)
+                                if($cnt_attach < 2) {
                                     $attach_result .= "<div class=\"profile_wall_attach_photo cursor_pointer page_num{$row_wall['id']}\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$globParId}', '{$attach_type[1]}', '{$cnt_attach}')\"><img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$globParId}/photos/{$attach_type[1]}\" align=\"left\" /></div>";
-                                else
+                                }
+                                else {
                                     $attach_result .= "<img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$globParId}/photos/c_{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$globParId}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row_wall['id']}\" />";
+                                }
 
                                 $cnt_attach++;
 
@@ -209,7 +233,7 @@ class PublicController extends Module{
 
                                 if($cnt_attach_video == 1 AND preg_match('/(photo|photo_u)/i', $row_wall['attach']) == false){
 
-                                    $video_id = intval($attach_type[2]);
+                                    $video_id = (int)$attach_type[2];
 
                                     $row_video = $db->super_query("SELECT video, title FROM `videos` WHERE id = '{$video_id}'", false, "wall/video{$video_id}");
                                     $row_video['title'] = stripslashes($row_video['title']);
@@ -230,7 +254,7 @@ class PublicController extends Module{
                                 //Музыка
                             } elseif($attach_type[0] == 'audio'){
                                 $data = explode('_', $attach_type[1]);
-                                $audioId = intval($data[0]);
+                                $audioId = (int)$data[0];
                                 $row_audio = $db->super_query("SELECT id, oid, artist, title, url, duration FROM
 						        `audio` WHERE id = '{$audioId}'");
                                 if($row_audio){
@@ -323,7 +347,7 @@ class PublicController extends Module{
                                 //Если документ
                             } elseif($attach_type[0] == 'doc'){
 
-                                $doc_id = intval($attach_type[1]);
+                                $doc_id = (int)$attach_type[1];
 
                                 $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false, "wall/doc{$doc_id}");
 
@@ -337,7 +361,7 @@ class PublicController extends Module{
                                 //Если опрос
                             } elseif($attach_type[0] == 'vote'){
 
-                                $vote_id = intval($attach_type[1]);
+                                $vote_id = (int)$attach_type[1];
 
                                 $row_vote = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false, "votes/vote_{$vote_id}");
 
@@ -418,9 +442,12 @@ class PublicController extends Module{
                     //Если это запись с "рассказать друзьям"
                     if($row_wall['tell_uid']){
                         if($row_wall['public'])
+                        {
                             $rowUserTell = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$row_wall['tell_uid']}'", false, "wall/group{$row_wall['tell_uid']}");
-                        else
+                        }
+                        else {
                             $rowUserTell = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$row_wall['tell_uid']}'");
+                        }
 
                         if(date('Y-m-d', $row_wall['tell_date']) == date('Y-m-d', $server_time))
                             $dateTell = langdate('сегодня в H:i', $row_wall['tell_date']);
@@ -488,7 +515,8 @@ class PublicController extends Module{
 
                     if($row_wall['likes_num']){
                         $query[$key]['likes'] =$row_wall['likes_num'];
-                        $query[$key]['likes_text'] = '<span id="like_text_num'.$row_wall['id'].'">'.$row_wall['likes_num'].'</span> '.Gramatic::declOfNum($row_wall['likes_num'], 'like');
+                        $titles = array('человеку', 'людям', 'людям');//like
+                        $query[$key]['likes_text'] = '<span id="like_text_num'.$row_wall['id'].'">'.$row_wall['likes_num'].'</span> '.Gramatic::declOfNum($row_wall['likes_num'], $titles);
                     } else {
                         $query[$key]['likes'] = true;
                         $query[$key]['likes_text'] ='<span id="like_text_num'.$row_wall['id'].'">0</span> человеку';
@@ -623,7 +651,8 @@ class PublicController extends Module{
                     }
                 }
 
-                $params['query'] = $query;
+                */
+                $params['wall_records'] = Wall::build($query);
 
                 //Стена
                 if($row['rec_num'] > 10){
@@ -647,10 +676,6 @@ class PublicController extends Module{
                 }
 
                 //Если страница вывзана через "к предыдущим записям"
-                if($page_cnt){
-//                    Tools::AjaxTpl($tpl);
-                    exit;
-                }
 
 //                $tpl->load_template('public/main.tpl');
 
@@ -738,7 +763,8 @@ class PublicController extends Module{
                     }
                     $params['feedback_users'] = $feedback_users;
                     $params['feedback'] = true;
-                } else {
+                }
+                else {
                     $params['feedback'] = false;
 //                    $params['no'] = true;
 //                    $params['yes'] = false;
@@ -762,8 +788,7 @@ class PublicController extends Module{
 
                 $params['id'] = $row['id'];
 
-                $date = megaDate(strtotime($row['date']), 1, 1);
-                $params['date'] = $date;
+                $params['date'] = megaDate(strtotime($row['date']), 1, 1);
                 //Комментарии включены
                 if($row['comments']){
                     $params['settings_comments'] = 'comments';

@@ -2,24 +2,23 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Exception;
+use Sura\Libs\Mail;
+use Sura\Libs\Navigation;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
 class FriendsController extends Module{
 
-    public function sends()
-    {
-        echo 'true';
-    }
-
     /**
      * Отправка заявки в друзья
+     *
      * @param $params
      */
-    public function send($params){
+    public function send($params)
+    {
 
         $path = explode('/', $_SERVER['REQUEST_URI']);
 
@@ -42,13 +41,13 @@ class FriendsController extends Module{
 
             AntiSpam('friends');
 
-            $for_user_id = intval($path['3']);
+            $for_user_id = (int)$path['3'];
             $from_user_id = $user_info['user_id'];
 
             //Проверяем на факт сушествования заявки для пользователя, если она уже есть, то даёт ответ "yes_demand"
             $check = $db->super_query("SELECT for_user_id FROM `friends_demands` WHERE for_user_id = '{$for_user_id}' AND from_user_id = '{$from_user_id}'");
 
-            if($for_user_id AND !$check AND $for_user_id != $from_user_id){
+            if($for_user_id AND !$check AND $for_user_id !== $from_user_id){
 
                 //Проверяем существования заявки у себя в заявках
                 $check_demands = $db->super_query("SELECT for_user_id FROM `friends_demands` WHERE for_user_id = '{$from_user_id}' AND from_user_id = '{$for_user_id}'");
@@ -62,7 +61,7 @@ class FriendsController extends Module{
                         $db->query("UPDATE `users` SET user_friends_demands = user_friends_demands+1 WHERE user_id = '{$for_user_id}'");
                         echo 'ok';
 
-                        $server_time = intval($_SERVER['REQUEST_TIME']);
+                        $server_time = (int)$_SERVER['REQUEST_TIME'];
                         //Вставляем событие в моментальные оповещания
                         $row_owner = $db->super_query("SELECT user_last_visit FROM `users` WHERE user_id = '{$for_user_id}'");
                         $update_time = $server_time - 70;
@@ -73,49 +72,51 @@ class FriendsController extends Module{
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$for_user_id}', from_user_id = '{$user_info['user_id']}', type = '11', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/friends/requests'");
 
-                            $Cache = Cache::initialize();
+                            $Cache = cache_init(array('type' => 'file'));
                             $Cache->set("users/{$for_user_id}/updates", '1');
                         }
 
-//                        $config = Settings::loadsettings();
+                        $config = Settings::loadsettings();
 
-                        //Отправка уведомления на E-mail
-//                        if($config['news_mail_1'] == 'yes'){
-//                            $rowUserEmail = $db->super_query("SELECT user_name, user_email FROM `users` WHERE user_id = '".$for_user_id."'");
-//                            if($rowUserEmail['user_email']){
-//                                include_once __DIR__.'/../Classes/mail.php';
-//                                $mail = new \dle_mail($config);
-//                                $rowMyInfo = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '".$user_id."'");
-//                                $rowEmailTpl = $db->super_query("SELECT text FROM `mail_tpl` WHERE id = '1'");
-//                                $rowEmailTpl['text'] = str_replace('{%user%}', $rowUserEmail['user_name'], $rowEmailTpl['text']);
-//                                $rowEmailTpl['text'] = str_replace('{%user-friend%}', $rowMyInfo['user_search_pref'], $rowEmailTpl['text']);
-//                                $mail->send($rowUserEmail['user_email'], 'Новая заявка в друзья', $rowEmailTpl['text']);
-//                            }
-//                        }
-                    } else
+                        /**
+                         * Отправка уведомления на E-mail
+                         */
+                        if($config['news_mail_1'] === 'yes'){
+                            $rowUserEmail = $db->super_query("SELECT user_name, user_email FROM `users` WHERE user_id = '".$for_user_id."'");
+                            if($rowUserEmail['user_email']){
+                                $mail = new Mail($config);
+                                $rowMyInfo = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '".$from_user_id."'");
+                                $rowEmailTpl = $db->super_query("SELECT text FROM `mail_tpl` WHERE id = '1'");
+                                $rowEmailTpl['text'] = str_replace('{%user%}', $rowUserEmail['user_name'], $rowEmailTpl['text']);
+                                $rowEmailTpl['text'] = str_replace('{%user-friend%}', $rowMyInfo['user_search_pref'], $rowEmailTpl['text']);
+                                $mail->send($rowUserEmail['user_email'], 'Новая заявка в друзья', $rowEmailTpl['text']);
+                            }
+                        }
+                    } else {
                         echo 'yes_friend';
-                } else
+                    }
+                } else {
                     echo 'yes_demand2';
-            } else
+                }
+            } else {
                 echo 'yes_demand';
-
-            die();
+            }
         }
+        echo 'false';
     }
 
     /**
      * Принятие заявки на дружбу
+     *
      * @param $params
+     * @return string
      */
-    public function take($params){
+    public function take($params): string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
-//        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-//        if($ajax == 'no')
-//            Tools::NoAjaxQuery();
 
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
@@ -126,7 +127,7 @@ class FriendsController extends Module{
             //Tools::NoAjaxQuery();
 
             $path = explode('/', $_SERVER['REQUEST_URI']);
-            var_dump($path);
+//            var_dump($path);
             //$take_user_id = intval($_GET['take_user_id']);
             $take_user_id = $path['3'];
 
@@ -153,18 +154,22 @@ class FriendsController extends Module{
                 //Удаляем заявку из таблицы заявок
                 $db->query("DELETE FROM `friends_demands` WHERE for_user_id = '{$user_id}' AND from_user_id = '{$take_user_id}'");
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
+                $server_time = (int)$_SERVER['REQUEST_TIME'];
                 $generateLastTime = $server_time-10800;
 
                 //Добавляем действия в ленту новостей кто подавал заявку
                 $rowX = $db->super_query("SELECT ac_id, action_text FROM `news` WHERE action_time > '{$generateLastTime}' AND action_type = 4 AND ac_user_id = '{$take_user_id}'");
-                if($rowX['ac_id'])
-                    if(!preg_match("/{$rowX['action_text']}/i", $user_id))
+                if($rowX['ac_id']) {
+                    if (!preg_match("/{$rowX['action_text']}/i", $user_id)) {
                         $db->query("UPDATE `news` SET action_text = '{$rowX['action_text']}||{$user_id}', action_time = '{$server_time}' WHERE ac_id = '{$rowX['ac_id']}'");
-                    else
+                    }
+                    else {
                         echo '';
-                else
+                    }
+                }
+                else {
                     $db->query("INSERT INTO `news` SET ac_user_id = '{$take_user_id}', action_type = 4, action_text = '{$user_id}', action_time = '{$server_time}'");
+                }
 
                 //Вставляем событие в моментальные оповещания
                 $row_owner = $db->super_query("SELECT user_last_visit FROM `users` WHERE user_id = '{$take_user_id}'");
@@ -173,27 +178,35 @@ class FriendsController extends Module{
                 if($row_owner['user_last_visit'] >= $update_time){
 
                     $myRow = $db->super_query("SELECT user_sex FROM `users` WHERE user_id = '{$user_info['user_id']}'");
-                    if($myRow['user_sex'] == 2) $action_update_text = 'подтвердила Вашу заявку на дружбу.';
-                    else $action_update_text = 'подтвердил Вашу заявку на дружбу.';
+                    if($myRow['user_sex'] == 2) {
+                        $action_update_text = 'подтвердила Вашу заявку на дружбу.';
+                    }
+                    else {
+                        $action_update_text = 'подтвердил Вашу заявку на дружбу.';
+                    }
 
                     $db->query("INSERT INTO `updates` SET for_user_id = '{$take_user_id}', from_user_id = '{$user_info['user_id']}', type = '12', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/u{$take_user_id}'");
 
-                    $Cache = Cache::initialize();
+                    $Cache = cache_init(array('type' => 'file'));
                     $Cache->set("users/{$take_user_id}/updates", '1');
                 }
 
                 //Добавляем действия в ленту новостей себе
                 $row = $db->super_query("SELECT ac_id, action_text FROM `news` WHERE action_time > '{$generateLastTime}' AND action_type = 4 AND ac_user_id = '{$user_id}'");
-                if($row)
-                    if(!preg_match("/{$row['action_text']}/i", $take_user_id))
+                if($row) {
+                    if (!preg_match("/{$row['action_text']}/i", $take_user_id)) {
                         $db->query("UPDATE `news` SET action_text = '{$row['action_text']}||{$take_user_id}', action_time = '{$server_time}' WHERE ac_id = '{$row['ac_id']}'");
-                    else
+                    }
+                    else {
                         echo '';
-                else
+                    }
+                }
+                else {
                     $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 4, action_text = '{$take_user_id}', action_time = '{$server_time}'");
+                }
 
                 //Чистим кеш владельцу стр и тому кого добавляем в др.
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_id}/profile_".$user_id);
                 $Cache->delete("users/{$take_user_id}/profile_".$take_user_id);
 
@@ -203,34 +216,34 @@ class FriendsController extends Module{
 
                 $openTakeList = $Cache->get("users/{$take_user_id}/friends");
                 $Cache->set("users/{$take_user_id}/friends", $openTakeList."u{$user_id}|");
-            } else
-                echo 'no_request';
 
-            die();
+                return _e('true');
+            }
+
+            return _e('no_request');
         }
+        return _e('no_request');
     }
 
     /**
      * Отклонение заявки на дружбу
+     *
+     * @param $params
      */
     public function reject($params){
-//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-            $params['title'] = $lang['friends'].' | Sura';
-//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-//            $gcount = 20;
-//            $limit_page = ($page-1)*$gcount;
+//        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
+        if($logged){
             //Tools::NoAjaxQuery();
-            $reject_user_id = $db->safesql(intval($_GET['reject_user_id']));
+            $reject_user_id = $db->safesql((int)$request['reject_user_id']);
             $user_id = $user_info['user_id'];
 
             //Проверяем на существования юзера в таблице заявок в друзья
@@ -242,32 +255,28 @@ class FriendsController extends Module{
                 //Удаляем заявку из таблицы заявок
                 $db->query("DELETE FROM `friends_demands` WHERE for_user_id = '{$user_id}' AND from_user_id = '{$reject_user_id}'");
 
-            } else
+            } else {
                 echo 'no_request';
+            }
         }
     }
 
     /**
      * Удаления друга из списка друзей
+     *
      * @param $params
      */
     public function delete($params){
-//        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
-        if($logged){
-//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-//            $gcount = 20;
-//            $limit_page = ($page-1)*$gcount;
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
+        if($logged){
             //Tools::NoAjaxQuery();
-            $delet_user_id = $db->safesql(intval($_POST['delet_user_id']));
+            $delet_user_id = $db->safesql((int)$request['delet_user_id']);
             $user_id = $user_info['user_id'];
 
             //Проверяем на существования юзера в списке друзей
@@ -286,7 +295,7 @@ class FriendsController extends Module{
                 $db->query("UPDATE `users` SET user_friends_num = user_friends_num-1 WHERE user_id = '{$delet_user_id}'");
 
                 //Чистим кеш владельцу стр и тому кого удаляем из др.
-                $Cache = Cache::initialize();
+                $Cache = cache_init(array('type' => 'file'));
                 $Cache->delete("users/{$user_id}/profile_".$user_id);
                 $Cache->delete("users/{$delet_user_id}/profile_".$delet_user_id);
 
@@ -296,13 +305,15 @@ class FriendsController extends Module{
 
                 $openTakeList = $Cache->get("users/{$delet_user_id}/friends");
                 $Cache->set("users/{$delet_user_id}/friends", str_replace("u{$user_id}|", "", $openTakeList));
-            } else
+            } else {
                 echo 'no_friend';
+            }
         }
     }
 
     /**
      * Удаления друга из списка друзей
+     *
      * @param $params
      * @return string
      * @throws Exception
@@ -314,15 +325,19 @@ class FriendsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
-        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
-        if($ajax == 'yes')
-            Tools::NoAjaxQuery();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
             $page = 1;
-            if (isset($_GET['page'] )){
-                if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if (isset($request['page'] )){
+                if($request['page'] > 0) {
+                    $page = (int)$request['page'];
+                } else {
+                    $page = 1;
+                }
             }
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
@@ -343,10 +358,14 @@ class FriendsController extends Module{
             $params['user_id'] =$user_id;
             if($user_info['user_friends_demands'])
 //                $tpl->set('{demands}', );
-            $params['demands'] ='('.$user_info['user_friends_demands'].')';
+            {
+                $params['demands'] = '(' . $user_info['user_friends_demands'] . ')';
+            }
             else
 //                $tpl->set('{demands}', '');
-            $params['demands'] ='';
+            {
+                $params['demands'] = '';
+            }
 //                $tpl->set('[request-friends]', '');
 //            $tpl->set('[/request-friends]', '');
             $params['request_friends'] = true;
@@ -356,72 +375,80 @@ class FriendsController extends Module{
             $params['online_friends'] = false;
 //                $tpl->compile('info');
 
+
+            $sql_count_ = $db->super_query("SELECT COUNT(*) as cnt FROM `friends_demands` WHERE for_user_id = '{$user_id}'");
+
             //Выводим заявки в друзья если они есть
-            if($user_info['user_friends_demands']){
-                $sql_ = $db->super_query("SELECT tb1.from_user_id, demand_date, tb2.user_photo, user_search_pref, user_country_city_name, user_birthday FROM `friends_demands` tb1, `users` tb2 WHERE tb1.for_user_id = '{$user_id}' AND tb1.from_user_id = tb2.user_id ORDER by `demand_date` DESC LIMIT {$limit_page}, {$gcount}", 1);
+            if($user_info['user_friends_demands'] || $sql_count_['cnt'] > 0){
+                $sql_ = $db->super_query("SELECT tb1.from_user_id, demand_date, tb2.user_photo, user_search_pref, user_country_city_name, user_birthday, user_last_visit FROM `friends_demands` tb1, `users` tb2 WHERE tb1.for_user_id = '{$user_id}' AND tb1.from_user_id = tb2.user_id ORDER by `demand_date` DESC LIMIT {$limit_page}, {$gcount}", true);
 //                $tpl->load_template('friends/request.tpl');
 
                 $config = Settings::loadsettings();
 
                 foreach($sql_ as $key => $row){
                     $user_country_city_name = explode('|', $row['user_country_city_name']);
-//                    $tpl->set('{country}', );
                     $sql_[$key]['country'] = $user_country_city_name[0];
-//                        $tpl->set('{city}', );
                     $sql_[$key]['city'] = ', '.$user_country_city_name[1];
-//                        $tpl->set('{user-id}', );
                     $sql_[$key]['user_id'] = $row['from_user_id'];
-//                        $tpl->set('{name}', );
                     $sql_[$key]['name'] = $row['user_search_pref'];
 
-                    // FOR MOBILE VERSION 1.0
-                    if($config['temp'] == 'mobile'){
-
-                        $avaPREFver = '50_';
-                        $noAvaPrf = 'no_ava_50.png';
-
-                    } else {
-
-                        $avaPREFver = '100_';
-                        $noAvaPrf = '100_no_ava.png';
-
+                    $online = Tools::Online($row['user_last_visit']);
+                    if ($online){
+                        $sql_[$key]['online'] = $lang['online'];
+                        $sql_[$key]['ava_online'] = 'avatar-online';
+                    }else{
+//                            $sql_[$key]['ava_online'] = 'avatar-offline';
+                        $sql_[$key]['ava_online'] = '';
+                        $sql_[$key]['online'] = '';
                     }
 
+                    $avaPREFver = '100_';
+                    $noAvaPrf = '100_no_ava.png';
+
+
                     if($row['user_photo'])
-//                        $tpl->set('{ava}', );
-                    $sql_[$key]['ava'] = $config['home_url'].'uploads/users/'.$row['from_user_id'].'/'.$avaPREFver.$row['user_photo'];
+                    {
+                        $sql_[$key]['ava'] = $config['home_url'] . 'uploads/users/' . $row['from_user_id'] . '/' . $avaPREFver . $row['user_photo'];
+                    }
                     else
-//                        $tpl->set('{ava}', );
-                    $sql_[$key]['ava'] = "/images/{$noAvaPrf}";
+                    {
+                        $sql_[$key]['ava'] = "/images/{$noAvaPrf}";
+                    }
 
                         //Возраст юзера
                     $user_birthday = explode('-', $row['user_birthday']);
-//                    $tpl->set('{age}', );
                     $sql_[$key]['age'] = user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
-
-//                        $tpl->compile('content');
                 }
                 $params['friends'] = $sql_;
 //                Tools::navigation($gcount, $user_info['user_friends_demands'], $config['home_url'].'friends/requests/page/', $tpl);
 
-            } else{
+                $limit = $gcount;
+                $count_all = $user_info['user_friends_demands'];
+                $page_num = (int)$request['page'];
+                $navi = new Navigation( "/friends/requests/" );
+                $navi->tpl = "{page}/";
+                $navi->spread = 4;
+                $template = $navi->build( $limit, $count_all, $page_num );
+                $params['nav'] = $template;
+            }
+            else{
 //                msgbox('', $lang['no_requests'], 'info_2');
-
+//                $params['info'] = $lang['no_requests'];
+//                return view('friends.request', $params);
             }
 
             $params['menu'] = \App\Models\Menu::friends();
-
             return view('friends.request', $params);
-
-        }else{
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
         }
+
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
     }
 
     /**
      * Просмотр всех онлайн друзей
+     *
      * @param $params
      * @return string
      * @throws Exception
@@ -434,21 +461,26 @@ class FriendsController extends Module{
         $logged = $this->logged();
         //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
 
-        Tools::NoAjaxRedirect();
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
 
         if($logged){
             //$act = $_GET['act'];
             $params['title'] = $lang['friends'].' | Sura';
 
-            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if(isset($request['page']) AND $request['page'] > 0) {
+                $page = (int)$request['page'];
+            } else {
+                $page = 1;
+            }
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
             $path = explode('/', $_SERVER['REQUEST_URI']);
-            if (empty($path['3'])) {
+            if (empty($path['2'])) {
                 $get_user_id = $user_info['user_id'];
             } else {
-                $get_user_id = $path['3'];
+                $get_user_id = (int)$path['2'];
             }
             $params['user_id'] = $get_user_id;
 
@@ -456,22 +488,28 @@ class FriendsController extends Module{
             $CheckBlackList = Tools::CheckBlackList($get_user_id);
             if(!$CheckBlackList){
 
-                if($get_user_id == $user_info['user_id'])
+                if($get_user_id === $user_info['user_id']) {
                     $sql_order = "ORDER by `views`";
-                else
+                }
+                else {
                     $sql_order = "ORDER by `friends_date`";
+                }
 
-                $server_time = intval($_SERVER['REQUEST_TIME']);
-                $online_time = $server_time - 60;
+                $config = Settings::loadsettings();
 
-                $sql_ = $db->super_query("SELECT tb1.user_id, user_country_city_name, user_search_pref, user_birthday, user_photo, user_logged_mobile FROM `users` tb1, `friends` tb2 WHERE tb1.user_id = tb2.friend_id AND tb2.user_id = '{$get_user_id}' AND tb1.user_last_visit >= '{$online_time}' AND tb2.subscriptions = 0 {$sql_order} DESC LIMIT {$limit_page}, {$gcount}", 1);
+                $server_time = (int)$_SERVER['REQUEST_TIME'];
+                $online_time = $server_time - $config['online_time'];
+
+                $sql_ = $db->super_query("SELECT tb1.user_id, user_country_city_name, user_search_pref, user_birthday, user_photo, user_logged_mobile FROM `users` tb1, `friends` tb2 WHERE tb1.user_id = tb2.friend_id AND tb2.user_id = '{$get_user_id}' AND tb1.user_last_visit >= '{$online_time}' AND tb2.subscriptions = 0 {$sql_order} DESC LIMIT {$limit_page}, {$gcount}", true);
 
                 //Выводим имя юзера
                 $friends_sql = $db->super_query("SELECT user_name, user_friends_num FROM `users` WHERE user_id = '{$get_user_id}'");
-                if($user_info['user_id'] != $get_user_id)
+                if($user_info['user_id'] !== $get_user_id) {
                     $gram_name = Gramatic::gramatikName($friends_sql['user_name']);
-                else
+                }
+                else {
                     $gram_name = 'Вас';
+                }
 
                 if($sql_)
                     //Кол-во друзей в онлайне
@@ -480,21 +518,23 @@ class FriendsController extends Module{
                 }
 
                 //Верх
-                if($user_info['user_id'] != $get_user_id)
+                if($user_info['user_id'] !== $get_user_id) {
                     $params['name'] = $gram_name;
-                else
+                }
+                else {
                     $params['name'] = '';
+                }
 
-                if($get_user_id == $user_info['user_id']){
+                if($get_user_id === $user_info['user_id']){
                     $params['owner'] = true;
                     $params['not_owner'] = false;
-                    if($user_info['user_friends_demands'])
-                        $params['demands'] = '('.$user_info['user_friends_demands'].')';
+                    if($user_info['user_friends_demands']) {
+                        $params['demands'] = '(' . $user_info['user_friends_demands'] . ')';
+                    }
                     else
                         $params['demands'] = '';
                 } else {
                     $params['not_owner'] = true;
-                    $params['not_owner'] = false;
                 }
                 $params['online_friends'] = true;
                 $params['request_friends'] = false;
@@ -559,10 +599,13 @@ class FriendsController extends Module{
 
     /**
      * Загрузка друзей в окне для выбора СП
+     *
      * @param $params
-     * @return bool
+     * @return string
+     * @throws Exception
      */
-    public function box($params){
+    public function box($params): string
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -571,6 +614,9 @@ class FriendsController extends Module{
         //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
 
         Tools::NoAjaxRedirect();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
 
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
@@ -582,13 +628,13 @@ class FriendsController extends Module{
 
             $user_id = $user_info['user_id'];
 
-            if($_POST['page'] > 0) $page = intval($_POST['page']); else $page = 1;
+            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 18;
             $limit_page = ($page-1)*$gcount;
 
-            if($_POST['user_sex'] == 1)
+            if($request['user_sex'] == 1)
                 $sql_usSex = 2;
-            elseif($_POST['user_sex'] == 2)
+            elseif($request['user_sex'] == 2)
                 $sql_usSex = 1;
             else
                 $sql_usSex = false;
@@ -619,16 +665,14 @@ class FriendsController extends Module{
             } else
                 msg_box( '<div class="clear" style="margin-top:140px"></div>'.$lang['no_requests'], 'info_2');
 
-//            Tools::AjaxTpl($tpl);
-
-//            $params['tpl'] = $tpl;
-//            Page::generate($params);
-            return true;
+            return view('info.info', $params);
         }
+        return view('info.info', $params);
     }
 
     /**
      * Общие друзья
+     *
      * @param $params
      * @return string
      * @throws Exception
@@ -643,9 +687,13 @@ class FriendsController extends Module{
 //        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
 //        if($ajax == 'yes')
 //            Tools::NoAjaxQuery();
+
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged) {
 //            $params['title'] = $lang['friends'].' | Sura';
-            if ($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
+            if ($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 20;
             $limit_page = ($page - 1) * $gcount;
 
@@ -782,6 +830,7 @@ class FriendsController extends Module{
 
     /**
      * Просмотр всех друзей
+     *
      * @param $params
      * @return string
      * @throws Exception
@@ -797,11 +846,14 @@ class FriendsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
+
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
 
-            if(isset($_GET['page']) AND $_GET['page'] > 0)
-                $page = intval($_GET['page']);
+            if(isset($request['page']) AND $request['page'] > 0)
+                $page = (int)$request['page'];
             else
                 $page = 1;
             $gcount = 20;
@@ -850,7 +902,7 @@ class FriendsController extends Module{
                     }
                 } else {
                     $params['not_owner'] = true;
-                    $params['not_owner'] = false;
+                    $params['owner'] = false;
                 }
 
                 $params['all_friends'] = true;
@@ -867,7 +919,7 @@ class FriendsController extends Module{
                         $sql_order = "ORDER by `friends_date`";
                     }
 
-                    $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.user_birthday, user_photo, user_search_pref, user_country_city_name, user_last_visit, user_logged_mobile FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$get_user_id}' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 0 {$sql_order} DESC LIMIT {$limit_page}, {$gcount}", 1);
+                    $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.user_birthday, user_photo, user_search_pref, user_country_city_name, user_last_visit, user_logged_mobile FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$get_user_id}' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 0 {$sql_order} DESC LIMIT {$limit_page}, {$gcount}", true);
                     if($sql_){
                         $config = Settings::loadsettings();
                         foreach($sql_ as $key => $row){
@@ -945,8 +997,6 @@ class FriendsController extends Module{
             return view('info.info', $params);
         }
 
-//        $params['tpl'] = $tpl;
-//        Page::generate($params);
-//        return true;
+        return view('info.info', $params);
     }
 }

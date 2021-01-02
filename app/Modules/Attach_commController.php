@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use Sura\Libs\Langs;
 use Sura\Libs\Registry;
+use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -19,12 +20,15 @@ class Attach_commController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
         if ($logged) {
             $user_id = $user_info['user_id'];
 
-            $id = intval($_POST['id']);
-            $purl = $db->safesql(Gramatic::totranslit($_POST['purl']));
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+            $id = (int)$request['id'];
+            $purl = $db->safesql(Gramatic::totranslit($request['purl']));
 
             //Выводим данные о комментариии
             $row = $db->super_query("SELECT tb1.forphoto, auser_id, tb2.ouser_id FROM `attach_comm` tb1, `attach` tb2 WHERE tb1.id = '{$id}' AND tb1.forphoto = '{$purl}'");
@@ -71,19 +75,27 @@ class Attach_commController extends Module{
 
     /**
      * Добавления комментария
+     * @param $params
+     * @return string
+     * @throws \Exception
      */
-    public function addcomm($params){
+    public function addcomm($params): string
+    {
 //        $tpl = $params['tpl'];
-        include __DIR__ . '/../lang/' . $checkLang . '/site.lng';
+//        include __DIR__ . '/../lang/' . $checkLang . '/site.lng';
+        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
         if ($logged) {
             $user_id = $user_info['user_id'];
 
-            $text = Validation::ajax_utf8(Validation::textFilter($_POST['text']));
-            $purl = $db->safesql(Gramatic::totranslit($_POST['purl']));
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+            $text = Validation::ajax_utf8(Validation::textFilter($request['text']));
+            $purl = $db->safesql(Gramatic::totranslit($request['purl']));
 
             //Проверка на существования фотки в таблице PREFIX_attach
             $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `attach` WHERE photo = '{$purl}'");
@@ -104,8 +116,8 @@ class Attach_commController extends Module{
             if(isset($text) AND !empty($text) AND $row['cnt']){
 
                 if($tab_photos){
-                    $server_time = intval($_SERVER['REQUEST_TIME']);
-                    $hash = md5($user_id.$server_time.$_IP.$user_info['user_email'].rand(0, 1000000000)).$text.$purl;
+                    $server_time = \Sura\Libs\Tools::time();
+                    $hash = md5($user_id.$server_time.$user_info['user_email'].rand(0, 1000000000)).$text.$purl;
 
                     $db->query("INSERT INTO `photos_comments` (pid, user_id, text, date, hash, album_id, owner_id, photo_name) VALUES ('{$row['id']}', '{$user_id}', '{$text}', NOW(), '{$hash}', '{$row['album_id']}', '{$row['user_id']}', '{$row['photo_name']}')");
                     $id = $db->insert_id();
@@ -139,27 +151,34 @@ class Attach_commController extends Module{
                 $tpl->set('[/owner]', '');
                 $tpl->compile('content');
 
-                Tools::AjaxTpl($tpl);
 
+                return view('info.info', $params);
             }
         }
+        return view('info.info', $params);
     }
 
     /**
      * Показ пред.комментариев
+     * @param $params
+     * @return string
+     * @throws \Exception
      */
-    public function prevcomm($params)
+    public function prevcomm($params): string
     {
 //        $tpl = $params['tpl'];
         include __DIR__ . '/../lang/' . $checkLang . '/site.lng';
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-        Tools::NoAjaxQuery();
+
         if ($logged) {
             $user_id = $user_info['user_id'];
 
-            $foSQLurl = $db->safesql(Gramatic::totranslit($_POST['purl']));
+            $requests = Request::getRequest();
+            $request = ($requests->getGlobal());
+
+            $foSQLurl = $db->safesql(Gramatic::totranslit($request['purl']));
 
             //Выводим данные о владельце фото
             $row = $db->super_query("SELECT ouser_id, acomm_num FROM `attach` WHERE photo = '{$foSQLurl}'");
@@ -176,8 +195,8 @@ class Attach_commController extends Module{
             }
 
             $limit = 10;
-            $first_id = intval($_POST['first_id']);
-            $page_post = intval($_POST['page']);
+            $first_id = (int)$request['first_id'];
+            $page_post = (int)$request['page'];
             if($page_post <= 0) $page_post = 1;
 
             $start_limit = $row['acomm_num']-($page_post*$limit)-3;
@@ -226,9 +245,10 @@ class Attach_commController extends Module{
                 $tpl->compile('content');
 
             }
+            return view('info.info', $params);
 
-            Tools::AjaxTpl($tpl);
         }
+        return view('info.info', $params);
     }
 
 
@@ -240,13 +260,14 @@ class Attach_commController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxQuery();
+        $requests = Request::getRequest();
+        $request = ($requests->getGlobal());
 
         if($logged){
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            $photo_url = $_POST['photo'];
+            $photo_url = $request['photo'];
             $resIMGurl = explode('/', $photo_url);
             $foSQLurl = end($resIMGurl);
             $foSQLurl = $db->safesql(Gramatic::totranslit($foSQLurl));
@@ -351,15 +372,13 @@ class Attach_commController extends Module{
                 $tpl->set('{comments}', $tpl->result['comments']);
                 $tpl->compile('content');
 
-                Tools::AjaxTpl($tpl);
 
             }
 
             $tpl->clear();
             $db->free();
-
+            return view('info.info', $params);
         }
-
-        Registry::set('tpl', $tpl);
+        return view('info.info', $params);
     }
 }
