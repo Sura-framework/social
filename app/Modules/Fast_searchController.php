@@ -24,8 +24,7 @@ class Fast_searchController extends Module{
 
         Tools::NoAjaxRedirect();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
 //            $user_id = $user_info['user_id'];

@@ -3,7 +3,6 @@
 namespace App\Modules;
 
 use App\Libs\Wall;
-use App\Services\Cache;
 use Exception;
 use Sura\Libs\Db;
 use Sura\Libs\Registry;
@@ -38,6 +37,8 @@ class ProfileController extends Module{
 
         $user_id = $user_info['user_id'];
         $params['user_id'] = $user_id;
+
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
 

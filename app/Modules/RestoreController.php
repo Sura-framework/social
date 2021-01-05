@@ -2,10 +2,9 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Langs;
 use Sura\Libs\Mail;
-use Sura\Libs\Page;
 use Sura\Libs\Registry;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
@@ -27,6 +26,7 @@ class RestoreController extends Module{
         if(!$logged){
             $params['title'] = $lang['restore_title'].' | Sura';
 
+            $request = (Request::getRequest()->getGlobal());
 //
             $email = Validation::ajax_utf8($request['email']);
             $check = $db->super_query("SELECT user_name FROM `users` WHERE user_email = '{$email}'");
@@ -88,6 +88,8 @@ class RestoreController extends Module{
         if(!$logged){
             $params['title'] = $lang['restore_title'].' | Sura';
 
+            $request = (Request::getRequest()->getGlobal());
+
             $hash = $db->safesql(Validation::strip_data($request['h']));
             $row = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$hash}' AND ip = '{$_IP}'");
             if($row){
@@ -133,6 +135,7 @@ class RestoreController extends Module{
         if(!$logged){
             $params['title'] = $lang['restore_title'].' | Sura';
 
+            $request = (Request::getRequest()->getGlobal());
 //
             $hash = $db->safesql(Validation::strip_data($request['hash']));
             $row = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$hash}' AND ip = '{$_IP}'");
@@ -199,6 +202,7 @@ class RestoreController extends Module{
         if(!$logged) {
             $meta_tags['title'] = $lang['restore_title'];
 
+            $request = (Request::getRequest()->getGlobal());
 
             $email = Validation::ajax_utf8($request['email']);
             $check = $db->super_query("SELECT user_id, user_search_pref, user_photo FROM `users` WHERE user_email = '{$email}'");

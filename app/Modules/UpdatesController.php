@@ -2,9 +2,7 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Exception;
-use Sura\Libs\Tools;
 
 class UpdatesController extends Module {
 

@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use Exception;
 use Sura\Libs\Gramatic;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Validation;
 
@@ -21,6 +22,8 @@ class Public_audioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $count = 40;
             $page = intval($request['page']);
             $offset = $count * $page;
@@ -76,6 +79,8 @@ class Public_audioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $count = 40;
             $page = intval($request['page']);
             $offset = $count * $page;
@@ -150,6 +155,8 @@ class Public_audioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $count = 40;
             $page = intval($request['page']);
             $offset = $count * $page;
@@ -187,6 +194,8 @@ class Public_audioController extends Module{
         $logged = $this->logged();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $count = 40;
             $page = intval($request['page']);
             $offset = $count * $page;

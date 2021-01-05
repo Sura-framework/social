@@ -2,7 +2,6 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Exception;
 use Sura\Libs\Profile_check;
 use Sura\Libs\Request;
@@ -31,8 +30,7 @@ class SettingsController extends Module{
             $user_id = $user_info['user_id'];
             Tools::NoAjaxRedirect();
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $request['old_pass'] = Validation::ajax_utf8($request['old_pass']);
             $request['new_pass'] = Validation::ajax_utf8($request['new_pass']);
@@ -70,8 +68,7 @@ class SettingsController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $user_name = Validation::ajax_utf8(Validation::textFilter($request['name']));
             $user_lastname = Validation::ajax_utf8(Validation::textFilter(ucfirst($request['lastname'])));
@@ -136,8 +133,7 @@ class SettingsController extends Module{
 
             $params['title'] = $lang['settings'].' | Sura';
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $val_msg = (int)$request['val_msg'];
             $val_wall1 = (int)$request['val_wall1'];
@@ -228,8 +224,7 @@ class SettingsController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $bad_user_id = (int)$request['bad_user_id'];
 
@@ -293,8 +288,7 @@ class SettingsController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $bad_user_id = (int)$request['bad_user_id'];
 
@@ -400,8 +394,7 @@ class SettingsController extends Module{
 //            include_once __DIR__.'/../Classes/mail.php';
 //            $mail = new \dle_mail($config);
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $email = Validation::textFilter($request['email'], false, true);
 
@@ -485,8 +478,7 @@ class SettingsController extends Module{
      */
     public function time_zone()
     {
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         $time_zone = (int)$request['time_zone'];
         $max = 26;
@@ -516,8 +508,11 @@ class SettingsController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        //FIXME update
         if($params['user']['logged']){
             $params['title'] = $lang['settings'].' | Sura';
+
+            $request = (Request::getRequest()->getGlobal());
 
             //Загружаем вверх
 //            $tpl->load_template('settings/general.tpl');

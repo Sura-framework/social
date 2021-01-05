@@ -2,10 +2,7 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Exception;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 
 class RatingController extends Module{

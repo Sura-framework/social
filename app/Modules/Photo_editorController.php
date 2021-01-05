@@ -3,12 +3,8 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Libs\Thumb;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
-use Sura\Libs\Tools;
 
 class Photo_editorController extends Module{
 
@@ -27,6 +23,8 @@ class Photo_editorController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
 //            $user_id = $user_info['user_id'];
 
 //            $tpl->load_template('photos/editor_close.tpl');
@@ -57,6 +55,8 @@ class Photo_editorController extends Module{
         $logged = $this->logged();
 
         if($logged){
+
+            $request = (Request::getRequest()->getGlobal());
 
             $user_id = $user_info['user_id'];
 

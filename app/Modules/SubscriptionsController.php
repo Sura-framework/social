@@ -2,7 +2,7 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -22,6 +22,8 @@ class SubscriptionsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
 
             $for_user_id = intval($request['for_user_id']);
@@ -87,6 +89,8 @@ class SubscriptionsController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
+            $request = (Request::getRequest()->getGlobal());
+
             $del_user_id = intval($request['del_user_id']);
 
             $Cache = cache_init(array('type' => 'file'));
@@ -126,6 +130,8 @@ class SubscriptionsController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
+
+            $request = (Request::getRequest()->getGlobal());
 
             //################### Показ всех подпискок юзера ###################//
             if($request['page'] > 0) $page = intval($request['page']); else $page = 1;

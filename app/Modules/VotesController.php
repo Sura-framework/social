@@ -2,7 +2,7 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Cache;
+use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
@@ -21,6 +21,7 @@ class VotesController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
 
             $user_id = $user_info['user_id'];
 

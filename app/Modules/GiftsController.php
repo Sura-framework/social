@@ -2,11 +2,9 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
-use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 
 class GiftsController extends Module{
@@ -24,8 +22,7 @@ class GiftsController extends Module{
 
         Tools::NoAjaxRedirect();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -68,8 +65,7 @@ class GiftsController extends Module{
 
         Tools::NoAjaxRedirect();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -191,8 +187,7 @@ class GiftsController extends Module{
 
         Tools::NoAjaxRedirect();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -228,8 +223,7 @@ class GiftsController extends Module{
 
         Tools::NoAjaxRedirect();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];

@@ -2,7 +2,6 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 

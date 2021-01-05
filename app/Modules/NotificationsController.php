@@ -2,10 +2,9 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Sura\Libs\Gramatic;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
-use Sura\Libs\Tools;
 use Exception;
 
 class NotificationsController extends Module{
@@ -20,6 +19,9 @@ class NotificationsController extends Module{
 //        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
+
+        $request = (Request::getRequest()->getGlobal());
+
         if($logged){
 //            $act = $request['act'];
 
@@ -49,6 +51,8 @@ class NotificationsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $settings_likes_posts = intval($request['settings_likes_posts']);
             $settings_likes_photos = intval($request['settings_likes_photos']);
             $settings_likes_compare = intval($request['settings_likes_compare']);
@@ -73,6 +77,8 @@ class NotificationsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $act = $request['act'];
 
             $id = intval($request['id']);
@@ -102,6 +108,8 @@ class NotificationsController extends Module{
         $logged = $this->logged();
         if($logged){
 //            $act = $_POST['act'];
+
+            $request = (Request::getRequest()->getGlobal());
 
             $id = intval($request['id']);
             if($id){
@@ -162,7 +170,7 @@ class NotificationsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
 //        $logged = $this->logged();
-
+        $request = (Request::getRequest()->getGlobal());
         $limit_news = 15;
         $last_id = intval($request['last_id']);
 //        $CacheNews = Cache::mozg_cache('user_'.$_SESSION['user_id'].'/new_news');

@@ -2,7 +2,6 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Cache;
 use Sura\Libs\Mail;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;

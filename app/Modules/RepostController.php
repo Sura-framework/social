@@ -2,9 +2,6 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;

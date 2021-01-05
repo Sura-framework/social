@@ -2,7 +2,7 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
+use App\Libs\Antispam;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -28,7 +28,7 @@ class ImController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//            AntiSpam('messages');
+            Antispam::Check(2, $user_id);
 
             $for_user_id = (int)$_POST['for_user_id'];
             $msg = Validation::ajax_utf8($_POST['msg']);
@@ -38,7 +38,7 @@ class ImController extends Module{
 
             $attach_files = str_replace('vote|', 'hack|', $attach_files);
 
-//            AntiSpam('identical', $msg.$attach_files);
+            Antispam::Check(4, $user_id, $msg.$attach_files);
 
             if(isset($msg) AND !empty($msg) OR isset($attach_files) OR !empty($attach_files)){
 
@@ -66,9 +66,10 @@ class ImController extends Module{
 
                     if($Privacy AND $user_id != $for_user_id){
 
-//                        AntiSpamLogInsert('identical', $msg.$attach_files);
+                        Antispam::LogInsert(4, $msg.$attach_files, $user_id);
 
-//                        if(!Tools::CheckFriends($for_user_id)) AntiSpamLogInsert('messages');
+                        if(!Tools::CheckFriends($for_user_id))
+                            Antispam::LogInsert(2, $user_id);
 
                         $server_time = \Sura\Libs\Tools::time();
 

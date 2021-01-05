@@ -2,9 +2,6 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Templates;
-use Sura\Libs\Registry;
-use App\Modules\Module;
 use Sura\Libs\Settings;
 
 /**

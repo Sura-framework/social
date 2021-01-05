@@ -2,9 +2,9 @@
 
 namespace App\Modules;
 
+use App\Libs\Antispam;
 use Exception;
 use Sura\Libs\Mail;
-use Sura\Libs\Navigation;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
@@ -16,8 +16,9 @@ class FriendsController extends Module{
      * Отправка заявки в друзья
      *
      * @param $params
+     * @return string
      */
-    public function send($params)
+    public function send($params): string
     {
 
         $path = explode('/', $_SERVER['REQUEST_URI']);
@@ -39,7 +40,10 @@ class FriendsController extends Module{
 
             //Tools::NoAjaxQuery();
 
-            AntiSpam('friends');
+            $antispam = Antispam::Check(1, $user_info['user_id']);
+            if ($antispam == true){
+                return _e('antispam_err');
+            }
 
             $for_user_id = (int)$path['3'];
             $from_user_id = $user_info['user_id'];
@@ -57,7 +61,7 @@ class FriendsController extends Module{
                     $check_friendlist = $db->super_query("SELECT user_id FROM `friends` WHERE friend_id = '{$for_user_id}' AND user_id = '{$from_user_id}' AND subscriptions = 0");
                     if(!$check_friendlist){
                         $db->query("INSERT INTO `friends_demands` (for_user_id, from_user_id, demand_date) VALUES ('{$for_user_id}', '{$from_user_id}', NOW())");
-                        AntiSpamLogInsert('friends');
+                        Antispam::LogInsert(1, $user_info['user_id']);
                         $db->query("UPDATE `users` SET user_friends_demands = user_friends_demands+1 WHERE user_id = '{$for_user_id}'");
                         echo 'ok';
 
@@ -238,8 +242,7 @@ class FriendsController extends Module{
         //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
 //        $ajax = (isset($_POST['ajax'])) ? 'yes' : 'no';
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             //Tools::NoAjaxQuery();
@@ -271,8 +274,7 @@ class FriendsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             //Tools::NoAjaxQuery();
@@ -326,8 +328,7 @@ class FriendsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
@@ -461,8 +462,7 @@ class FriendsController extends Module{
         $logged = $this->logged();
         //Если страница вызвана через AJAX то включаем защиту, чтоб не могли обращаться напрямую к странице
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             //$act = $_GET['act'];
@@ -615,8 +615,7 @@ class FriendsController extends Module{
 
         Tools::NoAjaxRedirect();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';
@@ -688,8 +687,7 @@ class FriendsController extends Module{
 //        if($ajax == 'yes')
 //            Tools::NoAjaxQuery();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged) {
 //            $params['title'] = $lang['friends'].' | Sura';
@@ -846,8 +844,7 @@ class FriendsController extends Module{
 
         Tools::NoAjaxRedirect();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $params['title'] = $lang['friends'].' | Sura';

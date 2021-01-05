@@ -1,17 +1,16 @@
 <?php
 
-use Sura\Classes\Db;
+use Sura\Libs\Db;
+
+require __DIR__.'/vendor/autoload.php';
 
 if (PHP_SAPI === 'cli') {
-    require __DIR__.'/vendor/autoload.php';
 
     $config = include __DIR__.'/config/config.php';
-    //include __DIR__.'/system/data/db.old.php';
-    //require __DIR__.'/system/classes/mysql.php';
+
 
 }else{
-    echo 'error: not cli';
-    die();
+    throw SuraException::Error("not cli");
 }
 
 $go = $_SERVER['argv']['1'];
@@ -33,7 +32,7 @@ $go = $_SERVER['argv']['1'];
                         if (file_exists($dir_file_name.'_240.mp4')) {
                             $db->query("DELETE FROM `".PREFIX."_videos_decode` WHERE video = '".$key['video']."'");
                             print "End convert\nFinish\n";
-                            die();
+//                            die();
                         }else{
                             $video_convert = true;
                         }
@@ -64,20 +63,20 @@ $go = $_SERVER['argv']['1'];
                             //ffmpeg -i inputfile.avi -vcodec libx264 -vprofile main -preset slow -b:v 400k -maxrate 400k -bufsize 800k -vf scale=-1:480 -threads 0 -acodec libvo_aacenc -ab 128k output.mp4
 
                             print "Convert Finish\n";
-                            die();
+//                            die();
                         }
                     }
                 }else{
                     print "Not found new videos\n";
-                    die();
+//                    die();
                 }
 
-                  die();
+//                  die();
               }else{
                   commandline_help();
-                  die();
+//                  die();
               }
-        die();
+              break;
 
         case '-make:add-user':
             $db = Db::getDB();
@@ -93,7 +92,7 @@ $go = $_SERVER['argv']['1'];
 
             $db->query("INSERT INTO `users` (`user_email`, `user_password`, `user_name`, `user_lastname`, `user_photo`, `user_wall_id`, `user_birthday`, `user_sex`, `user_day`, `user_month`, `user_year`, `user_country`, `user_city`, `user_reg_date`, `user_lastdate`, `user_group`, `user_hid`, `user_country_city_name`, `user_search_pref`, `user_xfields`, `xfields`, `user_xfields_all`, `user_albums_num`, `user_friends_demands`, `user_friends_num`, `user_last_visit`, `user_fave_num`, `user_pm_num`, `user_notes_num`, `user_subscriptions_num`, `user_videos_num`, `user_wall_num`, `user_status`, `user_privacy`, `user_blacklist_num`, `user_blacklist`, `user_sp`, `user_support`, `user_balance`, `user_lastupdate`, `user_gifts`, `user_public_num`, `user_audio`, `user_msg_type`, `user_delet`, `user_ban`, `user_ban_date`, `user_new_mark_photos`, `user_doc_num`, `user_logged_mobile`, `guests`, `user_cover`, `user_cover_pos`, `balance_rub`, `user_rating`, `invties_pub_num`, `notifications_list`, `user_text`) VALUES ('{$email}', '{$pass}', '{$name}', '{$lastname}', '', 0, '1970-1-1', '1', '1', '1', '1970', '1', '0', '{$time}', '', '0', '{$hid}', 'Россия|', '{$name} {$lastname}', '', '', '', 0, 0, 0, '1587841518', 0, 1, 0, 0, 0, 0, '', 'val_msg|1||val_wall1|1||val_wall2|1||val_wall3|1||val_info|1||', 0, '', '1|0', 0, 0, '1587840016', 0, 0, 0, 1, 0, 0, '', 0, 0, 0, 0, '', '', 0, 0, 0, '', '')");
 
-        die();
+        break;
 
         case '-migrate':
             $db = Db::getDB();
@@ -4704,10 +4703,12 @@ $tableSchema[] = "ALTER TABLE `videos` ADD FULLTEXT KEY `title` (`title`)";
          $db->query($table);
 
         die();
+        break;
 
         default:
             commandline_help();
-        die();
+//        die();
+        break;
       }
 
   function commandline_help() {

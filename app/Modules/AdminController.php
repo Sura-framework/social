@@ -10,6 +10,7 @@ class AdminController extends Module{
     /**
      * @param $params
      * @return bool
+     * @throws \Exception
      */
     public function main($params)
     {
@@ -20,18 +21,18 @@ class AdminController extends Module{
 //            $tpl = $params['tpl'];
 
             $modules = Admin::modules();
-//            var_dump($modules);
 
 //            $tpl->load_template('admin/modules.tpl');
-            foreach ($modules as $mod){
+//            foreach ($modules as $mod){
 //                $tpl->set('{title}', $mod['name']);
 //                $tpl->set('{description}', $mod['description']);
 //                $tpl->set('{link}', $mod['link']);
 //                $tpl->set('{img}', $mod['img']);
 
 //                $tpl->compile('modules');
-            }
-
+//            }
+            $params['modules'] = $modules;
+//            $params['country'] = $all_country;
 
 //            $tpl->load_template('admin/admin.tpl');
 //            $tpl->set('{modules}', $tpl->result['modules']);
@@ -40,15 +41,17 @@ class AdminController extends Module{
 //            $tpl->clear();
 //            $params['tpl'] = $tpl;
 //            Page::generate($params);
+            return view('admin.main', $params);
         }
-        return true;
+        return view('info.info', $params);
     }
 
     /**
      * @param $params
-     * @return bool
+     * @return string
+     * @throws \Exception
      */
-    public function stats($params)
+    public function stats($params): string
     {
         $logged = $params['user']['logged'];
         $user_info = $params['user']['user_info'];
@@ -83,8 +86,86 @@ class AdminController extends Module{
 //            $tpl->clear();
 //            $params['tpl'] = $tpl;
 //            Page::generate($params);
+            return view('info.info', $params);
         }
-        return true;
+        return view('info.info', $params);
+    }
+
+    public function settings($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function dbsettings($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function mysettings($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function users($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function video($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function music($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function photos($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function gifts($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function groups($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function report($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function mail_tpl($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function mail($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function ban($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function search($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function static($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function logsusers($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function country($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function city($params): string
+    {
+        return view('info.info', $params);
+    }
+    public function ads($params): string
+    {
+        return view('info.info', $params);
     }
 
 }

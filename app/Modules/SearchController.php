@@ -3,9 +3,7 @@
 namespace App\Modules;
 
 use App\Services\Cache;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -30,6 +28,8 @@ class SearchController extends Module{
         $logged = $this->logged();
 
         $config = Settings::loadsettings();
+
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $params['title'] = $lang['search'].' | Sura';

@@ -2,7 +2,7 @@
 
 namespace  App\Modules;
 
-use App\Services\Cache;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -25,6 +25,8 @@ class Public_videosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             //$act = $request['act'];
             $user_id = $user_info['user_id'];
 
@@ -87,6 +89,8 @@ class Public_videosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             //$act = $request['act'];
             $user_id = $user_info['user_id'];
 
@@ -137,6 +141,8 @@ class Public_videosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             //$act = $request['act'];
             $user_id = $user_info['user_id'];
 
@@ -177,6 +183,8 @@ class Public_videosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
@@ -224,6 +232,8 @@ class Public_videosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             //$act = $request['act'];
             $user_id = $user_info['user_id'];
 
@@ -326,15 +336,12 @@ class Public_videosController extends Module{
         $logged = $this->logged();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
 
             $user_id = $user_info['user_id'];
-
             $params['title'] = 'Видеозаписи сообщества'.' | Sura';
-
             $pid = intval($request['pid']);
-
             $sql_limit = 20;
-
             if($request['page'] > 0) $page_cnt = intval($request['page']) * $sql_limit;
             else $page_cnt = 0;
 

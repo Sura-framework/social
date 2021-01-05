@@ -1,2 +1,7 @@
-
-*.tmp
+/vendor
+/app/cache
+.idea
+.env
+.phpunit.result.cache
+composer.lock
+composer.phar

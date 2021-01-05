@@ -2,7 +2,7 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Tools;
+use Sura\Libs\Request;
 
 class LoadcityController extends Module{
 
@@ -14,7 +14,7 @@ class LoadcityController extends Module{
         //$lang = langs::get_langs();
         $db = $this->db();
 
-
+        $request = (Request::getRequest()->getGlobal());
 
         $country_id = (int)$request['country'];
 

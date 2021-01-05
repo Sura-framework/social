@@ -2,10 +2,8 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
-use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
 class DistinguishController extends Module{
@@ -22,8 +20,7 @@ class DistinguishController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -76,8 +73,7 @@ class DistinguishController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -120,8 +116,7 @@ class DistinguishController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -150,8 +145,7 @@ class DistinguishController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];

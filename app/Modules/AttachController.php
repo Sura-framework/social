@@ -4,7 +4,6 @@ namespace App\Modules;
 
 use Intervention\Image\ImageManager;
 use Sura\Libs\Settings;
-use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
 class AttachController extends Module{

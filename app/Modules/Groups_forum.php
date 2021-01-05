@@ -2,7 +2,6 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -26,10 +25,7 @@ class Groups_forum extends Module{
 //            $act = $_GET['act'];
             $user_id = $user_info['user_id'];
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
-//
+            $request = (Request::getRequest()->getGlobal());
 
             $public_id = (int)$request['public_id'];
             $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
@@ -74,8 +70,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $public_id = (int)$request['public_id'];
 
@@ -113,10 +108,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $fid = (int)$request['fid'];
             $answer_id = (int)$request['answer_id'];
@@ -232,10 +224,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $id = (int)$request['fid'];
             $pid = (int)$request['pid'];
@@ -331,10 +320,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $fid = (int)$request['fid'];
             $text = Validation::ajax_utf8(Validation::textFilter($request['text']));
@@ -373,10 +359,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $fid = (int)$request['fid'];
             $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
@@ -414,10 +397,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $fid = (int)$request['fid'];
 
@@ -458,10 +438,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $fid = (int)$request['fid'];
 
@@ -500,10 +477,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $fid = (int)$request['fid'];
 
@@ -548,10 +522,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $fid = (int)$request['fid'];
 
@@ -592,10 +563,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $mid = (int)$request['mid'];
 
@@ -638,10 +606,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-//
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $fid = (int)$request['fid'];
 
@@ -703,8 +668,7 @@ class Groups_forum extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $public_id = (int)$request['public_id'];
             $id = (int)$request['id'];
@@ -1033,8 +997,7 @@ class Groups_forum extends Module{
 //            if($_POST['a'])
 //                Tools::NoAjaxQuery();
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $public_id = (int)$request['public_id'];
 

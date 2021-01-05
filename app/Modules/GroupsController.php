@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use App\Contracts\Modules\GroupsInterface;
+use App\Libs\Antispam;
 use App\Libs\Wall;
 use App\Models\Menu;
 use Exception;
@@ -33,11 +34,11 @@ class GroupsController extends Module implements GroupsInterface
             $user_id = $user_info['user_id'];
             $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
 
-            AntiSpam('groups');
+            Antispam::Check(6, $user_id);
 
             if(isset($request['title']) AND !empty($request['title'])){
 
-                AntiSpamLogInsert('groups');
+                Antispam::LogInsert(6, $user_id);
                 $db->query("INSERT INTO `communities` SET title = '{$title}', type = 1, traf = 1, ulist = '|{$user_id}|', date = NOW(), admin = 'u{$user_id}|', real_admin = '{$user_id}', comments = 1");
                 $cid = $db->insert_id();
                 $db->query("INSERT INTO `friends` SET friend_id = '{$cid}', user_id = '{$user_id}', friends_date = NOW(), subscriptions = 2");
@@ -965,7 +966,7 @@ class GroupsController extends Module implements GroupsInterface
 
 //            Tools::NoAjaxQuery();
 
-            AntiSpam('comments');
+            Antispam::Check(5, $user_id);
 
             $rec_id = (int)$request['rec_id'];
             $public_id = (int)$request['public_id'];
@@ -977,7 +978,7 @@ class GroupsController extends Module implements GroupsInterface
 
             if($row['comments'] OR stripos($row['admin'], "u{$user_id}|") !== false AND isset($wall_text) AND !empty($wall_text)){
 
-                AntiSpamLogInsert('comments');
+                Antispam::LogInsert(5, $user_id);
 
                 //Если добавляется ответ на комментарий то вносим в ленту новостей "ответы"
                 if($answer_comm_id){

@@ -6,6 +6,7 @@ namespace App\Modules;
 
 use Intervention\Image\ImageManager;
 use Sura\Libs\Gramatic;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 
@@ -149,6 +150,8 @@ class StoriesController  extends Module
         $tpl = $params['tpl'];
         $user_info = $params['user']['user_info'];
         $user_id = $user_info['user_id'];
+
+        $request = (Request::getRequest()->getGlobal());
 
         if (isset($request['user'])){
             $user_id = $request['user'];

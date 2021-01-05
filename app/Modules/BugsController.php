@@ -2,9 +2,9 @@
 
 namespace App\Modules;
 
+use App\Libs\Antispam;
 use Intervention\Image\ImageManager;
 use Sura\Libs\Request;
-use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
 class BugsController extends Module
@@ -36,10 +36,9 @@ class BugsController extends Module
     function create(){
         $db = $this->db();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
-//        Tools::AntiSpam('bugs');
+        Antispam::Check(9, $user_id);
         $title = Validation::textFilter($request['title']);
         $text = Validation::textFilter($request['text']);
         $file = Validation::textFilter($request['file']);
@@ -55,7 +54,7 @@ class BugsController extends Module
         $server_time = \Sura\Libs\Tools::time();
 
         $db->query("INSERT INTO `bugs` (uids, title, text, date, images) VALUES ('{$user_id}', '{$title}', '{$text}', '{$server_time}', '{$file}')");
-//        Tools::AntiSpamLogInsert('bugs');
+        Antispam::LogInsert(9, $user_id);
 //        $iid = $db->insert_id();
 
     }
@@ -125,8 +124,7 @@ class BugsController extends Module
     function delete($params){
         $db = $this->db();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         $id = (int)$request['id'];
 
@@ -158,8 +156,7 @@ class BugsController extends Module
         $tpl = $params['tpl'];
         $db = $this->db();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         $limit_num = 10;
         if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_num;
@@ -243,8 +240,7 @@ class BugsController extends Module
         $tpl = $params['tpl'];
         $db = $this->db();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         $limit_num = 10;
         if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_num;
@@ -326,8 +322,7 @@ class BugsController extends Module
         $tpl = $params['tpl'];
         $db = $this->db();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         $limit_num = 10;
         if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_num;
@@ -409,8 +404,7 @@ class BugsController extends Module
         $tpl = $params['tpl'];
         $db = $this->db();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         $limit_num = 10;
         if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_num;
@@ -495,8 +489,7 @@ class BugsController extends Module
         $tpl = $params['tpl'];
         $db = $this->db();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         $id = (int)$request['id'];
 
@@ -576,8 +569,7 @@ class BugsController extends Module
 //        $tpl = $params['tpl'];
         $db = $this->db();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         $limit_num = 10;
         if($request['page_cnt'] > 0) $page_cnt = (int)$request['page_cnt'] * $limit_num;

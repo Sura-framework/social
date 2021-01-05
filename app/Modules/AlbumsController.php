@@ -5,7 +5,6 @@ namespace App\Modules;
 use App\Services\Cache;
 use Exception;
 use Intervention\Image\ImageManager;
-use Sura\Libs\Langs;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
@@ -41,8 +40,7 @@ class AlbumsController extends Module{
         $logged = $this->logged();
 //        $lang = $this->get_langs();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         Tools::NoAjaxRedirect();
 
@@ -297,8 +295,7 @@ class AlbumsController extends Module{
         $logged = $this->logged();
         $lang = $this->get_langs();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         Tools::NoAjaxRedirect();
 
@@ -377,8 +374,7 @@ class AlbumsController extends Module{
         $logged = $this->logged();
         $lang = $this->get_langs();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         Tools::NoAjaxRedirect();
 
@@ -418,8 +414,7 @@ class AlbumsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $id = (int)$request['id'];
             $user_id = $user_info['user_id'];
@@ -449,8 +444,7 @@ class AlbumsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $id = (int)$request['id'];
             $user_id = $user_info['user_id'];

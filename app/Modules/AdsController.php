@@ -3,13 +3,9 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
-use Sura\Libs\Thumb;
-use Sura\Libs\Cache;
 
 /**
  * Class AdsController

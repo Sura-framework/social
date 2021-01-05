@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
@@ -24,6 +25,8 @@ class SupportController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
 //            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
@@ -56,6 +59,8 @@ class SupportController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
@@ -114,6 +119,8 @@ class SupportController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
@@ -143,6 +150,8 @@ class SupportController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
@@ -171,6 +180,8 @@ class SupportController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
 //            $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
@@ -204,6 +215,8 @@ class SupportController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
@@ -282,6 +295,8 @@ class SupportController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
             if($request['page'] > 0) $page = intval($request['page']); else $page = 1;

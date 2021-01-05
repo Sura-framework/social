@@ -2,8 +2,8 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Intervention\Image\ImageManager;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -28,6 +28,8 @@ class PhotoController extends Module{
             $user_id = $user_info['user_id'];
 
             Tools::NoAjaxRedirect();
+
+            $request = (Request::getRequest()->getGlobal());
 
             $pid = intval($request['pid']);
             $comment = ajax_utf8(textFilter($request['comment']));
@@ -155,6 +157,8 @@ class PhotoController extends Module{
 
             Tools::NoAjaxRedirect();
 
+            $request = (Request::getRequest()->getGlobal());
+
             $hash = $db->safesql(substr($request['hash'], 0, 32));
             $check_comment = $db->super_query("SELECT id, pid, album_id, owner_id FROM `photos_comments` WHERE hash = '{$hash}'");
             if($check_comment){
@@ -192,6 +196,8 @@ class PhotoController extends Module{
             $user_id = $user_info['user_id'];
 
             Tools::NoAjaxRedirect();
+
+            $request = (Request::getRequest()->getGlobal());
 
             $pid = intval($request['pid']);
             $i_left = intval($request['i_left']);
@@ -274,6 +280,8 @@ class PhotoController extends Module{
 
             Tools::NoAjaxRedirect();
 
+            $request = (Request::getRequest()->getGlobal());
+
             $pid = intval($request['pid']);
             $num = intval($request['num']);
             if($num > 7){
@@ -331,6 +339,8 @@ class PhotoController extends Module{
         //$user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $uid = intval($request['uid']);
             if($request['type'])
                 $photo = __DIR__."/../../public/uploads/attach/{$uid}/c_{$request['photo']}";
@@ -376,6 +386,8 @@ class PhotoController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
+            $request = (Request::getRequest()->getGlobal());
+
             $id = intval($request['id']);
             $row = $db->super_query("SELECT photo_name, album_id, user_id FROM `photos` WHERE id = '".$id."'");
 
@@ -418,6 +430,8 @@ class PhotoController extends Module{
             $config = Settings::loadsettings();
 
             Tools::NoAjaxRedirect();
+
+            $request = (Request::getRequest()->getGlobal());
 
             $rating = intval($request['rating']);
             if($rating <= 0 OR $rating > 6) $rating = 5;
@@ -596,6 +610,8 @@ class PhotoController extends Module{
 
             Tools::NoAjaxRedirect();
 
+            $request = (Request::getRequest()->getGlobal());
+
             $id = intval($request['id']);
 
             //Выводим ИД фото и проверяем на админа фотки
@@ -635,6 +651,8 @@ class PhotoController extends Module{
         if($logged){
             //$act = $request['act'];
             //$user_id = $user_info['user_id'];
+
+            $request = (Request::getRequest()->getGlobal());
 
             //################### Просмотр фотографии ###################//
 

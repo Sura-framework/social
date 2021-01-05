@@ -31,8 +31,7 @@ class FaveController extends Module{
 
             Tools::NoAjaxRedirect();
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $fave_id = (int)$request['fave_id'];
             //Проверяем на факт существования юзера которого добавляем в закладки
@@ -64,8 +63,7 @@ class FaveController extends Module{
 
         Tools::NoAjaxRedirect();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -104,8 +102,7 @@ class FaveController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 70;

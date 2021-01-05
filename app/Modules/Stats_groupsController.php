@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use Exception;
+use Sura\Libs\Request;
 use Sura\Libs\Tools;
 
 class Stats_groupsController extends Module{
@@ -25,6 +26,8 @@ class Stats_groupsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             //################### Выводим статистику ###################//
             $gid = intval($request['gid']);
 

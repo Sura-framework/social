@@ -2,9 +2,7 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Sura\Libs\Request;
-use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
 class DocController extends Module{
@@ -119,11 +117,7 @@ class DocController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
-
+            $request = (Request::getRequest()->getGlobal());
 
             $did = (int)$request['did'];
 
@@ -165,8 +159,7 @@ class DocController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $did = (int)$request['did'];
             $name = Validation::ajax_utf8(Validation::textFilter($request['name'], false, true));
@@ -207,10 +200,7 @@ class DocController extends Module{
         if($logged){
 //            $user_id = $user_info['user_id'];
 
-
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $did = (int)$request['did'];
 
@@ -253,8 +243,7 @@ class DocController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -331,10 +320,7 @@ class DocController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
-
+            $request = (Request::getRequest()->getGlobal());
 
             $sql_limit = 20;
 

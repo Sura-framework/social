@@ -2,7 +2,6 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 
 class ReportController extends Module{

@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use Exception;
 use Sura\Libs\Registry;
+use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
@@ -26,6 +27,8 @@ class Static_pageController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $alt_name = $db->safesql(Gramatic::totranslit($request['page']));
             $row = $db->super_query("SELECT title, text FROM `static` WHERE alt_name = '".$alt_name."'");
             if($row){

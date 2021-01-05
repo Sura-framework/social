@@ -3,9 +3,7 @@
 namespace App\Modules;
 
 use Sura\Libs\Langs;
-use Sura\Libs\Registry;
 use Sura\Libs\Request;
-use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 
@@ -24,8 +22,7 @@ class Attach_commController extends Module{
         if ($logged) {
             $user_id = $user_info['user_id'];
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $id = (int)$request['id'];
             $purl = $db->safesql(Gramatic::totranslit($request['purl']));
@@ -91,8 +88,7 @@ class Attach_commController extends Module{
         if ($logged) {
             $user_id = $user_info['user_id'];
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $text = Validation::ajax_utf8(Validation::textFilter($request['text']));
             $purl = $db->safesql(Gramatic::totranslit($request['purl']));
@@ -175,8 +171,7 @@ class Attach_commController extends Module{
         if ($logged) {
             $user_id = $user_info['user_id'];
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $foSQLurl = $db->safesql(Gramatic::totranslit($request['purl']));
 
@@ -260,8 +255,7 @@ class Attach_commController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             //$act = $_GET['act'];

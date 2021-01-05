@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use App\Libs\Antispam;
 use App\Libs\Wall;
 use App\Models\Profile;
 use Exception;
@@ -69,12 +70,12 @@ class WallController extends Module{
 
             $str_date = time();
 
-//            if(!$fast_comm_id) {
-//                AntiSpam('wall');
-//            }
-//            else {
-//                AntiSpam('comments');
-//            }
+            if(!$fast_comm_id) {
+                Antispam::Check(3, $user_id);
+            }
+            else {
+                Antispam::Check(5, $user_id);
+            }
 
             //Проверка на наличии юзера которую отправляется запись
             $check = $db->super_query("SELECT user_privacy, user_last_visit FROM `users` WHERE user_id = '{$for_user_id}'");
@@ -314,7 +315,7 @@ class WallController extends Module{
                             }
 
                             //Если добавлена просто запись, то сразу обновляем все записи на стене
-                            AntiSpamLogInsert('wall');
+                            Antispam::LogInsert(3, $user_id);
 
                             if(!$fast_comm_id){
 
@@ -873,7 +874,7 @@ class WallController extends Module{
                                 //Если добавлен комментарий к записи то просто обновляем нужную часть, тоесть только часть комментариев, но не всю стену
                             } else {
 
-                                AntiSpamLogInsert('comments');
+                                Antispam::LogInsert(5, $user_id);
 //
 //                                //Выводим кол-во комментов к записи
                                 $row = $db->super_query("SELECT fasts_num FROM `wall` WHERE id = '{$fast_comm_id}'");
@@ -2034,7 +2035,8 @@ class WallController extends Module{
         $user_info = $this->user_info();
 
         $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+//        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
         $server = $requests->server;
 
         $path = explode('/', $server['REQUEST_URI']);

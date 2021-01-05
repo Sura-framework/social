@@ -4,7 +4,6 @@ namespace App\Modules;
 
 use Intervention\Image\ImageManager;
 use Sura\Libs\Request;
-use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
 class Attach_groupsController extends Module{
@@ -21,8 +20,7 @@ class Attach_groupsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $public_id = (int)$request['public_id'];

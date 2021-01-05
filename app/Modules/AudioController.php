@@ -2,7 +2,6 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Exception;
 use getID3;
 use Sura\Libs\Langs;
@@ -81,8 +80,7 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
 //            $count = 40;
@@ -132,8 +130,7 @@ class AudioController extends Module{
 //            $act = $_REQUEST['act'];
             $params['title'] = $lang['audio'].' | Sura';
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $id = (int)$request['id'];
             $check = $db->super_query("SELECT oid, url, filename, original, public FROM `audio` WHERE id = '{$id}'");
@@ -164,8 +161,7 @@ class AudioController extends Module{
         $logged = $this->logged();
         if($logged){
 
-            $requests = Request::getRequest();
-            $request = ($requests->getGlobal());
+            $request = (Request::getRequest()->getGlobal());
 
             $id = (int)$request['id'];
             $check = $db->super_query("SELECT url, artist, title, duration, filename FROM `audio` WHERE id = '{$id}'");
@@ -195,8 +191,7 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $count = 40;
@@ -312,8 +307,7 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
 //            $count = 40;
@@ -427,8 +421,7 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if ($logged) {
             $count = 40;
@@ -513,8 +506,7 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $params['title'] = $lang['audio'].' | Sura';
@@ -545,8 +537,7 @@ class AudioController extends Module{
 //        $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
 //            $count = 40;
@@ -598,8 +589,7 @@ class AudioController extends Module{
 //        $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
 //            $count = 40;
@@ -626,8 +616,7 @@ class AudioController extends Module{
 //        $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $count = 40;
@@ -657,8 +646,7 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $count = 40;
@@ -797,8 +785,7 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $count = 40;
@@ -939,8 +926,7 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $count = 40;
@@ -1082,8 +1068,7 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $count = 40;
@@ -1231,8 +1216,7 @@ class AudioController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
 

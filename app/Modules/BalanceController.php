@@ -2,7 +2,6 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Exception;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
@@ -22,8 +21,7 @@ class BalanceController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -243,8 +241,7 @@ class BalanceController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $user_id = $user_info['user_id'];

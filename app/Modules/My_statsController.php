@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use Exception;
+use Sura\Libs\Request;
 use Sura\Libs\Tools;
 
 class My_statsController extends Module{
@@ -24,6 +25,8 @@ class My_statsController extends Module{
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
+
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
 

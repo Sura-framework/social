@@ -3,7 +3,6 @@
 namespace App\Modules;
 
 use App\Models\Profile;
-use App\Services\Cache;
 use Exception;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
@@ -219,8 +218,7 @@ class EditprofileController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         Tools::NoAjaxRedirect();
 
@@ -288,8 +286,7 @@ class EditprofileController extends Module{
 
         Tools::NoAjaxRedirect();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
             $xfields = array();
@@ -335,8 +332,7 @@ class EditprofileController extends Module{
 
         Tools::NoAjaxRedirect();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
 
@@ -383,8 +379,7 @@ class EditprofileController extends Module{
 
         Tools::NoAjaxRedirect();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         if($logged){
 
@@ -647,8 +642,7 @@ class EditprofileController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $requests = Request::getRequest();
-        $request = ($requests->getGlobal());
+        $request = (Request::getRequest()->getGlobal());
 
         Tools::NoAjaxRedirect();
 

@@ -2,13 +2,9 @@
 
 namespace App\Modules;
 
-use App\Services\Cache;
 use Exception;
 use Intervention\Image\ImageManager;
-use Sura\Libs\Thumb;
-use Sura\Libs\Langs;
-use Sura\Libs\Page;
-use Sura\Libs\Registry;
+use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
@@ -166,6 +162,8 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $config = Settings::loadsettings();
 
@@ -290,6 +288,8 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $video_lnk = $request['video_lnk'];
 
             if(preg_match("/https:\/\/www.youtube.com|https:\/\/youtube.com|https:\/\/rutube.ru|https:\/\/www.rutube.ru|https:\/\/www.vimeo.com|https:\/\/vimeo.com|https:\/\/smotri.com|https:\/\/www.smotri.com/i", $video_lnk)){
@@ -408,6 +408,8 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $vid = intval($request['vid']);
 
@@ -478,6 +480,8 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             //$act = $request['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
@@ -513,6 +517,8 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $vid = intval($request['vid']);
 
@@ -569,7 +575,7 @@ class VideosController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-
+            $request = (Request::getRequest()->getGlobal());
             $path = explode('/', $_SERVER['REQUEST_URI']);
 
             if(!empty($request['vid'])){
@@ -817,6 +823,8 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $limit_vieos = 20;
 
@@ -945,6 +953,8 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $comm_id = intval($request['comm_id']);
 
@@ -1010,6 +1020,8 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             $user_id = $user_info['user_id'];
             $vid = intval($request['vid']);
             $comm_num = intval($request['num']);
@@ -1094,6 +1106,8 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
@@ -1182,6 +1196,8 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             //$act = $_GET['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;
@@ -1259,6 +1275,8 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
+
             //$act = $request['act'];
             $user_id = $user_info['user_id'];
             $limit_vieos = 20;
@@ -1342,6 +1360,7 @@ class VideosController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $request = (Request::getRequest()->getGlobal());
             //$act = $request['act'];
             $user_id = $user_info['user_id'];
             //$limit_vieos = 20;

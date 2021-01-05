@@ -3,9 +3,7 @@
 namespace App\Modules;
 
 use App\Models\Register;
-use App\Services\Cache;
 use Exception;
-use Sura\Libs\Page;
 use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;

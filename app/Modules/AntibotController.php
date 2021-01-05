@@ -2,9 +2,6 @@
 
 namespace App\Modules;
 
-use Sura\Libs\Langs;
-use Sura\Libs\Registry;
-use Sura\Libs\Tools;
 
 class AntibotController extends Module{
 
