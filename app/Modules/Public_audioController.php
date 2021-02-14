@@ -6,6 +6,7 @@ use Exception;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Libs\Status;
 use Sura\Libs\Validation;
 
 class Public_audioController extends Module{
@@ -13,11 +14,11 @@ class Public_audioController extends Module{
     /**
      * upload box
      *
-     * @param $params
      */
-    public function upload_box($params){
+    public function upload_box(): int
+    {
         $tpl = $params['tpl'];
-        $config = Settings::loadsettings();
+        $config = Settings::load();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -25,11 +26,11 @@ class Public_audioController extends Module{
             $request = (Request::getRequest()->getGlobal());
 
             $count = 40;
-            $page = intval($request['page']);
+            $page = (int)$request['page'];
             $offset = $count * $page;
             $act = $request['act'];
 
-            $pid = intval($request['pid']);
+            $pid = (int)$request['pid'];
             echo <<<HTML
                     <div class="audio_upload_cont">
                     <div class="upload_limits_title" dir="auto">Ограничения</div>
@@ -70,11 +71,13 @@ class Public_audioController extends Module{
     /**
      * upload
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function upload($params){
+    public function upload(): int
+    {
         $tpl = $params['tpl'];
-        $config = Settings::loadsettings();
+        $config = Settings::load();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -98,7 +101,7 @@ class Public_audioController extends Module{
 
                 $file_tmp = $_FILES['file']['tmp_name'];
                 $file_name = Gramatic::totranslit($_FILES['file']['name']);
-                $server_time = \Sura\Libs\Tools::time();
+                $server_time = \Sura\Libs\Date::time();
                 $file_rename = substr(md5($server_time+rand(1,100000)), 0, 15);
                 $file_size = $_FILES['file']['size'];
                 $tmp = explode('.', $file_name);
@@ -132,25 +135,35 @@ class Public_audioController extends Module{
 
 
                         //@unlink(ROOT_DIR.'/uploads/audio_tmp/'.$file_rename.'.mp3');
-                        echo json_encode(array('status' => 1));
-
-                    } else json_encode(array('status' => 0));
-                } else json_encode(array('status' => 0));
-
-            } else json_encode(array('status' => 0));
-
-            die();
+//                        echo json_encode(array('status' => 1));
+                        $status = Status::OK;
+                    } else {
+                        $status = Status::BAD_MOVE;
+                    }
+                } else {
+                    $status = Status::BAD_FORMAT;
+                }
+            } else {
+                $status = Status::BAD_RIGHTS;
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * add
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function add($params){
+    public function add(): int
+    {
         $tpl = $params['tpl'];
-        $config = Settings::loadsettings();
+        $config = Settings::load();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -168,26 +181,33 @@ class Public_audioController extends Module{
             $info = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$pid}'");
             $check = $db->super_query("SELECT url, artist, title, duration FROM `audio` WHERE id = '{$id}'");
             if(stripos($info['admin'], "u{$user_info['user_id']}|") !== false && $check){
-                $server_time = \Sura\Libs\Tools::time();
+                $server_time = \Sura\Libs\Date::time();
                 $db->query("INSERT INTO `audio` SET original = '{$id}', duration = '{$check['duration']}',oid = '{$pid}', public = '1', url = '{$db->safesql($check['url'])}', artist = '{$db->safesql($check['artist'])}', title = '{$db->safesql($check['title'])}', date = '{$server_time}'");
                 $db->query("UPDATE `communities` SET audio_num = audio_num + 1 WHERE id = '{$pid}'");
                 $db->query("UPDATE `audio` SET add_count = add_count + 1 WHERE id = '{$id}'");
+
+                $status = Status::OK;
+            }else{
+                $status = Status::BAD_RIGHTS;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Страница всех аудио
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function index($params): string
+    public function index(): int
     {
         $tpl = $params['tpl'];
 
-        $config = Settings::loadsettings();
+        $config = Settings::load();
 
         $db = $this->db();
         $user_info = $this->user_info();

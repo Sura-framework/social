@@ -1,0 +1,52 @@
+<?php
+
+
+namespace App\Libs;
+
+
+use Sura\Libs\Db;
+use Sura\Libs\Registry;
+
+class Friends
+{
+	/**
+	 * check user to friends
+	 * @param int $for_user_id
+	 * @param int $from_user_id
+	 * @return bool
+	 */
+	public static function CheckFriends(int $for_user_id, int $from_user_id = 0): bool
+	{
+		if ($from_user_id == 0) {
+			$user_info = Registry::get('user_info');
+			$from_user_id = $user_info['user_id'];
+		}
+		$db = Db::getDB();
+		$check = $db->super_query("SELECT user_id FROM `friends` WHERE friend_id = '{$for_user_id}' AND user_id = '{$from_user_id}' AND subscriptions = 0");
+		if ($check) {
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * @param int $bad_user_id
+	 * @param int $user_id
+	 * @return bool
+	 */
+	public static function CheckBlackList(int $bad_user_id, int $user_id = 0): bool
+	{
+		if ($user_id == 0) {
+			$user_info = Registry::get('user_info');
+			$user_id = $user_info['user_id'];
+		}
+		if ($user_id !== $bad_user_id) {
+			$db = Db::getDB();
+			$row_blacklist = $db->super_query("SELECT id FROM `users_blacklist` WHERE users = '{$bad_user_id}|{$user_id}'");
+			if ($row_blacklist) {
+				return true;
+			}
+		}
+		return false;
+	}
+}

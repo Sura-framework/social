@@ -2,7 +2,10 @@
 
 namespace App\Modules;
 
+use Sura\Libs\Download;
+use Sura\Libs\Langs;
 use Sura\Libs\Request;
+use Sura\Libs\Status;
 use Sura\Libs\Validation;
 
 class DocController extends Module{
@@ -10,8 +13,11 @@ class DocController extends Module{
     /**
      * Загрузка файла
      *
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function upload(){
+    public function upload(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -50,7 +56,7 @@ class DocController extends Module{
                         @chmod($upload_dir, 0777);
                     }
 
-                    $server_time = \Sura\Libs\Tools::time();
+                    $server_time = \Sura\Libs\Date::time();
                     $downl_file_name = substr(md5($file_name.rand(0, 1000).$server_time), 0, 25);
 
                     //Загружаем сам файл
@@ -75,7 +81,9 @@ class DocController extends Module{
                         //Обновляем кол-во док. у юзера
                         $db->query("UPDATE `users` SET user_doc_num = user_doc_num+1 WHERE user_id = '{$user_id}'");
 
-                        if(!$file_name) $file_name = 'Без названия.'.$res_type;
+                        if(!$file_name) {
+                            $file_name = 'Без названия.' . $res_type;
+                        }
 
                         $strLn = strlen($file_name);
                         if($strLn > 50){
@@ -83,32 +91,42 @@ class DocController extends Module{
                             $file_name = substr($file_name, 0, 50).'...'.$res_type;
                         }
 
-                        $server_time = \Sura\Libs\Tools::time();
+                        $server_time = \Sura\Libs\Date::time();
                         //Вставляем файл в БД
                         $db->query("INSERT INTO `doc` SET duser_id = '{$user_id}', dname = '{$file_name}', dsize = '{$dsize}', ddate = '{$server_time}', ddownload_name = '{$downl_file_name}{$res_type}'");
 
-                        echo $file_name.'"'.$db->insert_id().'"'.$dsize.'"'.strtolower($type).'"'.langdate('сегодня в H:i', $server_time);
+                        echo $file_name.'"'.$db->insert_id().'"'.$dsize.'"'.strtolower($type).'"'.Langs::lang_date('сегодня в H:i', $server_time);
 
-//                        Cache::mozg_mass_clear_cache_file("
-//                        user_{$user_id}/profile_{$user_id}|
-//                        user_{$user_id}/docs");
+                        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                        $cache = new \Sura\Cache\Cache($storage, 'users');
+                        $cache->remove("{$user_id}/profile_{$user_id}");
+                        $cache->remove("{$user_id}/docs");
 
-                        $Cache = cache_init(array('type' => 'file'));
-                        $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                        $Cache->delete("users/{$user_id}/docs");
+                        $status = Status::OK;
+                    }else{
+                        $status = Status::BAD_MOVE;
                     }
-
-                } else
-                    echo 1;
-
+                }else{
+                    $status = Status::BIG_SIZE;
+                }
+            }else{
+                $status = Status::BAD_FORMAT;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Удаление документа
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function del(){
+    public function del(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -132,25 +150,33 @@ class DocController extends Module{
                 //Обновляем кол-во док. у юзера
                 $db->query("UPDATE `users` SET user_doc_num = user_doc_num-1 WHERE user_id = '{$user_id}'");
 
-//                Cache::mozg_mass_clear_cache_file("
-//                user_{$user_id}/profile_{$user_id}|
-//                user_{$user_id}/docs");
-//                Cache::mozg_clear_cache_file("wall/doc{$did}");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $cache->remove("{$user_id}/profile_{$user_id}");
+                $cache->remove("{$user_id}/docs");
+                $cache = new \Sura\Cache\Cache($storage, 'wall');
+                $cache->remove("wall/doc{$did}");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                $Cache->delete("users/{$user_id}/docs");
-                $Cache->delete("wall/doc{$did}");
-
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Сохранение отред.данных
      *
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function editsave($params){
+    public function editsave(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -173,25 +199,31 @@ class DocController extends Module{
 
                 $db->query("UPDATE `doc`SET dname = '{$name}' WHERE did = '{$did}'");
 
-//                Cache::mozg_mass_clear_cache_file("
-//                user_{$user_id}/profile_{$user_id}|
-//                user_{$user_id}/docs");
-//                Cache::mozg_clear_cache_file("wall/doc{$did}");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $cache->remove("{$user_id}/profile_{$user_id}");
+                $cache->remove("{$user_id}/docs");
+                $cache = new \Sura\Cache\Cache($storage, 'wall');
+                $cache->remove("doc{$did}");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                $Cache->delete("users/{$user_id}/docs");
-                $Cache->delete("wall/doc{$did}");
-
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
-
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Скачивание документа с сервера
+     * @throws \JsonException
      */
-    public function download($params){
+    public function download(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -222,21 +254,29 @@ class DocController extends Module{
 
                 if(file_exists(FILE_DIR.$filename) AND $filename){
 
-                    $file = new download(FILE_DIR.$filename, $row['dname'], 1, $config['files_max_speed']);
+                    $file = new Download(FILE_DIR.$filename, $row['dname'], 1, $config['files_max_speed']);
                     $file->download_file();
 
+                    $status = Status::OK;
+                }else{
+                    $status = Status::NOT_FOUND;
                 }
-
-            } else
-                header("Location: /index.php");
-
+            }else{
+                $status = Status::NOT_FOUND;
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Страница всех загруженных документов
      */
-    public function list($params){
+    public function list(): int
+    {
         $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -277,7 +317,7 @@ class DocController extends Module{
                 $tpl->set('{format}', end($array));
                 $tpl->set('{did}', $row['did']);
                 $tpl->set('{size}', $row['dsize']);
-                $date = megaDate(strtotime($row['ddate']));
+                $date = \Sura\Libs\Date::megaDate(strtotime($row['ddate']));
                 $tpl->set('{date}', $date);
 
                 $tpl->compile('content');
@@ -304,13 +344,11 @@ class DocController extends Module{
 
     /**
      * Страница всех загруженных документов для прикрепления BOX
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function index($params): string
+    public function index(): int
     {
-        $tpl = $params['tpl'];
+//        $tpl = $params['tpl'];
 
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -332,30 +370,30 @@ class DocController extends Module{
             if(!$page_cnt){
                 $rowUser = $db->super_query("SELECT user_doc_num FROM `users` WHERE user_id = '{$user_id}'");
 
-                $tpl->load_template('doc/top.tpl');
-                $tpl->set('{doc-num}', $rowUser['user_doc_num']);
-                $tpl->compile('content');
+//                $tpl->load_template('doc/top.tpl');
+//                $tpl->set('{doc-num}', $rowUser['user_doc_num']);
+//                $tpl->compile('content');
             }
 
-            $tpl->load_template('doc/doc.tpl');
+//            $tpl->load_template('doc/doc.tpl');
             foreach($sql_ as $row){
 
-                $tpl->set('{name}', stripslashes($row['dname']));
+//                $tpl->set('{name}', stripslashes($row['dname']));
                 $array = explode('.', $row['ddownload_name']);
-                $tpl->set('{format}', end($array));
-                $tpl->set('{did}', $row['did']);
+//                $tpl->set('{format}', end($array));
+//                $tpl->set('{did}', $row['did']);
 
-                $date = megaDate(strtotime($row['ddate']));
-                $tpl->set('{date}', $date);
+                $date = \Sura\Libs\Date::megaDate(strtotime($row['ddate']));
+//                $tpl->set('{date}', $date);
 
-                $tpl->compile('content');
+//                $tpl->compile('content');
             }
 
             if(!$page_cnt AND $rowUser['user_doc_num'] > 20){
-                $tpl->load_template('doc/bottom.tpl');
-                $tpl->compile('content');
+//                $tpl->load_template('doc/bottom.tpl');
+//                $tpl->compile('content');
             }
-            return view('info.info', $params);
+            return view('docs.box', $params);
 
         } else
             echo 'no_log';

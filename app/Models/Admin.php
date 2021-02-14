@@ -4,12 +4,12 @@ namespace App\Models;
 
 class Admin
 {
-
-    /**
-     * @return string[][]
-     */
-    public static function modules() : array
-    {
+	
+	/**
+	 * @return string[][]
+	 */
+	public static function modules(): array
+	{
        return array(
            array(
                 'name' =>'Настройка системы',
@@ -143,9 +143,6 @@ class Admin
                'img' => 'static.png',
                'link' => 'stats',
            ),
-
-
         );
-
     }
 }

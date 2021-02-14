@@ -3,17 +3,27 @@
 return array(
     // Главная
     '/'                                           => 'HomeController@Index',
+
+    '/theme/'                                           => 'HomeController@Theme',
+    '/404/'                                           => 'HomeController@Index',
 //    '/2'                                           => array('method' => 'HomeController@Index'),
     // Регистрация
     '/reg/'                                       => 'HomeController@Index',
     '/test/'                                       => 'HomeController@Test',
 
-    '/register/'                                       => 'RegisterController@Index',
 
+    '/register/'                                       => 'AuthController@end_register',
+    //Воостановление пароля
+    '/restore/'                                   => 'AuthController@restore',
+    '/restore/next/'                              => 'AuthController@restore_next',
+    '/restore/send/'                              => 'AuthController@restore_send',
+    '/restore/finish/'                            => 'AuthController@restore_finish',
+    '/restore/prefinish/'                            => 'AuthController@restore_pre_finish',
     //Реф. ссылка на регистрацию
     '/reg/:num/'                                  => 'HomeController@Index',
-    '/signup/'                                  => 'RegisterController@Signup',
-    '/login/'                                  => 'HomeController@Login',
+    '/signup/'                                  => 'AuthController@signup',
+    '/login/'                                  => 'AuthController@Login',
+    '/logout/'                                    => 'AuthController@logout',
 
     // Уведомления
     '/notifications/'                             => 'NotificationsController@Index',
@@ -98,6 +108,7 @@ return array(
     '/albums/edit/:num/'                          => 'AlbumsController@edit_pos_photos',
     '/albums/new/'                                => 'AlbumsController@new_photos',
     '/albums/new/:num/'                           => 'AlbumsController@new_photos',
+    '/albums/create/'                        => 'AlbumsController@create',
     '/albums/create_page/'                        => 'AlbumsController@create_page',
     '/albums/del_album/'                          => 'AlbumsController@del_album',
     '/albums/save_pos_albums/'                    => 'AlbumsController@save_pos_albums',
@@ -233,7 +244,8 @@ return array(
 
     '/repost/all/'                                => 'RepostController@Index',
     '/repost/groups/'                             => 'RepostController@groups',
-    '/repost/for_wall/'                             => 'RepostController@groups',
+    '/repost/for_wall/'                             => 'RepostController@for_wall',
+    '/repost/message/'                             => 'RepostController@message',
 
     //Стена
     '/wall/:num/'                                 => 'WallController@Index',
@@ -277,11 +289,6 @@ return array(
     '/support/delete_answer/'                      => 'SupportController@delete_answer',
     '/support/close/'                             => 'SupportController@close',
 
-    //Воостановление пароля
-    '/restore/'                                   => 'RestoreController@Index',
-    '/restore/next/'                              => 'RestoreController@next',
-    '/restore/send/'                              => 'RestoreController@send',
-    '/restore/finish/'                            => 'RestoreController@finish',
 
     //UBM
     '/balance/'                                   => 'BalanceController@Index',
@@ -408,6 +415,7 @@ return array(
     '/audio/load_play_list/'                      => 'AudioController@load_play_list',
     '/audio/add/'                                 => 'AudioController@add',
     '/audio/upload_box/'                                 => 'AudioController@upload_box',
+    '/audio/my_box/'                                 => 'AudioController@allMyAudiosBox',
     '/audio/upload/'                                 => 'AudioController@upload',
     '/audio/get_text/'                            => 'AudioController@get_text',
     '/audio/get_info/'                            => 'AudioController@get_info',
@@ -426,31 +434,33 @@ return array(
     '/docs/'                                      => 'DocController@Index',
     '/docs/del/'                                  => 'DocController@del',
     '/docs/editsave/'                             => 'DocController@editsave',
+    '/docs/box/'                             => 'DocController@editsave',
     '/docs/download/:num/'                        => 'DocController@download',
 
     // votes
     '/votes/'                                     => 'VotesController@Index',
 
     '/attach/'                                    => 'AttachController@Index',
-    '/attach_comm/'                               => 'Attach_commController@Index',
-    '/attach_comm/addcomm/'                       => 'Attach_commController@addcomm',
-    '/attach_comm/delcomm/'                       => 'Attach_commController@delcomm',
-    '/attach_comm/prevcomm/'                      => 'Attach_commController@prevcomm',
-    '/attach_groups/:num/'                        => 'Attach_groupsController@Index',
+    '/attach_comm/'                               => 'AttachController@Attach_comm',
+    '/attach_comm/addcomm/'                       => 'AttachController@addcomm',
+    '/attach_comm/delcomm/'                       => 'AttachController@delcomm',
+    '/attach_comm/prevcomm/'                      => 'AttachController@prevcomm',
+    '/attach_groups/:num/'                        => 'AttachController@Attach_groups',
 
     //Стат страницы
     '/:seg.html'                                  => 'Static_pageController@Index',
 
     //Языки
     '/lang/'                                      => 'LangController@Index',
-    '/lang/change/:num/'                                      => 'LangController@change_lang',
+    '/lang/change/:num/'                                      => 'LangController@change_lang', //?
 
-    '/logout/'                                    => 'LogoutController@Index',
 
     '/bugs/'                                    => 'BugsController@Index',
+    '/bugs/:num'                                    => 'BugsController@view_page',
     '/bugs/load_img/'                                    => 'BugsController@load_img',
     '/bugs/add_box/'                                    => 'BugsController@add_box',
     '/bugs/create/'                                    => 'BugsController@create',
+    '/bugs/comments/create/'                                    => 'BugsController@create_comment',
     '/bugs/delete/'                                    => 'BugsController@delete',
     '/bugs/open/'                                    => 'BugsController@open',
     '/bugs/complete/'                                    => 'BugsController@complete',
@@ -483,5 +493,7 @@ return array(
     '/admin/ads/'                                    => 'AdminController@main',
 
     '/sitemap/'                                    => 'SitemapController@main',
+
+    '/:any'                                           => 'HomeController@alias',
 );
 

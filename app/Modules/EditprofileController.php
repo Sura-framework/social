@@ -6,6 +6,7 @@ use App\Models\Profile;
 use Exception;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Intervention\Image\ImageManager;
@@ -16,16 +17,17 @@ class EditprofileController extends Module{
     /**
      * Загрузка фотографии
      *
+     * @throws \Throwable
      */
-    public function upload(){
-        //TODO json output
+    public function upload(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        Tools::NoAjaxRedirect();
+//        Tools::NoAjaxRedirect();
 
         if($logged){
 //            $metatags['title'] = $lang['editmyprofile'];
@@ -38,33 +40,31 @@ class EditprofileController extends Module{
                 if (!mkdir($concurrentDirectory = $upload_dir . $user_id, 0777) && !is_dir($concurrentDirectory)) {
                     throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
                 }
-                @chmod($upload_dir.$user_id, 0777 );
                 if (!mkdir($concurrentDirectory = $upload_dir . $user_id . '/albums', 0777) && !is_dir($concurrentDirectory)) {
                     throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
                 }
-                @chmod($upload_dir.$user_id.'/albums', 0777 );
             }
-
-            //Разришенные форматы
+            //Разрешенные форматы
             $allowed_files = array('jpg', 'jpeg', 'jpe', 'png', 'gif');
-
             //Получаем данные о фотографии
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = \Sura\Libs\Tools::time();
+//            $image_name = random_bytes(10);
+            $server_time = \Sura\Libs\Date::time();
             $permitted_chars = '0123456789abcdefghijklmnopqrstuvwxyz';
 //            $image_rename = substr(md5($server_time+rand(1,100000)), 0, 15); // имя фотографии
             $image_rename = substr(str_shuffle($permitted_chars), 0, 15); // имя фотографии
+//            $image_rename = random_bytes(15); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
             $array = explode(".", $image_name);
             $type = end($array); // формат файла
 
             //Проверям если, формат верный то пропускаем
-            if(in_array($type, $allowed_files)){
+            if(in_array($type, $allowed_files, true)){
                 if($image_size < 5000000){
                     $res_type = '.'.$type;
                     //upgraded
-                    $upload_dir = $upload_dir.$user_id.'/'; // Директория куда загружать
+                    $upload_dir .= $user_id . '/'; // Директория куда загружать
                     if(move_uploaded_file($image_tmp, $upload_dir.$image_rename.$res_type)) {
 
                         $manager = new ImageManager(array('driver' => 'gd'));
@@ -98,10 +98,12 @@ class EditprofileController extends Module{
 
                         //Добавляем на стену
                         $row = $db->super_query("SELECT user_sex FROM `users` WHERE user_id = '{$user_id}'");
-                        if($row['user_sex'] == 2)
+                        if($row['user_sex'] == 2) {
                             $sex_text = 'обновила';
-                        else
+                        }
+                        else {
                             $sex_text = 'обновил';
+                        }
 
                         $wall_text = "<div class=\"profile_update_photo\"><a href=\"\" onClick=\"Photo.Profile(\'{$user_id}\', \'{$image_rename}{$res_type}\'); return false\"><img src=\"/uploads/users/{$user_id}/o_{$image_rename}{$res_type}\" style=\"margin-top:3px\" alt=\"\"></a></div>";
 
@@ -116,33 +118,44 @@ class EditprofileController extends Module{
                         //Обновляем имя фотки в бд
                         $db->query("UPDATE `users` SET user_photo = '{$image_rename}{$res_type}', user_wall_id = '{$db_id}' WHERE user_id = '{$user_id}'");
 
-                        $config = Settings::loadsettings();
+                        $config = Settings::load();
 
-                        echo $config['home_url'].'uploads/users/'.$user_id.'/'.$image_rename.$res_type;
+//                        echo $config['home_url'].'uploads/users/'.$user_id.'/'.$image_rename.$res_type;
 
-//                        Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-//                        Cache::mozg_clear_cache();
+                        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                        $cache = new \Sura\Cache\Cache($storage, 'users');
+                        $cache->remove("{$user_id}/profile_{$user_id}");
 
-                        $Cache = cache_init(array('type' => 'file'));
-                        $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                        //json!
-                    } else
-                        echo 'bad';
-                } else
-                    echo 'big_size';
-            } else
-                echo 'bad_format';
-
-//            die();
+                        $status = Status::OK;
+                        return _e_json(array(
+                            'status' => $status,
+                            'img' => $config['home_url'].'uploads/users/'.$user_id.'/'.$image_rename.$res_type,
+                        ) );
+                    } else {
+                        $status = Status::BAD_MOVE;
+                    }
+                } else {
+                    $status = Status::BIG_SIZE;
+                }
+            } else {
+                $status = Status::BAD_FORMAT;
+            }
+        } else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Удаление фотографии
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    //TODO json output
-    public function del_photo($params){
+    public function del_photo(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -173,31 +186,35 @@ class EditprofileController extends Module{
                 unlink($upload_dir.'o_'.$row['user_photo']);
                 unlink($upload_dir.'130_'.$row['user_photo']);
 
-//                Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-//                Cache::mozg_clear_cache();
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $cache->remove("{$user_id}/profile_{$user_id}");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
-            //json!
-//            die();
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Страница загрузки главной фотографии
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    //TODO add blade template
-    public function load_photo($params): string
+    public function load_photo(): int
     {
         $lang = $this->get_langs();
         $logged = $this->logged();
 
-        Tools::NoAjaxRedirect();
+//        Tools::NoAjaxRedirect();
 
+        if (!isset($lang['editmyprofile']))
+            $lang['editmyprofile'] = "editmyprofile";
         if($logged) {
             $params['title'] = $lang['editmyprofile'] . ' | Sura';
             return view('profile.load_photo', $params);
@@ -209,13 +226,16 @@ class EditprofileController extends Module{
 
     /**
      * Сохранение основых данных
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    //TODO json output
-    public function save_general($params){
-        $lang = $this->get_langs();
+    public function save_general(): int
+    {
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
+        $user_id = $user_info['user_id'];
         $logged = $this->logged();
 
         $request = (Request::getRequest()->getGlobal());
@@ -266,22 +286,31 @@ class EditprofileController extends Module{
 
             $db->query("UPDATE `users` SET user_sex = '{$user_sex}', user_day = '{$user_day}', user_month = '{$user_month}', user_year = '{$user_year}', user_country = '{$user_country}', user_city = '{$user_city}', user_country_city_name = '{$user_country_city_name}', user_birthday = '{$user_birthday}', user_sp = '{$user_sp}' WHERE user_id = '{$user_info['user_id']}'");
 
-            $Cache = cache_init(array('type' => 'file'));
-            $Cache->delete("users/{$user_info['user_id']}/profile_{$user_info['user_id']}");
+            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+            $cache = new \Sura\Cache\Cache($storage, 'users');
+            $cache->remove("{$user_id}/profile_{$user_id}");
 
-            echo 'ok';
+            $status = Status::OK;
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Сохранение контактов
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    //TODO json output
-    public function save_contact($params){
+    public function save_contact(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
+        $user_id = $user_info['user_id'];
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
@@ -301,33 +330,36 @@ class EditprofileController extends Module{
             $xfieldsdata = '';
             foreach($xfields as $name => $value){
                 $value = str_replace("|", "&#124;", $value);
-                if(strlen($value) > 0)
+                if($value != '')
                     $xfieldsdata .= $name.'|'.$value.'||';
             }
 
             $db->query("UPDATE `users` SET user_xfields = '{$xfieldsdata}' WHERE user_id = '{$user_info['user_id']}'");
 
-//            Cache::mozg_clear_cache_file('user_'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
+            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+            $cache = new \Sura\Cache\Cache($storage, 'users');
+            $cache->remove("{$user_id}/profile_{$user_id}");
 
-            $Cache = cache_init(array('type' => 'file'));
-            $Cache->delete("users/{$user_info['user_id']}/profile_{$user_info['user_id']}");
-
-            echo 'ok';
+            $status = Status::OK;
         }else{
-            echo 'error';
+            $status = Status::BAD_LOGGED;
         }
-
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Сохранение интересов
-     * @param $params
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    //TODO json output
-    public function save_interests($params){
+    public function save_interests(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
+        $user_id = $user_info['user_id'];
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
@@ -349,32 +381,35 @@ class EditprofileController extends Module{
             $xfieldsdata = '';
             foreach($xfields as $name => $value){
                 $value = str_replace("|", "&#124;", $value);
-                if(strlen($value) > 0)
+                if($value != '')
                     $xfieldsdata .= $name.'|'.$value.'||';
             }
 
             $db->query("UPDATE `users` SET user_xfields_all = '{$xfieldsdata}' WHERE user_id = '{$user_info['user_id']}'");
 
-//            Cache::mozg_clear_cache_file('user_'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
+            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+            $cache = new \Sura\Cache\Cache($storage, 'users');
+            $cache->remove("{$user_id}/profile_{$user_id}");
 
-            $Cache = cache_init(array('type' => 'file'));
-            $Cache->delete("users/{$user_info['user_id']}/profile_{$user_info['user_id']}");
-
-            echo 'ok';
+            $status = Status::OK;
         }else{
-            echo 'error';
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Сохранение доп.полей
-     * @param $params
+     * @throws \Throwable
      */
-    //TODO json output
-    public function save_xfields($params){
+    public function save_xfields(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
+        $user_id = $user_info['user_id'];
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
@@ -427,40 +462,38 @@ class EditprofileController extends Module{
                 }
             }
 
-            if($filecontents)
-                $filecontents = implode( "||", $filecontents);
-            else
+            if($filecontents) {
+                $filecontents = implode("||", $filecontents);
+            }
+            else {
                 $filecontents = '';
+            }
 
             $db->query("UPDATE `users` SET xfields = '{$filecontents}' WHERE user_id = '{$user_info['user_id']}'");
 
-//            Cache::mozg_clear_cache_file('user_'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
+            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+            $cache = new \Sura\Cache\Cache($storage, 'users');
+            $cache->remove("{$user_id}/profile_{$user_id}");
 
-            $Cache = cache_init(array('type' => 'file'));
-            $Cache->delete("users/{$user_info['user_id']}/profile_{$user_info['user_id']}");
-
-//            exit;
+            $status = Status::OK;
         }else{
-            echo 'error';
+            $status = Status::BAD_LOGGED;
         }
-
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Страница Редактирование контактов
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    //TODO add Blade template
-    public function contact($params): string
+    public function contact(): int
     {
         $lang = $this->get_langs();
         $user_info = $this->user_info();
         $logged = $this->logged();
         $Profile = new Profile;
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             $params['title'] = $lang['editmyprofile'].' | Sura';
@@ -486,19 +519,15 @@ class EditprofileController extends Module{
 
     /**
      * Страница Редактирование интересов
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function interests($params): string
+    public function interests(): int
     {
         $lang = $this->get_langs();
 //        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         $Profile = new Profile;
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             $params['title'] = $lang['editmyprofile'].' | Sura';
@@ -526,7 +555,7 @@ class EditprofileController extends Module{
     /**
      * Страница Редактирование доп.полей
      */
-/*    public function all($params){
+/*    public function all(){
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -598,24 +627,21 @@ class EditprofileController extends Module{
             $tpl->clear();
 
             $params['tpl'] = $tpl;
-            Page::generate($params);
+            Page::generate();
             return true;
         }
     }*/
-
-    /**
-     * Страница миниатюры
-     * @param $params
-     * @return string
-     * @throws Exception
-     */
-    public function miniature($params): string
+	
+	/**
+	 * Страница миниатюры
+	 * @return int
+	 * @throws \JsonException
+	 */
+    public function miniature(): int
     {
         $lang = $this->get_langs();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             $params['title'] = $lang['editmyprofile'].' | Sura';
@@ -625,18 +651,22 @@ class EditprofileController extends Module{
                 $params['user_id'] = $user_info['user_id'];
                 $params['ava'] = $row['user_photo'];
                 return view('profile.miniature', $params);
-            } else
-                echo '1';
+            } else {
+	            $status = Status::NOT_FOUND;
+            }
         }else
-            return false;
-        //TODO JSON output
+	        $status = Status::BAD_LOGGED;
+	    return _e_json(array(
+		    'status' => $status,
+	    ) );
     }
-
-    /**
-     * Сохранение миниатюры
-     * @param $params
-     */
-    public function miniature_save($params){
+	
+	/**
+	 * Сохранение миниатюры
+	 * @return int
+	 * @throws \JsonException
+	 */
+    public function miniature_save(): int{
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -659,178 +689,52 @@ class EditprofileController extends Module{
             $upload_dir = __DIR__."/../../public/uploads/users/{$user_info['user_id']}/";
             $image_rename = $row['user_photo'];
 
-            if($row['user_photo'] AND $i_width >= 100 AND $i_height >= 100 AND $i_left >= 0 AND $i_height >= 0){
-                $manager = new ImageManager(array('driver' => 'gd'));
+            if($row['user_photo']){
+                if ($i_width >= 100 AND $i_height >= 100 AND $i_left >= 0 AND $i_height >= 0){
+                    $manager = new ImageManager(array('driver' => 'gd'));
 //                $image = $manager->make($upload_dir.$image_rename);
 //                $image->save($upload_dir.$image_rename, 90);
 //                $image->crop($i_width, $i_height, $i_left, $i_top);
 //                $image_name = str_replace(".webp", "", $image_rename);
-                $image = $manager->make($upload_dir.$image_rename)->resize(100, 100);
-                $image->save($upload_dir.'100_'.$image_rename, 90);
-                $image = $manager->make($upload_dir.'100_'.$image_rename);
-                $image->crop(100, 100, $i_left, $i_top);
+                    $image = $manager->make($upload_dir.$image_rename)->resize(100, 100);
+                    $image->save($upload_dir.'100_'.$image_rename, 90);
+                    $image = $manager->make($upload_dir.'100_'.$image_rename);
+                    $image->crop(100, 100, $i_left, $i_top);
 
-                $image = $manager->make($upload_dir.$image_rename)->resize(50, 50);
-                $image->save($upload_dir.'50_'.$image_rename, 90);
-                $image = $manager->make($upload_dir.'50_'.$image_rename);
-                $image->crop(50, 50, $i_left, $i_top);
+                    $image = $manager->make($upload_dir.$image_rename)->resize(50, 50);
+                    $image->save($upload_dir.'50_'.$image_rename, 90);
+                    $image = $manager->make($upload_dir.'50_'.$image_rename);
+                    $image->crop(50, 50, $i_left, $i_top);
 
-                echo $user_info['user_id'];
+                    return _e_json(array(
+                        'status' => Status::OK,
+                        'user_id' => $user_info['user_id'],
+                    ) );
+                } else
+                {
+//                	echo 'err';//NOT_DATA
+	                $status = Status::NOT_DATA;
+                }
             } else
-                echo 'err';
+            {
+//            	echo 'err';//NOT_FOUND
+	            $status = Status::NOT_FOUND;
+            }
         }else{
-            echo 'err: not logged';
+//            echo 'err: not logged';//BAD_LOGGED
+	        $status = Status::BAD_LOGGED;
         }
-        //TODO JSON otput
+	    return _e_json(array(
+		    'status' => $status,
+	    ) );
     }
 
     /**
-     * Загрузка обложки
-     */
-/*    public function upload_cover($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
-        $user_info = $this->user_info();
-        $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
-
-        if($logged){
-            $params['title'] = $lang['editmyprofile'].' | Sura';
-
-//            Tools::NoAjaxQuery();
-
-            //Получаем данные о файле
-            $image_tmp = $_FILES['uploadfile']['tmp_name'];
-            $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = \Sura\Libs\Tools::time();
-            $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя файла
-            $image_size = $_FILES['uploadfile']['size']; // размер файла
-            $type = end(explode(".", $image_name)); // формат файла
-
-            $max_size = 1024 * 7000;
-
-            //Проверка размера
-            if($image_size <= $max_size){
-                //Разришенные форматы
-                $allowed_files = explode(', ', 'jpg, jpeg, jpe, png, gif');
-                //Проверям если, формат верный то пропускаем
-                if(in_array(strtolower($type), $allowed_files)){
-                    $res_type = strtolower('.'.$type);
-                    $upload_dir = __DIR__."/../../public/uploads/users/{$user_info['user_id']}/";
-                    $rImg = $upload_dir.$image_rename.$res_type;
-                    $rImg_c = $upload_dir.'c_'.$image_rename.$res_type;
-                    if(move_uploaded_file($image_tmp, $upload_dir.$image_rename.$res_type)){
-                        //imagick gd
-                        $manager = new ImageManager(array('driver' => 'gd'));
-                        $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(960, 540);
-                        $image->save($upload_dir.$image_rename.'.webp', 90);
-                        unlink($upload_dir.$image_rename.$res_type);
-
-                        $res_type = '.webp';
-                        $rImg = $upload_dir.$image_rename.'.webp';
-
-
-                        //Выводим и удаляем пред. обложку
-                        $row = $db->super_query("SELECT user_cover FROM `users` WHERE user_id = '{$user_info['user_id']}'");
-                        if($row){
-                            unlink($upload_dir.$row['user_cover']);
-                        }
-                        $imgData = getimagesize($rImg);
-                        $rImgsData = round($imgData[1] / ($imgData[0] / 960));
-
-                        //Обновдяем обложку в базе
-                        $pos = round(($rImgsData / 2) - 100);
-                        if($rImgsData <= 230){
-                            $rImgsData = 230;
-                            $pos = 0;
-                        }
-                        $db->query("UPDATE `users` SET user_cover = '{$image_rename}{$res_type}', user_cover_pos = '{$pos}' WHERE user_id = '{$user_info['user_id']}'");
-                        echo $user_info['user_id'].'/'.$image_rename.$res_type.'|'.$rImgsData;
-
-                        //Чистим кеш
-                        Cache::mozg_clear_cache_file("user_{$user_info['user_id']}/profile_{$user_info['user_id']}");
-                    }
-                } else
-                    echo 2;
-            } else
-                echo 1;
-            exit();
-        }
-    }*/
-
-    /**
-     * Сохранение новой позиции обложки
-     */
-/*    public function savecoverpos($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
-        $user_info = $this->user_info();
-        $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
-
-        if($logged){
-            $params['title'] = $lang['editmyprofile'].' | Sura';
-
-//            Tools::NoAjaxQuery();
-
-            $pos = intval($_POST['pos']);
-            if($pos < 0) $pos = 0;
-
-            $db->query("UPDATE `users` SET user_cover_pos = '{$pos}' WHERE user_id = '{$user_info['user_id']}'");
-
-            //Чистим кеш
-            Cache::mozg_clear_cache_file("user_{$user_info['user_id']}/profile_{$user_info['user_id']}");
-
-            exit();
-        }
-    }*/
-
-    /**
-     * Удаление обложки
-     */
-/*    public function delcover($params){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
-        $user_info = $this->user_info();
-        $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
-
-        if($logged){
-            $params['title'] = $lang['editmyprofile'].' | Sura';
-
-//            Tools::NoAjaxQuery();
-
-            //Выводим и удаляем пред. обложку
-            $row = $db->super_query("SELECT user_cover FROM `users` WHERE user_id = '{$user_info['user_id']}'");
-            if($row){
-
-                $upDir = __DIR__."/../../uploads/users/{$user_info['user_id']}/";
-                @unlink($upDir.$row['user_cover']);
-
-            }
-
-            $db->query("UPDATE `users` SET user_cover_pos = '', user_cover = '' WHERE user_id = '{$user_info['user_id']}'");
-
-            //Чистим кеш
-            Cache::mozg_clear_cache_file("user_{$user_info['user_id']}/profile_{$user_info['user_id']}");
-
-            exit();
-        }
-    }*/
-
-    /**
      * Страница Редактирование основное
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function index($params){
+    public function index(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -924,17 +828,17 @@ class EditprofileController extends Module{
 
     /**
      * Модальнок окно Редактирование основное
-     * @param $params
-     * @return bool
-     * @throws Exception
+     * @return int
+     * @throws \JsonException
      */
-    public function box($params): bool
+    public function box(): int
     {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         $Profile = new Profile;
+
         Tools::NoAjaxRedirect();
 
         if($logged){
@@ -1030,7 +934,10 @@ class EditprofileController extends Module{
             $params['books'] = stripslashes($xfields['books']);
             $params['games'] = stripslashes($xfields['games']);
             $params['quote'] = stripslashes($xfields['quote']);
-            return view('profile.edit_box', $params);
+            $row = view_data('profile.edit_box', $params);
+            return _e_json(array(
+                'content' => $row,
+            ) );
         } else {
             $params['title'] = $lang['no_infooo'];
             $params['info'] = $lang['not_logged'];

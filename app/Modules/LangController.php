@@ -3,72 +3,68 @@
 namespace App\Modules;
 
 use Sura\Libs\Langs;
+use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 
 class LangController extends Module{
 
     /**
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
+     * @throws \JsonException
      */
-    public static function index($params): string
+    public static function index(): int
     {
-        Tools::NoAjaxRedirect();
+//        Tools::NoAjaxRedirect();
 
-        if (isset($_COOKIE['lang']) AND $_COOKIE['lang'] > 0)
+        if (isset($_COOKIE['lang']) AND $_COOKIE['lang'] > 0) {
             $useLang = (int)$_COOKIE['lang'];
-        else
+        }
+        else {
             $useLang = 0;
+        }
 
-        $Lang_List = Langs::lang_list();
-        $num_Lang = count($Lang_List);
-
-        $lang_params = array(
-            0 => array(
-                'flag' => '<svg style="margin-right: 10px;width: 30px;height: 25px;" xmlns="http://www.w3.org/2000/svg" id="flag-icon-css-ru" viewBox="0 0 640 480"><g fill-rule="evenodd" stroke-width="1pt"><path fill="#fff" d="M0 h640v480H0z"/><path fill="#0039a6" d="M0 160h640v320H0z"/><path fill="#d52b1e" d="M0 320h640v160H0z"/></g></svg>',
-                'name' => 'Русский',
-            ),
-            1 => array(
-                'flag' => '<svg style="margin-right: 10px;width: 30px;height: 25px;" xmlns="http://www.w3.org/2000/svg" id="flag-icon-css-us" viewBox="0 0 640 480"><g fill-rule="evenodd"><g stroke-width="1pt"><path fill="#bd3d44" d="M0 0h972.8v39.4H0zm0 78.8h972.8v39.4H0zm0 78.7h972.8V197H0zm0 78.8h972.8v39.4H0zm0 78.8h972.8v39.4H0zm0 78.7h972.8v39.4H0zm0 78.8h972.8V512H0z" transform="scale(.9375)"/><path fill="#fff" d="M0 39.4h972.8v39.4H0zm0 78.8h972.8v39.3H0zm0 78.7h972.8v39.4H0zm0 78.8h972.8v39.4H0zm0 78.8h972.8v39.4H0zm0 78.7h972.8v39.4H0z" transform="scale(.9375)"/></g><path fill="#192f5d" d="M0 0h389.1v275.7H0z" transform="scale(.9375)"/><path fill="#fff" d="M32.4 11.8L36 22.7h11.4l-9.2 6.7 3.5 11-9.3-6.8-9.2 6.7 3.5-10.9-9.3-6.7H29zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.5 11-9.2-6.8-9.3 6.7 3.5-10.9-9.2-6.7h11.4zm64.8 0l3.6 10.9H177l-9.2 6.7 3.5 11-9.3-6.8-9.2 6.7 3.5-10.9-9.3-6.7h11.5zm64.9 0l3.5 10.9H242l-9.3 6.7 3.6 11-9.3-6.8-9.3 6.7 3.6-10.9-9.3-6.7h11.4zm64.8 0l3.6 10.9h11.4l-9.2 6.7 3.5 11-9.3-6.8-9.2 6.7 3.5-10.9-9.2-6.7h11.4zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.6 11-9.3-6.8-9.3 6.7 3.6-10.9-9.3-6.7h11.5zM64.9 39.4l3.5 10.9h11.5L70.6 57 74 67.9l-9-6.7-9.3 6.7L59 57l-9-6.7h11.4zm64.8 0l3.6 10.9h11.4l-9.3 6.7 3.6 10.9-9.3-6.7-9.3 6.7L124 57l-9.3-6.7h11.5zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.5 10.9-9.2-6.7-9.3 6.7 3.5-10.9-9.2-6.7H191zm64.8 0l3.6 10.9h11.4l-9.3 6.7 3.6 10.9-9.3-6.7-9.2 6.7 3.5-10.9-9.3-6.7H256zm64.9 0l3.5 10.9h11.5L330 57l3.5 10.9-9.2-6.7-9.3 6.7 3.5-10.9-9.2-6.7h11.4zM32.4 66.9L36 78h11.4l-9.2 6.7 3.5 10.9-9.3-6.8-9.2 6.8 3.5-11-9.3-6.7H29zm64.9 0l3.5 11h11.5l-9.3 6.7 3.5 10.9-9.2-6.8-9.3 6.8 3.5-11-9.2-6.7h11.4zm64.8 0l3.6 11H177l-9.2 6.7 3.5 10.9-9.3-6.8-9.2 6.8 3.5-11-9.3-6.7h11.5zm64.9 0l3.5 11H242l-9.3 6.7 3.6 10.9-9.3-6.8-9.3 6.8 3.6-11-9.3-6.7h11.4zm64.8 0l3.6 11h11.4l-9.2 6.7 3.5 10.9-9.3-6.8-9.2 6.8 3.5-11-9.2-6.7h11.4zm64.9 0l3.5 11h11.5l-9.3 6.7 3.6 10.9-9.3-6.8-9.3 6.8 3.6-11-9.3-6.7h11.5zM64.9 94.5l3.5 10.9h11.5l-9.3 6.7 3.5 11-9.2-6.8-9.3 6.7 3.5-10.9-9.2-6.7h11.4zm64.8 0l3.6 10.9h11.4l-9.3 6.7 3.6 11-9.3-6.8-9.3 6.7 3.6-10.9-9.3-6.7h11.5zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.5 11-9.2-6.8-9.3 6.7 3.5-10.9-9.2-6.7H191zm64.8 0l3.6 10.9h11.4l-9.2 6.7 3.5 11-9.3-6.8-9.2 6.7 3.5-10.9-9.3-6.7H256zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.5 11-9.2-6.8-9.3 6.7 3.5-10.9-9.2-6.7h11.4zM32.4 122.1L36 133h11.4l-9.2 6.7 3.5 11-9.3-6.8-9.2 6.7 3.5-10.9-9.3-6.7H29zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.5 10.9-9.2-6.7-9.3 6.7 3.5-10.9-9.2-6.7h11.4zm64.8 0l3.6 10.9H177l-9.2 6.7 3.5 11-9.3-6.8-9.2 6.7 3.5-10.9-9.3-6.7h11.5zm64.9 0l3.5 10.9H242l-9.3 6.7 3.6 11-9.3-6.8-9.3 6.7 3.6-10.9-9.3-6.7h11.4zm64.8 0l3.6 10.9h11.4l-9.2 6.7 3.5 11-9.3-6.8-9.2 6.7 3.5-10.9-9.2-6.7h11.4zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.6 11-9.3-6.8-9.3 6.7 3.6-10.9-9.3-6.7h11.5zM64.9 149.7l3.5 10.9h11.5l-9.3 6.7 3.5 10.9-9.2-6.8-9.3 6.8 3.5-11-9.2-6.7h11.4zm64.8 0l3.6 10.9h11.4l-9.3 6.7 3.6 10.9-9.3-6.8-9.3 6.8 3.6-11-9.3-6.7h11.5zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.5 10.9-9.2-6.8-9.3 6.8 3.5-11-9.2-6.7H191zm64.8 0l3.6 10.9h11.4l-9.2 6.7 3.5 10.9-9.3-6.8-9.2 6.8 3.5-11-9.3-6.7H256zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.5 10.9-9.2-6.8-9.3 6.8 3.5-11-9.2-6.7h11.4zM32.4 177.2l3.6 11h11.4l-9.2 6.7 3.5 10.8-9.3-6.7-9.2 6.7 3.5-10.9-9.3-6.7H29zm64.9 0l3.5 11h11.5l-9.3 6.7 3.6 10.8-9.3-6.7-9.3 6.7 3.6-10.9-9.3-6.7h11.4zm64.8 0l3.6 11H177l-9.2 6.7 3.5 10.8-9.3-6.7-9.2 6.7 3.5-10.9-9.3-6.7h11.5zm64.9 0l3.5 11H242l-9.3 6.7 3.6 10.8-9.3-6.7-9.3 6.7 3.6-10.9-9.3-6.7h11.4zm64.8 0l3.6 11h11.4l-9.2 6.7 3.5 10.8-9.3-6.7-9.2 6.7 3.5-10.9-9.2-6.7h11.4zm64.9 0l3.5 11h11.5l-9.3 6.7 3.6 10.8-9.3-6.7-9.3 6.7 3.6-10.9-9.3-6.7h11.5zM64.9 204.8l3.5 10.9h11.5l-9.3 6.7 3.5 11-9.2-6.8-9.3 6.7 3.5-10.9-9.2-6.7h11.4zm64.8 0l3.6 10.9h11.4l-9.3 6.7 3.6 11-9.3-6.8-9.3 6.7 3.6-10.9-9.3-6.7h11.5zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.5 11-9.2-6.8-9.3 6.7 3.5-10.9-9.2-6.7H191zm64.8 0l3.6 10.9h11.4l-9.2 6.7 3.5 11-9.3-6.8-9.2 6.7 3.5-10.9-9.3-6.7H256zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.5 11-9.2-6.8-9.3 6.7 3.5-10.9-9.2-6.7h11.4zM32.4 232.4l3.6 10.9h11.4l-9.2 6.7 3.5 10.9-9.3-6.7-9.2 6.7 3.5-11-9.3-6.7H29zm64.9 0l3.5 10.9h11.5L103 250l3.6 10.9-9.3-6.7-9.3 6.7 3.6-11-9.3-6.7h11.4zm64.8 0l3.6 10.9H177l-9 6.7 3.5 10.9-9.3-6.7-9.2 6.7 3.5-11-9.3-6.7h11.5zm64.9 0l3.5 10.9H242l-9.3 6.7 3.6 10.9-9.3-6.7-9.3 6.7 3.6-11-9.3-6.7h11.4zm64.8 0l3.6 10.9h11.4l-9.2 6.7 3.5 10.9-9.3-6.7-9.2 6.7 3.5-11-9.2-6.7h11.4zm64.9 0l3.5 10.9h11.5l-9.3 6.7 3.6 10.9-9.3-6.7-9.3 6.7 3.6-11-9.3-6.7h11.5z" transform="scale(.9375)"/></g></svg>',
-                'name' => 'English',
-            ),
-            2 => array(
-                'flag' => '<svg style="margin-right: 10px;width: 30px;height: 25px;" xmlns="http://www.w3.org/2000/svg" id="flag-icon-css-de" viewBox="0 0 640 480"><path fill="#ffce00" d="M0 320h640v160H0z"/><path d="M0 0h640v160H0z"/><path fill="#d00" d="M0 160h640v160H0z"/></svg>',
-                'name' => 'Deutsch',
-            ),
-            3 => array(
-                'flag' => '<img style="margin-right: 10px;width: 30px;height: 25px;" src=\'/images/lang/es.svg\' alt=\'\'>',
-                'name' => 'Español',
-            ),
-            4 => array(
-                'flag' => '<img style="margin-right: 10px;width: 30px;height: 25px;" src=\'/images/lang/fr.svg\' alt=\'\'>',
-                'name' => 'Francesa',
-            ),
-            5 => array(
-                'flag' => '<img style="margin-right: 10px;width: 30px;height: 25px;" src=\'/images/lang/pt.svg\' alt=\'\'>',
-                'name' => 'Português',
-            ),
-            6 => array(
-                'flag' => '<img style="margin-right: 10px;width: 30px;height: 25px;" src=\'/images/lang/tr.svg\' alt=\'\'>',
-                'name' => 'Türk',
-            ),
-            7 => array(
-                'flag' => '<img style="margin-right: 10px;width: 30px;height: 25px;" src=\'/images/lang/cn.svg\' alt=\'\'>',
-                'name' => '中文',
-            ),
-
-        );
+        $langs = Langs::lang_list();
+        $num_Lang = count($langs);
 
         $lang = '';
-        foreach($Lang_List as $key => $value){
-            if($key == $useLang OR $num_Lang == 0) {
-                $lang .= "<div class=\"lang_but lang_selected\">{$lang_params[$key]['flag']} {$lang_params[$key]['name']}</div>";
+        foreach($langs as $key => $value){
+            if($useLang == $key OR $num_Lang == 0) {
+                $lang .= "<div class=\"lang_but lang_selected\">".$langs[$key]['flag'] .$langs[$key]['name']."</div>";
             }else{
-                $lang .= "<a href=\"/lang/change/{$key}/\"><div class=\"lang_but\">{$lang_params[$key]['flag']} {$lang_params[$key]['name']}</div></a>";
+                $lang .= "<a href=\"/lang/change/{$key}/\"><div class=\"lang_but\">".$langs[$key]['flag'].$langs[$key]['name']."</div></a>";
             }
         }
         $params['lang'] = $lang;
-        return view('lang', $params);
+
+        $langs = view_data('lang', $params);
+
+        return _e_json(array(
+            'content' => $langs,
+        ) );
+    }
+
+    /**
+     * Меняем язык
+     */
+    public function change_lang()
+    {
+        //Смена языка
+//        $langId = (int)$_GET['id'];
+        $path = explode('/', $_SERVER['REQUEST_URI']);
+        $langId = $path['3'];
+//        var_dump($langId);
+//        exit();
+
+//        $config = Settings::load();
+//        $config['lang_list'] = nl2br($config['lang_list']);
+//        $expLangList = explode('<br />', $config['lang_list']);
+        $num_lang = count(Langs::lang_list());
+        if($langId < $num_lang){
+            Tools::set_cookie("lang", $langId, 365);
+        }
+        $langReferer = $_SERVER['HTTP_REFERER'];
+
+        return  header("Location: {$langReferer}");
+
     }
 }

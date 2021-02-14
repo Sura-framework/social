@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use Sura\Libs\Request;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
@@ -11,9 +12,11 @@ class VotesController extends Module{
     /**
      * Опросы
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function index($params){
+    public function index(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -85,11 +88,16 @@ class VotesController extends Module{
 
                 $result .= "{$answer_text2} <b>{$row_vote['answer_num']}</b> {$answer_num_text}.<div class=\"clear\" style=\"margin-top:10px\"></div>";
 
-                echo $result;
-
+//                echo $result;
+                $status = Status::OK;
+            }else{
+                $status = Status::FOUND;
             }
-
-        } else
-            echo 'no_log';
+        } else {
+            $status = Status::BAD_LOGGED;
+        }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 }

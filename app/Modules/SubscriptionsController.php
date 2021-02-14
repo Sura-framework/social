@@ -2,8 +2,10 @@
 
 namespace App\Modules;
 
+use App\Libs\Friends;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
@@ -12,9 +14,12 @@ class SubscriptionsController extends Module{
     /**
      * Добвление юзера в подписки
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function add($params){
+    public function add(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -32,54 +37,67 @@ class SubscriptionsController extends Module{
             $check = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$for_user_id}' AND subscriptions = 1");
 
             //ЧС
-            $CheckBlackList = CheckBlackList($check['user_id']);
+            $CheckBlackList = Friends::CheckBlackList($check['user_id']);
 
-            if(!$CheckBlackList AND !$check AND $for_user_id != $user_id){
-                $db->query("INSERT INTO `friends` SET user_id = '{$user_id}', friend_id = '{$for_user_id}', friends_date = NOW(), subscriptions = 1");
-                $db->query("UPDATE `users` SET user_subscriptions_num = user_subscriptions_num+1 WHERE user_id = '{$user_id}'");
+            if ($for_user_id != $user_id){
+                if (!$check){
+                    if(!$CheckBlackList){
+                        $db->query("INSERT INTO `friends` SET user_id = '{$user_id}', friend_id = '{$for_user_id}', friends_date = NOW(), subscriptions = 1");
+                        $db->query("UPDATE `users` SET user_subscriptions_num = user_subscriptions_num+1 WHERE user_id = '{$user_id}'");
 
-                //Вставляем событие в моментальные оповещания
-                $row_owner = $db->super_query("SELECT user_last_visit, user_sex FROM `users` WHERE user_id = '{$for_user_id}'");
+                        //Вставляем событие в моментальные оповещания
+                        $row_owner = $db->super_query("SELECT user_last_visit, user_sex FROM `users` WHERE user_id = '{$for_user_id}'");
 
-                $server_time = \Sura\Libs\Tools::time();
+                        $server_time = \Sura\Libs\Date::time();
 
-                $update_time = $server_time - 70;
+                        $update_time = $server_time - 70;
 
-                $Cache = cache_init(array('type' => 'file'));
+                        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                        $cache = new \Sura\Cache\Cache($storage, 'users');
 
-                if($row_owner['user_last_visit'] >= $update_time){
+                        if($row_owner['user_last_visit'] >= $update_time){
 
-                    $myRow = $db->super_query("SELECT user_sex FROM `users` WHERE user_id = '{$user_info['user_id']}'");
+                            $myRow = $db->super_query("SELECT user_sex FROM `users` WHERE user_id = '{$user_info['user_id']}'");
 
-                    if($myRow['user_sex'] == 1)
-                        $action_update_text = 'подписался на Ваши обновления.';
-                    else
-                        $action_update_text = 'подписалась на Ваши обновления.';
+                            if($myRow['user_sex'] == 1)
+                                $action_update_text = 'подписался на Ваши обновления.';
+                            else
+                                $action_update_text = 'подписалась на Ваши обновления.';
 
-                    $db->query("INSERT INTO `updates` SET for_user_id = '{$for_user_id}', from_user_id = '{$user_info['user_id']}', type = '13', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/u{$user_info['user_id']}'");
+                            $db->query("INSERT INTO `updates` SET for_user_id = '{$for_user_id}', from_user_id = '{$user_info['user_id']}', type = '13', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/u{$user_info['user_id']}'");
 
-//                    Cache::mozg_create_cache("user_{$for_user_id}/updates", 1);
+                            $cache->save("{$for_user_id}/updates", 1);
+                        }
 
-                    $Cache->set("users/{$for_user_id}/updates", 1);
+                        //Чистим кеш
+                        $cache->remove("{$user_id}/profile_{$user_id}");
+                        $cache->remove("{$user_id}/subscr");
 
+                        $status = Status::OK;
+                    }else{
+                        $status = Status::BLACKLIST;
+                    }
+                }else{
+                    $status = Status::SUBSCRIPTION;
                 }
-
-
-                //Чистим кеш
-//                Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-//                Cache::mozg_clear_cache_file('subscr_user_'.$user_id);
-
-                $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                $Cache->delete("users/{$user_id}/subscr");
+            }else{
+                $status = Status::NOT_DATA;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Удаление юзера из подписок
      *
+     * @throws \Throwable
      */
-    public function del(){
+    public function del(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -93,40 +111,43 @@ class SubscriptionsController extends Module{
 
             $del_user_id = intval($request['del_user_id']);
 
-            $Cache = cache_init(array('type' => 'file'));
-
             //Проверка на существование юзера в подписках
             $check = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$del_user_id}' AND subscriptions = 1");
             if($check){
                 $db->query("DELETE FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$del_user_id}' AND subscriptions = 1");
                 $db->query("UPDATE `users` SET user_subscriptions_num = user_subscriptions_num-1 WHERE user_id = '{$user_id}'");
 
-                //Чистим кеш
-//                Cache::mozg_clear_cache_file('user_'.$user_id.'/profile_'.$user_id);
-//                Cache::mozg_clear_cache_file('subscr_user_'.$user_id);
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
 
-                $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                $Cache->delete("users/{$user_id}/subscr");
+                //Чистим кеш
+                $cache->remove("{$user_id}/profile_{$user_id}");
+                $cache->remove("{$user_id}/subscr");
+
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_DATA;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
-     * Показ всех подпискок юзера
+     * Показ всех подписок юзера
      *
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function index($params): string
+    public function index(): int
     {
         $tpl = $params['tpl'];
 
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -152,7 +173,7 @@ class SubscriptionsController extends Module{
                 $tpl->compile('content');
 
                 $tpl->load_template('profile_friends.tpl');
-                $config = Settings::loadsettings();
+                $config = Settings::load();
                 foreach($sql_ as $row){
                     if($row['user_photo'])
                         $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['friend_id'].'/50_'.$row['user_photo']);

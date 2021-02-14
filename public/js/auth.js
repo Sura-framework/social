@@ -6,16 +6,16 @@ const lastname = $('#lastname');
 const email = $('#email');
 const new_pass = $('#new_pass');
 const new_pass2 = $('#new_pass2');
-let sex = $("#sex");
+const sex = $("#sex");
 const day = $("#day");
-let month = $("#month");
+const month = $("#month");
 const year = $("#year");
 const country = $("#country");
 const city = $("#select_city");
 const rndval = new Date().getTime();
 
 //REG
-var reg = {
+const reg = {
 	step1: function(){
 		const step1 = $('#step1');
 		const step2 = $('#step2');
@@ -148,37 +148,39 @@ var reg = {
 				sec_code: code,
 				token: token.val(),
 			}, function(d){
-			var exp = d.split('|');
-			if(exp[0] === 'ok'){
+				d = JSON.parse(d);
+			if(d.status === 1){
 				//window.location = '/u'+exp[1]+'after';
-				window.location = '/u'+exp[1];
+				window.location = '/u'+d.res;
 				//window.location = '/';
-			} else if(exp[0] === 'err_mail'){
+			} else if(d.status === 17){
 				$('#err2').show().html('Пользователь с таким E-Mail адресом уже зарегистрирован.');
 				Box.Close('sec_code');
-			} else if(exp[0] === 'error' && exp['1'] === 'no_val'){
-				if (exp['2'] === 'mail'){
+			} else if(d.status === 9){
+				if (d.err.mail) {
 					let err_name = 'Некоректный E-Mail.';
 					$('#err2').show().html(err_name);
 					Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else if (exp['2'] === 'name'){
+				}
+				if (d.err.user_name) {
 					let err_name = 'Неправильно введено имя.';
 					$('#err2').show().html(err_name);
 					Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else if (exp['2'] === 'surname'){
+				}
+				if (d.err.user_surname) {
 					let err_name = 'Неправильно введена фамилия.';
 					$('#err2').show().html(err_name);
 					Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else if (exp['2'] === 'password'){
+				}
+				if (d.err.password) {
 					let err_name = 'Неправильно введен пароль.';
 					$('#err2').show().html(err_name);
 					Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else{
-					$('#err2').show().html('Неправильно введены данные.');
-					Box.Info('boxerr', 'Ошибка', 'Неизвестная ошибка', 300);
 				}
 				Box.Close('sec_code');
-			} else {
+			}
+			else if(d.status === 4){}
+			else {
 				Box.Info('boxerr', 'Ошибка', 'Неизвестная ошибка', 300);
 				Box.Close('sec_code');
 			}
@@ -186,7 +188,7 @@ var reg = {
 	}
 }
 //RESTORE
-var restore = {
+const restore = {
 	next: function(){
 		const step1 = $('#step1');
 		const step2 = $('#step2');
@@ -252,7 +254,7 @@ var restore = {
 	}
 }
 //LOGIN
-var login = {
+const login = {
 	send: function(){
 		const log_email = $('#log_email');
 		const log_password = $('#log_password');
@@ -268,36 +270,55 @@ var login = {
 			pass: log_password.val(),
 			token: token.val(),
 		}, function(d){
-			console.log(d);
-			var exp = d.split('|');
-			if(exp[0] === 'ok'){
+			// d = JSON.parse(d);
+
+			// console.log(d);
+			// var exp = d.split('|');
+			if(d.status === 1){
 				// window.location = '/u'+exp[1]+'after';
-				window.location = '/u'+exp[1];
-			} else if(exp[0] === 'err_mail'){
-				$('#err2').show().html('Пользователь с таким E-Mail адресом уже зарегистрирован.');
+				window.location = '/u'+d.res;
+			}
+			else if(d.status === 2){
+				let err_name = '<div class="alert alert-danger" role="alert">' +
+					'<a href="/restore" onClick="Page.Go(this.href); return false">Забыли пароль?</a></div>';
+				$('#err2').show().html(err_name);
+
+				// if (exp['2'] === 'mail'){
+				// 	let err_name = '<div class="alert alert-danger" role="alert">' +
+				// 		'Некоректный E-Mail.</div>';
+				// 	$('#err2').show().html(err_name);
+				// 	// Box.Info('boxerr', 'Ошибка', err_name, 300);
+				// }else if (exp['2'] === 'password'){
+				// 	let err_name = '<div class="alert alert-danger" role="alert">' +
+				// 		'<a href="/restore" onClick="Page.Go(this.href); return false">Забыли пароль?</a></div>';
+				// 	$('#err2').show().html(err_name);
+				// 	// Box.Info('boxerr', 'Ошибка', err_name, 300);
+				// }else if (exp['2'] === 'no_user'){
+				// 	let err_name = '<div class="alert alert-danger" role="alert">' +
+				// 		'<a href="/restore" onClick="Page.Go(this.href); return false">Забыли пароль?</a></div>';
+				// 	$('#err2').show().html(err_name);
+				// 	// Box.Info('boxerr', 'Ошибка', err_name, 300);
+				// }else{
+				// 	$('#err2').show().html('Неправильно введены данные.');
+				// 	Box.Info('boxerr', 'Ошибка', 'Неизвестная ошибка', 300);
+				// }
 				Box.Close('sec_code');
-			} else if(exp[0] === 'error' && exp['1'] === 'no_val'){
-				if (exp['2'] === 'mail'){
-					let err_name = '<div class="alert alert-danger" role="alert">' +
-						'Некоректный E-Mail.</div>';
+			}
+			else if(d.status === 3){
+				if (d.err.mail) {
+					let err_name = '<div class="alert alert-danger" role="alert">Некоректный E-Mail.</div>';
 					$('#err2').show().html(err_name);
-					// Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else if (exp['2'] === 'password'){
-					let err_name = '<div class="alert alert-danger" role="alert">' +
-						'<a href="/restore" onClick="Page.Go(this.href); return false">Забыли пароль?</a></div>';
-					$('#err2').show().html(err_name);
-					// Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else if (exp['2'] === 'no_user'){
-					let err_name = '<div class="alert alert-danger" role="alert">' +
-						'<a href="/restore" onClick="Page.Go(this.href); return false">Забыли пароль?</a></div>';
-					$('#err2').show().html(err_name);
-					// Box.Info('boxerr', 'Ошибка', err_name, 300);
-				}else{
+					Box.Close('sec_code');
+				} else if (d.err.password) {
 					$('#err2').show().html('Неправильно введены данные.');
-					Box.Info('boxerr', 'Ошибка', 'Неизвестная ошибка', 300);
+					Box.Close('sec_code');
 				}
+			}
+			else if(d.status === 4){
+				$('#err2').show().html('Неправильно введены данные.');
 				Box.Close('sec_code');
-			} else {
+			}
+			else {
 				Box.Info('boxerr', 'Ошибка', 'Неизвестная ошибка', 300);
 				Box.Close('sec_code');
 			}
@@ -331,7 +352,7 @@ function checkCode(){
 	$('#code_loading').html('<div class="spinner-border mt-2" role="status"><span class="sr-only">Loading...</span>\</div>');
 	$.get('/antibot/code/?user_code='+val_sec_code, function(data){
 		//var val_sec_code = $('#val_sec_code');
-		if(data === 'ok'){
+		if(data.status === 1){
 			console.log('ok');
 			reg.send(val_sec_code);
 		} else {

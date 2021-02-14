@@ -11,6 +11,7 @@ use Sura\Libs\Db;
 use Sura\Libs\Langs;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -20,12 +21,14 @@ class WallController extends Module{
     /**
      * Добвление новой записи на стену
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
+     * @throws \Throwable
      */
-    public function send($params): string
+    public function send(): int
     {
+        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+        $cache = new \Sura\Cache\Cache($storage, 'users');
+
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -72,8 +75,7 @@ class WallController extends Module{
 
             if(!$fast_comm_id) {
                 Antispam::Check(3, $user_id);
-            }
-            else {
+            }else {
                 Antispam::Check(5, $user_id);
             }
 
@@ -89,7 +91,7 @@ class WallController extends Module{
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if($user_privacy['val_wall2'] == 2 OR $user_privacy['val_wall1'] == 2 OR $user_privacy['val_wall3'] == 2 AND $user_id != $for_user_id)
-                        $check_friend = Tools::CheckFriends($for_user_id);
+                        $check_friend = \App\Libs\Friends::CheckFriends($for_user_id);
 
                     if(!$fast_comm_id){
                         if($user_privacy['val_wall2'] == 1 OR $user_privacy['val_wall2'] == 2 AND $check_friend OR $user_id == $for_user_id)
@@ -126,7 +128,7 @@ class WallController extends Module{
                                         $rImgUrl = str_replace("\\", "/", $rImgUrl);
                                         $img_name_arr = explode(".", $rImgUrl);
                                         $img_format = Gramatic::totranslit(end($img_name_arr));
-                                        $server_time = \Sura\Libs\Tools::time();
+                                        $server_time = \Sura\Libs\Date::time();
                                         $image_rename = substr(md5($server_time.md5($rImgUrl)), 0, 15);
 
                                         //Разришенные форматы
@@ -218,7 +220,7 @@ class WallController extends Module{
                                     $wall_text = str_replace($check2['user_name'], "<a href=\"/u{$row_owner2['author_user_id']}\" onClick=\"Page.Go(this.href); return false\" class=\"newcolor000\">{$check2['user_name']}</a>", $wall_text);
 
                                     //Вставляем в ленту новостей
-                                    $server_time = \Sura\Libs\Tools::time();
+                                    $server_time = \Sura\Libs\Date::time();
                                     $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 6, action_text = '{$wall_text}', obj_id = '{$answer_comm_id}', for_user_id = '{$row_owner2['author_user_id']}', action_time = '{$server_time}'");
 
                                     //Вставляем событие в моментальные оповещания
@@ -228,14 +230,11 @@ class WallController extends Module{
 
                                         $db->query("INSERT INTO `updates` SET for_user_id = '{$row_owner2['author_user_id']}', from_user_id = '{$user_id}', type = '5', date = '{$server_time}', text = '{$wall_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/wall{$for_user_id}_{$fast_comm_id}'");
 
-                                        $Cache = cache_init(array('type' => 'file'));
-                                        $Cache->set("users/{$row_owner2['author_user_id']}/updates", 1);
-
+                                        $cache->save("{$row_owner2['author_user_id']}/updates", 1);
                                         //ИНАЧЕ Добавляем +1 юзеру для оповещания
                                     } else {
-                                        $Cache = cache_init(array('type' => 'file'));
-                                        $cntCacheNews = $Cache->get("users/{$row_owner2['author_user_id']}/new_news");
-                                        $Cache->set("users/{$row_owner2['author_user_id']}/new_news", ($cntCacheNews+1));
+                                        $value = $cache->load("{$row_owner2['author_user_id']}/new_news");
+                                        $cache->save("{$row_owner2['author_user_id']}/new_news", $value+1);
                                     }
 
                                 }
@@ -260,28 +259,22 @@ class WallController extends Module{
                                     $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 6, action_text = '{$wall_text}', obj_id = '{$fast_comm_id}', for_user_id = '{$row_owner['author_user_id']}', action_time = '{$str_date}'");
 
                                     //Вставляем событие в моментальные оповещания
-                                    $server_time = \Sura\Libs\Tools::time();
+                                    $server_time = \Sura\Libs\Date::time();
                                     $update_time = $server_time - 70;
 
                                     if($check['user_last_visit'] >= $update_time){
-
                                         $db->query("INSERT INTO `updates` SET for_user_id = '{$row_owner['author_user_id']}', from_user_id = '{$user_id}', type = '1', date = '{$server_time}', text = '{$wall_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/wall{$for_user_id}_{$fast_comm_id}'");
-
-                                        $Cache = cache_init(array('type' => 'file'));
-                                        $Cache->set("users/{$row_owner['author_user_id']}/updates", 1);
-
+                                        $cache->save("{$row_owner['author_user_id']}/updates", 1);
                                         //ИНАЧЕ Добавляем +1 юзеру для оповещания
                                     } else {
-                                        $Cache = cache_init(array('type' => 'file'));
-                                        try {
-                                            $cntCacheNews = $Cache->get("users/{$row_owner['author_user_id']}/new_news");
-                                        }catch(Exception $e){
-                                            $cntCacheNews = 0;
+                                        $value = $cache->load("{$row_owner['author_user_id']}/new_news");
+                                        if ($value == NULL){
+                                            $value = 0;
                                         }
-                                        $Cache->set("users/{$row_owner['author_user_id']}/new_news", ($cntCacheNews+1));
+                                        $cache->save("{$row_owner['author_user_id']}/new_news", $value+1);
                                     }
 
-                                    $config = Settings::loadsettings();
+                                    $config = Settings::load();
 
                                     //Отправка уведомления на E-mail
                                     if($config['news_mail_2'] == 'yes'){
@@ -303,7 +296,7 @@ class WallController extends Module{
                                 $db->query("UPDATE `wall` SET fasts_num = fasts_num+1 WHERE id = '{$fast_comm_id}'");
                             else{
                                 $db->query("UPDATE `users` SET user_wall_num = user_wall_num+1 WHERE user_id = '{$for_user_id}'");
-                                $Cache = cache_init(array('type' => 'file'));
+//                                $Cache = cache_init(array('type' => 'file'));
                                 //TODO update code
 /*                                try {
 //                                    $row = $Cache->get("users/{$for_user_id}/profile_{$for_user_id}");
@@ -332,8 +325,8 @@ class WallController extends Module{
                                     //                                    $tpl->load_template('wall/record.tpl');
                                     //                                    $compile = 'content';
 
-                                    //                                    $server_time = \Sura\Libs\Tools::time();
-                                    //                                  $config = Settings::loadsettings();
+                                    //                                    $server_time = \Sura\Libs\Date::time();
+//                                    //                                  $config = Settings::load();
 
                                     //                                    $Profile = new Profile;
 
@@ -845,11 +838,11 @@ class WallController extends Module{
 
 
                                 }
+                                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                                $cache = new \Sura\Cache\Cache($storage, 'users');
+                                $cache->remove("{$for_user_id}/profile_{$for_user_id}");
 
-                                $Cache = cache_init(array('type' => 'file'));
-                                $Cache->delete("users/{$for_user_id}/profile_".$for_user_id);
-
-                                $config = Settings::loadsettings();
+//                                $config = Settings::load();
 
                                 //Отправка уведомления на E-mail
                                 if($config['news_mail_7'] == 'yes' AND $user_id != $for_user_id){
@@ -904,25 +897,39 @@ class WallController extends Module{
 
                             return view('wall.one_record', array('wall_records' => $params['wall_records']));
 
+                        }else{
+	                        $status = Status::PRIVACY;
                         }
-                        return _e('err_privacy');
+//                        return _e('err_privacy');//PRIVACY
+                    }else{
+	                    $status = Status::BLACKLIST;
                     }
-                    return _e('err_blacklist');
+//                    return _e('err_blacklist');//BLACKLIST
+                }else{
+	                $status = Status::NOT_DATA;
                 }
-                return _e('err_not_content');
+//                return _e('err_not_content');//NOT_DATA
+            }else{
+	            $status = Status::NOT_FOUND;
             }
-            return _e('err_check_user');
+//            return _e('err_check_user');//BAD_USER
+        }else{
+	        $status = Status::BAD_LOGGED;
         }
-        return _e('err_auth');
+//        return _e('err_auth');//BAD_LOGGED
+        //FIXME update response
+	    return _e_json(array(
+		    'status' => $status,
+	    ) );
     }
 
     /**
      * Удаление записи со стены
      *
-     * @param $params
-     * @return string
+     * @return int
+     * @throws \Throwable
      */
-    public function delete($params): string
+    public function delete(): int
     {
         $db = $this->db();
         $user_info = $this->user_info();
@@ -953,8 +960,9 @@ class WallController extends Module{
                     $db->query("UPDATE `users` SET user_wall_num = user_wall_num-1 WHERE user_id = '{$row['for_user_id']}'");
 
                     //Чистим кеш
-                    $Cache = cache_init(array('type' => 'file'));
-                    $Cache->delete( 'users/'.$row['for_user_id'].'/profile_'.$row['for_user_id']);
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $cache->remove("{$row['for_user_id']}/profile_{$row['for_user_id']}");
 
                     //удаляем из ленты новостей
                     $db->query("DELETE FROM `news` WHERE obj_id = '{$rid}' AND action_type = 6");
@@ -984,22 +992,31 @@ class WallController extends Module{
                 }
                 //удаляем из ленты новостей
                 $db->query("DELETE FROM `news` WHERE obj_id = '{$rid}' AND action_time = '{$row['add_date']}' AND action_type = {$action_type}");
-                return _e('true');
+//                return _e('true');
+	            $status = Status::OK;
+            }else{
+	            $status = Status::NOT_FOUND;
+//            return _e('err|not found|');//NOT_FOUND
             }
-            return _e('err|not found|');
+        }else{
+	        $status = Status::BAD_LOGGED;
         }
-        return _e('err');
+//        return _e('err');//BAD_LOGGED
+        //FIXME update response
+	    return _e_json(array(
+		    'status' => $status,
+	    ) );
     }
 
     /**
      * Ставим "Мне нравится"
      *
-     * @param $params
-     * @return string
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function like_yes($params): string
+    public function like_yes(): int
     {
-//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1015,31 +1032,36 @@ class WallController extends Module{
                 //Проверка на то что этот юзер ставил уже мне нрав или нет
                 $likes_users = explode('|', str_replace('u', '', $row['likes_users']));
                 if(!in_array($user_id, $likes_users, true)){
-                    $server_time = \Sura\Libs\Tools::time();
+                    $server_time = \Sura\Libs\Date::time();
                     $db->query("INSERT INTO `wall_like` SET rec_id = '{$rid}', user_id = '{$user_id}', date = '{$server_time}'");
 
                     $db->query("UPDATE `wall` SET likes_num = likes_num+1, likes_users = '|u{$user_id}|{$row['likes_users']}' WHERE id = '{$rid}'");
 
                     if($user_id != $row['author_user_id']){
 
-                        //Вставляем событие в моментальные оповещания
+                        //Вставляем событие в моментальные оповещения
                         $row_owner = $db->super_query("SELECT user_last_visit, notifications_list FROM `users` WHERE user_id = '{$row['author_user_id']}'");
                         $update_time = $server_time - 70;
 
                         if($row_owner['user_last_visit'] >= $update_time){
 
                             $row['text'] = strip_tags($row['text']);
-                            if($row['text']) $wall_text = ' &laquo;'.iconv_substr($row['text'], 0, 70, 'utf-8').'&raquo;';
-                            else $wall_text = '.';
+                            if($row['text'])
+                                $wall_text = ' &laquo;'.iconv_substr($row['text'], 0, 70, 'utf-8').'&raquo;';
+                            else
+                                $wall_text = '.';
 
                             $myRow = $db->super_query("SELECT user_sex FROM `users` WHERE user_id = '{$user_info['user_id']}'");
-                            if($myRow['user_sex'] == 2) $action_update_text = 'оценила Вашу запись'.$wall_text;
-                            else $action_update_text = 'оценил Вашу запись'.$wall_text;
+                            if($myRow['user_sex'] == 2)
+                                $action_update_text = 'оценила Вашу запись'.$wall_text;
+                            else
+                                $action_update_text = 'оценил Вашу запись'.$wall_text;
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$row['author_user_id']}', from_user_id = '{$user_info['user_id']}', type = '10', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/wall{$row['author_user_id']}_{$rid}'");
 
-                            $Cache = cache_init(array('type' => 'file'));
-                            $Cache->set("users/{$row['author_user_id']}/updates", 1);
+                            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                            $cache = new \Sura\Cache\Cache($storage, 'users');
+                            $cache->save("{$row['author_user_id']}/updates", 1);
                         }
 
                         //Добавляем в ленту новостей "ответы"
@@ -1055,31 +1077,45 @@ class WallController extends Module{
 
                         if(stripos($row_owner['notifications_list'], "settings_likes_gifts|") === false){
 
-                            $Cache = cache_init(array('type' => 'file'));
-                            $cntCacheNews = $Cache->get('users/'.$row['author_user_id'].'/new_news');
-                            $Cache->set('user_'.$row['author_user_id'].'/new_news', ($cntCacheNews+1));
+                            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                            $cache = new \Sura\Cache\Cache($storage, 'users');
+                            $cntCacheNews = $cache->load("{$row['author_user_id']}/new_news");
+                            //FIXME
+                            if (!is_int($cntCacheNews)){
+                                $cntCacheNews = 1;
+                            }else{
+                                $cntCacheNews =+1;
+                            }
+                            $cache->save("{$row['author_user_id']}/new_news", $cntCacheNews);
+                            $cache->save("{$row['author_user_id']}/updates", 1);
                         }
-                        return _e('true');
+                        $status = Status::OK;
                     }else {
-                        return _e('err');
+                        $status = Status::OWNER;
                     }
                 }else {
-                    return _e('err');
+                    $status = Status::FOUND;
+//                    $err =  'Вы уже ставили like';
                 }
             }else {
-                return _e('err');
+                $status = Status::NOT_FOUND;
             }
         }else {
-            return _e('err');
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Удаляем "Мне нравится"
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function like_no($params){
+    public function like_no(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1109,18 +1145,26 @@ class WallController extends Module{
                         $db->query("DELETE FROM `news` WHERE obj_id = '{$rid}' AND action_type = 7");
                     }
                 }
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Выводим первых 7 юзеров
      * которые поставили "мне нравится"
      *
-     * @param $params
-     * @return string
+     * @return int
+     * @throws \JsonException
      */
-    public function liked_users($params): string
+    public function liked_users(): int
     {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
@@ -1145,21 +1189,25 @@ class WallController extends Module{
                     }
                     $response .= '<a href="/u' . $row['user_id'] . '" id="Xlike_user' . $row['user_id'] . '_' . $rid . '" onClick="Page.Go(this.href); return false"><img src="' . $ava . '" width="32" alt="' . $row['user_id'] . '" /></a>';
                 }
-                return _e($response);
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
-            return _e('-');
+        }else{
+            $status = Status::BAD_LOGGED;
         }
-        return _e('');
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Выводим всех юзеров
      * которые поставили "мне нравится"
-     * @param $params
-     * @return string
-     * @throws Exception
+     *
+     * @return int
      */
-    public function all_liked_users($params): string
+    public function all_liked_users(): int
     {
         $db = $this->db();
         $logged = $this->logged();
@@ -1191,7 +1239,7 @@ class WallController extends Module{
 //                    $tpl->compile('content');
 //                    $tpl->result['content'] = str_replace('Всего', '', $tpl->result['content']);
 //                    $tpl->load_template('profile_friends.tpl');
-                    $config = Settings::loadsettings();
+                    $config = Settings::load();
                     foreach($sql_ as $key => $row){
                         if($row['user_photo'])
                         {
@@ -1219,10 +1267,11 @@ class WallController extends Module{
     /**
      * Показ всех комментариев к записи
      *
-     * @param $params
-     * @return bool
+     * @return int
+     * @throws \JsonException
      */
-    public function all_comm($params){
+    public function all_comm(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1261,27 +1310,36 @@ class WallController extends Module{
 //                        $wall->comm_select();
 
                         $params['wall_records'] = Wall::build($query);
-                    } else
-                        echo 'err_privacy';
+                        $status = Status::OK;
+                    } else {
+                        $status = Status::PRIVACY;
+                    }
+                }else{
+                    $status = Status::NOT_FOUND;
                 }
+            }else{
+                $status = Status::NOT_DATA;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Показ предыдущих записей
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function page($params): string
+    public function page(): int
     {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         $Profile = new Profile;
-        $config = Settings::loadsettings();
+//        $config = Settings::load();
         $lang = langs::get_langs();
         $server_time = (int)$_SERVER['REQUEST_TIME'];
 
@@ -1330,526 +1388,7 @@ class WallController extends Module{
                     else {
                         $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, type, tell_uid, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE tb1.id < '{$last_id}' AND for_user_id = '{$for_user_id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = '0' AND tb1.author_user_id = '{$for_user_id}' ORDER by `add_date` DESC LIMIT 0, {$limit_select}", true);
                     }
-/*
-                    foreach($query as $key => $row_wall){
-                        $query[$key]['rec_id'] = $row_wall['id']; //!
 
-                        //КНопка Показать полностью..
-                        $expBR = explode('<br />', $row_wall['text']);
-                        $textLength = count($expBR);
-                        $strTXT = strlen($row_wall['text']);
-                        if($textLength > 9 OR $strTXT > 600)
-                            $row_wall['text'] = '<div class="wall_strlen" id="hide_wall_rec'.$row_wall['id'].'">'.$row_wall['text'].'</div><div class="wall_strlen_full" onMouseDown="wall.FullText('.$row_wall['id'].', this.id)" id="hide_wall_rec_lnk'.$row_wall['id'].'">Показать полностью..</div>';
-
-                        //Прикрипленные файлы
-                        if($row_wall['attach']){
-                            $attach_arr = explode('||', $row_wall['attach']);
-                            $cnt_attach = 1;
-                            $cnt_attach_link = 1;
-                            //                                        $jid = 0;
-                            $attach_result = '';
-                            $attach_result .= '<div class="clear"></div>';
-                            foreach($attach_arr as $attach_file){
-                                $attach_type = explode('|', $attach_file);
-
-                                //Фото со стены сообщества
-                                if($attach_type[0] == 'photo' AND file_exists(__DIR__."/../../public/uploads/groups/{$row_wall['tell_uid']}/photos/c_{$attach_type[1]}")){
-                                    if($cnt_attach < 2)
-                                        $attach_result .= "<div class=\"profile_wall_attach_photo cursor_pointer page_num{$row_wall['id']}\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$row_wall['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\"><img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$row_wall['tell_uid']}/photos/{$attach_type[1]}\"  alt=\"\" /></div>";
-                                    else
-                                        $attach_result .= "<img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$row_wall['tell_uid']}/photos/c_{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$row_wall['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row_wall['id']}\"  alt=\"\"/>";
-
-                                    $cnt_attach++;
-
-                                    $resLinkTitle = '';
-
-                                    //Фото со стены юзера
-                                }
-                                elseif($attach_type[0] == 'photo_u'){
-
-                                    if (!isset($rodImHeigh))
-                                        $rodImHeigh = null;
-
-                                    if($row_wall['tell_uid']) $attauthor_user_id = $row_wall['tell_uid'];
-                                    else $attauthor_user_id = $row_wall['author_user_id'];
-
-                                    if($attach_type[1] == 'attach' AND file_exists(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}")){
-
-                                        if($cnt_attach == 1)
-
-                                            $attach_result .= "<div class=\"profile_wall_attach_photo cursor_pointer page_num{$row_wall['id']}\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$attauthor_user_id}', '{$attach_type[1]}', '{$cnt_attach}', 'photo_u')\"><img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/{$attach_type[2]}\"  alt=\"\"/></div>";
-
-                                        else
-
-                                            $attach_result .= "<img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}\" style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row_wall['id']}\" height=\"{$rodImHeigh}\"  alt=\"\"/>";
-
-
-                                        $cnt_attach++;
-
-
-                                    } elseif(file_exists(__DIR__."/../../public/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}")){
-
-                                        if($cnt_attach < 2)
-                                            $attach_result .= "<div class=\"profile_wall_attach_photo cursor_pointer page_num{$row_wall['id']}\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$attauthor_user_id}', '{$attach_type[1]}', '{$cnt_attach}', 'photo_u')\"><img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/{$attach_type[1]}\"  alt=\"\"/></div>";
-                                        else
-                                            $attach_result .= "<img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$row_wall['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row_wall['id']}\"  alt=\"\"/>";
-
-                                        $cnt_attach++;
-                                    }
-
-                                    $resLinkTitle = '';
-
-                                    //Видео
-                                }
-                                elseif($attach_type[0] == 'video' AND file_exists(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}")){
-
-                                    $for_cnt_attach_video = explode('video|', $row_wall['attach']);
-                                    $cnt_attach_video = count($for_cnt_attach_video)-1;
-
-                                    if($row_wall['tell_uid']) $attauthor_user_id = $row_wall['tell_uid'];
-
-                                    if($cnt_attach_video == 1 AND preg_match('/(photo|photo_u)/i', $row_wall['attach']) == false){
-
-                                        $video_id = intval($attach_type[2]);
-
-                                        $row_video = $Profile->row_video($video_id);
-                                        $row_video['title'] = stripslashes($row_video['title']);
-                                        $row_video['video'] = stripslashes($row_video['video']);
-                                        $row_video['video'] = strtr($row_video['video'], array('width="770"' => 'width="390"', 'height="420"' => 'height="310"'));
-
-
-                                        if ($row_video['download'] == '1') {
-                                            $attach_result .= "<div class=\"cursor_pointer clear\" href=\"/video{$attauthor_user_id}_{$video_id}_sec=wall/fuser={$attauthor_user_id}\" id=\"no_video_frame{$video_id}\" onClick=\"videos.show({$video_id}, this.href, '/u{$attauthor_user_id}')\">
-							                            <div class=\"video_inline_icon\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"width: 175px;height: 131px;margin-top:3px;max-width: 500px;\" height=\"350\"  alt=\"\"/></div><div id=\"video_frame{$video_id}\" class=\"no_display\" style=\"padding-top:3px\">{$row_video['video']}</div>";
-                                        }else{
-                                            $attach_result .= "<div class=\"cursor_pointer clear\" href=\"/video{$attauthor_user_id}_{$video_id}_sec=wall/fuser={$attauthor_user_id}\" id=\"no_video_frame{$video_id}\" onClick=\"videos.show({$video_id}, this.href, '/u{$attauthor_user_id}')\">
-							                            <div class=\"video_inline_icon\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;max-width: 500px;\" height=\"350\"  alt=\"\"/></div><div id=\"video_frame{$video_id}\" class=\"no_display\" style=\"padding-top:3px\">{$row_video['video']}</div>";
-                                        }
-                                    } else {
-
-                                        if ($row_video['download'] == '1') {//bug: undefined
-                                            $attach_result .= "<div class=\"fl_l\"><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><div class=\"video_inline_icon video_inline_icon2\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"width: 175px;height: 131px;margin-top:3px;margin-right:3px\"  alt=\"\"/></a></div>";
-                                        }else{
-                                            $attach_result .= "<div class=\"fl_l\"><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><div class=\"video_inline_icon video_inline_icon2\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"width: 175px;height: 131px;margin-top:3px;margin-right:3px\"  alt=\"\"/></a></div>";
-                                        }
-                                    }
-
-                                    $resLinkTitle = '';
-
-                                    //Музыка
-                                } elseif($attach_type[0] == 'audio'){
-                                    $data = explode('_', $attach_type[1]);
-                                    $audio_id = intval($data[0]);
-                                    $row_audio = $Profile->row_audio($audio_id);
-                                    if($row_audio){
-                                        $stime = gmdate("i:s", $row_audio['duration']);
-                                        if(!$row_audio['artist']) $row_audio['artist'] = 'Неизвестный исполнитель';
-                                        if(!$row_audio['title']) $row_audio['title'] = 'Без названия';
-                                        $plname = 'wall';
-                                        if($row_audio['oid'] != $user_info['user_id']) $q_s = <<<HTML
-                                                    <div class="audioSettingsBut"><li class="icon-plus-6"
-                                                    onClick="gSearch.addAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}')"
-                                                    onmouseover="showTooltip(this, {text: 'Добавить в мой список', shift: [6,5,0]});"
-                                                    id="no_play"></li><div class="clear"></div></div>
-                                                    HTML;
-                                        else $q_s = '';
-                                        $qauido = "<div class=\"audioPage audioElem search search_item\"
-                                                    id=\"audio_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
-                                                    onclick=\"playNewAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}', event);\"><div
-                                                    class=\"area\"><table cellspacing=\"0\" cellpadding=\"0\"
-                                                    width=\"100%\"><tbody><tr><td><div class=\"audioPlayBut new_play_btn\"><div
-                                                    class=\"bl\"><div class=\"figure\"></div></div></div><input type=\"hidden\"
-                                                    value=\"{$row_audio['url']},{$row_audio['duration']},page\"
-                                                    id=\"audio_url_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"></td><td
-                                                    class=\"info\"><div class=\"audioNames\" style=\"width: 275px;\"><b class=\"author\"
-                                                    onclick=\"Page.Go('/?go=search&query=&type=5&q='+this.innerHTML);\"
-                                                    id=\"artist\">{$row_audio['artist']}</b> – <span class=\"name\"
-                                                    id=\"name\">{$row_audio['title']}</span> <div class=\"clear\"></div></div><div
-                                                    class=\"audioElTime\"
-                                                    id=\"audio_time_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\">{$stime}</div>{$q_s}</td
-                                                    ></tr></tbody></table><div id=\"player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
-                                                    class=\"audioPlayer player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\" border=\"0\"
-                                                    cellpadding=\"0\"><table cellpadding=\"0\" width=\"100%\"><tbody><tr><td
-                                                    style=\"width: 100%;\"><div class=\"progressBar fl_l\" style=\"width: 100%;\"
-                                                    onclick=\"cancelEvent(event);\" onmousedown=\"audio_player.progressDown(event, this);\"
-                                                    id=\"no_play\" onmousemove=\"audio_player.playerPrMove(event, this)\"
-                                                    onmouseout=\"audio_player.playerPrOut()\"><div class=\"audioTimesAP\"
-                                                    id=\"main_timeView\"><div class=\"audioTAP_strlka\">100%</div></div><div
-                                                    class=\"audioBGProgress\"></div><div class=\"audioLoadProgress\"></div><div
-                                                    class=\"audioPlayProgress\" id=\"playerPlayLine\"><div
-                                                    class=\"audioSlider\"></div></div></div></td><td><div class=\"audioVolumeBar fl_l ml-2\"
-                                                    onclick=\"cancelEvent(event);\" onmousedown=\"audio_player.volumeDown(event, this);\"
-                                                    id=\"no_play\"><div class=\"audioTimesAP\"><div
-                                                    class=\"audioTAP_strlka\">100%</div></div><div class=\"audioBGProgress\"></div><div
-                                                    class=\"audioPlayProgress\" id=\"playerVolumeBar\"><div
-                                                    class=\"audioSlider\"></div></div></div> </td></tr></tbody></table></div></div></div>";
-                                        $attach_result .= $qauido;
-                                    }
-                                    $resLinkTitle = '';
-                                    //Смайлик
-                                } elseif($attach_type[0] == 'smile' AND file_exists(__DIR__."/../../public/uploads/smiles/{$attach_type[1]}")){
-                                    $attach_result .= '<img src=\"/uploads/smiles/'.$attach_type[1].'\" style="margin-right:5px" />';
-
-                                    $resLinkTitle = '';
-
-                                    //Если ссылка
-                                } elseif($attach_type[0] == 'link' AND preg_match('/http:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1 AND stripos(str_replace('http://www.', 'http://', $attach_type[1]), $config['home_url']) === false){
-                                    //                                                $count_num = count($attach_type);
-                                    $domain_url_name = explode('/', $attach_type[1]);
-                                    $rdomain_url_name = str_replace('http://', '', $domain_url_name[2]);
-
-                                    $attach_type[3] = stripslashes($attach_type[3]);
-                                    $attach_type[3] = iconv_substr($attach_type[3], 0, 200, 'utf-8');
-
-                                    $attach_type[2] = stripslashes($attach_type[2]);
-                                    $str_title = iconv_substr($attach_type[2], 0, 55, 'utf-8');
-
-                                    if(stripos($attach_type[4], '/uploads/attach/') === false){
-                                        $attach_type[4] = '/images/no_ava_groups_100.gif';
-                                        $no_img = false;
-                                    } else
-                                        $no_img = true;
-
-                                    if(!$attach_type[3]) $attach_type[3] = '';
-
-                                    if($no_img AND $attach_type[2]){
-                                        if($row_wall['tell_comm']) $no_border_link = 'border:0px';
-
-                                        $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away/?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div><div class="clear"></div><div class="wall_show_block_link" style="'.$no_border_link.'"><a href="/away.php?url='.$attach_type[1].'" target="_blank"><div style="width:108px;height:80px;float:left;text-align:center"><img src="'.$attach_type[4].'"  alt=""/></div></a><div class="attatch_link_title"><a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$str_title.'</a></div><div style="max-height:50px;overflow:hidden">'.$attach_type[3].'</div></div></div>';
-
-                                        $resLinkTitle = $attach_type[2];
-                                        $resLinkUrl = $attach_type[1];
-                                    } else if($attach_type[1] AND $attach_type[2]){
-                                        $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away/?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div></div><div class="clear"></div>';
-
-                                        $resLinkTitle = $attach_type[2];
-                                        $resLinkUrl = $attach_type[1];
-                                    }
-
-                                    $cnt_attach_link++;
-
-                                    //Если документ
-                                } elseif($attach_type[0] == 'doc'){
-
-                                    $doc_id = intval($attach_type[1]);
-
-                                    $row_doc = $Profile->row_doc($doc_id);
-
-                                    if($row_doc){
-
-                                        $attach_result .= '<div style="margin-top:5px;margin-bottom:5px" class="clear"><div class="doc_attach_ic fl_l" style="margin-top:4px;margin-left:0"></div><div class="attach_link_block_te"><div class="fl_l">Файл <a href="/index.php?go=doc&act=download&did='.$doc_id.'" target="_blank" onMouseOver="myhtml.title(\''.$doc_id.$cnt_attach.$row_wall['id'].'\', \'<b>Размер файла: '.$row_doc['dsize'].'</b>\', \'doc_\')" id="doc_'.$doc_id.$cnt_attach.$row_wall['id'].'">'.$row_doc['dname'].'</a></div></div></div><div class="clear"></div>';
-
-                                        $cnt_attach++;
-                                    }
-
-                                    //Если опрос
-                                }
-                                elseif($attach_type[0] == 'vote'){
-
-                                    $vote_id = intval($attach_type[1]);
-
-                                    $row_vote = $Profile->row_vote($vote_id);
-
-                                    if($vote_id){
-
-                                        $checkMyVote = $Profile->vote_check($vote_id, $user_id);
-
-                                        $row_vote['title'] = stripslashes($row_vote['title']);
-
-                                        if(!$row_wall['text'])
-                                            $row_wall['text'] = $row_vote['title'];
-
-                                        $arr_answe_list = explode('|', stripslashes($row_vote['answers']));
-                                        $max = $row_vote['answer_num'];
-
-                                        $sql_answer = $Profile->vote_answer($vote_id);
-                                        $answer = array();
-                                        foreach($sql_answer as $row_answer){
-                                            $answer[$row_answer['answer']]['cnt'] = $row_answer['cnt'];
-                                        }
-
-                                        $attach_result .= "<div class=\"clear\" style=\"height:10px\"></div><div id=\"result_vote_block{$vote_id}\"><div class=\"wall_vote_title\">{$row_vote['title']}</div>";
-
-                                        for($ai = 0; $ai < sizeof($arr_answe_list); $ai++){
-
-                                            if(!$checkMyVote['cnt']){
-
-                                                $attach_result .= "<div class=\"wall_vote_oneanswe\" onClick=\"Votes.Send({$ai}, {$vote_id})\" id=\"wall_vote_oneanswe{$ai}\"><input type=\"radio\" name=\"answer\" /><span id=\"answer_load{$ai}\">{$arr_answe_list[$ai]}</span></div>";
-
-                                            } else {
-
-                                                $num = $answer[$ai]['cnt'];
-
-                                                if(!$num ) $num = 0;
-                                                if($max != 0) $proc = (100 * $num) / $max;
-                                                else $proc = 0;
-                                                $proc = round($proc, 2);
-
-                                                $attach_result .= "<div class=\"wall_vote_oneanswe cursor_default\">
-                                                            {$arr_answe_list[$ai]}<br />
-                                                            <div class=\"wall_vote_proc fl_l\"><div class=\"wall_vote_proc_bg\" style=\"width:".intval($proc)."%\"></div><div style=\"margin-top:-16px\">{$num}</div></div>
-                                                            <div class=\"fl_l\" style=\"margin-top:-1px\"><b>{$proc}%</b></div>
-                                                            </div><div class=\"clear\"></div>";
-
-                                            }
-
-                                        }
-                                        $titles = array('человек', 'человека', 'человек');//fave
-                                        if($row_vote['answer_num']) $answer_num_text = Gramatic::declOfNum($row_vote['answer_num'], $titles);
-                                        else $answer_num_text = 'человек';
-
-                                        if($row_vote['answer_num'] <= 1) $answer_text2 = 'Проголосовал';
-                                        else $answer_text2 = 'Проголосовало';
-
-                                        $attach_result .= "{$answer_text2} <b>{$row_vote['answer_num']}</b> {$answer_num_text}.<div class=\"clear\" style=\"margin-top:10px\"></div></div>";
-
-                                    }
-
-                                }
-                                else
-
-                                    $attach_result .= '';
-
-                            }
-
-                            if($resLinkTitle AND $row_wall['text'] == $resLinkUrl OR !$row_wall['text'])
-                                $row_wall['text'] = $resLinkTitle.$attach_result;
-                            else if($attach_result)
-                                $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']).$attach_result;
-                            else
-                                $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']);
-                        } else
-                            $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']);
-
-                        $resLinkTitle = '';
-
-                        //Если это запись с "рассказать друзьям"
-                        if($row_wall['tell_uid']){
-                            if($row_wall['public'])
-                                $rowUserTell = $Profile->user_tell_info($row_wall['tell_uid'], 2);
-                            else
-                                $rowUserTell = $Profile->user_tell_info($row_wall['tell_uid'], 1);
-
-                            if(date('Y-m-d', $row_wall['tell_date']) == date('Y-m-d', $server_time))
-                                $dateTell = langdate('сегодня в H:i', $row_wall['tell_date']);
-                            elseif(date('Y-m-d', $row_wall['tell_date']) == date('Y-m-d', ($server_time-84600)))
-                                $dateTell = langdate('вчера в H:i', $row_wall['tell_date']);
-                            else
-                                $dateTell = langdate('j F Y в H:i', $row_wall['tell_date']);
-
-                            if($row_wall['public']){
-                                $rowUserTell['user_search_pref'] = stripslashes($rowUserTell['title']);
-                                $tell_link = 'public';
-                                if($rowUserTell['photo'])
-                                    $avaTell = '/uploads/groups/'.$row_wall['tell_uid'].'/50_'.$rowUserTell['photo'];
-                                else
-                                    $avaTell = '/images/no_ava_50.png';
-                            } else {
-                                $tell_link = 'u';
-                                if($rowUserTell['user_photo'])
-                                    $avaTell = '/uploads/users/'.$row_wall['tell_uid'].'/50_'.$rowUserTell['user_photo'];
-                                else
-                                    $avaTell = '/images/no_ava_50.png';
-                            }
-
-                            if($row_wall['tell_comm']) $border_tell_class = 'wall_repost_border'; else $border_tell_class = 'wall_repost_border2';
-
-                            $row_wall['text'] = <<<HTML
-                                        {$row_wall['tell_comm']}
-                                        <div class="{$border_tell_class}">
-                                        <div class="wall_tell_info"><div class="wall_tell_ava"><a href="/{$tell_link}{$row_wall['tell_uid']}" onClick="Page.Go(this.href); return false"><img src="{$avaTell}" width="30"  alt=""/></a></div><div class="wall_tell_name"><a href="/{$tell_link}{$row_wall['tell_uid']}" onClick="Page.Go(this.href); return false"><b>{$rowUserTell['user_search_pref']}</b></a></div><div class="wall_tell_date">{$dateTell}</div></div>{$row_wall['text']}
-                                        <div class="clear"></div>
-                                        </div>
-                                        HTML;
-                        }
-
-                        $query[$key]['text'] = stripslashes($row_wall['text']);
-                        $query[$key]['name'] = $row_wall['user_search_pref'];
-                        $query[$key]['user_id'] = $row_wall['author_user_id'];
-                        $online = Online($row_wall['user_last_visit'], $row_wall['user_logged_mobile']);
-                        $query[$key]['online'] = $online;
-                        $date = megaDate($row_wall['add_date']);
-                        $query[$key]['date'] = $date;
-
-                        if($row_wall['user_photo']){
-                            $query[$key]['ava'] = '/uploads/users/'.$row_wall['author_user_id'].'/50_'.$row_wall['user_photo'];
-                        }
-                        else{
-                            $query[$key]['ava'] = '/images/no_ava_50.png';
-                        }
-
-                        //Мне нравится
-                        if(stripos($row_wall['likes_users'], "u{$user_id}|") !== false){
-                            $query[$key]['yes_like'] = 'public_wall_like_yes';
-                            $query[$key]['yes_like_color'] = 'public_wall_like_yes_color';
-                            $query[$key]['like_js_function'] = 'groups.wall_remove_like('.$row_wall['id'].', '.$user_id.', \'uPages\')';
-                        } else {
-                            $query[$key]['yes_like'] = '';
-                            $query[$key]['yes_like_color'] = '';
-                            $query[$key]['like_js_function'] = 'groups.wall_add_like('.$row_wall['id'].', '.$user_id.', \'uPages\')';
-                        }
-
-                        if($row_wall['likes_num']){
-                            $query[$key]['likes'] = $row_wall['likes_num'];
-                            $titles = array('человеку', 'людям', 'людям');//like
-                            $query[$key]['likes_text'] = '<span id="like_text_num'.$row_wall['id'].'">'.$row_wall['likes_num'].'</span> '.Gramatic::declOfNum($row_wall['likes_num'], $titles);
-                        } else {
-                            $query[$key]['likes'] = '';
-                            $query[$key]['likes_text'] = '<span id="like_text_num'.$row_wall['id'].'">0</span> человеку';
-                        }
-
-                        //Выводим информцию о том кто смотрит страницу для себя
-                        $query[$key]['viewer_id'] = $user_id;
-                        if($user_info['user_photo']){
-                            $query[$key]['viewer_ava'] = '/uploads/users/'.$user_id.'/50_'.$user_info['user_photo'];
-                        }else{
-                            $query[$key]['viewer_ava'] = '/images/no_ava_50.png';
-                        }
-
-                        if($row_wall['type']){
-                            $query[$key]['type'] = $row_wall['type'];
-                        }else{
-                            $query[$key]['type'] = '';
-                        }
-
-                        //времменно
-                        if (!isset($for_user_id))
-                            $for_user_id = null;
-
-                        if(!isset($id))
-                            $id = $for_user_id;//bug: undefined
-
-                        //Тег Owner означает показ записей только для владельца страницы или для того кто оставил запись
-                        if($user_id == $row_wall['author_user_id'] OR $user_id == $id){
-                            $query[$key]['owner'] = true;
-                        } else{
-                            $query[$key]['owner'] = false;
-                        }
-
-                        //Показа кнопки "Рассказать др" только если это записи владельца стр.
-                        if($row_wall['author_user_id'] == $id AND $user_id != $id){
-                            $query[$key]['author_user_id'] = true;
-                        } else{
-                            $query[$key]['author_user_id'] = false;
-                        }
-
-                        //Если есть комменты к записи, то выполняем след. действия / Приватность
-                        if($row_wall['fasts_num']){
-                            $query[$key]['if_comments'] = false;
-                        } else {
-                            $query[$key]['if_comments'] = true;
-                        }
-
-                        //TODO update code
-//                        $CheckFriends = false;
-                        $CheckFriends = Tools::CheckFriends($row_wall['author_user_id']);
-                        if($CheckFriends)
-                            $CheckFriends = true;
-                        else
-                            $CheckFriends = false;
-
-
-                        //Приватность комментирования записей
-                        if($user_privacy['val_wall3'] == 1 OR $user_privacy['val_wall3'] == 2 AND $CheckFriends == true OR $user_id == $id){
-                            $query[$key]['privacy_comment'] = true;
-                        } else{
-                            $query[$key]['privacy_comment'] = false;
-                        }
-
-                        $query[$key]['record'] = true;
-                        $query[$key]['comment'] = false;
-                        $query[$key]['comment_form'] = false;
-                        $query[$key]['all_comm'] = false;
-
-                        //Помещаем все комменты в id wall_fast_block_{id} это для JS
-                        //                                    $tpl->result[$compile] .= '<div id="wall_fast_block_'.$row_wall['id'].'">';
-
-                        //Если есть комменты к записи, то открываем форму ответа уже в развернутом виде и выводим комменты к записи
-                        if($user_privacy['val_wall3'] == 1 OR $user_privacy['val_wall3'] == 2 AND $CheckFriends OR $user_id == $id){
-                            if($row_wall['fasts_num']){
-
-                                if($row_wall['fasts_num'] > 3)
-                                    $comments_limit = $row_wall['fasts_num']-3;
-                                else
-                                    $comments_limit = 0;
-
-                                $sql_comments = $Profile->comments($row_wall['id'], $comments_limit);
-
-                                //Загружаем кнопку "Показать N запсии"
-                                $titles1 = array('предыдущий', 'предыдущие', 'предыдущие');//prev
-                                $titles2 = array('комментарий', 'комментария', 'комментариев');//comments
-                                $query[$key]['gram_record_all_comm'] = Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles1).' '.($row_wall['fasts_num']-3).' '.Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles2);
-
-                                if($row_wall['fasts_num'] < 4){
-                                    $query[$key]['all_comm_block'] = false;
-                                }else {
-                                    $query[$key]['rec_id'] = $row_wall['id'];
-                                }
-                                $query[$key]['author_id'] = $id;
-
-                                $query[$key]['record_block'] = false;
-                                $query[$key]['comment_form_block'] = false;
-                                $query[$key]['comment_block'] = false;
-
-                                //Сообственно выводим комменты
-                                foreach($sql_comments as $key => $row_comments){
-                                    $sql_comments[$key]['name'] = $row_comments['user_search_pref'];
-                                    if($row_comments['user_photo']){
-                                        $sql_comments[$key]['ava'] = '/uploads/users/'.$row_comments['author_user_id'].'/50_'.$row_comments['user_photo'];
-                                    }else{
-                                        $sql_comments[$key]['ava'] = '/images/no_ava_50.png';
-                                    }
-
-                                    $sql_comments[$key]['rec_id'] = $row_wall['id'];
-                                    $sql_comments[$key]['comm_id'] = $row_comments['id'];
-                                    $sql_comments[$key]['user_id'] = $row_comments['author_user_id'];
-
-                                    $expBR2 = explode('<br />', $row_comments['text']);
-                                    $textLength2 = count($expBR2);
-                                    $strTXT2 = strlen($row_comments['text']);
-                                    if($textLength2 > 6 OR $strTXT2 > 470)
-                                        $row_comments['text'] = '<div class="wall_strlen" id="hide_wall_rec'.$row_comments['id'].'" style="max-height:102px"">'.$row_comments['text'].'</div><div class="wall_strlen_full" onMouseDown="wall.FullText('.$row_comments['id'].', this.id)" id="hide_wall_rec_lnk'.$row_comments['id'].'">Показать полностью..</div>';
-
-                                    //Обрабатываем ссылки
-                                    $row_comments['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_comments['text']);
-
-                                    $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
-
-                                    $date = megaDate($row_comments['add_date']);
-                                    $sql_comments[$key]['date'] = $date;
-                                    if($user_id == $row_comments['author_user_id'] || $user_id == $id){
-                                        $sql_comments[$key]['owner_block'] = true;
-                                    } else{
-                                        $sql_comments[$key]['owner_block'] = false;
-                                    }
-
-                                    if($user_id == $row_comments['author_user_id']){
-                                        $sql_comments[$key]['not_owner'] = false;
-                                    }else {
-                                        $sql_comments[$key]['not_owner_block'] = true;
-                                    }
-
-                                    $sql_comments[$key]['comment_block'] = true;
-                                    $sql_comments[$key]['record_block'] = false;
-                                    $sql_comments[$key]['comment_form_block'] = false;
-                                    $sql_comments[$key]['all_comm_block'] = false;
-                                }
-
-                                //Загружаем форму ответа
-                                $query[$key]['rec_id'] = $row_wall['id'];
-                                $query[$key]['author_id'] = $id;
-                                $query[$key]['comment_form_block'] = true;
-                                $query[$key]['record_block'] = false;
-                                $query[$key]['comment_block'] = false;
-                                $query[$key]['all-comm_block'] = false;
-                            }
-                        }
-
-                        //Закрываем блок для JS
-                        //                                    $tpl->result[$compile] .= '</div>';
-                    }
-                    */
-//                    $params['wall_records'] = $query;
                     $params['wall_records'] = Wall::build($query);
                 }
             }
@@ -1867,11 +1406,13 @@ class WallController extends Module{
     }
 
     /**
-     * Рассказать друзьям "Мне нравитсяя"
+     * Рассказать друзьям "Мне нравится"
      *
-     * @param $params
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function tell($params){
+    public function tell(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -1898,8 +1439,8 @@ class WallController extends Module{
                         $row['text'] = $db->safesql($row['text']);
                         $row['attach'] = $db->safesql($row['attach']);
 
-                        //Всталвяем себе на стену
-                        $server_time = \Sura\Libs\Tools::time();
+                        //Вставляем себе на стену
+                        $server_time = \Sura\Libs\Date::time();
                         $db->query("INSERT INTO `wall` SET author_user_id = '{$user_id}', for_user_id = '{$user_id}', text = '{$row['text']}', add_date = '{$server_time}', fast_comm_id = 0, tell_uid = '{$row['author_user_id']}', tell_date = '{$row['add_date']}', public = '{$row['public']}', attach = '{$row['attach']}'");
                         $dbid = $db->insert_id();
                         $db->query("UPDATE `users` SET user_wall_num = user_wall_num+1 WHERE user_id = '{$user_id}'");
@@ -1908,24 +1449,39 @@ class WallController extends Module{
                         $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 1, action_text = '{$row['text']}', obj_id = '{$dbid}', action_time = '{$server_time}'");
 
                         //Чистим кеш
-                        $Cache = cache_init(array('type' => 'file'));
-                        $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                        $cache = new \Sura\Cache\Cache($storage, 'users');
+                        $cache->remove("{$user_id}/profile_{$user_id}");
+
+
+                        $status = Status::OK;
                     } else {
-                        echo 1;
+//                        echo 1;
+                        $status = Status::NOT_FOUND;
                     }
                 } else {
-                    echo 1;
+//                    echo 1;
+                    $status = Status::OWNER;
                 }
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Парсер информации о ссылке
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function parse_link($params){
+    public function parse_link(): int
+    {
         $user_info = $this->user_info();
         $logged = $this->logged();
         if($logged){
@@ -2013,20 +1569,25 @@ class WallController extends Module{
                     }
                 }
                 echo $res_title.'<f>'.$res_descr.'<f>'.$img_link.'<f>'.$new_imgs;
-
-            } else
-                echo 1;
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Показ последних 10 записей
-     * 
-     * @param $params
-     * @return string
-     * @throws Exception
+     *
+     * @return int
+     * @throws \Throwable
      */
-    public function index($params): string
+    public function index(): int
     {
         $lang = $this->get_langs();
         $db = Db::getDB();
@@ -2042,32 +1603,32 @@ class WallController extends Module{
         $path = explode('/', $server['REQUEST_URI']);
         $id = (int)$path['2'];
 
-        $Cache = cache_init(array('type' => 'file'));
-        try {
-            $value = $Cache->get("users/{$id}/profile_{$id}", $default = null);
-            $row = unserialize($value, $options = []);
-        }catch (Exception $e){
+        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+        $cache = new \Sura\Cache\Cache($storage, 'users');
+        $key = "{$id}/profile_{$id}";
+        $value = $cache->load($key, function (&$dependencies) {
+            $dependencies[\Sura\Cache\Cache::EXPIRE] = '20 minutes';
+        });
+        if ($value == NULL){
             $dir = __DIR__.'/../cache/users/'.$id.'/';
             if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
                 throw new \Exception(sprintf('Directory "%s" was not created', $dir));
             }
-
             $row = $Profile->user_row($id);
             $value = serialize($row);
-
-            $Cache->set("users/{$id}/profile_{$id}", $value);
+            $cache->save($key, $value);
+        }else{
+            $row = unserialize($value, $options = []);
         }
 
         $user_id = $user_info['user_id'];
 
         if($user_id !== $id){
-            $CheckBlackList = Tools::CheckBlackList($row['user_id']);
-            $CheckFriends = Tools::CheckFriends($row['user_id']);
-
+            $CheckBlackList = \App\Libs\Friends::CheckBlackList($row['user_id']);
+            $CheckFriends = \App\Libs\Friends::CheckFriends($row['user_id']);
         }else{
             $CheckBlackList = false;
             $CheckFriends = false;
-
         }
 
         $user_privacy = xfieldsdataload($row['user_privacy']);
@@ -2210,6 +1771,9 @@ class WallController extends Module{
 
             }
 
+            if(!isset($where_sql))
+                $where_sql = null;
+
             if(!$CheckBlackList){
                 if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $CheckFriends OR $user_id == $id) {
                     $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
@@ -2248,7 +1812,7 @@ class WallController extends Module{
                                                 }*/
 
                 $server_time = (int)$_SERVER['REQUEST_TIME'];
-                $config = Settings::loadsettings();
+//                $config = Settings::load();
 
                 /**
                  * wall records
@@ -2765,6 +2329,8 @@ class WallController extends Module{
                 $params['wall_records'] = Wall::build($query);
             }
         }
+
+        $lang = $this->get_langs();
         $params['title'] = $lang['no_infooo'];
         $params['info'] = $lang['no_upage'];
         return view('wall.wall', $params);

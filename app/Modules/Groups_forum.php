@@ -2,7 +2,9 @@
 
 namespace App\Modules;
 
+use Sura\Libs\Langs;
 use Sura\Libs\Request;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -11,8 +13,10 @@ class Groups_forum extends Module{
 
     /**
      * Отправка темы в БД
+     * @throws \JsonException|\Throwable
      */
-    public function new_send($params){
+    public function new_send(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -37,29 +41,36 @@ class Groups_forum extends Module{
             if(stripos($row['ulist'], "|{$user_id}|") !== false AND $row['discussion'] AND isset($title) AND !empty($title) AND isset($text) AND !empty($text) OR isset($attach_files) AND !empty($attach_files)){
 
                 //Вставляем тему в БД
-                $server_time = \Sura\Libs\Tools::time();
+                $server_time = \Sura\Libs\Date::time();
                 $db->query("INSERT INTO `communities_forum` SET public_id = '{$public_id}', fuser_id = '{$user_id}', title = '{$title}', text = '{$text}', attach = '{$attach_files}', fdate = '{$server_time}', lastuser_id = '{$user_id}', lastdate = '{$server_time}', msg_num = 1");
                 $dbid = $db->insert_id();
 
                 //Обновляем кол-во тем в сообществе
                 $db->query("UPDATE `communities` SET forum_num = forum_num+1 WHERE id = '{$public_id}'");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete('groups_forum/'.$public_id.'/forum'.$public_id);
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'groups');
+                $cache->remove("{$public_id}/forum{$public_id}");
 
                 echo $dbid;
 
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_DATA;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Страница создания новой темы
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function new($params): string
+    public function new(): int
     {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -93,10 +104,11 @@ class Groups_forum extends Module{
 
     /**
      * Добавления сообщения к теме
-     * @param $params
-     * @return bool
+     * @return int
+     * @throws \Throwable
      */
-    public function add_msg($params){
+    public function add_msg(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -135,7 +147,7 @@ class Groups_forum extends Module{
                         $msg = str_replace($check2['user_name'], "<a href=\"/u{$row_owner2['muser_id']}\" onClick=\"Page.Go(this.href); return false\">{$check2['user_name']}</a>", $msg);
 
                         //Всталвяем саму запись в БД
-                        $server_time = \Sura\Libs\Tools::time();
+                        $server_time = \Sura\Libs\Date::time();
                         $db->query("INSERT INTO `communities_forum_msg` SET fid = '{$fid}', muser_id = '{$user_id}', msg = '{$msg}', mdate = '{$server_time}'");
                         $dbid = $db->insert_id();
 
@@ -145,21 +157,19 @@ class Groups_forum extends Module{
                         //Вставляем событие в моментальные оповещания
                         $update_time = $server_time - 70;
 
+                        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                        $cache = new \Sura\Cache\Cache($storage, 'users');
+
                         if($check2['user_last_visit'] >= $update_time){
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$row_owner2['muser_id']}', from_user_id = '{$user_id}', type = '6', date = '{$server_time}', text = '{$msg}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/forum{$row['public_id']}?act=view&id={$fid}'");
 
-                            $Cache = cache_init(array('type' => 'file'));
-                            $Cache->set("users/{$row_owner2['muser_id']}/updates", 1);
-
+                            $cache->save("{$row_owner2['muser_id']}/updates", 1);
                             //ИНАЧЕ Добавляем +1 юзеру для оповещания
                         } else {
-
                             $cntCacheNews = '';//TODO update
-
-                            $Cache = cache_init(array('type' => 'file'));
-                            $Cache->get("users/{$row_owner2['muser_id']}/new_news");
-                            $Cache->set("users/{$row_owner2['muser_id']}/new_news", $cntCacheNews+1);
+                            $value = $cache->load("{$row_owner2['muser_id']}/new_news");
+                            $cache->save("{$row_owner2['muser_id']}/new_news", $value);
                         }
 
                     }
@@ -167,17 +177,18 @@ class Groups_forum extends Module{
                 } else {
 
                     //Всталвяем саму запись в БД
-                    $server_time = \Sura\Libs\Tools::time();
+                    $server_time = \Sura\Libs\Date::time();
                     $db->query("INSERT INTO `communities_forum_msg` SET fid = '{$fid}', muser_id = '{$user_id}', msg = '{$msg}', mdate = '{$server_time}'");
                     $dbid = $db->insert_id();
 
                 }
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'groups');
+                $cache->remove("{$row['public_id']}/forum{$row['public_id']}");
 
                 //Обновляем данные в теме
-                $server_time = \Sura\Libs\Tools::time();
+                $server_time = \Sura\Libs\Date::time();
                 $db->query("UPDATE `communities_forum` SET msg_num = msg_num+1, lastdate = '{$server_time}', lastuser_id = '{$user_id}' WHERE fid = '{$fid}'");
 
                 $tpl->load_template('forum/msg.tpl');
@@ -189,7 +200,7 @@ class Groups_forum extends Module{
                 $tpl->set('{online}', $lang['online']);
                 $tpl->set('{mid}', $dbid);
                 $tpl->set('{user-id}', $user_info['user_id']);
-                $tpl->set('{date}', langdate('сегодня в H:i', $server_time));
+                $tpl->set('{date}', Langs::lang_date('сегодня в H:i', $server_time));
                 $tpl->set('[admin-2]', '');
                 $tpl->set('[/admin-2]', '');
                 $tpl->set_block("'\\[not-owner\\](.*?)\\[/not-owner\\]'si","");
@@ -209,10 +220,10 @@ class Groups_forum extends Module{
 
     /**
      * Показах предыдущих сообщений
-     * @param $params
-     * @return bool
+     * @return int
      */
-    public function prev_msg($params){
+    public function prev_msg(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -263,9 +274,9 @@ class Groups_forum extends Module{
                     $tpl->set('{text}', stripslashes($row_comm['msg']));
                     $tpl->set('{user-id}', $row_comm['muser_id']);
                     $tpl->set('{mid}', $row_comm['mid']);
-                    $date = megaDate(strtotime($row_comm['mdate']));
+                    $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['mdate']));
                     $tpl->set('{date}', $date);
-                    $online = Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
+                    $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                     $tpl->set('{online}', $online);
 
                     //ADMIN 2
@@ -306,9 +317,11 @@ class Groups_forum extends Module{
 
     /**
      * Сохранение отред. данных темы
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function saveedit($params){
+    public function saveedit(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -337,17 +350,28 @@ class Groups_forum extends Module{
 
                 $db->query("UPDATE `communities_forum` SET text = '{$text}' WHERE fid = '{$fid}'");
 
-                echo $text;
+//                echo $text;
 
+                $status = Status::OK;
+            }else{
+                $status = Status::BAD_RIGHTS;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Сохранение отред. названия
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function savetitle($params){
+    public function savetitle(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -376,16 +400,28 @@ class Groups_forum extends Module{
 
                 $db->query("UPDATE `communities_forum` SET title = '{$title}' WHERE fid = '{$fid}'");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'groups');
+                $cache->remove("{$row['public_id']}/forum{$row['public_id']}");
+
+                $status = Status::OK;
+            }else{
+                $status = Status::BAD_RIGHTS;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Фиксирование темы . закрипление
+     * @throws \Throwable
      */
-    public function fix($params){
+    public function fix(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -416,17 +452,29 @@ class Groups_forum extends Module{
 
                 $db->query("UPDATE `communities_forum` SET fixed = '{$fixed}' WHERE fid = '{$fid}'");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'groups');
+                $cache->remove("{$row['public_id']}/forum{$row['public_id']}");
+
+                $status = Status::OK;
+            }else{
+                $status = Status::BAD_RIGHTS;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Открытие - закрытие тему
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function status($params){
+    public function status(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -452,20 +500,33 @@ class Groups_forum extends Module{
 
             if($user_info['user_group'] == 1 OR $public_admin AND $row2['discussion']){
 
-                if(!$row['status']) $status = 1;
-                else $status = 0;
+                if(!$row['status'])
+                    $status = 1;
+                else
+                    $status = 0;
 
                 $db->query("UPDATE `communities_forum` SET status = '{$status}' WHERE fid = '{$fid}'");
 
+                $status = Status::OK;
+            }else{
+                $status = Status::BAD_RIGHTS;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      *  Уадаление темы
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function del($params){
+    public function del(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -498,19 +559,31 @@ class Groups_forum extends Module{
                 $db->query("DELETE FROM `votes` WHERE id = '{$row['vote']}'");
                 $db->query("DELETE FROM `votes_result` WHERE vote_id = '{$row['vote']}'");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
-                $Cache->delete("votes/vote_{$row['vote']}");
-                $Cache->delete("votes/vote_answer_cnt_{$row['vote']}");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'groups');
+                $cache->remove("{$row['public_id']}/forum{$row['public_id']}");
+                $cache = new \Sura\Cache\Cache($storage, 'votes');
+                $cache->remove("vote_{$row['vote']}");
+                $cache->remove("vote_answer_cnt_{$row['vote']}");
 
+                $status = Status::OK;
+            }else{
+                $status = Status::BAD_RIGHTS;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
-     * Уадаление опроса
+     * Удаление опроса
+     * @throws \Throwable
      */
-    public function delvote($params){
+    public function delvote(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -540,18 +613,31 @@ class Groups_forum extends Module{
                 $db->query("DELETE FROM `votes` WHERE id = '{$row['vote']}'");
                 $db->query("DELETE FROM `votes_result` WHERE vote_id = '{$row['vote']}'");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("votes/vote_{$row['vote']}");
-                $Cache->delete("votes/vote_answer_cnt_{$row['vote']}");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'votes');
+                $cache->remove("vote_{$row['vote']}");
+                $cache->remove("vote_answer_cnt_{$row['vote']}");
+
+                $status = Status::OK;
+            }else{
+                $status = Status::BAD_RIGHTS;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
-     * Уадаление сообщения
-     * @param $params
+     * Удаление сообщения
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function delmsg($params){
+    public function delmsg(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -584,17 +670,29 @@ class Groups_forum extends Module{
                 //Удаляем из ленты новостей
                 $db->query("DELETE FROM `news` WHERE action_type = '6' AND obj_id = '{$mid}' AND action_time = '{$row['mdate']}'");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("groups_forum/{$row['public_id']}/forum{$row['public_id']}");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'groups');
+                $cache->remove("{$row['public_id']}/forum{$row['public_id']}");
+
+                $status = Status::OK;
+            }else{
+                $status = Status::BAD_RIGHTS;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Прикрипление опроса
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function createvote($params){
+    public function createvote(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -645,19 +743,26 @@ class Groups_forum extends Module{
 
                     $db->query("UPDATE `communities_forum` SET vote = '{$db->insert_id()}' WHERE fid = '{$fid}'");
 
+                    $status = Status::OK;
+                }else{
+                    $status = Status::NOT_DATA;
                 }
-
+            }else{
+                $status = Status::BAD_RIGHTS;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Просмотр темы
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function view($params): string
+    public function view(): int
     {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -708,9 +813,9 @@ class Groups_forum extends Module{
                         $tpl->set('{mid}', $row_comm['mid']);
                         $tpl->set('{user-id}', $row_comm['muser_id']);
 
-                        $date = megaDate(strtotime($row_comm['mdate']));
+                        $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['mdate']));
                         $tpl->set('{date}', $date);
-                        $online = Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
+                        $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                         $tpl->set('{online}', $online);
 
                         if($row_comm['user_photo'])
@@ -842,9 +947,9 @@ class Groups_forum extends Module{
                 $tpl->set('{user-id}', $row['fuser_id']);
                 $tpl->set('{my-uid}', $user_id);
                 $tpl->set('{msg-num}', $row['msg_num']);
-                $online = Online($row['user_last_visit'], $row['user_logged_mobile']);
+                $online = \App\Libs\Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
                 $tpl->set('{online}', $online);
-                $date = megaDate(strtotime($row['fdate']));
+                $date = \Sura\Libs\Date::megaDate(strtotime($row['fdate']));
                 $tpl->set('{date}', $date);
                 if($row['user_photo'])
                     $tpl->set('{ava}', "/uploads/users/{$row['fuser_id']}/50_{$row['user_photo']}");
@@ -974,11 +1079,9 @@ class Groups_forum extends Module{
 
     /**
      * Вывод всех обсуждений в сообществе
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function index($params): string
+    public function index(): int
     {
         $tpl = $params['tpl'];
 
@@ -1056,7 +1159,7 @@ class Groups_forum extends Module{
                         else if($row['fixed']) $tpl->set('{status}', 'тема закреплена');
                         else $tpl->set('{status}', '');
 
-                        $date = megaDate(strtotime($row['lastdate']));
+                        $date = \Sura\Libs\Date::megaDate(strtotime($row['lastdate']));
                         $tpl->set('{date}', $date);
 
                         $tpl->compile('content');

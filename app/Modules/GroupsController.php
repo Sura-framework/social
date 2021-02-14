@@ -2,27 +2,32 @@
 
 namespace App\Modules;
 
-use App\Contracts\Modules\GroupsInterface;
 use App\Libs\Antispam;
 use App\Libs\Wall;
 use App\Models\Menu;
 use Exception;
 use Intervention\Image\ImageManager;
+use RuntimeException;
+use Sura\Libs\Date;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 
-class GroupsController extends Module implements GroupsInterface
+class GroupsController extends Module
 {
 
     /**
      * Отправка сообщества БД
      *
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function send(){
+    public function send(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -45,29 +50,39 @@ class GroupsController extends Module implements GroupsInterface
                 $db->query("UPDATE `users` SET user_public_num = user_public_num+1 WHERE user_id = '{$user_id}'");
 
                 if (!mkdir($concurrentDirectory = __DIR__ . '/../../public/uploads/groups/' . $cid . '/', 0777) && !is_dir($concurrentDirectory)) {
-                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+                    throw new RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
                 }
                 chmod(__DIR__.'/../../public/uploads/groups/'.$cid.'/', 0777);
 
                 if (!mkdir($concurrentDirectory = __DIR__ . '/../../public/uploads/groups/' . $cid . '/photos/', 0777) && !is_dir($concurrentDirectory)) {
-                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+                    throw new RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
                 }
                 chmod(__DIR__.'/../../public/uploads/groups/'.$cid.'/photos/', 0777);
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $cache->remove("{$user_id}/profile_{$user_id}");
+
                 echo $cid;
-            } else {
-                echo 'err';
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_DATA;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      *  Выход из сообщества
      *
+     * @throws \Throwable
      */
-    public function logout(){
+    public function logout(): int
+    {
         //FIXME rename function name
         $db = $this->db();
         $user_info = $this->user_info();
@@ -87,7 +102,7 @@ class GroupsController extends Module implements GroupsInterface
                 $db->query("UPDATE `communities` SET traf = traf-1, ulist = REPLACE(ulist, '|{$user_id}|', '') WHERE id = '{$id}'");
 
                 //Записываем в статистику "Вышедшие участники"
-                $server_time = Tools::time();
+                $server_time = Date::time();
                 $stat_date = date('Y-m-d', $server_time);
                 $stat_x_date = date('Y-m', $server_time);
                 $stat_date = strtotime($stat_date);
@@ -104,29 +119,37 @@ class GroupsController extends Module implements GroupsInterface
                     }
                     $db->query("INSERT INTO `communities_stats_log` SET user_id = '{$user_info['user_id']}', date = '{$stat_date}', act = '3', gid = '{$id}'");
                 }
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                $Cache->delete("public/{$id}/profile_{$id}");
-                echo 'true';
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $cache->remove("{$user_id}/profile_{$user_id}");
+                $cache = new \Sura\Cache\Cache($storage, 'public');
+                $cache->remove("{$id}/profile_{$id}");
+
+//                echo 'true';
+                $status = Status::OK;
             }else{
                 $user_id = $user_info['user_id'];
                 $id = (int)$request['id'];
                 $db->query("DELETE FROM `friends` WHERE friend_id = '{$id}' AND user_id = '{$user_id}' AND subscriptions = 2");
-                echo 'false';
+//                echo 'false';
+                $status = Status::NOT_FOUND;
             }
         }else{
-            echo 'err_logged';
+//            echo 'err_logged';
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Страница загрузки главного фото сообщества
      *
      * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function load_photo_page($params): string
+    public function load_photo_page($params): int
     {
         $lang = $this->get_langs();
         $logged = $this->logged();
@@ -145,8 +168,10 @@ class GroupsController extends Module implements GroupsInterface
      * Загрузка и изминение главного фото сообщества
      *
      * @throws Exception
+     * @throws \Throwable
      */
-    public function loadphoto($params){
+    public function loadphoto(): int
+    {
 //        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -170,7 +195,7 @@ class GroupsController extends Module implements GroupsInterface
                 //Получаем данные о фотографии
                 $image_tmp = $_FILES['uploadfile']['tmp_name'];
                 $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-                $server_time = Tools::time();
+                $server_time = Date::time();
                 $image_rename = substr(md5($server_time+random_int(1,100000)), 0, 20); // имя фотографии
                 $image_size = $_FILES['uploadfile']['size']; // размер файла
                 $array = explode(".", $image_name);
@@ -212,25 +237,51 @@ class GroupsController extends Module implements GroupsInterface
                             $db->query("UPDATE `communities` SET photo = '{$image_rename}{$res_type}' WHERE id = '{$id}'");
 
                             //Результат для ответа
-                            echo $image_rename.$res_type;
+//                            echo $image_rename.$res_type;
 
-                            $Cache = cache_init(array('type' => 'file'));
-                            $Cache->delete("wall/group{$id}");
-                         } else
-                            echo 'big_size';
-                    } else
-                        echo 'big_size';
-                } else
-                    echo 'bad_format';
+                            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                            $cache = new \Sura\Cache\Cache($storage, 'wall');
+                            $cache->remove("group{$id}");
+
+                            $status = Status::OK;
+                            $err =  'yes';
+                        } else {
+//                            echo 'big_size';
+                            $status = Status::BAD_MOVE;
+                            $err =  'hacking';
+                        }
+                    } else {
+//                        echo 'big_size';
+                        $status = Status::BIG_SIZE;
+                        $err =  'hacking';
+                    }
+                } else {
+//                    echo 'bad_format';
+                    $status = Status::BAD_FORMAT;
+                    $err =  'hacking';
+                }
+            }else{
+                $status = Status::BAD_RIGHTS;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;//BAD_LOGGED
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Удаление фото сообщества
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function delphoto($params){
+    public function delphoto(): int
+    {
 //        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -259,17 +310,33 @@ class GroupsController extends Module implements GroupsInterface
                 unlink($upload_dir.'100_'.$row['photo']);
                 $db->query("UPDATE `communities` SET photo = '' WHERE id = '{$id}'");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("wall/group{$id}");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'wall');
+                $cache->remove("group{$id}");
+
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::BAD_RIGHTS;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Вступление в сообщество
      *
+     * @throws Exception|\Throwable
      */
-    public function login(){
+    public function login(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -283,7 +350,7 @@ class GroupsController extends Module implements GroupsInterface
             if (isset($request['id']))
                 $id = (int)$request['id'];
             else{
-                throw new \Exception('item not found');
+                throw new Exception('item not found');
             }
             //Проверка на существования юзера в сообществе
             $row = $db->super_query("SELECT ulist, del, ban FROM `communities` WHERE id = '{$id}'");
@@ -299,7 +366,7 @@ class GroupsController extends Module implements GroupsInterface
                 $db->query("INSERT INTO `friends` SET friend_id = '{$id}', user_id = '{$user_id}', friends_date = NOW(), subscriptions = 2");
 
                 //Записываем в статистику "Новые участники"
-                $server_time = Tools::time();
+                $server_time = Date::time();
                 $stat_date = date('Y-m-d', $server_time);
                 $stat_x_date = date('Y-m', $server_time);
                 $stat_date = strtotime($stat_date);
@@ -332,25 +399,38 @@ class GroupsController extends Module implements GroupsInterface
                 $db->query("UPDATE `users` SET user_public_num = user_public_num + 1 {$appSQLDel} WHERE user_id = '{$user_id}'");
 
                 //Чистим кеш
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                $Cache->delete("public/{$id}/profile_{$id}");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $cache->remove("{$user_id}/profile_{$user_id}");
+                $cache = new \Sura\Cache\Cache($storage, 'public');
+                $cache->remove("{$id}/profile_{$id}");
+
                 echo 'true';
+                $status = Status::OK;
+                $err =  'yes';
             }else{
-                echo 'false';
+                $status = Status::NOT_FOUND;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Страница добавления контактов
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function addfeedback_pg($params): string
+    public function addfeedback_pg(): int
     {
+        $params = array();
+
         $lang = $this->get_langs();
         $logged = Registry::get('logged');
         $request = (Request::getRequest()->getGlobal());
@@ -367,9 +447,11 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * Добавления контакт в БД
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function addfeedback_db($params){
+    public function addfeedback_db(): int
+    {
 //        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -408,19 +490,34 @@ class GroupsController extends Module implements GroupsInterface
 
             if($row['cnt'] AND stripos($checkAdmin['admin'], "u{$user_id}|") !== false AND !$checkSec['cnt']){
                 $db->query("UPDATE `communities` SET feedback = feedback+1 WHERE id = '{$id}'");
-                $server_time = Tools::time();
+                $server_time = Date::time();
                 $db->query("INSERT INTO `communities_feedback` SET cid = '{$id}', fuser_id = '{$upage}', office = '{$office}', fphone = '{$phone}', femail = '{$email}', fdate = '{$server_time}'");
-            } else
-                echo 1;
+
+                $status = Status::OK;
+                $err =  'yes';
+            } else {
+//                echo 1;
+                $status = Status::BAD_RIGHTS;
+                $err =  'hacking';
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Удаление контакта из БД
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function delfeedback($params){
+    public function delfeedback(): int
+    {
 //        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -454,16 +551,30 @@ class GroupsController extends Module implements GroupsInterface
             if(stripos($checkAdmin['admin'], "u{$user_id}|") !== false AND $checkSec['cnt']){
                 $db->query("UPDATE `communities` SET feedback = feedback-1 WHERE id = '{$id}'");
                 $db->query("DELETE FROM `communities_feedback` WHERE fuser_id = '{$uid}' AND cid = '{$id}'");
+
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::BAD_RIGHTS;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Выводим фотографию юзера при указании ИД страницы
      *
-     * @param $params
+     * @throws \JsonException
      */
-    public function checkFeedUser($params){
+    public function checkFeedUser(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -485,16 +596,30 @@ class GroupsController extends Module implements GroupsInterface
             $row = $db->super_query("SELECT user_photo, user_search_pref FROM `users` WHERE user_id = '{$id}'");
             if($row) {
                 echo $row['user_search_pref'] . "|" . $row['user_photo'];
+
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::NOT_FOUND;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Сохранение отредактированых данных контакт в БД
      *
-     * @param $params
+     * @throws \Throwable
      */
-    public function editfeeddave($params){
+    public function editfeeddave(): int
+    {
 //        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -530,23 +655,36 @@ class GroupsController extends Module implements GroupsInterface
 
             if(stripos($checkAdmin['admin'], "u{$user_id}|") !== false AND $checkSec['cnt']){
                 $db->query("UPDATE `communities_feedback` SET office = '{$office}', fphone = '{$phone}', femail = '{$email}' WHERE fuser_id = '{$upage}' AND cid = '{$id}'");
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("wall/group{$id}");
-            } else {
-                echo 1;
+
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'wall');
+                $cache->remove("group{$id}");
+
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::BAD_RIGHTS;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Все контакты (БОКС)
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function allfeedbacklist($params): string
+    public function allfeedbacklist(): int
     {
+        $params = array();
+
 //        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -569,7 +707,7 @@ class GroupsController extends Module implements GroupsInterface
             //Выводим ИД админа
             $owner = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$id}'");
 
-            $sql_ = $db->super_query("SELECT tb1.fuser_id, office, fphone, femail, tb2.user_search_pref, user_photo FROM `communities_feedback` tb1, `users` tb2 WHERE tb1.cid = '{$id}' AND tb1.fuser_id = tb2.user_id ORDER by `fdate` ASC", 1);
+            $sql_ = $db->super_query("SELECT tb1.fuser_id, office, fphone, femail, tb2.user_search_pref, user_photo FROM `communities_feedback` tb1, `users` tb2 WHERE tb1.cid = '{$id}' AND tb1.fuser_id = tb2.user_id ORDER by `fdate`", true);
 //            $tpl->load_template('groups/allfeedbacklist.tpl');
             if($sql_){
                 foreach($sql_ as $key => $row){
@@ -625,9 +763,12 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * Сохранение отредактированных данных группы
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function saveinfo($params){
+    public function saveinfo(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -678,20 +819,35 @@ class GroupsController extends Module implements GroupsInterface
                 } else
                     echo 'err_adres';
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("wall/group{$id}");
-            }
-        }
-    }
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'wall');
+                $cache->remove("group{$id}");
 
-    /**
-     * Выводим информацию о пользователе которого
-     * будем делать админом
-     *
-     * @param $params
-     */
-    public function new_admin($params){
-        $lang = $this->get_langs();
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::BAD_RIGHTS;
+                $err =  'hacking';
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
+        }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
+    }
+	
+	/**
+	 * Выводим информацию о пользователе которого
+	 * будем делать админом
+	 *
+	 * @throws \JsonException
+	 */
+    public function new_admin(): int
+    {
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -709,26 +865,43 @@ class GroupsController extends Module implements GroupsInterface
 
 //            Tools::NoAjaxQuery();
             $new_admin_id = (int)$request['new_admin_id'];
-            $row = $db->super_query("SELECT tb1.user_id, tb2.user_photo, user_search_pref, user_sex FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$new_admin_id}' AND tb1.user_id = tb2.user_id AND tb1.subscriptions = 2");
-            if($row AND $user_id != $new_admin_id){
-//                $config = Settings::loadsettings();
+            if ($user_id != $new_admin_id){
+                $row = $db->super_query("SELECT tb1.user_id, tb2.user_photo, user_search_pref, user_sex FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$new_admin_id}' AND tb1.user_id = tb2.user_id AND tb1.subscriptions = 2");
+                if($row){
+//                $config = Settings::load();
 
-                if($row['user_photo']) $ava = "/uploads/users/{$new_admin_id}/100_{$row['user_photo']}";
-                else $ava = "/images/100_no_ava.png";
-                if($row['user_sex'] == 1) $gram = 'был';
-                else $gram = 'была';
-                echo "<div style=\"padding:15px\"><img src=\"{$ava}\" align=\"left\" style=\"margin-right:10px\" id=\"adm_ava\" />Вы хотите чтоб <b id=\"adm_name\">{$row['user_search_pref']}</b> {$gram} одним из руководителей страницы?</div>";
-            } else
-                echo "<div style=\"padding:15px\"><div class=\"err_red\">Пользователь с таким адресом страницы не подписан на эту страницу.</div></div><script>$('#box_but').hide()</script>";
+                    if($row['user_photo']) $ava = "/uploads/users/{$new_admin_id}/100_{$row['user_photo']}";
+                    else $ava = "/images/100_no_ava.png";
+                    if($row['user_sex'] == 1) $gram = 'был';
+                    else $gram = 'была';
+                    echo "<div style=\"padding:15px\"><img src=\"{$ava}\" style=\"margin-right:10px\" id=\"adm_ava\" />Вы хотите чтоб <b id=\"adm_name\">{$row['user_search_pref']}</b> {$gram} одним из руководителей страницы?</div>";
+                    //FIXME
+                    $status = Status::OK;
+                } else
+                {
+                    echo "<div style=\"padding:15px\"><div class=\"err_red\">Пользователь с таким адресом страницы не подписан на эту страницу.</div></div><script>$('#box_but').hide()</script>";
+                    $status = Status::NOT_FOUND;
+                }
+            }else{
+                $status = Status::BAD_RIGHTS;
+            }
+        }else{
+	        $status = Status::BAD_LOGGED;
+	
         }
+	    return _e_json(array(
+		    'status' => $status,
+	    ) );
     }
 
     /**
      * Запись нового админа в БД
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function send_new_admin($params){
+    public function send_new_admin(): int
+    {
 //        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -740,8 +913,11 @@ class GroupsController extends Module implements GroupsInterface
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
-            $gcount = 20;
+//            if($request['page'] > 0)
+//                $page = (int)$request['page'];
+//            else
+//                $page = 1;
+//            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
 //            $params['title'] = $lang['communities'].' | Sura';
 
@@ -752,15 +928,30 @@ class GroupsController extends Module implements GroupsInterface
             if(stripos($row['admin'], "u{$user_id}|") !== false AND stripos($row['admin'], "u{$new_admin_id}|") === false AND stripos($row['ulist'], "|{$user_id}|") !== false){
                 $admin = $row['admin']."u{$new_admin_id}|";
                 $db->query("UPDATE `communities` SET admin = '{$admin}' WHERE id = '{$id}'");
+
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::BAD_RIGHTS;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Удаление админа из БД
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function deladmin($params){
+    public function deladmin(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -784,17 +975,31 @@ class GroupsController extends Module implements GroupsInterface
             if(stripos($row['admin'], "u{$user_id}|") !== false AND stripos($row['admin'], "u{$uid}|") !== false AND $uid != $row['real_admin']){
                 $admin = str_replace("u{$uid}|", '', $row['admin']);
                 $db->query("UPDATE `communities` SET admin = '{$admin}' WHERE id = '{$id}'");
+
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::BAD_RIGHTS;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Добавление записи на стену
      *
-     * @param $params
-     * @return string
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function wall_send($params): string
+    public function wall_send(): int
     {
         $lang = $this->get_langs();
         $db = $this->db();
@@ -830,7 +1035,8 @@ class GroupsController extends Module implements GroupsInterface
 
             //Проверка на админа
             $row = $db->super_query("SELECT admin, del, ban FROM `communities` WHERE id = '{$id}'");
-            if(stripos($row['admin'], "u{$user_id}|") === false) {
+            if(stripos($row['admin'], "u{$user_id}|") == false) {
+               //BAD_RIGHTS
                 return _e('err');
             }
 
@@ -843,13 +1049,13 @@ class GroupsController extends Module implements GroupsInterface
                     foreach($attach_arr as $attach_file){
                         $attach_type = explode('|', $attach_file);
                         if($attach_type[0] == 'link' AND preg_match('/https:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1){
-                            $domain_url_name = explode('/', $attach_type[1]);
+//                            $domain_url_name = explode('/', $attach_type[1]);
                             //$rdomain_url_name = str_replace('https://', '', $domain_url_name[2]);
                             $rImgUrl = $attach_type[4];
                             $rImgUrl = str_replace("\\", "/", $rImgUrl);
                             $img_name_arr = explode(".", $rImgUrl);
                             $img_format = Gramatic::totranslit(end($img_name_arr));
-                            $server_time = Tools::time();
+                            $server_time = Date::time();
                             $image_rename = substr(md5($server_time.md5($rImgUrl)), 0, 15);
                             $res_type = '.'.$img_format;
                             //Разришенные форматы
@@ -864,7 +1070,7 @@ class GroupsController extends Module implements GroupsInterface
                                 //Если нет папки юзера, то создаём её
                                 if(!is_dir($upload_dir)){
                                     if (!mkdir($upload_dir, 0777) && !is_dir($upload_dir)) {
-                                        throw new \RuntimeException(sprintf('Directory "%s" was not created', $upload_dir));
+                                        throw new RuntimeException(sprintf('Directory "%s" was not created', $upload_dir));
                                     }
                                     chmod($upload_dir, 0777);
                                 }
@@ -918,7 +1124,7 @@ class GroupsController extends Module implements GroupsInterface
                 }
 
                 //Вставляем саму запись в БД
-                $server_time = Tools::time();
+                $server_time = Date::time();
                 $db->query("INSERT INTO `communities_wall` SET public_id = '{$id}', text = '{$wall_text}', attach = '{$attach_files}', add_date = '{$server_time}'");
                 $dbid = $db->insert_id();
                 $db->query("UPDATE `communities` SET rec_num = rec_num+1 WHERE id = '{$id}'");
@@ -926,28 +1132,41 @@ class GroupsController extends Module implements GroupsInterface
                 //Вставляем в ленту новотсей
                 $db->query("INSERT INTO `news` SET ac_user_id = '{$id}', action_type = 11, action_text = '{$wall_text}', obj_id = '{$dbid}', action_time = '{$server_time}'");
 
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'public');
+                $cache->remove("{$id}/profile_{$id}");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("public/{$id}/profile_{$id}");
                 $query = $db->super_query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, fixed, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = '{$row['id']}' AND tb1.public_id = tb2.id AND fast_comm_id = 0 ORDER by `fixed` DESC, `add_date` DESC LIMIT {$page_cnt}, {$limit_select}", true);
 
                 $params['wall_records'] = Wall::build($query);
 
                 return _e('true');
             }
-
-            return _e('err');
+            else{
+                //NOT_DATA
+                return _e('err');
+            }
+        }else{
+            $status = Status::BAD_LOGGED;//BAD_LOGGED
+            $err =  'hacking';
+//            return _e('err');
         }
 
-        return _e('err');
+
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Добавление комментария к записи
      *
-     * @param $params
+     * @throws \Throwable
+     * @throws \Throwable
      */
-    public function wall_send_comm($params){
+    public function wall_send_comm(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -996,32 +1215,29 @@ class GroupsController extends Module implements GroupsInterface
                         $wall_text = str_replace($check2['user_name'], "<a href=\"/u{$row_owner2['public_id']}\" onClick=\"Page.Go(this.href); return false\" class=\"newcolor000\">{$check2['user_name']}</a>", $wall_text);
 
                         //Вставляем в ленту новостей
-                        $server_time = Tools::time();
+                        $server_time = Date::time();
                         $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 6, action_text = '{$wall_text}', obj_id = '{$answer_comm_id}', for_user_id = '{$row_owner2['public_id']}', action_time = '{$server_time}', answer_text = '{$answer_text}', link = '/wallgroups{$row['public_id']}_{$rec_id}'");
 
                         //Вставляем событие в моментальные оповещания
                         $update_time = $server_time - 70;
 
+                        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                        $cache = new \Sura\Cache\Cache($storage, 'public');
                         if($check2['user_last_visit'] >= $update_time){
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$row_owner2['public_id']}', from_user_id = '{$user_id}', type = '5', date = '{$server_time}', text = '{$wall_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/news/notifications'");
 
-                            $Cache = cache_init(array('type' => 'file'));
-                            $Cache->set("users/{$row_owner2['public_id']}/updates", 1);
+                            $cache->save("{$row_owner2['public_id']}/updates", 1);
                             //ИНАЧЕ Добавляем +1 юзеру для оповещания
                         } else {
-
-                            $Cache = cache_init(array('type' => 'file'));
-                            $cntCacheNews = $Cache->get("users/{$row_owner2['public_id']}/new_news");
-                            $Cache->set("users/{$row_owner2['public_id']}/new_news", ($cntCacheNews+1));
+                            $value = $cache->load("{$row_owner2['public_id']}/new_news");
+                            $cache->save("{$row_owner2['public_id']}/new_news", $value+1);
                         }
-
                     }
-
                 }
 
                 //Вставляем саму запись в БД
-                $server_time = Tools::time();
+                $server_time = Date::time();
                 $db->query("INSERT INTO `communities_wall` SET public_id = '{$user_id}', text = '{$wall_text}', add_date = '{$server_time}', fast_comm_id = '{$rec_id}'");
                 $db->query("UPDATE `communities_wall` SET fasts_num = fasts_num+1 WHERE id = '{$rec_id}'");
 
@@ -1032,7 +1248,7 @@ class GroupsController extends Module implements GroupsInterface
                 else
                     $comments_limit = 0;
 
-                $sql_comments = $db->super_query("SELECT tb1.id, public_id, text, add_date, tb2.user_photo, user_search_pref FROM `communities_wall` tb1, `users` tb2 WHERE tb1.public_id = tb2.user_id AND tb1.fast_comm_id = '{$rec_id}' ORDER by `add_date` ASC LIMIT {$comments_limit}, 3", 1);
+                $sql_comments = $db->super_query("SELECT tb1.id, public_id, text, add_date, tb2.user_photo, user_search_pref FROM `communities_wall` tb1, `users` tb2 WHERE tb1.public_id = tb2.user_id AND tb1.fast_comm_id = '{$rec_id}' ORDER by `add_date`  LIMIT {$comments_limit}, 3", true);
 
                 //Загружаем кнопку "Показать N запсии"
 //                $tpl->load_template('groups/record.tpl');
@@ -1065,7 +1281,7 @@ class GroupsController extends Module implements GroupsInterface
 //
 //                $tpl->load_template('groups/record.tpl');
                 //Сообственно выводим комменты
-                $config = Settings::loadsettings();
+                $config = Settings::load();
                 foreach($sql_comments as $key => $row_comments){
 //                    $tpl->set('{public-id}', $public_id);
                     $sql_comments[$key]['public_id'] = $public_id;
@@ -1099,7 +1315,7 @@ class GroupsController extends Module implements GroupsInterface
 
 //                    $tpl->set('{text}', );
                     $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
-                    $date = megaDate($row['add_date']);
+                    $date = \Sura\Libs\Date::megaDate($row['add_date']);
 //                    $tpl->set('{date}', $date);
                     $sql_comments[$key]['date'] = $date;
                     if(stripos($row['admin'], "u{$user_id}|") !== false OR $user_id == $row_comments['public_id']){
@@ -1153,17 +1369,28 @@ class GroupsController extends Module implements GroupsInterface
                 $params['comment'] = false;
 //                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
                 $params['all-comm'] = false;
+	            
+                $status = Status::OK;
+            }else{
+	            $status = Status::BAD_RIGHTS;
             }
+        }else{
+	        $status = Status::BAD_LOGGED;
         }
+	    return _e_json(array(
+		    'status' => $status,
+	    ) );
     }
 
     /**
      * Удаление записи
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function wall_del($params){
-        $lang = $this->get_langs();
+    public function wall_del(): int
+    {
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -1188,7 +1415,9 @@ class GroupsController extends Module implements GroupsInterface
                 $row = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$public_id}'");
                 $row_rec = $db->super_query("SELECT fast_comm_id, public_id, add_date FROM `communities_wall` WHERE id = '{$rec_id}'");
             } else
+            {
                 $row = $db->super_query("SELECT tb1.public_id, attach, fast_comm_id, tb2.admin FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = tb2.id AND tb1.id = '{$rec_id}'");
+            }
 
             if(stripos($row['admin'], "u{$user_id}|") !== false OR $user_id == $row_rec['public_id']){
                 if($public_id){
@@ -1216,22 +1445,32 @@ class GroupsController extends Module implements GroupsInterface
                     $db->query("DELETE FROM `communities_wall` WHERE id = '{$rec_id}'");
                 }
 
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::BAD_RIGHTS;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Показ всех комментариев к записи
      *
-     * @param $params
      */
-    public function all_comm($params){
-        $lang = $this->get_langs();
+    public function all_comm(): void
+    {
+//        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-
-        Tools::NoAjaxRedirect();
 
         $request = (Request::getRequest()->getGlobal());
 
@@ -1253,7 +1492,7 @@ class GroupsController extends Module implements GroupsInterface
                 $sql_comments = $db->super_query("SELECT tb1.id, public_id, text, add_date, tb2.user_photo, user_search_pref FROM `communities_wall` tb1, `users` tb2 WHERE tb1.public_id = tb2.user_id AND tb1.fast_comm_id = '{$rec_id}' ORDER by `add_date` ASC", 1);
 //                $tpl->load_template('groups/record.tpl');
                 //Сообственно выводим комменты
-                $config = Settings::loadsettings();
+                $config = Settings::load();
 
                 foreach($sql_comments as $key => $row_comments){
 //                    $tpl->set('{public-id}', );
@@ -1289,7 +1528,7 @@ class GroupsController extends Module implements GroupsInterface
 
 //                    $tpl->set('{text}', );
                     $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
-                    $date = megaDate(strtotime($row_comments['add_date']));
+                    $date = \Sura\Libs\Date::megaDate(strtotime($row_comments['add_date']));
 //                    $tpl->set('{date}', );
                     $sql_comments[$key]['date'] = $date;
                     if(stripos($row['admin'], "u{$user_id}|") !== false OR $user_id == $row_comments['public_id']){
@@ -1352,11 +1591,9 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * Страница загрузки фото в сообщество
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function photos($params): string
+    public function photos(): int
     {
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -1422,13 +1659,15 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * Выводим инфу о видео при прикреплении видео на стену
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function select_video_info($params){
+    public function select_video_info(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
-        $user_info = Registry::get('user_info');
+//        $user_info = Registry::get('user_info');
 
         Tools::NoAjaxRedirect();
 
@@ -1447,19 +1686,30 @@ class GroupsController extends Module implements GroupsInterface
             if($row){
                 $array = explode('/', $row['photo']);
                 echo end($array);
-            } else {
-                echo '1';
+
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::NOT_FOUND;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Ставим мне нравится
      *
-     * @param $params
-     * @return string
+     * @return int
+     * @throws \JsonException
      */
-    public function wall_like_yes($params): string
+    public function wall_like_yes(): int
     {
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -1473,21 +1723,33 @@ class GroupsController extends Module implements GroupsInterface
             if($row AND stripos($row['likes_users'], "u{$user_id}|") === false){
                 $likes_users = "u{$user_id}|".$row['likes_users'];
                 $db->query("UPDATE `communities_wall` SET likes_num = likes_num+1, likes_users = '{$likes_users}' WHERE id = '".$rec_id."'");
-                $server_time = Tools::time();
+                $server_time = Date::time();
                 $db->query("INSERT INTO `communities_wall_like` SET rec_id = '".$rec_id."', user_id = '".$user_id."', date = '".$server_time."'");
-                return _e('true');
+//                return _e('true');
+
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::NOT_FOUND;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
-        return _e('err');
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Убераем мне нравится
      *
-     * @param $params
-     * @return string
+     * @return int
+     * @throws \JsonException
      */
-    public function wall_like_remove($params): string
+    public function wall_like_remove(): int
     {
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1501,39 +1763,43 @@ class GroupsController extends Module implements GroupsInterface
                 $likes_users = str_replace("u{$user_id}|", '', $row['likes_users']);
                 $db->query("UPDATE `communities_wall` SET likes_num = likes_num-1, likes_users = '{$likes_users}' WHERE id = '".$rec_id."'");
                 $db->query("DELETE FROM `communities_wall_like` WHERE rec_id = '".$rec_id."' AND user_id = '".$user_id."'");
-                return _e('true');
+//                return _e('true');
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::NOT_FOUND;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
-        return _e('err');
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Выводим последних 7 юзеров кто
      * поставил "Мне нравится"
      *
-     * @param $params
+     * @throws \JsonException
      */
-    public function wall_like_users_five($params){
+    public function wall_like_users_five(): int
+    {
 //        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
-        $user_info = Registry::get('user_info');
-
+//        $user_info = Registry::get('user_info');
         Tools::NoAjaxRedirect();
-
         if($logged){
             $request = (Request::getRequest()->getGlobal());
-
-//            $user_id = $user_info['user_id'];
-//            if($_GET['page'] > 0) $page = intval($_GET['page']); else $page = 1;
-//            $gcount = 20;
-//            $limit_page = ($page-1)*$gcount;
-
-//            Tools::NoAjaxQuery();
             $rec_id = (int)$request['rec_id'];
-            $sql_ = $db->super_query("SELECT tb1.user_id, tb2.user_photo FROM `communities_wall_like` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND tb1.rec_id = '{$rec_id}' ORDER by `date` DESC LIMIT 0, 7", 1);
+            $sql_ = $db->super_query("SELECT tb1.user_id, tb2.user_photo FROM `communities_wall_like` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND tb1.rec_id = '{$rec_id}' ORDER by `date` DESC LIMIT 0, 7", true);
             if($sql_){
-                $config = Settings::loadsettings();
+//                $config = Settings::load();
+                $response = '';
                 foreach($sql_ as $row){
                     if($row['user_photo']) {
                         $ava = '/uploads/users/' . $row['user_id'] . '/50_' . $row['user_photo'];
@@ -1541,21 +1807,31 @@ class GroupsController extends Module implements GroupsInterface
                     else {
                         $ava = '/images/no_ava_50.png';
                     }
-                    echo '<a href="/u'.$row['user_id'].'" id="Xlike_user'.$row['user_id'].'_'.$rec_id.'" onClick="Page.Go(this.href); return false"><img src="'.$ava.'" width="32" /></a>';
+                    $response .= '<a href="/u'.$row['user_id'].'" id="Xlike_user'.$row['user_id'].'_'.$rec_id.'" onClick="Page.Go(this.href); return false"><img src="'.$ava.'" alt="name" width="32" /></a>';
                 }
+                $status = Status::OK;
+                $res = $response;
+            }else{
+                $status = Status::NOT_FOUND;
+                $res = null;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $res = null;
         }
+        return _e_json(array(
+            'status' => $status,
+            'res' => $res,
+        ) );
     }
 
     /**
      * Выводим всех юзеров которые
      * поставили "мне нравится"
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function all_liked_users($params): string
+    public function all_liked_users(): int
     {
         $db = $this->db();
         $logged = $this->logged();
@@ -1587,7 +1863,7 @@ class GroupsController extends Module implements GroupsInterface
                     $params['bottom'] = false;
 //                    $tpl->result['content'] = str_replace('Всего', '', $tpl->result['content']);
 //                    $tpl->load_template('profile_friends.tpl');
-                    $config = Settings::loadsettings();
+                    $config = Settings::load();
                     foreach($sql_ as $key => $row){
                         if($row['user_photo'])
                         {
@@ -1615,9 +1891,12 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * Рассказать друзьям "Мне нравится"
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function wall_tell($params){
+    public function wall_tell(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1655,7 +1934,7 @@ class GroupsController extends Module implements GroupsInterface
                     $row['attach'] = $db->safesql($row['attach']);
 
                     //Всталвяем себе на стену
-                    $server_time = Tools::time();
+                    $server_time = Date::time();
                     $db->query("INSERT INTO `wall` SET author_user_id = '{$user_id}', for_user_id = '{$user_id}', text = '{$row['text']}', add_date = '{$server_time}', fast_comm_id = 0, tell_uid = '{$row['public_id']}', tell_date = '{$row['add_date']}', public = '{$row['public']}', attach = '".$row['attach']."'");
                     $dbid = $db->insert_id();
                     $db->query("UPDATE `users` SET user_wall_num = user_wall_num+1 WHERE user_id = '{$user_id}'");
@@ -1664,26 +1943,41 @@ class GroupsController extends Module implements GroupsInterface
                     $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 1, action_text = '{$row['text']}', obj_id = '{$dbid}', action_time = '{$server_time}'");
 
                     //Чистим кеш
-                    $Cache = cache_init(array('type' => 'file'));
-                    $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $cache->remove("{$user_id}/profile_{$user_id}");
+
+                    $status = Status::OK;
+                    $err =  'hacking';
                 } else {
-                    echo 1;
+//                    echo 1;
+                    $status = Status::NOT_FOUND;
+                    $err =  'hacking';
                 }
-            } else {
-                echo 1;
+
+            }else{
+                $status = Status::NOT_FOUND;
+                $err =  'hacking';
             }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Показ всех подписок
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function all_people($params): string
+    public function all_people(): int
     {
+        $params = array();
+
 //        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -1743,12 +2037,12 @@ class GroupsController extends Module implements GroupsInterface
      * Показ всех сообщества юзера
      * на которые он подписан (BOX)
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function all_groups_user($params): string
+    public function all_groups_user(): int
     {
+        $params = array();
+
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1809,18 +2103,16 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * Одна запись со стены
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function wallgroups($params): string
+    public function wallgroups(): int
     {
+        $params = array();
+
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
 //        $user_info = Registry::get('user_info');
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             $request = (Request::getRequest()->getGlobal());
@@ -1860,7 +2152,7 @@ class GroupsController extends Module implements GroupsInterface
 //                $wall->query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.id = '{$id}' AND tb1.public_id = tb2.id AND fast_comm_id = 0");
 //                $wall->template('groups/record.tpl');
 //                $wall->compile('content');
-//                $server_time = Tools::time();
+//                $server_time = Date::time();
 
                 $query = $db->super_query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.id = '{$id}' AND tb1.public_id = tb2.id AND fast_comm_id = 0", true);
                 $params['wall_records'] = Wall::build($query);
@@ -1888,9 +2180,11 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * Закривление записи
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function fasten($params){
+    public function fasten(): int
+    {
 //        $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1924,17 +2218,30 @@ class GroupsController extends Module implements GroupsInterface
                 //Ставим фиксацию записи
                 $db->query("UPDATE `communities_wall` SET fixed = '1' WHERE id = '{$rec_id}'");
 
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::BAD_RIGHTS;
+                $err =  'hacking';
             }
-
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Убераем фиксацию
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function unfasten($params){
+    public function unfasten(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -1965,18 +2272,28 @@ class GroupsController extends Module implements GroupsInterface
                 //Убераем фиксацию записи
                 $db->query("UPDATE `communities_wall` SET fixed = '0' WHERE id = '{$rec_id}'");
 
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::NOT_FOUND;
+                $err =  'hacking';
             }
-
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Загрузка обложки
-     *
-     * @param $params
      * @throws Exception
+     * @deprecated
      */
-    public function upload_cover($params){
+    public function upload_cover(){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2005,7 +2322,7 @@ class GroupsController extends Module implements GroupsInterface
                 //Получаем данные о файле
                 $image_tmp = $_FILES['uploadfile']['tmp_name'];
                 $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-                $server_time = Tools::time();
+                $server_time = Date::time();
                 $image_rename = substr(md5($server_time+random_int(1,100000)), 0, 20); // имя файла
                 $image_size = $_FILES['uploadfile']['size']; // размер файла
                 $array = explode(".", $image_name);
@@ -2073,9 +2390,12 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * Сохранение новой позиции обложки
      *
-     * @param $params
+     * @return false|string
+     * @throws \JsonException
+     * @deprecated
      */
-    public function savecoverpos($params){
+    public function savecoverpos(): bool|string
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2105,17 +2425,27 @@ class GroupsController extends Module implements GroupsInterface
 
                 $db->query("UPDATE `communities` SET cover_pos = '{$pos}' WHERE id = '{$public_id}'");
 
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::BAD_RIGHTS;
+                $err =  'hacking';
             }
-
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      *
      * @deprecated
-     * @param $params
      */
-    public function delcover($params){
+    public function delcover(){
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2158,12 +2488,12 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * invite box
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function invitebox($params): string
+    public function invitebox(): int
     {
+        $params = array();
+
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -2195,7 +2525,7 @@ class GroupsController extends Module implements GroupsInterface
             if($sql_){
 
 //                $tpl->load_template('groups/inviteuser.tpl');
-                $config = Settings::loadsettings();
+                $config = Settings::load();
                 foreach($sql_ as $key => $row){
 
                     if($row['user_photo'])
@@ -2265,9 +2595,11 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * invite send
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function invitesend($params){
+    public function invitesend(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -2290,7 +2622,7 @@ class GroupsController extends Module implements GroupsInterface
             $rowPub = $db->super_query("SELECT id, ulist FROM `communities` WHERE id = '{$pub_id}'");
 
             //Дата заявки
-            $server_time = Tools::time();
+            $server_time = Date::time();
             $newData = date('Y-m-d', $server_time);
 
             //Считаем сколько заявок было отправлено за последние сутки
@@ -2326,7 +2658,7 @@ class GroupsController extends Module implements GroupsInterface
                                     $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_join` WHERE for_user_id = '{$ruser_id}' AND public_id = '{$pub_id}'");
 
                                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-                                    $check_friend = Tools::CheckFriends($ruser_id);
+                                    $check_friend = \App\Libs\Friends::CheckFriends($ruser_id);
 
                                     //Если нет приглашения, то отправляем приглашение
                                     if(!$check['cnt'] AND $check_friend){
@@ -2351,26 +2683,35 @@ class GroupsController extends Module implements GroupsInterface
 
                 }
 
-            } else
-                echo 1;
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::LIMIT;
+                $err =  'hacking';
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * invites
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function invites($params): string
+    public function invites(): int
     {
+        $params = array();
+
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -2464,9 +2805,11 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * invite_no
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function invite_no($params){
+    public function invite_no(): int
+    {
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
@@ -2495,26 +2838,35 @@ class GroupsController extends Module implements GroupsInterface
                 //Обновляем кол-во приглашений
                 $db->query("UPDATE `users` SET invties_pub_num = invties_pub_num - 1 WHERE user_id = '{$user_id}'");
 
+                $status = Status::OK;
+                $err =  'yes';
+            }else{
+                $status = Status::NOT_FOUND;
+                $err =  'hacking';
             }
-
+        }else{
+            $status = Status::BAD_LOGGED;
+            $err =  'hacking';
         }
+        return _e_json(array(
+            'status' => $status,
+            'err' => $err
+        ) );
     }
 
     /**
      * Вывод всех сообществ
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function index($params): string
+    public function index(): int
     {
+        $params = array();
+
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = $this->logged();
         $user_info = $params['user']['user_info'];
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             //$act = $_GET['act'];
@@ -2602,18 +2954,14 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * Вывод всех сообществ
      *
-     * @param $params
-     * @return bool|string
-     * @throws Exception
+     * @return int
      */
-    public function admin(&$params): bool|string
+    public function admin(): int
     {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             //$act = $_GET['act'];
@@ -2698,10 +3046,9 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * edit main
      *
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function edit_main(): string
+    public function edit_main(): int
     {
         $path = explode('/', $_SERVER['REQUEST_URI']);
         if (isset($path['4'])) $id = $path['4']; else $id = $path['3'];
@@ -2765,10 +3112,9 @@ class GroupsController extends Module implements GroupsInterface
 
     /**
      * edit users
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function edit_users(): string
+    public function edit_users(): int
     {
         $path = explode('/', $_SERVER['REQUEST_URI']);
         if (isset($path['4'])) $id = $path['4']; else $id = $path['3'];
@@ -2864,7 +3210,7 @@ class GroupsController extends Module implements GroupsInterface
                     $users[$key]['tags'] = '';
                 }
 
-                $server_time = Tools::time();
+                $server_time = Date::time();
                 $online_time = $server_time - 60;
                 if($p_user['user_last_visit'] >= $online_time) {
                     $users[$key]['online'] = true;
@@ -2918,10 +3264,9 @@ class GroupsController extends Module implements GroupsInterface
     /**
      * edit
      *
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function edit(): string
+    public function edit(): int
     {
         $path = explode('/', $_SERVER['REQUEST_URI']);
         if (isset($path['4'])) $id = $path['4']; else $id = $path['3'];

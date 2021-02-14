@@ -1,11 +1,13 @@
 <?php
-
+declare(strict_types=1);
 namespace App\Modules;
 
+use App\Libs\Friends;
 use Exception;
 use Sura\Libs\Profile_check;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -16,9 +18,11 @@ class SettingsController extends Module{
     /**
      * Изменение пароля
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function newpass($params){
+    public function newpass(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -43,21 +47,32 @@ class SettingsController extends Module{
             //Выводим текущий пароль
             $row = $db->super_query("SELECT user_password FROM `users` WHERE user_id = '{$user_id}'");
             if($row['user_password'] == $old_pass){
-                if($new_pass == $new_pass2)
+                if($new_pass == $new_pass2){
                     $db->query("UPDATE `users` SET user_password = '{$new_pass2}' WHERE user_id = '{$user_id}'");
-                else
-                    echo '2';
-            } else
-                echo '1';
+
+                    $status = Status::OK;
+                }else{
+                    $status = Status::PASSWORD_DOESNT_MATCH;
+                }
+            }else{
+                $status = Status::NOT_DATA;
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      *  Изменение имени
      *
      * @param $params
+     * @throws \JsonException
      */
-    public function newname($params){
+    public function newname(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -98,29 +113,39 @@ class SettingsController extends Module{
                 $errors_lastname = 1;
 
             if($errors == 0 AND $errors_lastname == 0){
-                    $user_name = ucfirst($user_name);
-                    $user_lastname = ucfirst($user_lastname);
+                $user_name = ucfirst($user_name);
+                $user_lastname = ucfirst($user_lastname);
 
-                    $db->query("UPDATE `users` SET user_name = '{$user_name}', user_lastname = '{$user_lastname}', user_search_pref = '{$user_name} {$user_lastname}' WHERE user_id = '{$user_id}'");
+                $db->query("UPDATE `users` SET user_name = '{$user_name}', user_lastname = '{$user_lastname}', user_search_pref = '{$user_name} {$user_lastname}' WHERE user_id = '{$user_id}'");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $cache->remove($user_id.'/profile_'.$user_id);
 
-                $Cache = cache_init(array('type' => 'file'));
-                    $response = $Cache->delete('users/'.$user_id.'/profile_'.$user_id);
-                    if ($response == false){
-                        echo 1;
+                if ($response == false){
+                        $status = Status::OK;
                     }else{
-                        echo 'true';
+                        $status = Status::BAD;
                     }
-            } else
-                echo $errors;
+            } else {
+                $status = Status::BAD;//TODO update
+            }
+        } else {
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Сохранение настроек приватности
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function saveprivacy($params){
+    public function saveprivacy(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -151,26 +176,32 @@ class SettingsController extends Module{
 
             $db->query("UPDATE `users` SET user_privacy = '{$user_privacy}' WHERE user_id = '{$user_id}'");
 
-            $Cache = cache_init(array('type' => 'file'));
-            $Cache->delete('users/'.$user_id.'/profile_'.$user_id);
+            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+            $cache = new \Sura\Cache\Cache($storage, 'users');
+            $cache->remove($user_id.'/profile_'.$user_id);
+
+            $status = Status::OK;
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Приватность настройки
      *
      * @param $params
-     * @return string
+     * @return int
      * @throws Exception
      */
-    public function privacy($params): string
+    public function privacy(): int
     {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -211,9 +242,12 @@ class SettingsController extends Module{
      * Блокируем юзера
      * Добавление в черный список
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function addblacklist($params){
+    public function addblacklist(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -235,49 +269,67 @@ class SettingsController extends Module{
             //Проверяем юзера на блеклист
             $row_blacklist = $db->super_query("SELECT id FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
 
-            if($row['cnt'] AND !$row_blacklist['id'] AND $user_id != $bad_user_id){
-                $db->query("UPDATE `users` SET user_blacklist_num = user_blacklist_num+1 WHERE user_id = '{$user_id}'");
+            if ($row['cnt'] AND $user_id != $bad_user_id){
+                if( !$row_blacklist['id']){
+                    $db->query("UPDATE `users` SET user_blacklist_num = user_blacklist_num+1 WHERE user_id = '{$user_id}'");
 
-                $db->query("INSERT INTO `users_blacklist` SET users = '{$user_id}|{$bad_user_id}'");
+                    $db->query("INSERT INTO `users_blacklist` SET users = '{$user_id}|{$bad_user_id}'");
 
-                //Если юзер есть в др.
-                if(Tools::CheckFriends($bad_user_id)){
-                    //Удаляем друга из таблицы друзей
-                    $db->query("DELETE FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$bad_user_id}' AND subscriptions = 0");
+                    //Если юзер есть в др.
+                    if(Friends::CheckFriends($bad_user_id)){
+                        //Удаляем друга из таблицы друзей
+                        $db->query("DELETE FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$bad_user_id}' AND subscriptions = 0");
 
-                    //Удаляем у друга из таблицы
-                    $db->query("DELETE FROM `friends` WHERE user_id = '{$bad_user_id}' AND friend_id = '{$user_id}' AND subscriptions = 0");
+                        //Удаляем у друга из таблицы
+                        $db->query("DELETE FROM `friends` WHERE user_id = '{$bad_user_id}' AND friend_id = '{$user_id}' AND subscriptions = 0");
 
-                    //Обновляем кол-друзей у юзера
-                    $db->query("UPDATE `users` SET user_friends_num = user_friends_num-1 WHERE user_id = '{$user_id}'");
+                        //Обновляем кол-друзей у юзера
+                        $db->query("UPDATE `users` SET user_friends_num = user_friends_num-1 WHERE user_id = '{$user_id}'");
 
-                    //Обновляем у друга которого удаляем кол-во друзей
-                    $db->query("UPDATE `users` SET user_friends_num = user_friends_num-1 WHERE user_id = '{$bad_user_id}'");
+                        //Обновляем у друга которого удаляем кол-во друзей
+                        $db->query("UPDATE `users` SET user_friends_num = user_friends_num-1 WHERE user_id = '{$bad_user_id}'");
 
-                    //Чистим кеш владельцу стр и тому кого удаляем из др.
-                    $Cache = cache_init(array('type' => 'file'));
-                    $Cache->delete('users/'.$user_id.'/profile_'.$user_id);
-                    $Cache->delete('users/'.$bad_user_id.'/profile_'.$bad_user_id);
+                        //Чистим кеш владельцу стр и тому кого удаляем из др.
+                        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                        $cache = new \Sura\Cache\Cache($storage, 'users');
+                        $cache->remove($user_id.'/profile_'.$user_id);
+                        $cache->remove($bad_user_id.'/profile_'.$bad_user_id);
 
-                    //Удаляем пользователя из кеш файл друзей
-                    $openMyList = $Cache->get("users/{$user_id}/friends");
-                    $Cache->set("users/{$user_id}/friends", str_replace("u{$bad_user_id}|", "", $openMyList));
 
-                    $openTakeList = $Cache->get("users/{$bad_user_id}/friends");
-//                    $openTakeList = Cache::mozg_cache("user_{$bad_user_id}/friends");
-                    $Cache->set("users/{$bad_user_id}/friends", str_replace("u{$user_id}|", "", $openTakeList));
+                        //Удаляем пользователя из кеш файл друзей
+                        $openMyList = $cache->load("{$user_id}/friends");
+                        $cache->save("{$user_id}/friends", str_replace("u{$bad_user_id}|", "", $openMyList));
+
+                        $openTakeList = $cache->load("users/{$bad_user_id}/friends");
+                        $cache->save("users/{$bad_user_id}/friends", str_replace("u{$user_id}|", "", $openTakeList));
+
+                        $status = Status::OK;
+                    }else{
+                        $status = Status::BAD_FRIEND;
+                    }
+                }else{
+                    $status = Status::FOUND;
                 }
+            }else{
+                $status = Status::BAD_USER;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * разблокируем юзера
      * Удаление из черного списка
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function delblacklist($params){
+    public function delblacklist(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -295,34 +347,44 @@ class SettingsController extends Module{
             //Проверяем на существование юзера
             $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `users` WHERE user_id = '{$bad_user_id}'");
 
-            //Выводим свой блеклист для проверка
+            //Выводим свой блеклист для проверки
             //Проверяем юзера на блеклист
             $row_blacklist = $db->super_query("SELECT id FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
 
-            if($row['cnt'] AND $row_blacklist['id'] AND $user_id != $bad_user_id){
-                $db->query("UPDATE `users` SET user_blacklist_num = user_blacklist_num-1 WHERE user_id = '{$user_id}'");
-
-                $db->query("DELETE FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
+            if ($row['cnt'] AND $user_id != $bad_user_id){
+                if($row_blacklist['id']){
+                    $db->query("UPDATE `users` SET user_blacklist_num = user_blacklist_num-1 WHERE user_id = '{$user_id}'");
+                    $db->query("DELETE FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
+                    $status = Status::OK;
+                }else{
+                    $status = Status::NOT_FOUND;
+                }
+            }else{
+                $status = Status::BAD_USER;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Черный список
      *
-     * @param $params
-     * @return string
+     * @return int
      * @throws Exception
      */
-    public function blacklist($params): string
+    public function blacklist(): int
     {
+        $params = array();
         $lang = $this->get_langs();
         $db = $this->db();
 
-        Tools::NoAjaxRedirect();
+        $logged = $this->logged();
 
-        //FIXME update logged
-        if($params['user']['logged']){
+        if($logged){
             $params['title'] = $lang['settings'].' | Sura';
             $row = $db->super_query("SELECT user_blacklist, user_blacklist_num FROM `users` WHERE user_id = '{$params['user']['user_id']}'");
             if($row['user_blacklist_num'] > 0 AND $row['user_blacklist_num'] <= 100){
@@ -376,8 +438,10 @@ class SettingsController extends Module{
 
     /**
      *  Смена e-mail
+     * @throws \JsonException
      */
-    public function change_mail(){
+    public function change_mail(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -388,7 +452,7 @@ class SettingsController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
             //Отправляем письмо на обе почты
 //            include_once __DIR__.'/../Classes/mail.php';
@@ -396,11 +460,16 @@ class SettingsController extends Module{
 
             $request = (Request::getRequest()->getGlobal());
 
-            $email = Validation::textFilter($request['email'], false, true);
+            $email = Validation::textFilter($request['email']);
 
             //Проверка E-mail
-            if(preg_match('/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?((25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.))((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i', $email)) $ok_email = true;
-            else $ok_email = false;
+            if(preg_match('/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?((25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.))((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i', $email))
+            {
+                $ok_email = true;
+            }
+            else {
+                $ok_email = false;
+            }
 
             $row = $db->super_query("SELECT user_email FROM `users` WHERE user_id = '{$user_id}'");
 
@@ -416,7 +485,7 @@ class SettingsController extends Module{
                 for($i = 0; $i < 15; $i++){
                     $rand_lost .= $salt[rand(0, 33)];
                 }
-                $server_time = \Sura\Libs\Tools::time();
+                $server_time = \Sura\Libs\Date::time();
                 $hash = md5($server_time.$row['user_email'].rand(0, 100000).$rand_lost);
 
                 $message = <<<HTML
@@ -468,48 +537,66 @@ class SettingsController extends Module{
                 //Вставляем в БД код 2
                 $db->query("INSERT INTO `restore` SET email = '{$email}', hash = '{$hash}', ip = '{$_IP}'");
 
-            } else
-                echo '1';
+
+                $status = Status::OK;
+            }else{
+                $status = Status::BAD_MAIL;
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * time zone
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function time_zone()
+    public function time_zone(): int
     {
-        $request = (Request::getRequest()->getGlobal());
+        $logged = $this->logged();
+        if ($logged){
+            $request = (Request::getRequest()->getGlobal());
 
-        $time_zone = (int)$request['time_zone'];
-        $max = 26;
-        if($time_zone < $max){
-            $user_info = $this->user_info();
-            $db = $this->db();
-            $db->query("UPDATE `users` SET time_zone = '".$time_zone."'  WHERE user_id = '".$user_info['user_id']."'");
+            $time_zone = (int)$request['time_zone'];
+            $max = 26;
+            if($time_zone < $max){
+                $user_info = $this->user_info();
+                $db = $this->db();
+                $db->query("UPDATE `users` SET time_zone = '".$time_zone."'  WHERE user_id = '".$user_info['user_id']."'");
 
-            $Cache = cache_init(array('type' => 'file'));
-            $Cache->delete('users/'.$user_info['user_id'].'/profile_'.$user_info['user_id']);
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $cache->remove($user_info['user_id'].'/profile_'.$user_info['user_id']);
+
+                $status = Status::OK;
+            }else{
+                $status = Status::MAX;
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
-        echo '';
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Общие настройки
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function general($params): string
+    public function general(): int
     {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
+        $logged = $this->logged();
 
-        Tools::NoAjaxRedirect();
-
-        //FIXME update
-        if($params['user']['logged']){
+        if($logged){
             $params['title'] = $lang['settings'].' | Sura';
 
             $request = (Request::getRequest()->getGlobal());
@@ -588,22 +675,21 @@ class SettingsController extends Module{
     /**
      * Общие настройки
      *
-     * @param $params
-     * @return string
+     * @return int
      * @throws Exception
      */
-    public function index($params): string
+    public function index(): int
     {
         $lang = $this->get_langs();
         $params['menu'] = \App\Models\Menu::settings();
-
-        if($params['user']['logged']){
+        $logged = $this->logged();
+        if($logged){
             $params['title'] = $lang['settings'].' | Sura';
             return view('settings.settings', $params);
-        } else {
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
         }
+
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
     }
 }

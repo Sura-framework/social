@@ -3,20 +3,21 @@
 namespace App\Modules;
 
 use Sura\Libs\Request;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 
 class Fast_searchController extends Module{
-
-    /**
-     * Быстрый поиск
-     *
-     * @param $params
-     * @return string
-     * @throws \Exception
-     */
-    public function index($params){
+	
+	/**
+	 * Быстрый поиск
+	 *
+	 * @return int
+	 * @throws \JsonException
+	 */
+    public function index(): int
+    {
 //        $lang = $this->get_langs();
         $db = $this->db();
 //        $user_info = $this->user_info();
@@ -61,7 +62,7 @@ class Fast_searchController extends Module{
                                 $ava = $row['photo'];
                                 $img_width = 100;
                                 $row['user_search_pref'] = $row['title'];
-                                $country = 'Добавлено '.megaDate(strtotime($row['add_date']), 1, 1);
+                                $country = 'Добавлено '.\Sura\Libs\Date::megaDate(strtotime($row['add_date']), 1, 1);
                                 $row['user_id'] = 'video'.$row['owner_user_id'].'_'.$row['id'].'" onClick="videos.show('.$row['id'].', this.href, location.href); return false';
                                 $city = '';
                                 //Если критерий поиск "по сообществам"
@@ -105,7 +106,7 @@ class Fast_searchController extends Module{
 
                                 //Возраст юзера
                                 $user_birthday = explode('-', $row['user_birthday']);
-                                $sql_[$key]['age'] = user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+                                $sql_[$key]['age'] = \App\Libs\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
 
 //                                $img_width = '';
 
@@ -127,10 +128,22 @@ class Fast_searchController extends Module{
 
                         $params['search'] = $sql_;
                         return view('search.fast', $params);
+                    }else{
+	                    $status = Status::NOT_FOUND;
                     }
+                }else{
+	                $status = Status::NOT_FOUND;
                 }
+            }else{
+	            $status = Status::NOT_DATA;
             }
         } else
-            echo 'no_log';
+        {
+	        $status = Status::BAD_LOGGED;
+        }
+        //FIXME response
+	    return _e_json(array(
+		    'status' => $status,
+	    ) );
     }
 }

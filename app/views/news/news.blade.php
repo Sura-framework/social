@@ -3,7 +3,7 @@
     <script type="text/javascript">
         var page_cnt = 1;
         $(document).ready(function(){
-            $('#wall_text, .fast_form_width').autoResize();
+            // $('#wall_text, .fast_form_width').autoResize();
             $(window).scroll(function(){
                 if($(document).height() - $(window).height() <= $(window).scrollTop()+($(document).height()/2-250)){
                     news.load();
@@ -37,7 +37,7 @@
                             <path fill-rule="evenodd" d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.995-.944v-.002.002zM7.022 13h7.956a.274.274 0 0 0 .014-.002l.008-.002c-.002-.264-.167-1.03-.76-1.72C13.688 10.629 12.718 10 11 10c-1.717 0-2.687.63-3.24 1.276-.593.69-.759 1.457-.76 1.72a1.05 1.05 0 0 0 .022.004zm7.973.056v-.002.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816zM4.92 10c-1.668.02-2.615.64-3.16 1.276C1.163 11.97 1 12.739 1 13h3c0-1.045.323-2.086.92-3zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
                         </svg>
                         <span class="left_label inl_bl ">@_e('friends') <span id="new_requests">{{ $demands }}</span></span>
-                    </a>
+                    </a>@if(\Sura\Libs\Settings::get('env') == 'debug')
                     <a href="/albums/{{ $my_id }}/" onclick="Page.Go(this.href); return false;" class="left_row" id="requests_link_new_photos">
                         <svg class="bi bi-image-alt" width="32" height="32" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                             <path d="M10.648 6.646a.5.5 0 0 1 .577-.093l4.777 3.947V15a1 1 0 0 1-1 1h-14a1 1 0 0 1-1-1v-2l3.646-4.354a.5.5 0 0 1 .63-.062l2.66 2.773 3.71-4.71z"/>
@@ -74,7 +74,7 @@
                             <path fill-rule="evenodd" d="M3.762 2.558C4.735 1.909 5.348 1.5 6.5 1.5c.653 0 1.139.325 1.495.562l.032.022c.391.26.646.416.973.416.168 0 .356-.042.587-.126a8.89 8.89 0 0 0 .593-.25c.058-.027.117-.053.18-.08.57-.255 1.278-.544 2.14-.544a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5c-.638 0-1.18.21-1.734.457l-.159.07c-.22.1-.453.205-.678.287A2.719 2.719 0 0 1 9 9.5c-.653 0-1.139-.325-1.495-.562l-.032-.022c-.391-.26-.646-.416-.973-.416-.833 0-1.218.246-2.223.916a.5.5 0 1 1-.515-.858C4.735 7.909 5.348 7.5 6.5 7.5c.653 0 1.139.325 1.495.562l.032.022c.391.26.646.416.973.416.168 0 .356-.042.587-.126.187-.068.376-.153.593-.25.058-.027.117-.053.18-.08.456-.204 1-.43 1.64-.512V2.543c-.433.074-.83.234-1.234.414l-.159.07c-.22.1-.453.205-.678.287A2.719 2.719 0 0 1 9 3.5c-.653 0-1.139-.325-1.495-.562l-.032-.022c-.391-.26-.646-.416-.973-.416-.833 0-1.218.246-2.223.916a.5.5 0 0 1-.554-.832l.04-.026z"/>
                         </svg>
                         <span class="left_label inl_bl ">@_e('groups') <span id="new_groups">{{ $new_groups }}</span></span>
-                    </a>
+                    </a>@endif
                     <a href="/news/{{ $news_link }}" onclick="Page.Go(this.href); return false;" class="left_row"  id="news_link">
                         <svg class="bi bi-newspaper" width="32" height="32" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                             <path fill-rule="evenodd" d="M0 2A1.5 1.5 0 0 1 1.5.5h11A1.5 1.5 0 0 1 14 2v12a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 0 14V2zm1.5-.5A.5.5 0 0 0 1 2v12a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5h-11z"/>
@@ -116,8 +116,8 @@
                     <a href="#">@_e('developers')</a>
                     <a href="#">@_e('help')</a>
                 </div>
-                <div class="col-12">
-                    @_e('name') &copy; 2020 <a class="cursor_pointer" onClick="trsn.box()"
+                <div class="col-12 footer">
+                    @_e('Name') &copy; 2020 <a class="cursor_pointer" onClick="trsn.box()"
                        onMouseOver="myhtml.title('1', '@_e('select_lang')', 'langTitle', 1)"
                        id="langTitle1">@_e('lang')</a>
                 </div>
@@ -158,6 +158,8 @@
 
                     </div>
                 </div>--}}
+                @if(!empty($stories))
+
                 @foreach($stories as $item)
                     <div class="card m-1" style="width: 111px; height: 198px;" onclick="Stories.Show('{{$item['user_id']}}')">
                         <div class="card-body" >
@@ -168,15 +170,16 @@
                         </div>
                     </div>
                 @endforeach
-                <div class="card m-1" style="width: 111px; height: 198px;">
-                    <div class="card-body">
-                        <div>
-                            <div class="rounded-circle" style="width: 50px;height: 50px;background-color: whitesmoke;"></div>
-                        </div>
-                        <div class="d-none" style="margin-top: 100px;">@_e('story')</div>
+                @endif
+{{--                <div class="card m-1" style="width: 111px; height: 198px;">--}}
+{{--                    <div class="card-body">--}}
+{{--                        <div>--}}
+{{--                            <div class="rounded-circle" style="width: 50px;height: 50px;background-color: whitesmoke;"></div>--}}
+{{--                        </div>--}}
+{{--                        <div class="d-none" style="margin-top: 100px;">@_e('story')</div>--}}
 
-                    </div>
-                </div>
+{{--                    </div>--}}
+{{--                </div>--}}
             </div>
         </div>
         @endif
@@ -186,7 +189,7 @@
                         <div class="bg_block" >
                             <div class="newmes mb-2" id="wall_tab">
                                 <label for="wall_text"></label>
-                                <textarea id="wall_text" onblur="if(this.value=='') this.value='Что у Вас нового?';this.style.color = '#909090';$('#wall_text').css('height', '33px');" onfocus="if(this.value=='Что у Вас нового?')this.value='';this.style.color = '#000000';$('#wall_text').css('height', '50px');" class="wall_inpst wall_fast_opened_texta"
+                                <textarea id="wall_text" onblur="if(this.value === '') this.value='Что у Вас нового?';this.style.color = '#909090';$('#wall_text').css('height', '33px');" onfocus="if(this.value==='Что у Вас нового?')this.value='';this.style.color = '#000000';$('#wall_text').css('height', '50px');" class="wall_inpst wall_fast_opened_texta"
                                           style="width: 100%;resize: none;overflow-y: hidden;border-bottom: 1px solid #E4E4E4;margin-top: -5px;color: #909090;font-weight: 500;"
                                           onkeyup="wall.CheckLinkText(this.value)" onblur="wall.CheckLinkText(this.value, 1)">@_e('wall_text_default')</textarea>
                                 <div id="attach_files" class="margin_top_10 no_display"></div>

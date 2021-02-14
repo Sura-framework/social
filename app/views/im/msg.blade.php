@@ -1,7 +1,7 @@
 <div class="im_text support_answer im_msg {{ $new }} mb-3" id="imMsg{{ $msg_id }}" {{ $read_js_func }}>
     <div style="float:left;width:55px">
         <div class="ava_mini im_msg_ava im_ava_mini">
-            <a href="/u{{ user_id }}" onClick="Page.Go(this.href); return false">
+            <a href="/u{{ $user_id }}" onClick="Page.Go(this.href); return false">
                 <img src="{{ $ava }}" style="width: 45px;" width="45"  alt="{{ $name }}"/>
             </a>
         </div>

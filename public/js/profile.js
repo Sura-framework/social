@@ -1,9 +1,74 @@
+function menuHoverItem(el){
+	var tp = $(el).children('.head_tooltip'), left = $(el).offset().left, w = $(el).width(), tpw = tp.width();
+	var ol = left-(tpw/2)+(w/2)+2;
+	tp.css({left: ol+'px', opacity: 1, display: 'block'});
+}
+function menuOutItem(el){
+	var tp = $(el).children('.head_tooltip');
+	tp.css({left: '-99999999px', opacity: 0, display: 'none'});
+}
+function openTopMenu(el){
+	removeTimer('hidetopmenu');
+	if($(el).hasClass('active')){
+		$('.kj_head_menu').removeClass('d-block');
+		$('#topmenubut').removeClass('active');
+		return;
+	}
+	var left = $(el).offset().left-5;
+	$(el).addClass('active');
+	$('.kj_head_menu').addClass('d-block');
+	setTimeout(function(){
+		$('.kj_head_menu').animate({top: 46}, 100);
+	});
+}
+function hideTopMenu(){
+	removeTimer('hidetopmenu');
+	addTimer('hidetopmenu', function(){
+		$('.kj_head_menu').removeClass('d-block');
+		$('#topmenubut').removeClass('active');
+	}, 1000);
+}
+
+function openUserMenu(el){
+	removeTimer('hideusermenu');
+	if($(el).hasClass('active')){
+		$('.user_menu').removeClass('d-block');
+		$('#usermenubut').removeClass('active');
+		return;
+	}
+	var left = $(el).offset().left-5;
+	$(el).addClass('active');
+	$('.user_menu').addClass('d-block');
+	setTimeout(function(){
+		$('.user_menu').animate({top: 28}, 100);
+	});
+}
+function hideUserMenu(){
+	removeTimer('hideusermenu');
+	addTimer('hideusermenu', function(){
+		$('.user_menu').removeClass('d-block');
+		$('#usermenubut').removeClass('active');
+	}, 600);
+}
+
+function open_menu(){
+	// $('.menu-sidebar').addClass('active');
+	const menuSidebar = $('.menu-sidebar');
+	const menuBtn = $('#m-menu');
+	if(menuSidebar.hasClass('active')){
+		menuSidebar.removeClass('active')
+	}else{
+		menuSidebar.addClass('active');
+	}
+}
+
+
 //ALBUMS
 var Albums = {
 	CreatAlbum: function(){
 		Page.Loading('start');
 		$.post('/albums/create_page/', function(data){
-			Box.Show('albums', 450, lang_title_new_album, data, lang_box_canсel, lang_album_create, 'StartCreatAlbum(); return false;', 0, 0, 1, 1);
+			Box.Show('albums', 450, lang_title_new_album, data.res, lang_box_cancel, lang_album_create, 'StartCreatAlbum(); return false;', 0, 0, 1, 1);
 			$('#name').focus();
 			Page.Loading('stop');
 		});
@@ -125,7 +190,8 @@ var Profile_edit ={
 		$('.js_titleRemove').remove();
 		viiBox.start();
 		$.post('/edit/box/', function(d){
-			viiBox.win('edit_box', d);
+			viiBox.win('edit_box', d.content);
+			viiBox.stop();
 		});
 	},
 	Interests: function () {
@@ -659,7 +725,7 @@ var fave = {
 	},
 	delet: function(fave_id){
 		$('#addfave_load').show();
-		$.post('/fave/delet/', {fave_id: fave_id}, function(data){
+		$.post('/fave/delete/', {fave_id: fave_id}, function(data){
 			$('#addfave_but').attr('onClick', 'fave.add('+fave_id+'); return false').attr('href', '/');
 			$('#text_add_fave').text(lang_add_fave);
 			$('#addfave_load').hide();
@@ -670,7 +736,7 @@ var fave = {
 	},
 	gDelet: function(fave_id){
 		$('#box_loading').show();
-		$.post('/fave/delet/', {fave_id: fave_id}, function(data){
+		$.post('/fave/delete/', {fave_id: fave_id}, function(data){
 			$('#user_'+fave_id).remove();
 			Box.Close('del_fave');
 			
@@ -1033,7 +1099,7 @@ var videos = {
 		$('#box_but').hide();
 		$('#box_loading').show();
 		$('#text_del_video_'+vid).text(lang_videos_deletes);
-		$.post('/videos/delet/', {vid: vid}, function(){
+		$.post('/videos/delete/', {vid: vid}, function(){
 			$('#video_'+vid).html(lang_videos_delok);
 			Box.Close('del_video_'+vid);
 			updateNum('#nums');
@@ -1203,6 +1269,7 @@ $(document).click(function() {
 	}
 });
 
+
 function CheckRequest_Search(request){
 	return request.indexOf("/search/");
 }
@@ -1236,12 +1303,10 @@ var gSearch = {
 		$('.site_menu_fix').css('height', h+'px');
 	},
 	go: function(){
-
 		// var  query_full = $('#query_full').val();
-		var  query = $('#query').val();
-
+		let query = $('#query').val();
 		//в поиске
-		var type = $('#se_type').val();
+		let type = $('#se_type').val();
 
 		// if(query == 'Поиск' || !query)
 		// 	{
@@ -1321,7 +1386,9 @@ var gSearch = {
 				$('html, body').css('overflow-y', 'auto');
 				$('#sel_types, #search_tab, .fast_search_bg').hide();
 				// $('#query').val('');
+				Page.Loading('stop');
 			});
+
 		} else {
 			// $('#query').focus();
 			$('#query').val('n');
@@ -1332,7 +1399,7 @@ var gSearch = {
 //WALL
 var prevAnsweName = false;
 var comFormValID = false;
-var wall = {
+const wall = {
 	send_news: function(){
 		wall_text = $('#wall_text').val();
 		attach_files = $('#vaLattach_files').val();
@@ -1376,26 +1443,42 @@ var wall = {
 			$('#wall_text').val('').focus();
 		}
 	},
-	showTag: function(id, rand, type){
+	showTag: function(id, rand, type, prefix_id, pad_left){
+		if(!pad_left)
+			pad_left = 5;
+
+		if ($("div").is('.js_titleRemove')){
+		}else{
+			$.post('/tags/', {id: id, rand: rand, type: type}, function(data){
+				$("body").append('<div id="js_title_'+prefix_id+rand+'" class="js_titleRemove">'+data.data+'<div class="tooltip"></div></div>');
+				let sub_tooltip = $('.'+prefix_id+rand);
+				// console.log(sub_tooltip);
+				let xOffset = sub_tooltip.offset().left + pad_left - 40;
+				let yOffset = sub_tooltip.offset().top - 155;
+				// 155
+
+				// var link_tag = $('.'+prefix_id+id);
+				// var offset = link_tag.offset();
+				// var xOffset = offset.top-140;
+				// var yOffset = offset.left-13;
+
+				$('#js_title_'+prefix_id+rand)
+					.css("position","absolute")
+					.css("top", yOffset+"px")
+					.css("left", xOffset+"px")
+					.css("z-index","1000")
+					.fadeIn('fast');
+			});
+		}
 		//var top = $(window).height()/2-50;
-		var link_tag = $('#link_tag_'+id+'_'+rand);
-		var offset = link_tag.offset();
-		var top = offset.top-140;
-		var left = offset.left-13;
-		$.post('/tags/', {id: id, rand: rand, type: type}, function(data){
-			$('#tt_wind').html(data.data);
-			$('#tt_wind2')
-				.css("top", top+"px")
-				.css("left", left+"px")
-				.fadeIn('fast');
-		});
 	},
-	hideTag: function(id, rand, type){
+	hideTag: function(id, rand, type,prefix_id, pad_left){
 		//$('#tt_wind').html('');
+
 		removeTimer('hidetag');
 		addTimer('hidetag', function(){
-			$('#tt_wind').html('');
-		}, 600);
+			$('.js_titleRemove').remove();
+		}, 800);
 	},
 	form_open: function(){
 		$('#wall_input').hide();
@@ -1423,8 +1506,8 @@ var wall = {
 			wall.fast_form_close();
 			
 		//скрываем форму установки статуса
-		if(oi != 'set_status_bg' && oi != 'status_text' && oi != 'status_but' && oi != 'status_link' && oi != 'new_status')
-			gStatus.close();
+		// if(oi != 'set_status_bg' && oi != 'status_text' && oi != 'status_but' && oi != 'status_link' && oi != 'new_status')
+		// 	gStatus.close();
 	},
 	send: function(){
 		let wall_text = $('#wall_text').val();
@@ -1490,11 +1573,11 @@ var wall = {
 		$('#wall_fast_block_'+rid).remove();
 		$('#wall_rec_num').text(rec_num);
 		myhtml.title_close(rid);
-		$.post('/wall/delet/', {rid: rid});
+		$.post('/wall/delete/', {rid: rid});
 	},
 	fast_comm_del: function(rid){
 		$('#wall_fast_comment_'+rid).html(lang_wall_del_com_ok);
-		$.post('/wall/delet/', {rid: rid});
+		$.post('/wall/delete/', {rid: rid});
 	},
 	page: function(for_user_id){
 		// if($('#wall_link').text() == 'к предыдущим записям'){
@@ -1716,7 +1799,7 @@ var wall = {
 	},
 	attach_addsmile: function(){
 		wall.attach_menu('close', 'wall_attach', 'wall_attach_menu');
-		Box.Show('attach_smile', 395, lang_wall_atttach_addsmile, lang_wall_attach_smiles, lang_box_canсel, '', '', 0, 1, 1, 1);
+		Box.Show('attach_smile', 395, lang_wall_atttach_addsmile, lang_wall_attach_smiles, lang_box_cancel, '', '', 0, 1, 1, 1);
 	},
 	attach_addphoto: function(id, page_num, notes){
 		wall.attach_menu('close', 'wall_attach', 'wall_attach_menu');
@@ -1732,7 +1815,7 @@ var wall = {
 		else
 			notes = '';
 		
-		Box.Page('/albums/all_photos_box/', page+notes, 'all_photos_'+page_num, 627, lang_wall_attatch_photos, lang_box_canсel, 0, 0, 400, 1, 1, 1, 0, 1);
+		Box.Page('/albums/all_photos_box/', page+notes, 'all_photos_'+page_num, 627, lang_wall_attatch_photos, lang_box_cancel, 0, 0, 400, 1, 1, 1, 0, 1);
 	},
 	attach_addvideo: function(id, page_num, notes){
 		wall.attach_menu('close', 'wall_attach', 'wall_attach_menu');
@@ -1748,7 +1831,7 @@ var wall = {
 		else
 			notes = '';
 		
-		Box.Page('/videos/all_videos', page+notes, 'all_videos_'+page_num, 627, lang_wall_attatch_videos, lang_box_canсel, 0, 0, 400, 1, 1, 1, 0, 1);
+		Box.Page('/videos/all_videos', page+notes, 'all_videos_'+page_num, 627, lang_wall_attatch_videos, lang_box_cancel, 0, 0, 400, 1, 1, 1, 0, 1);
 	},
 	attach_addvideo_public: function(id, page_num, pid){
 		wall.attach_menu('close', 'wall_attach', 'wall_attach_menu');
@@ -1758,8 +1841,8 @@ var wall = {
 			page = '';
 			page_num = 1;
 		}
-		
-		Box.Page('/videos/all_videos_public', 'pid='+pid+page, 'all_videos_'+page_num, 627, lang_wall_attatch_videos, lang_box_canсel, 0, 0, 400, 1, 1, 1, 0, 1);
+		// var lang_box_cancel = 'Отмена';
+		Box.Page('/videos/all_videos_public', 'pid='+pid+page, 'all_videos_'+page_num, 627, lang_wall_attatch_videos, lang_box_cancel, 0, 0, 400, 1, 1, 1, 0, 1);
 	},
 	attach_addaudio: function(id, page_num){
 		wall.attach_menu('close', 'wall_attach', 'wall_attach_menu');
@@ -1770,11 +1853,11 @@ var wall = {
 			page_num = 1;
 		}
 
-		Box.Page('/audio/allMyAudiosBox', page, 'all_audios', 627, lang_audio_wall_attatch, lang_box_canсel, 0, 0, 400, 1, 1, 1, 0, 0);
+		Box.Page('/audio/my_box/', page, 'all_audios', 627, lang_audio_wall_attatch, lang_box_cancel, 0, 0, 400, 1, 1, 1, 0, 0);
 		// music.jPlayerInc();
 	},
 	attach_addDoc: function(){
-		Box.Page('/doc', '', 'all_doc', 627, 'Выберите документ', lang_box_canсel, 0, 0, 400, 1, 0, 1, 0, 0);
+		Box.Page('/docs/box/', '', 'all_doc', 627, 'Выберите документ', lang_box_cancel, 0, 0, 400, 1, 0, 1, 0, 0);
 	},
 	tell: function(id){
 		$('#wall_tell_'+id).hide();
@@ -1968,112 +2051,6 @@ var wysiwyg = {
 	}
 }
 
-//STATUS
-var gStatus = {
-	open: function(){
-		$('#set_status_bg').fadeIn(100);
-		$('#status_text').focus();
-		$('#status_text').select();
-		if($('#status_text').val()){
-			$('.yes_status_text').show();
-			$('.no_status_text').hide();
-		} else {
-			$('.yes_status_text').hide();
-			$('.no_status_text').show();
-		}
-		$('.status_tell_friends').hide();
-	},
-	close: function(){
-		$('#set_status_bg').hide();
-		$('#status_text').val($('#status_text').val());
-	},
-	set: function(clear, a){
-		text = $('#status_text').val();
-		if(clear){
-			text = '';
-			$('#status_text').val('');
-		}
-		if(text != $('#new_status').text()){
-			butloading('status_but', 55, 'disabled');
-			
-			if(a){
-				act = 'public/';
-				public_id = $('#public_id').val();
-			} else { 
-				act = '';
-				public_id = '';
-			}
-			
-			$.post('/status/'+act, {text: text, public_id: public_id}, function(data){
-				if(data){
-					$('#status_link').hide();
-					gStatus.tell();
-					
-					$('#new_status').attr('onMouseOver', 'gStatus.tell()');
-					
-				} else
-					$('#status_link').show();
-					
-				$('#new_status').html(data);
-				
-				gStatus.close();
-				butloading('status_but', 55, 'enabled', lang_box_save);
-			});
-		} else
-			gStatus.close();
-	},
-	tell: function(){
-		$('.status_tell_friends').hide();
-		pos = $('#tellBlockPos').position().top;
-
-		$('.status_tell_friends').fadeIn('fast');
-
-		setTimeout(function(){
-			$('.status_tell_friends').fadeOut('fast');
-		}, 2500);
-	},
-	startTell: function(){
-		for_user_id = location.href.split('https://'+location.host+'/u');
-		text = $('#status_text').val();
-		tell_friends = $('#tell_friends').val();
-		if(tell_friends){
-			if(text != 0){
-				$.post('/wall/send/', {wall_text: text, for_user_id: for_user_id[1]}, function(data){
-					$('#wall_records').html(data);
-					$('#wall_all_record').html('');
-					updateNum('#wall_rec_num', 1);
-				});
-			}
-		} else {
-			insert_id = $('.wallrecord:first').attr('id').replace('wall_record_', '');
-			wall.delet(insert_id);
-		}
-	},
-	startTellPublic: function(i){
-		tell_friends = $('#tell_friends').val();
-		if(tell_friends){
-			if($('#status_text').val() != 0){
-				$.post('/groups/wall_send/', {id: i, wall_text: $('#status_text').val()}, function(data){
-					if($('#rec_num').text() == 'Нет записей')
-						$('.albtitle').html('<b id="rec_num">1</b> запись');
-					else
-						updateNum('#rec_num', 1);
-
-					$('#public_wall_records').html(data);
-					if($('#rec_num').text() > 10){
-						$('#page_cnt').val('1');
-						$('#wall_all_records').show();
-						$('#load_wall_all_records').html('к предыдущим записям');
-					}
-				});
-			}
-		} else {
-			insert_id = $('.public_wall:first').attr('id').replace('wall_record_', '');
-			groups.wall_delet(insert_id);
-		}
-	}
-}
-
 //NEWS
 var news = {
 	page: function(){
@@ -2099,15 +2076,17 @@ var news = {
 		if($('#loading_news').text() === 'Показать предыдущие новости'){
 			textLoad('loading_news');
 			$.post('/news/next/', {page: 1, page_cnt: page_cnt}, function(d){
-				// var d = JSON.parse(d);
-				console.log(d.content);
-				if(d.content !== 'no_news'){
-					$('#news').append(d.content);
+				d = JSON.parse(d);
+
+				if(d.status === 1){
+					$('#news').append(d.res);
 					$('#wall_l_href_news').attr('onClick', 'news.load()');
 					$('#loading_news').html('Показать предыдущие новости');
 					page_cnt++;
 				} else
 				{
+					//
+					$('#news').append('<p class="text-muted text-center m-5">Показаны последние новости</p>');
 					$('#wall_l_href_news').hide();
 				}
 			});
@@ -2340,7 +2319,7 @@ var support = {
 	},
 	startDel: function(qid){
 		$('#box_loading').show();
-		$.post('/support/delet/', {qid: qid}, function(){
+		$.post('/support/delete/', {qid: qid}, function(){
 			Page.Go('/support');
 		});
 	},
@@ -2362,7 +2341,7 @@ var support = {
 	},
 	delanswe: function(id){
 		$('#asnwe_'+id).html(lang_del_comm);
-		$.post('/support/delet_answer/', {id: id});
+		$.post('/support/delete_answer/', {id: id});
 	},
 	close: function(qid){
 		butloading('close', '30', 'disabled', '');
@@ -2713,13 +2692,13 @@ var groups = {
 		} else
 			setErrorInputMsg('fast_text_'+rec_id);
 	},
-	wall_delet: function(rec_id){
+	delete: function(rec_id, public_id){
 		$('#wall_record_'+rec_id).html('<span class="color777">Запись удалена.</span>');
 		$('#wall_fast_block_'+rec_id+', .wall_fast_opened_form').remove();
 		$('#wall_record_'+rec_id).css('padding-bottom', '5px');
 		myhtml.title_close(rec_id);
 		updateNum('#rec_num');
-		$.post('/groups/wall_del/', {rec_id: rec_id});
+		$.post('/groups/wall_del/', {rec_id: rec_id, public_id: public_id});
 	},
 	comm_wall_delet: function(rec_id, public_id){
 		$('#wall_fast_comment_'+rec_id).html('<div class="color777" style="margin-bottom:7px">Комментарий удалён.</div>');
@@ -2914,7 +2893,7 @@ var groups = {
 		$('#like_user'+user_id+'_'+rec_id).hide();
 		updateNum('#like_text_num'+rec_id);
 
-		if(type == '1')
+		if(type === '1')
 			$.post('/wall/like_no/', {rid: rec_id});
 		else
 			$.post('/groups/wall_like_remove/', {rec_id: rec_id});
@@ -2922,15 +2901,19 @@ var groups = {
 	wall_like_users_five: function(rec_id, type){		
 		$('.public_likes_user_block').hide();
 		if(!ge('like_cache_block'+rec_id) && $('#wall_like_cnt'+rec_id).text() && $('#update_like'+rec_id).val() == 0){
-			if(type == '1'){
-				$.post('/wall/liked_users/', {rid: rec_id}, function(data){
-					$('#likes_users'+rec_id).html(data+'<span id="like_cache_block'+rec_id+'"></span>');
-					$('#public_likes_user_block'+rec_id).show();
+			if(type === '1'){
+				$.post('/wall/liked_users/', {rid: rec_id}, function(d){
+					if (d.status === 1){
+						$('#likes_users'+rec_id).html(d.res+'<span id="like_cache_block'+rec_id+'"></span>');
+						$('#public_likes_user_block'+rec_id).show();
+					}
 				});
 			} else {
-				$.post('/groups/wall_like_users_five/', {rec_id: rec_id}, function(data){
-					$('#likes_users'+rec_id).html(data+'<span id="like_cache_block'+rec_id+'"></span>');
-					$('#public_likes_user_block'+rec_id).show();
+				$.post('/groups/wall_like_users_five/', {rec_id: rec_id}, function(d){
+					if (d.status === 1){
+						$('#likes_users'+rec_id).html(d.res+'<span id="like_cache_block'+rec_id+'"></span>');
+						$('#public_likes_user_block'+rec_id).show();
+					}
 				});
 			}
 		} else
@@ -2954,12 +2937,12 @@ var groups = {
 			
 		Box.Page('/groups/all_liked_users/', 'rid='+rid+'&liked_num='+liked_num+page, 'all_liked_users_'+rid+page_num, 525, lang_wall_liked_users, lang_msg_close, 0, 0, 345, 1, 1, 1, 0, 1);
 	},
-	wall_tell: function(rec_id){
+	tell: function(rec_id){
 		$('#wall_tell_'+rec_id).hide();
 		myhtml.title_close(rec_id);
 		$('#wall_ok_tell_'+rec_id).fadeIn(150);
 		$.post('/groups/wall_tell/', {rec_id: rec_id}, function(data){
-			if(data == 1)
+			if(data.status !== 1)
 				addAllErr(lang_wall_tell_tes);
 		});
 	},
@@ -3081,7 +3064,7 @@ var im = {
 			vii_typograf = false;
 		}
 		if(!vii_typograf){
-			0 == vii_msg_te_val != a && a != 0 < a.length && (clearInterval(vii_typograf_delay), vii_typograf_delay = setInterval(function(){
+			0 === vii_msg_te_val !== a && a !== 0 < a.length && (clearInterval(vii_typograf_delay), vii_typograf_delay = setInterval(function(){
 				$.post('/im/typograf/stop/', {for_user_id: for_user_id});
 				vii_typograf = true;
 			}, 3000));
@@ -3123,12 +3106,11 @@ var im = {
 		$('#imViewMsg').html('<div class="spinner-border" role="status"  style="margin-left:225px;margin-top:220px"><span class="sr-only">Loading...</span></div>');
 		$.post('/im/history/', {for_user_id: uid}, function(d){
 			$('#imViewMsg').html(d);
-			
 			$('.im_scroll').append('<div class="im_typograf"></div>').scrollTop(99999);
-			
-			var aco = $('.im_usactive').text().split(' ');
+			let aco = $('.im_usactive').text().split(' ');
 			$('.im_typograf').html('<div class="no_display" id="im_typograf"><img src="/images/typing.gif" /> '+aco[0]+' набирает сообщение..</div>');
-	
+			let h = '/im/'+uid+'/';
+			history.pushState({link:h}, aco[0], h);
 			$('#msg_text').focus();
 		});
 	},
@@ -3158,11 +3140,12 @@ var im = {
 			butloading('sending', 56, 'disabled');
 			$('#status_sending').val('0');
 			$.post('/im/send/', {for_user_id: for_user_id, my_name: my_name, my_ava: my_ava, msg: msg_text, attach_files: attach_files}, function(data){
-				if(data == 'antispam_err'){
+				console.log(data);
+				if(data === 'antispam_err'){
 			      AntiSpam('messages');
 			      return false;
 			    }
-				if(data == 'err_privacy')
+				if(data === 'err_privacy')
 					Box.Info('msg_info', lang_pr_no_title, lang_pr_no_msg, 400, 4000);
 				else {
 					$('#im_scroll').append(data);
@@ -3182,7 +3165,7 @@ var im = {
 	},
 	delet: function(mid, folder){
 		$('.js_titleRemove, #imMsg'+mid).remove();
-		$.post('/messages/delet/', {mid: mid, folder: folder});
+		$.post('/messages/delete/', {mid: mid, folder: folder});
 	},
 	update: function(){
 		var for_user_id = $('#for_user_id').val();
@@ -3462,30 +3445,41 @@ var Report = {
 
 //REPOST
 var Repost = {
-	Box: function(rec_id, g_tell){
-		Box.Page('/repost/all/', 'rec_id='+rec_id, 'repost', 430, 'Отправка записи', lang_box_canсel, 'Поделиться записью', 'Repost.Send('+rec_id+', '+g_tell+')', 0, 0, 0, 0, 'comment_repost');
+	Box: function(rec_id, g_tell, undefined){
+		Box.Page('/repost/all/', 'rec_id='+rec_id, 'repost', 430, 'Отправка записи', lang_box_cancel, 'Поделиться записью', 'Repost.Send('+rec_id+', '+g_tell+')', 0, 0, 0, 0, 'comment_repost');
 	},
 	Send: function(rec_id, g_tell){
-		comm = $('#comment_repost').val();
-		type = $('#type_repost').val();
-		if(type == 1) cas = 'for_wall';
-		else if(type == 2)
-			if(g_tell) cas = 'groups_2';
-			else cas = 'groups';
-		else if(type == 3) cas = 'message';
-		else cas = '';
+		const comm = $('#comment_repost').val();
+		const type = $('#type_repost').val();
+		let cas;
+		if (type == 1) {
+			cas = 'for_wall';
+		}
+		else if (type == 2)
+			if (g_tell) {
+				cas = 'groups_2';
+			} else {
+				cas = 'groups';
+			}
+		else if (type == 3) {
+			cas = 'message';
+		} else {
+			cas = '';
+		}
 		$('#box_loading').show();
 		ge('box_butt_create').disabled = true;
 		$.post('/repost/'+cas+'/', {rec_id: rec_id, comm: comm, sel_group: $('#sel_group').val(), g_tell: g_tell, for_user_id: $('#for_user_id').val()}, function(d){
-			if(d == 1){
-				$('#box_loading').hide();
-				ge('box_butt_create').disabled = false;
-				addAllErr(lang_wall_tell_tes);
-			} else {
+			if(d.status == 1){
 				if(type == 1) Box.Info('yes_report', 'Запись отправлена.', 'Теперь эта запись появится в новостях у Ваших друзей.', 300, 2500);
 				if(type == 2) Box.Info('yes_report', 'Запись отправлена.', 'Теперь эта запись появится на странице сообщества.', 300, 2500);
 				if(type == 3) Box.Info('yes_report', 'Сообщение отправлено.', 'Ваше сообщение отправлено.', 300, 2500);
 				Box.Close();
+				$('#box_loading').hide();
+				ge('box_butt_create').disabled = false;
+			} else {
+				$('#box_loading').hide();
+				ge('box_butt_create').disabled = false;
+				addAllErr(lang_wall_tell_tes);
 			}
 		});
 	}
@@ -3792,175 +3786,103 @@ var attach = {
 	},
 }
 
-//PHOTO EDITOR
-// Удалить !
-var photoeditor = {
-	start: function(img, id, h){
-		var height = parseInt(h) + 180;
-		$('#ladybug_ant'+id).hide();
-		$('#frameedito'+id).html('<iframe src="https://pixlr.com/express/?s=c&image='+escape(img)+'&title=photo&target='+escape('https://'+location.host+'/photo_editor&pid='+id)+'&exit='+escape('https://'+location.host+'/photo_editor/close&image='+img)+'" width="770" height="'+height+'" frameborder="0"></iframe>');
-	}
-}
-
-//COVER
-var cover = {
-	init: function(i, hi){
-		$('#cover_img').attr('src', i);
-		$("#les10_ex2").draggable({
-			axis: 'y',
-			stop: function(){
-				$('.cover_addut, .cover_descring').show();
-			},
-			drag: function(event, ui){
-				var d = ui.position.top;
-				$('.cover_addut, .cover_descring').hide();
-				if(d >= 0){
-					$("#les10_ex2").remove();
-					$('#cover_restart').html('<div style="width:100%;height:'+hi+'px;position:relative;top:0;z-index:1" id="les10_ex2"><img src="'+i+'" id="cover_img" style="width: 100%" /></div>');
-					$('.cover_addut, .cover_descring').show();
-					cover.init(i, hi);
-				}
-				h = parseInt('-'+(hi-370));
-				if(d <= h){
-					$("#les10_ex2").remove();
-					$('#cover_restart').html('<div style="width:100%;height:'+hi+'px;position:relative;top:'+h+'px;z-index:1" id="les10_ex2"><img src="'+i+'" id="cover_img" style="width: 100%" /></div>');
-					$('.cover_addut, .cover_descring').show();
-					cover.init(i, hi);
-				}
-			}
+var QNotifications = {
+	open_notify: function(id){
+		if(event.target.className === 'del' || event.target.className === 'user'){
+		return false;
+		}
+		$('#qnotifications_news').css('display', 'none');
+		$('#qnotifications_settings').css('display', 'none');
+		$('#qnotifications_notification').css('display', 'block');
+		$.post('/notifications/', {act:'notification',id:id}, function(d){
+		$('#qnotifications_notification_content').html('');
+		$("#notification"+id).clone().appendTo("#qnotifications_notification_content");
+		$("#qnotifications_notification_content #notification"+id+"").attr('onclick', '').css('background','#e9ecee').css('box-shadow','inset 0 1px 3px rgba(0, 0, 0, 0.2)');
+		$("#qnotifications_notification_content #notification"+id+" .del").remove();
+		$('#qnotifications_notification_content').append(d);
 		});
 	},
-	del: function(public_id){
-		$('.cover_descring, .cover_addut').hide();
-		$('#upload_cover').show().text('Добавить обложку');
-		$('.cover_newpos').css('margin-left', '430px');
-		$('#cover_img').attr('src', '');
-		$('.cover_loaddef_bg').css('cursor', 'default').hide();
-		$('#cover_restart').html('');
-		$("#les10_ex2").draggable('destroy');
-		if(public_id) $.post('/groups/delcover/id'+public_id+'/');
-		else $.post('/edit/delcover/');
-		$('.cover_newava').removeClass('d-none');
+	settings_save: function(id){
+		var name = '#'+id;
+		if($(name).hasClass('html_checked')) $(name).removeClass('html_checked');
+		else $(name).addClass('html_checked');
+		var settings_likes_posts = 1, settings_likes_photos = 1, settings_likes_compare = 1, settings_likes_gifts = 1;
+		if($('#settings_likes_posts').hasClass('html_checked')) settings_likes_posts = 0;
+		if($('#settings_likes_photos').hasClass('html_checked')) settings_likes_photos = 0;
+		if($('#settings_likes_compare').hasClass('html_checked')) settings_likes_compare = 0;
+		if($('#settings_likes_gifts').hasClass('html_checked')) settings_likes_gifts = 0;
+		$.post('/notifications/save_settings/', {act : 'save_settings', settings_likes_posts:settings_likes_posts,settings_likes_photos:settings_likes_photos,settings_likes_compare:settings_likes_compare,settings_likes_gifts:settings_likes_gifts});
 	},
-	save: function(public_id){
-		cover.cancel();
-		t = $("#les10_ex2").attr('style').split('top:');
-		s = t[1].split('px');
-		s[0] = s[0].replace('-', '');
-		if(public_id) $.post('/groups/savecoverpos/id='+public_id+'/', {pos: s[0]});
-		else $.post('/edit/savecoverpos/', {pos: s[0]});
-		$('.cover_newava').removeClass('d-none');
+	settings: function(){
+		if($('#qnotifications_news').css('display') == 'block'){
+		$('#qnotifications_news').css('display', 'none');
+		$('#qnotifications_settings').css('display', 'block');
+		$.post('/notifications/settings/', {act:'settings'}, function(d){
+		$('#qnotifications_settings_content').html(d);
+		});
+		} else {
+		$('#qnotifications_news').css('display', 'block');
+		$('#qnotifications_settings').css('display', 'none');
+		}
 	},
-	cancel: function(t){
-		$('.cover_descring, .cover_addut').hide();
-		$('.cover_addut_edit').show();
-		$('.cover_newpos').css('margin-left', '397px');
-		$('.cover_loaddef_bg').css('cursor', 'default');
-		$("#les10_ex2").draggable('destroy');
-		if(t) $("#les10_ex2").css('top', '-'+t+'px');
-		$('.cover_newava').removeClass('d-none');
-	},
-	startedit: function(i, h, public_id){
-		$('#upload_cover').show().text('Изменить фото');
-		$('.cover_descring, .cover_addut').show();
-		$('.cover_newpos').css('margin-left', '197px');
-		$('.cover_addut_edit').hide();
-		$('.cover_loaddef_bg').css('cursor', 'move');
-		$('.cover_newava').addClass('d-none');
+	close_notify: function(){
+		$('#qnotifications_news').css('display', 'block');
+		$('#qnotifications_settings').css('display', 'none');
+		$('#qnotifications_notification').css('display', 'none');
+		$('#qnotifications_news').removeClass('d-flex');
+		$('#qnotifications_news').addClass('d-none');
 
-		cover.init(i, h);
+	},
+	box: function(){
+		$('#new_notifications').html('');
+		// if($('#qnotifications_box').css('display') == 'none'){
+		if($('#qnotifications_box').hasClass('d-flex') === false){
+			$('html').css('overflow-y', 'hidden');
+			$('#qnotifications_box').removeClass('d-none');
+			$('#qnotifications_box').addClass('d-flex');
+			$.post('/notifications/', function(d){
+				// d = JSON.parse(d);
+				$('#qnotifications_content').html(d.content);
+			});
+			$('#qnotifications_box').scroll(function(){
+			try {
+				let button = $('.show_all_button');
+				if(button){
+					var afunction = button.attr('onclick');
+					if(afunction && more_show){
+					more_show = false;
+					console.log(afunction);
+					//eval(afunction);
+					button.click();
+					}
+				}
+			} catch (err){}
+			});
+		} else {
+		$('html').css('overflow-y', 'scroll');
+		// 	$('#qnotifications_box').css('display', 'none');
+			$('#qnotifications_box').removeClass('d-flex');
+			$('#qnotifications_box').addClass('d-none');
+		}
+	},
+	del: function(id){
+		$.post('/notifications/del/', {act:'del', id:id}, function(d){
+		$('#notification'+id).remove();
+		});
+	},
+	MoreShow: function(){
+		$('.show_all_button').remove();
+		var lgift = $('.notification:last');
+		var gid = lgift.attr('id').split('notification');
+		$.post('/notifications/', {
+		last_id: gid[1]
+		}, function(d) {
+			var obj = jQuery.parseJSON(d);
+			$('#qnotifications_content').append(obj.content);
+			if ($('.notification').length < obj.count){
+				$('#qnotifications_content').append('<div class="show_all_button" onclick="QNotifications.MoreShow();">Показать больше уведомлений</div>');
+			}
+			more_show = true;
+		});
 	}
-}
-
-var QNotifications = {
-open_notify: function(id){
-if(event.target.className == 'del' || event.target.className == 'user'){
-return false;
-}
-$('#qnotifications_news').css('display', 'none');
-$('#qnotifications_settings').css('display', 'none');
-$('#qnotifications_notification').css('display', 'block');
-$.post('/notifications/', {act:'notification',id:id}, function(d){
-$('#qnotifications_notification_content').html('');
-$("#notification"+id).clone().appendTo("#qnotifications_notification_content");
-$("#qnotifications_notification_content #notification"+id+"").attr('onclick', '').css('background','#e9ecee').css('box-shadow','inset 0 1px 3px rgba(0, 0, 0, 0.2)');
-$("#qnotifications_notification_content #notification"+id+" .del").remove();
-$('#qnotifications_notification_content').append(d);
-});
-},
-settings_save: function(id){
-var name = '#'+id;
-if($(name).hasClass('html_checked')) $(name).removeClass('html_checked');
-else $(name).addClass('html_checked');
-var settings_likes_posts = 1, settings_likes_photos = 1, settings_likes_compare = 1, settings_likes_gifts = 1;
-if($('#settings_likes_posts').hasClass('html_checked')) settings_likes_posts = 0;
-if($('#settings_likes_photos').hasClass('html_checked')) settings_likes_photos = 0;
-if($('#settings_likes_compare').hasClass('html_checked')) settings_likes_compare = 0;
-if($('#settings_likes_gifts').hasClass('html_checked')) settings_likes_gifts = 0;
-$.post('/notifications/save_settings/', {act : 'save_settings', settings_likes_posts:settings_likes_posts,settings_likes_photos:settings_likes_photos,settings_likes_compare:settings_likes_compare,settings_likes_gifts:settings_likes_gifts});
-},
-settings: function(){
-if($('#qnotifications_news').css('display') == 'block'){
-$('#qnotifications_news').css('display', 'none');
-$('#qnotifications_settings').css('display', 'block');
-$.post('/notifications/settings/', {act:'settings'}, function(d){
-$('#qnotifications_settings_content').html(d);
-});
-} else {
-$('#qnotifications_news').css('display', 'block');
-$('#qnotifications_settings').css('display', 'none');
-}
-},
-close_notify: function(){
-$('#qnotifications_news').css('display', 'block');
-$('#qnotifications_settings').css('display', 'none');
-$('#qnotifications_notification').css('display', 'none');
-},
-box: function(){
-$('#new_notifications').html('');
-if($('#qnotifications_box').css('display') == 'none'){
-// $('html, body').css('overflow-y', 'hidden');
-$('#qnotifications_box').css('display', 'block');
-$.post('/notifications/', function(d){
-$('#qnotifications_content').html(d);
-});
-$('#qnotifications_box').scroll(function(){
-try {
-var button = $('.show_all_button');
-if(button){
-var afunction = button.attr('onclick');
-if(afunction && more_show){
-more_show = false;
-console.log(afunction);
-//eval(afunction);
-button.click();
-}
-}
-} catch (err){}
-});
-} else {
-// $('html, body').css('overflow-y', 'scroll');
-$('#qnotifications_box').css('display', 'none');
-}
-},
-del: function(id){
-$.post('/notifications/del/', {act:'del', id:id}, function(d){
-$('#notification'+id).remove();
-});
-},
-MoreShow: function(){
-$('.show_all_button').remove();
-var lgift = $('.notification:last');
-var gid = lgift.attr('id').split('notification');
-$.post('/notifications/', {
-last_id: gid[1]
-}, function(d) {
-var obj = jQuery.parseJSON(d);
-$('#qnotifications_content').append(obj.content);
-if ($('.notification').length < obj.count){
-$('#qnotifications_content').append('<div class="show_all_button" onclick="QNotifications.MoreShow();">Показать больше уведомлений</div>');
-}
-more_show = true;
-});
-}
 }

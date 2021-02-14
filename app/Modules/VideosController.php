@@ -6,6 +6,7 @@ use Exception;
 use Intervention\Image\ImageManager;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
@@ -19,9 +20,11 @@ class VideosController extends Module{
     /**
      * upload
      *
-     * @param $params
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function upload($params){
+    public function upload(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -30,7 +33,7 @@ class VideosController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
             $file_tmp = $_FILES['uploadfile']['tmp_name'];
             if (!file_exists($file_tmp)) {
@@ -41,7 +44,7 @@ class VideosController extends Module{
             $root_dir = str_replace('/app/Modules', '', $modules_dir);
 
             $file_name = Gramatic::totranslit($_FILES['uploadfile']['name']);
-            $server_time = \Sura\Libs\Tools::time();
+            $server_time = \Sura\Libs\Date::time();
             $file_rename = substr(md5($server_time+rand(1,100000)), 0, 15);
             $file_size = $_FILES['uploadfile']['size'];
             $array = explode(".", $file_name);
@@ -83,46 +86,53 @@ class VideosController extends Module{
                     $title = 'Без названия';
                     $descr = '';
 
-                    $Video_id = $db->query("INSERT INTO `videos` SET download = '1', owner_user_id = '{$user_id}', video = '{$result_video}', photo = '{$photo}', title = '{$title}', descr = '{$descr}', add_date = NOW(), privacy = '1'");
+                    $db->query("INSERT INTO `videos` SET download = '1', owner_user_id = '{$user_id}', video = '{$result_video}', photo = '{$photo}', title = '{$title}', descr = '{$descr}', add_date = NOW(), privacy = '1'");
                     $dbid = $db->insert_id();
                     $db->query("UPDATE `users` SET user_videos_num = user_videos_num+1 WHERE user_id = '{$user_id}'");
                     $generateLastTime = $server_time-10800;
                     $row = $db->super_query("SELECT ac_id, action_text FROM `news` WHERE action_time > '{$generateLastTime}' AND action_type = 2 AND ac_user_id = '{$user_id}'");
-                    if($row) $db->query("UPDATE `news` SET action_text = '{$dbid}|{$photo}||{$row['action_text']}', action_time = '{$server_time}' WHERE ac_id = '{$row['ac_id']}'");
-                    else $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 2, action_text = '{$dbid}|{$photo}', action_time = '{$server_time}'");
-//                    Cache::mozg_mass_clear_cache_file("
-//                    user_{$user_id}/page_videos_user|
-//                    user_{$user_id}/page_videos_user_friends|
-//                    user_{$user_id}/page_videos_user_all|
-//                    user_{$user_id}/profile_{$user_id}|
-//                    user_{$user_id}/videos_num_all|
-//                    user_{$user_id}/videos_num_friends");
+                    if($row) {
+                        $db->query("UPDATE `news` SET action_text = '{$dbid}|{$photo}||{$row['action_text']}', action_time = '{$server_time}' WHERE ac_id = '{$row['ac_id']}'");
+                    }
+                    else {
+                        $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 2, action_text = '{$dbid}|{$photo}', action_time = '{$server_time}'");
+                    }
+//
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $cache->remove("{$user_id}/profile_{$user_id}");
+                    $cache->remove("{$user_id}/page_videos_user");
+                    $cache->remove("{$user_id}/page_videos_user_friends");
+                    $cache->remove("{$user_id}/page_videos_user_all");
+                    $cache->remove("{$user_id}/videos_num_all");
+                    $cache->remove("{$user_id}/videos_num_friends");
 
-                    $Cache = cache_init(array('type' => 'file'));
-                    $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                    $Cache->delete("users/{$user_id}/page_videos_user");
-                    $Cache->delete("users/{$user_id}/page_videos_user_friends");
-                    $Cache->delete("users/{$user_id}/page_videos_user_all");
-                    $Cache->delete("users/{$user_id}/videos_num_all");
-                    $Cache->delete("users/{$user_id}/videos_num_friends");
-
-                    echo $Video_id; // 'complited'
-                } else echo 'not_upload';
-            } else echo 'big_file';
+                    $status = Status::OK;
+//                    echo $Video_id; // 'complited'
+                } else {
+                    $status = Status::BAD_MOVE;
+                }
+            } else {
+                $status = Status::BIG_SIZE;
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Страница добавления видео
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function add($params): string
+    public function add(): int
     {
         $logged = $this->logged();
         Tools::NoAjaxRedirect();
+        $params = array();
 
         if($logged){
             return view('videos.add', $params);
@@ -134,14 +144,13 @@ class VideosController extends Module{
     /**
      * upload add
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function upload_add($params): string
+    public function upload_add(): int
     {
         $logged = $this->logged();
         Tools::NoAjaxRedirect();
+        $params = array();
 
         if($logged){
             return view('videos.upload', $params);
@@ -152,9 +161,12 @@ class VideosController extends Module{
     /**
      * Добавление видео в БД
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function send($params){
+    public function send(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -165,11 +177,11 @@ class VideosController extends Module{
             $request = (Request::getRequest()->getGlobal());
 
             $user_id = $user_info['user_id'];
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
             if($config['video_mod_add'] == 'yes'){
                 $good_video_lnk = Validation::ajax_utf8(Validation::textFilter($request['good_video_lnk']));
-                $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
+                $title = Validation::ajax_utf8(Validation::textFilter($request['title']));
                 $descr = Validation::ajax_utf8(Validation::textFilter($_POST['descr'], 3000));
                 $privacy = intval($request['privacy']);
                 if($privacy <= 0 OR $privacy > 3) $privacy = 1;
@@ -244,7 +256,7 @@ class VideosController extends Module{
                     $photo = str_replace($config['home_url'], '/', $photo);
 
                     //Добавляем действия в ленту новостей
-                    $server_time = \Sura\Libs\Tools::time();
+                    $server_time = \Sura\Libs\Date::time();
                     $generateLastTime = $server_time-10800;
                     $row = $db->super_query("SELECT ac_id, action_text FROM `news` WHERE action_time > '{$generateLastTime}' AND action_type = 2 AND ac_user_id = '{$user_id}'");
                     if($row)
@@ -253,36 +265,45 @@ class VideosController extends Module{
                         $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 2, action_text = '{$dbid}|{$photo}', action_time = '{$server_time}'");
 
                     //Чистим кеш
-//                    Cache::mozg_mass_clear_cache_file("
-//                    user_{$user_id}/page_videos_user|
-//                    user_{$user_id}/page_videos_user_friends|
-//                    user_{$user_id}/page_videos_user_all|
-//                    user_{$user_id}/profile_{$user_id}|
-//                    user_{$user_id}/videos_num_all|
-//                    user_{$user_id}/videos_num_friends");
-
-                    $Cache = cache_init(array('type' => 'file'));
-                    $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                    $Cache->delete("users/{$user_id}/page_videos_user");
-                    $Cache->delete("users/{$user_id}/page_videos_user_friends");
-                    $Cache->delete("users/{$user_id}/page_videos_user_all");
-                    $Cache->delete("users/{$user_id}/videos_num_all");
-                    $Cache->delete("users/{$user_id}/videos_num_friends");
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $cache->remove("{$user_id}/profile_{$user_id}");
+                    $cache->remove("{$user_id}/page_videos_user");
+                    $cache->remove("{$user_id}/page_videos_user_friends");
+                    $cache->remove("{$user_id}/page_videos_user_all");
+                    $cache->remove("{$user_id}/videos_num_all");
+                    $cache->remove("{$user_id}/videos_num_friends");
 
                     if($request['notes'] == 1)
-                        echo "{$photo}|{$user_id}|{$dbid}";
+                    {
+//                        echo "{$photo}|{$user_id}|{$dbid}";
+
+                        $status = Status::OK;
+                    }else{
+                        $status = Status::NOT_DATA;
+                    }
+                }else{
+                    $status = Status::NOT_DATA;//NOT_DATA
                 }
-            } else
-                echo 'error';
+            } else {
+                $status = Status::BAD_RIGHTS;//BAD_RIGHTS
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Парсер . Загрузка данных о видео
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function load($params){
+    public function load(): int
+    {
         $user_info = $this->user_info();
         $logged = $this->logged();
         Tools::NoAjaxRedirect();
@@ -306,8 +327,9 @@ class VideosController extends Module{
                 }
 
                 if(!$sock){
-                    echo 'no_serviece';
-                } else {
+                    $status = Status::NOT_DATA;
+                }
+                else {
                     $html = '';
 
                     //Если сервис youtube, rutube, smotri то просто выводи
@@ -386,22 +408,31 @@ class VideosController extends Module{
                     $result_title = trim(strip_tags(strtr($res_title, array('&#39;' => "'", '&quot;' => '"', '&iqu;' => '[', '&iqu2;' => ']'))));
                     $result_descr = trim(strip_tags($res_descr));
 
-                    if($result_img && $result_title)
-                        echo "{$result_img}:|:{$result_title}:|:{$result_descr}";
-                    else
-                        echo 'no_serviece';
+                    if($result_img && $result_title) {
+//                        echo "{$result_img}:|:{$result_title}:|:{$result_descr}";
+                        $status = Status::OK;
+                    }else {
+                        $status = Status::NOT_DATA;
+                    }
                 }
-            } else
-                echo 'no_serviece';
+            } else {
+                $status = Status::NOT_DATA;
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Удаление видео
      *
-     * @param $params
+     * @throws \Throwable
      */
-    public function delet($params){
+    public function delet(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -441,43 +472,45 @@ class VideosController extends Module{
                     }
 
                     //Чистим кеш
-//                    Cache::mozg_mass_clear_cache_file("
-//                    user_{$row['owner_user_id']}/page_videos_user|
-//                    user_{$row['owner_user_id']}/page_videos_user_friends|
-//                    user_{$row['owner_user_id']}/page_videos_user_all|
-//                    user_{$row['owner_user_id']}/profile_{$row['owner_user_id']}|
-//                    user_{$row['owner_user_id']}/videos_num_all|
-//                    user_{$row['owner_user_id']}/videos_num_friends|
-//                    wall/video{$vid}");
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $cache->remove("{$user_id}/profile_{$user_id}");
+                    $cache->remove("{$user_id}/page_videos_user");
+                    $cache->remove("{$user_id}/page_videos_user_friends");
+                    $cache->remove("{$user_id}/page_videos_user_all");
+                    $cache->remove("{$user_id}/videos_num_all");
+                    $cache->remove("{$user_id}/videos_num_friends");
+                    $cache = new \Sura\Cache\Cache($storage, 'wall');
+                    $cache->remove("video{$vid}");
 
-                    $Cache = cache_init(array('type' => 'file'));
-                    $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                    $Cache->delete("users/{$user_id}/page_videos_user");
-                    $Cache->delete("users/{$user_id}/page_videos_user_friends");
-                    $Cache->delete("users/{$user_id}/page_videos_user_all");
-                    $Cache->delete("users/{$user_id}/videos_num_all");
-                    $Cache->delete("users/{$user_id}/videos_num_friends");
-
-                    $Cache->delete("wall/video{$vid}");
-
+                    $status = Status::OK;
+                }else{
+                    $status = Status::NOT_FOUND;
                 }
+            }else{
+                $status = Status::NOT_DATA;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      *  Страница редактирования видео
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function edit($params): string
+    public function edit(): int
     {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
         Tools::NoAjaxRedirect();
+
+        $params = array();
 
         if($logged){
             $request = (Request::getRequest()->getGlobal());
@@ -508,9 +541,12 @@ class VideosController extends Module{
     /**
      * Сохранение отредактированых данных
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function editsave($params){
+    public function editsave(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -534,44 +570,46 @@ class VideosController extends Module{
                     $db->query("UPDATE `videos` SET title = '{$title}', descr = '{$descr}', privacy = '{$privacy}' WHERe id = '{$vid}'");
                     echo stripslashes($descr);
 
-                    //Чистим кеш
-//                    Cache::mozg_mass_clear_cache_file("
-//                    user_{$row['owner_user_id']}/page_videos_user|
-//                    user_{$row['owner_user_id']}/page_videos_user_friends|
-//                    user_{$row['owner_user_id']}/page_videos_user_all|
-//                    user_{$row['owner_user_id']}/videos_num_all|
-//                    user_{$row['owner_user_id']}/videos_num_friends|
-//                    wall/video{$vid}");
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $cache->remove("{$user_id}/profile_{$user_id}");
+                    $cache->remove("{$user_id}/page_videos_user");
+                    $cache->remove("{$user_id}/page_videos_user_friends");
+                    $cache->remove("{$user_id}/page_videos_user_all");
+                    $cache->remove("{$user_id}/videos_num_all");
+                    $cache->remove("{$user_id}/videos_num_friends");
+                    $cache = new \Sura\Cache\Cache($storage, 'wall');
+                    $cache->remove("video{$vid}");
 
-                    $Cache = cache_init(array('type' => 'file'));
-                    $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                    $Cache->delete("users/{$user_id}/page_videos_user");
-                    $Cache->delete("users/{$user_id}/page_videos_user_friends");
-                    $Cache->delete("users/{$user_id}/page_videos_user_all");
-                    $Cache->delete("users/{$user_id}/videos_num_all");
-                    $Cache->delete("users/{$user_id}/videos_num_friends");
-
-                    $Cache->delete("wall/video{$vid}");
-
+                    $status = Status::OK;
+                }else{
+                    $status = Status::NOT_FOUND;
                 }
+            }else{
+                $status = Status::NOT_DATA;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      *  Просмотр видео
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function view($params): string
+    public function view(): int
     {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
+
+        $params = array();
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -595,12 +633,12 @@ class VideosController extends Module{
 
 
                 if($user_id != $get_user_id)
-                    $check_friend = Tools::CheckFriends($row['owner_user_id']);
+                    $check_friend = \App\Libs\Friends::CheckFriends($row['owner_user_id']);
                 else
                     $check_friend = null;//bug
 
                 //Blacklist
-                $CheckBlackList = Tools::CheckBlackList($row['owner_user_id']);
+                $CheckBlackList = \App\Libs\Friends::CheckBlackList($row['owner_user_id']);
 
 
                 //Приватность
@@ -610,7 +648,7 @@ class VideosController extends Module{
                     $privacy = false;
 
                 if($privacy){
-                    $config = Settings::loadsettings();
+                    $config = Settings::load();
 
                     //Выводим комментарии если они есть
                     if($row['comm_num'] AND $config['video_mod_comm'] == 'yes'){
@@ -636,7 +674,7 @@ class VideosController extends Module{
                         $sql_comm = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, tb2.user_search_pref, user_photo, user_last_visit, user_logged_mobile FROM `videos_comments` tb1, `users` tb2 WHERE tb1.video_id = '{$vid}' AND tb1.author_user_id = tb2.user_id ORDER by `add_date` ASC LIMIT {$limit_comm}, {$row['comm_num']}", 1);
 //                        $tpl->load_template('videos/comment.tpl');
                         foreach($sql_comm as $row_comm){
-                            $online = Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
+                            $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
 //                            $tpl->set('{online}', $online);
 
 //                            $tpl->set('{uid}', $row_comm['author_user_id']);
@@ -644,7 +682,7 @@ class VideosController extends Module{
 //                            $tpl->set('{comment}', stripslashes($row_comm['text']));
 //                            $tpl->set('{id}', $row_comm['id']);
                             //Registry::set('tpl', $tpl);
-                            $date = megaDate(strtotime($row_comm['add_date']));
+                            $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['add_date']));
 //                            $tpl->set('{date}', $date);
 
                             if($row_comm['author_user_id'] == $user_id || $row['owner_user_id'] == $user_id || $public_admin){
@@ -678,7 +716,7 @@ class VideosController extends Module{
                             $active = '';
 
                         $vplaylist .= '<a class="plvideo'.$row_playlist['id'].'" href="/video/'.$row['owner_user_id'].'/'.$row_playlist['id'].'/" onclick="$(`.video_view`).remove(); videos.show('.$row_playlist['id'].', this.href); return false;"><div class="plvideo'.$row_playlist['id'].' videopl'.$active.'" style="display: flex;font-size: 12px;padding: 6px 5px 6px 10px;">
-                                <div style="margin-right: 7px;"><img style="width:100;height:55px;" src="'.$row_playlist['photo'].'"/></div>
+                                <div style="margin-right: 7px;"><img style="width:100px;height:55px;" src="'.$row_playlist['photo'].'"/></div>
                                 <div>
                                 <div style="max-height: 34px;margin-bottom: 2px;display: -webkit-box;-webkit-line-clamp: 2;-webkit-box-orient: vertical;overflow: hidden;text-overflow: ellipsis;line-height: 17px;color: #fff;opacity: 0.7;">'.$row_playlist['title'].'</div>
                                 <div style="color: #fff;opacity: 0.35;">'.$row_playlist['views'].' '.declofnum($row_playlist['views'], array('просмотр','просмотра','просмотров')).'</div>
@@ -745,7 +783,7 @@ class VideosController extends Module{
 //                    $tpl->set('{owner-id}', $row['owner_user_id']);
 //                    $tpl->set('{close-link}', $close_link);
 
-                    $date = megaDate(strtotime($row['add_date']));
+                    $date = \Sura\Libs\Date::megaDate(strtotime($row['add_date']));
 //                    $tpl->set('{date}', $date);
 
                     if($row['owner_user_id'] == $user_id){
@@ -809,11 +847,10 @@ class VideosController extends Module{
     /**
      * Добавления комментария в базу
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
+     * @throws \Throwable
      */
-    public function addcomment($params): string
+    public function addcomment(): int
     {
         $lang = $this->get_langs();
         $db = $this->db();
@@ -822,13 +859,15 @@ class VideosController extends Module{
 
         Tools::NoAjaxRedirect();
 
+        $params = array();
+
         if($logged){
             $request = (Request::getRequest()->getGlobal());
 
             $user_id = $user_info['user_id'];
             $limit_vieos = 20;
 
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
             if($config['video_mod_comm'] == 'yes'){
                 $vid = intval($request['vid']);
@@ -870,31 +909,23 @@ class VideosController extends Module{
                             if($user_id != $check_video['owner_user_id']){
                                 $check_video['photo'] = str_replace($config['home_url'], '/', $check_video['photo']);
                                 $comment = str_replace("|", "&#124;", $comment);
-                                $server_time = \Sura\Libs\Tools::time();
+                                $server_time = \Sura\Libs\Date::time();
                                 $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 9, action_text = '{$comment}|{$check_video['photo']}|{$vid}', obj_id = '{$id}', for_user_id = '{$check_video['owner_user_id']}', action_time = '{$server_time}'");
 
                                 //Вставляем событие в моментальные оповещания
                                 $row_userOW = $db->super_query("SELECT user_last_visit FROM `users` WHERE user_id = '{$check_video['owner_user_id']}'");
                                 $update_time = $server_time - 70;
 
-                                $Cache = cache_init(array('type' => 'file'));
+                                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                                $cache = new \Sura\Cache\Cache($storage, 'users');
+
                                 if($row_userOW['user_last_visit'] >= $update_time){
-
                                     $db->query("INSERT INTO `updates` SET for_user_id = '{$check_video['owner_user_id']}', from_user_id = '{$user_id}', type = '3', date = '{$server_time}', text = '{$comment}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/video{$check_video['owner_user_id']}_{$vid}'");
-
-//                                    Cache::mozg_create_cache("
-//                                    user_{$check_video['owner_user_id']}/updates", 1);
-                                    $Cache->set("users/{$check_video['owner_user_id']}/updates", 1);
-
-                                    //ИНАЧЕ Добавляем +1 юзеру для оповещания
+                                    $cache->save("{$check_video['owner_user_id']}/updates", 1);
                                 } else {
-
-//                                    $cntCacheNews = Cache::mozg_cache('user_'.$check_video['owner_user_id'].'/new_news');
-//                                    Cache::mozg_create_cache('user_'.$check_video['owner_user_id'].'/new_news', ($cntCacheNews+1));
-
-                                    $cntCacheNews = $Cache->get("users/{$check_video['owner_user_id']}/new_news");
-                                    $Cache->set("users/{$check_video['owner_user_id']}/new_news", $cntCacheNews+1);
-
+                                    //ИНАЧЕ Добавляем +1 юзеру для оповещания
+                                    $value = $cache->load("users/{$check_video['owner_user_id']}/new_news");
+                                    $cache->save("users/{$check_video['owner_user_id']}/new_news", $value+1);
                                 }
 
                                 //Отправка уведомления на E-mail
@@ -914,21 +945,17 @@ class VideosController extends Module{
                             }
 
                             //Чистим кеш
-//                            Cache::mozg_mass_clear_cache_file("
-//                            user_{$check_video['owner_user_id']}/page_videos_user|
-//                            user_{$check_video['owner_user_id']}/page_videos_user_friends|
-//                            user_{$check_video['owner_user_id']}/page_videos_user_all");
+                            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                            $cache = new \Sura\Cache\Cache($storage, 'users');
 
-                            $Cache = cache_init(array('type' => 'file'));
-                            $Cache->delete("users/{$check_video['owner_user_id']}/profile");
-                            $Cache->delete("users/{$check_video['owner_user_id']}/page_videos_user_friends");
-                            $Cache->delete("users/{$check_video['owner_user_id']}/page_videos_user_all");
+                            $cache->remove("{$check_video['owner_user_id']}/profile");
+                            $cache->remove("{$check_video['owner_user_id']}/page_videos_user_friends");
+                            $cache->remove("{$check_video['owner_user_id']}/page_videos_user_all");
 
                         } else{
-//                            Cache::mozg_clear_cache_file("
-//                            groups/video{$check_video['public_id']}");
-                            $Cache = cache_init(array('type' => 'file'));
-                            $Cache->delete("groups/{$check_video['public_id']}/video{$check_video['public_id']}");
+                            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                            $cache = new \Sura\Cache\Cache($storage, 'groups');
+                            $cache->remove("{$check_video['public_id']}/video{$check_video['public_id']}");
                         }
                         return view('info.info', $params);
 
@@ -943,9 +970,12 @@ class VideosController extends Module{
     /**
      * Удаления комментария
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function delcomment($params){
+    public function delcomment(): int
+    {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -974,13 +1004,17 @@ class VideosController extends Module{
                     $db->query("DELETE FROM `news` WHERE obj_id = '{$comm_id}' AND action_type = 9");
                     $db->query("UPDATE `videos` SET comm_num = comm_num-1 WHERE id = '{$row['video_id']}'");
 
-//                    Cache::mozg_clear_cache_file("groups/video{$row['public_id']}");
-                    $Cache = cache_init(array('type' => 'file'));
-                    $Cache->delete("groups/{$row['public_id']}/video{$row['public_id']}");
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'groups');
+
+                    $cache->remove("{$row['public_id']}/video{$row['public_id']}");
+
+                    $status = Status::OK;
+                }else{
+                    $status = Status::NOT_FOUND;
                 }
-
-            } else {
-
+            }
+            else {
                 if($row['author_user_id'] == $user_id OR $row['owner_user_id'] == $user_id){
 
                     $db->query("DELETE FROM `videos_comments` WHERE id = '{$comm_id}'");
@@ -988,36 +1022,41 @@ class VideosController extends Module{
                     $db->query("UPDATE `videos` SET comm_num = comm_num-1 WHERE id = '{$row['video_id']}'");
 
                     //Чистим кеш
-//                    Cache::mozg_mass_clear_cache_file("
-//                    user_{$row['owner_user_id']}/page_videos_user|
-//                    user_{$row['owner_user_id']}/page_videos_user_friends|
-//                    user_{$row['owner_user_id']}/page_videos_user_all");
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'users');
 
-                    $Cache = cache_init(array('type' => 'file'));
-                    $Cache->delete("users/{$row['owner_user_id']}/profile");
-                    $Cache->delete("users/{$row['owner_user_id']}/page_videos_user_friends");
-                    $Cache->delete("users/{$row['owner_user_id']}/page_videos_user_all");
+                    $cache->remove("{$row['owner_user_id']}/profile");
+                    $cache->remove("{$row['owner_user_id']}/page_videos_user_friends");
+                    $cache->remove("row['owner_user_id']}/page_videos_user_all");
 
+                    $status = Status::OK;
+                }else{
+                    $status = Status::NOT_FOUND;
                 }
 
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Показ всех комментариев
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function all_comm($params): string
+    public function all_comm(): int
     {
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
+
+        $params = array();
 
         if($logged){
             $request = (Request::getRequest()->getGlobal());
@@ -1052,10 +1091,10 @@ class VideosController extends Module{
 //                    $tpl->set('{author}', $row_comm['user_search_pref']);
 //                    $tpl->set('{comment}', stripslashes($row_comm['text']));
 //                    $tpl->set('{id}', $row_comm['id']);
-                    $online = Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
+                    $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
 //                    $tpl->set('{online}', $online);
 
-                    $date = megaDate(strtotime($row_comm['add_date']));
+                    $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['add_date']));
 //                    $tpl->set('{date}', $date);
 
                     if($row_comm['author_user_id'] == $user_id OR $owner_id == $user_id OR $public_admin){
@@ -1067,7 +1106,7 @@ class VideosController extends Module{
 
                     }
 
-                    $config = Settings::loadsettings();
+                    $config = Settings::load();
 
                     if($row_comm['user_photo']){
 //                        $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row_comm['author_user_id'].'/50_'.$row_comm['user_photo']);
@@ -1091,11 +1130,9 @@ class VideosController extends Module{
      * Страница всех видео юзера,
      * для прикрепления видео кому-то на стену
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function all_videos($params): string
+    public function all_videos(): int
     {
 //        $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -1104,6 +1141,8 @@ class VideosController extends Module{
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
+
+        $params = array();
 
         if($logged){
             $request = (Request::getRequest()->getGlobal());
@@ -1181,11 +1220,9 @@ class VideosController extends Module{
      * Страница всех видео юзера,
      * для прикрепления видео в сообщество
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function all_videos_public($params): string
+    public function all_videos_public(): int
     {
 //        $tpl = $params['tpl'];
         //$lang = $this->get_langs();
@@ -1194,6 +1231,8 @@ class VideosController extends Module{
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
+
+        $params = array();
 
         if($logged){
             $request = (Request::getRequest()->getGlobal());
@@ -1260,11 +1299,9 @@ class VideosController extends Module{
     /**
      * Бесконечная подгрузка видео из БД
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function page($params): string
+    public function page(): int
     {
 //        $tpl = $params['tpl'];
         //$lang = $this->get_langs();
@@ -1273,6 +1310,8 @@ class VideosController extends Module{
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
+
+        $params = array();
 
         if($logged){
             $request = (Request::getRequest()->getGlobal());
@@ -1326,7 +1365,7 @@ class VideosController extends Module{
                             $titles = array('комментарий', 'комментария', 'комментариев');//comments
 //                            $tpl->set('{comm}', $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles));
 
-                            $date = megaDate(strtotime($row['add_date']));
+                            $date = \Sura\Libs\Date::megaDate(strtotime($row['add_date']));
 //                            $tpl->set('{date}', $date);
                             if($get_user_id == $user_id){
 //                                $tpl->set('[owner]', '');
@@ -1348,9 +1387,12 @@ class VideosController extends Module{
     /**
      * Добавление видео к себе в список
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function addmylist($params){
+    public function addmylist(): int
+    {
         //$tpl = $params['tpl'];
         //$lang = $this->get_langs();
         $db = $this->db();
@@ -1366,67 +1408,68 @@ class VideosController extends Module{
             //$limit_vieos = 20;
 
             $vid = intval($request['vid']);
-            $row = $db->super_query("SELECT video, photo, title, descr FROM `videos` WHERE id = '{$vid}'");
 
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
-            if($row AND $config['video_mod_add_my'] == 'yes'){
-                //Директория загрузки фото
-                $upload_dir = __DIR__.'/../../public/uploads/videos/'.$user_id;
+            if ($config['video_mod_add_my'] == 'yes'){
+                $row = $db->super_query("SELECT video, photo, title, descr FROM `videos` WHERE id = '{$vid}'");
+                if($row){
+                    //Директория загрузки фото
+                    $upload_dir = __DIR__.'/../../public/uploads/videos/'.$user_id;
 
-                //Если нет папки юзера, то создаём её
-                if(!is_dir($upload_dir)){
-                    @mkdir($upload_dir, 0777);
-                    @chmod($upload_dir, 0777);
+                    //Если нет папки юзера, то создаём её
+                    if(!is_dir($upload_dir)){
+                        @mkdir($upload_dir, 0777);
+                        @chmod($upload_dir, 0777);
+                    }
+
+                    $array = explode('/', $row['photo']);
+                    $expPhoto = end($array);
+                    copy($row['photo'], __DIR__."/../../public/uploads/videos/{$user_id}/{$expPhoto}");
+                    $newPhoto = "{$config['home_url']}uploads/videos/{$user_id}/{$expPhoto}";
+                    $row['video'] = $db->safesql($row['video']);
+                    $row['descr'] = $db->safesql($row['descr']);
+                    $row['title'] = $db->safesql($row['title']);
+                    $db->query("INSERT INTO `videos` SET owner_user_id = '{$user_id}', video = '{$row['video']}', photo = '{$newPhoto}', title = '{$row['title']}', descr = '{$row['descr']}', add_date = NOW(), privacy = 1");
+                    //$dbid = $db->insert_id();
+                    $db->query("UPDATE `users` SET user_videos_num = user_videos_num+1 WHERE user_id = '{$user_id}'");
+
+                    //Чистим кеш
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $cache->remove("{$user_id}/page_videos_user");
+                    $cache->remove("{$user_id}/page_videos_user_friends");
+                    $cache->remove("{$user_id}/page_videos_user_all");
+                    $cache->remove("{$user_id}/profile_{$user_id}");
+                    $cache->remove("{$user_id}/videos_num_all");
+                    $cache->remove("{$user_id}/videos_num_friends");
+
+                    $status = Status::OK;
+                }else{
+                    $status = Status::NOT_FOUND;
                 }
-
-                $array = explode('/', $row['photo']);
-                $expPhoto = end($array);
-                copy($row['photo'], __DIR__."/../../public/uploads/videos/{$user_id}/{$expPhoto}");
-                $newPhoto = "{$config['home_url']}uploads/videos/{$user_id}/{$expPhoto}";
-                $row['video'] = $db->safesql($row['video']);
-                $row['descr'] = $db->safesql($row['descr']);
-                $row['title'] = $db->safesql($row['title']);
-                $db->query("INSERT INTO `videos` SET owner_user_id = '{$user_id}', video = '{$row['video']}', photo = '{$newPhoto}', title = '{$row['title']}', descr = '{$row['descr']}', add_date = NOW(), privacy = 1");
-                //$dbid = $db->insert_id();
-                $db->query("UPDATE `users` SET user_videos_num = user_videos_num+1 WHERE user_id = '{$user_id}'");
-
-                //Чистим кеш
-//                Cache::mozg_mass_clear_cache_file("
-//                user_{$user_id}/page_videos_user|
-//                user_{$user_id}/page_videos_user_friends|
-//                user_{$user_id}/page_videos_user_all|
-//                user_{$user_id}/profile_{$user_id}|
-//                user_{$user_id}/videos_num_all|
-//                user_{$user_id}/videos_num_friends");
-
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("users/{$user_id}/page_videos_user");
-                $Cache->delete("users/{$user_id}/page_videos_user_friends");
-                $Cache->delete("users/{$user_id}/page_videos_user_all");
-                $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                $Cache->delete("users/{$user_id}/videos_num_all");
-                $Cache->delete("users/{$user_id}/videos_num_friends");
-
+            }else{
+                $status = Status::BAD_RIGHTS;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Просмотр видео и комментари к видео
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function index($params): string
+    public function index(): int
     {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -1444,7 +1487,7 @@ class VideosController extends Module{
                 $params['owner'] = false;
             }
 
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
             if($config['video_mod_add'] == 'yes'){
                 $params['admin_video_add'] = true;
@@ -1472,7 +1515,7 @@ class VideosController extends Module{
 
                     if($user_id != $get_user_id)
                         //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-                        $check_friend = Tools::CheckFriends($get_user_id);
+                        $check_friend = \App\Libs\Friends::CheckFriends($get_user_id);
 
                     //Настройки приватности
                     if($user_id == $get_user_id)
@@ -1524,7 +1567,7 @@ class VideosController extends Module{
                                 $titles = array('комментарий', 'комментария', 'комментариев');//comments
                                 $params[$sql_]['comm'] = $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles);
 
-                                $date = megaDate(strtotime($row['add_date']));
+                                $date = \Sura\Libs\Date::megaDate(strtotime($row['add_date']));
                                 $params[$sql_]['date'] = $date;
                                 if($get_user_id == $user_id){
                                     $params[$sql_]['owner'] = true;

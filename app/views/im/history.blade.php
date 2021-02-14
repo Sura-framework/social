@@ -1,5 +1,4 @@
 <div class="im_messages_cont" id="im_messages_cont">
-
     <div class="im_messages_res" style="padding-bottom: 109px;">
     <div id="im_history">
     @if($im)

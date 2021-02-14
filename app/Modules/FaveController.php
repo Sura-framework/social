@@ -6,6 +6,7 @@ use Exception;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 
 class FaveController extends Module{
@@ -13,9 +14,11 @@ class FaveController extends Module{
     /**
      * Добвление юзера в закладки
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function add($params){
+    public function add(): int
+    {
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -40,22 +43,33 @@ class FaveController extends Module{
 
                 //Проверям на факт существование этого юзера в закладках, если нету то пропускаем
                 $db->query("SELECT `user_id` FROM `fave` WHERE user_id = '{$user_id}' AND fave_id = '{$fave_id}'");
-                if(!$db->num_rows()){
+                if(!$db->num_rows()){//TODO update
                     $db->query("INSERT INTO `fave` SET user_id = '{$user_id}', fave_id = '{$fave_id}', date = NOW()");
                     $db->query("UPDATE `users` SET user_fave_num = user_fave_num+1 WHERE user_id = '{$user_id}'");
-                } else
-                    echo 'yes_user';
-            } else
-                echo 'no_user';
+
+                    $status = Status::OK;
+                } else {
+                    $status = Status::FOUND;
+                }
+            } else {
+                $status = Status::NOT_FOUND;
+            }
+        } else {
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Удаление юзера из закладок
      *
-     * @param $params
+     * @throws \JsonException
      */
-    public function delet($params){
+    public function delete(): int
+    {
+        //TODO add to route
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -78,26 +92,30 @@ class FaveController extends Module{
             if($row){
                 $db->query("DELETE FROM `fave` WHERE user_id = '{$user_id}' AND fave_id = '{$fave_id}'");
                 $db->query("UPDATE `users` SET user_fave_num = user_fave_num-1 WHERE user_id = '{$user_id}'");
-            } else
-                echo 'yes_user';
+
+                $status = Status::OK;
+            } else{
+                $status = Status::NOT_FOUND;
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Вывод людей которые есть в закладках
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function index($params): string
+    public function index(): int
     {
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -124,7 +142,7 @@ class FaveController extends Module{
 
                 //Выводи из базы
                 $sql_ = $db->super_query("SELECT tb1.fave_id, tb2.user_search_pref, user_photo, user_last_visit, user_logged_mobile FROM `fave` tb1, `users` tb2 WHERE tb1.user_id = '{$user_id}' AND tb1.fave_id = tb2.user_id ORDER by `date` LIMIT {$limit_page}, {$gcount}", 1);
-                $config = Settings::loadsettings();
+                $config = Settings::load();
                 foreach($sql_ as $key => $row){
                     if($row['user_photo']){
                         $sql_[$key]['ava'] = $config['home_url'].'uploads/users/'.$row['fave_id'].'/100_'.$row['user_photo'];
@@ -134,7 +152,7 @@ class FaveController extends Module{
                     }
                     $sql_[$key]['name'] = $row['user_search_pref'];
                     $sql_[$key]['user_id'] = $row['fave_id'];
-                    $online = Online($row['user_last_visit'], $row['user_logged_mobile']);
+                    $online = \App\Libs\Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
                     $sql_[$key]['online'] = $online;
                 }
                 $params['fave'] = $sql_;

@@ -3,17 +3,17 @@ var rating = {
     $('.js_titleRemove').remove();
     viiBox.start();
 	$.post('/rating/', {for_user_id: f}, function(d){
-	  viiBox.win('rate', d);
+	  viiBox.win('rate', d.content);
 	});
   },
   save: function(u){
-    var trate = parseInt($('#profile_rate_num').text()) + parseInt($('#rate_num').val());
-	var add = $('#rate_num').val();
-	if(parseInt($('#balance').val()) < parseInt($('#rate_num').val())){
+	  const trate = parseInt($('#profile_rate_num').text()) + parseInt($('#rate_num').val());
+	  const add = $('#rate_num').val();
+	  if(parseInt($('#balance').val()) < parseInt($('#rate_num').val())){
 	  setErrorInputMsg('rate_num');
 	  return false;
 	}
-	if(add != 0){
+	if(add !== 0){
 	  butloading('saverate', 94, 'disabled', '');
 	  $.post('/rating/add/', {for_user_id: u, num: add}, function(d){
 	    $('#profile_rate_num').text(trate);
@@ -32,10 +32,10 @@ var rating = {
 	  setErrorInputMsg('rate_num');
   },
   update: function(){
-    var add = $('#rate_num').val();
-	var new_rate = $('#balance').val() - add;
-	var pr = parseInt(add);
-	if(!isNaN(pr)) $('#rate_num').val(parseInt(add));
+	  const add = $('#rate_num').val();
+	  const new_rate = $('#balance').val() - add;
+	  const pr = parseInt(add);
+	  if(!isNaN(pr)) $('#rate_num').val(parseInt(add));
 	else $('#rate_num').val('');
 	if(add && new_rate >= 0){
 	  $('#num').text(new_rate);
@@ -51,13 +51,14 @@ var rating = {
   view: function(){
     viiBox.start();
 	$.post('/rating/view/', function(d){
-	  viiBox.win('view_rating', d);
+	  viiBox.win('view_rating', d.content);
 	});
   },
   page: function(){
     if($('#load_rate_prev_ubut').text() == 'Показать предыдущие повышения'){
 	  textLoad('load_rate_prev_ubut');
-	  $.post('/rating/view/', {page_cnt: page_cnt_rate}, function(d){
+		let page_cnt_rate;
+		$.post('/rating/view/', {page_cnt: page_cnt_rate}, function(d){
 		page_cnt_rate++;
 		$('#rating_users').append(d);
 		$('#load_rate_prev_ubut').text('Показать предыдущие повышения');

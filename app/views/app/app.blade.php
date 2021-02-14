@@ -1,24 +1,25 @@
 @if(!\Sura\Libs\Request::ajax())
-@inject('Support' , 'App\Libs')
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <title>{{ $title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    {{ $support->header() }}
+    {{ \App\Libs\Support::header() }}
     <noscript><meta http-equiv="refresh" content="0; URL=/badbrowser/"></noscript>
     <link media="screen" href="@asset('style/bootstrap.min.css?=3')" type="text/css" rel="stylesheet" />
+{{--    <link media="screen" href="@asset('style/style.css?=3')" type="text/css" rel="stylesheet" />--}}
     <link media="screen" href="@asset('style/style.css?=3')" type="text/css" rel="stylesheet" />
-    {{ $support->head_script_uId() }}{{ $support->head_js() }}
-    <script src="@asset('js/menu.js?=3')"></script>
+    {{ \App\Libs\Support::head_script_uId() }}{{ \App\Libs\Support::head_js() }}
+{{--    <script src="@asset('js/menu.js?=3')"></script>--}}
 </head>
-<body {{--onResize="onBodyResize()"--}} class="no_display">
+<body {{--onResize="onBodyResize()"--}} >
 {{--<div class="scroll_fix_bg no_display" onMouseDown="myhtml.scrollTop()"><div class="scroll_fix_page_top">Наверх</div></div>--}}
+<div id="theme">{{ \App\Libs\Support::theme() }}</div>
 <div id="doLoad"></div>
 <header class="fixed-top">
     <div class="ml-3 mr-3">
         <nav class="flex-nowrap navbar navbar-expand-lg navbar-light bg-light">
-            <button class="m-menu mr-5">
+            <button class="m-menu mr-5" onclick="open_menu()">
                 <span class="line"></span>
                 <span class="line"></span>
                 <span class="line"></span>
@@ -31,10 +32,10 @@
                        onkeypress="if(event.keyCode == 13) gSearch.go();"
                        onkeyup="FSE.Txt()"
                        autocomplete="off"
-                value="{{ $support->search() }}"
+                value="{{ App\Libs\Support::search() }}"
                 >
                 <div id="search_types">
-                    <input type="hidden" value="1" id="se_type">
+                    <input type="hidden" value="3" id="se_type">
                     <div class="search_type d-none" id="search_selected_text" onclick="gSearch.open_types('#sel_types'); return false">@_e('by_people')</div>
                     <div class="search_alltype_sel no_display" id="sel_types" style="display: none;">
                         <div id="1" onclick="gSearch.select_type(this.id, 'по людям'); FSE.GoSe($('#query').val()); return false" class="search_type_selected">@_e('by_people')</div>
@@ -62,16 +63,16 @@
 @include('app.menu')
 <div class="">
     <div id="audioPlayer"></div>
-    <div id="qnotifications_box">
-        <div id="qnotifications_news">
+    <div id="qnotifications_box" class="d-none justify-content-center">
+        <div id="qnotifications_news" class="col-12 col-sm-12 col-md-12 col-lg-8 col-xl-6 mt-5">
             <div class="qnotifications_head"><span>@_e('all_notify')</span><span class="settings_icon" onclick="QNotifications.settings();"></span></div>
             <div id="qnotifications_content"></div>
         </div>
-        <div id="qnotifications_settings" style="display:none;">
+        <div id="qnotifications_settings" class="col-12 col-sm-12 col-md-12 col-lg-8 col-xl-6 mt-5" style="display:none;">
             <div class="qnotifications_head" style="color: #008bc8;cursor: pointer;" onclick="QNotifications.settings();"><span><img style="margin: -4px 6px 0 0;vertical-align: middle;" src="/images/left-arrow.png" alt="left-arrow"></span><span>@_e('back_to_my_notify')</span></div>
             <div id="qnotifications_settings_content"></div>
         </div>
-        <div id="qnotifications_notification" style="display:none;">
+        <div id="qnotifications_notification" class="col-12 col-sm-12 col-md-12 col-lg-8 col-xl-6 mt-5" style="display:none;">
             <div class="qnotifications_head" style="color: #008bc8;cursor: pointer;" onclick="QNotifications.close_notify();"><span><img style="margin: -4px 6px 0 0;vertical-align: middle;" src="/images/left-arrow.png" alt="left-arrow"></span><span>@_e('back')</span></div>
             <div id="qnotifications_notification_content"></div>
         </div>
@@ -90,7 +91,7 @@
 <footer>
     <div class="container">
         <div class="footer">
-            @_e('Name') &copy; 2020 <a class="cursor_pointer" onClick="trsn.box()"
+            @_e('Name') &copy; 2021 <a class="cursor_pointer" onClick="trsn.box()"
                 onMouseOver="myhtml.title('1', '@_e('select_lang')', 'langTitle', 1)"
                 id="langTitle1">@_e('lang')</a>
             <div class="fl_r">

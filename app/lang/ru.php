@@ -33,6 +33,8 @@ return array(
     'and'=>'и',
     'close'=>'Закрыть',
     'online' => 'Online',
+    'no_infooo' => 'no_infooo',
+    'no_upage' => 'no_upage',
 
     //footer
     'privacy'=>'Конфиденциальность',

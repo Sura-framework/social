@@ -8,11 +8,12 @@ class LoadcityController extends Module{
 
     /**
      *  Загрузка городов
+     * @throws \Throwable
      */
-    public function index()
+    public function index(): int
     {
         //$lang = langs::get_langs();
-        $db = $this->db();
+//        $db = $this->db();
 
         $request = (Request::getRequest()->getGlobal());
 
@@ -21,9 +22,7 @@ class LoadcityController extends Module{
         echo '<option value="0">- Выбрать -</option>';
 
         if($country_id > 0){
-            $sql_ = $db->super_query("SELECT id, name FROM `city` WHERE id_country = '{$country_id}' ORDER by `name` ", 1);
-            foreach($sql_ as $row2)
-                echo '<option value="'.$row2['id'].'">'.stripslashes($row2['name']).'</option>';
+            echo   (new \App\Libs\Support)->allCity($country_id, 1);
         }
 
         echo '<script type="text/javascript">$(\'#load_mini\').hide();</script>'; //!NB

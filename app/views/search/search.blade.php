@@ -39,14 +39,14 @@
 {{--                    <div class="{activetab-2}"><a href="/search/?{{ $query_videos }}" onClick="Page.Go(this.href); return false;"><div><b>Видеозаписи</b></div></a></div>--}}
 {{--                </div>--}}
                 <div class="site_menu_fix">
-                    <a href="/search/?query={{ $query_people }}" onclick="Page.Go(this.href); return false;" class="left_row">
+                    <a href="/search/?{{ $query_all }}" onclick="Page.Go(this.href); return false;" class="left_row">
       <span class="left_label inl_bl ml-5">
        <svg class="bi bi-files" width="24" height="24" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
   <path fill-rule="evenodd" d="M3 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3z"/>
   <path d="M5 0h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2v-1a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1H3a2 2 0 0 1 2-2z"/>
 </svg>@_e('all')</span>
                     </a>
-                    <a href="/search/?query={{ $query_people }}" onclick="Page.Go(this.href); return false;" class="left_row">
+                    <a href="/search/?{{ $query_people }}" onclick="Page.Go(this.href); return false;" class="left_row">
       <span class="left_label inl_bl  ml-5">
                  <svg class="bi bi-files" width="24" height="24" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
   <path fill-rule="evenodd" d="M3 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3z"/>
@@ -156,18 +156,144 @@
             <input type="hidden" id="teck_prefix" value="" />
         </div>
         <div class="col-12 col-sm-12 col-md-12 col-lg-6">
-            @if($search)
                 @if($type == 1)
                     @include('search.people', $search)
                 @elseif($type == 2)
                     @include('search.video', $search)
+                @elseif($type == 3)
+
+                    <div class="card mt-3">
+                        <a href="" style="text-decoration:none" onclick="Page.Go(this.href); return false">
+                            <div class="albtitle">Люди<span class="pl-2">{{ $users_count }}</span></div>
+                        </a>
+                        <div class="d-flex">
+                            @foreach($last_users as $row)
+                                <div id="link_tag_{{ $row['user_id'] }}_{{ $row['user_id'] }}" class="newmesnobg" style="padding:0px;padding-top:10px;">
+                                    <div class="onefriend">
+                                        <a href="/u{{ $row['user_id'] }}" onclick="Page.Go(this.href); return false">
+                                            <div>
+                                                <img src="{{ $row['ava'] }}" alt="{{ $row['name'] }}" class="avatar-img" style="width: 120px;height: 120px;"
+                                                     onmouseover="wall.showTag({{ $row['user_id'] }}, {{ $row['user_id'] }}, 1)" onmouseout="wall.hideTag({{ $row['user_id'] }}, {{ $row['user_id'] }}, 1)">
+                                            </div>
+                                            <div>
+                                                {{ $row['name'] }}
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                    </div>
+
+                    <div class="card mt-3">
+                        <a href="" style="text-decoration:none" onclick="Page.Go(this.href); return false">
+                            <div class="albtitle">Сообщества<span class="pl-2">{{ $users_count }}</span></div>
+                        </a>
+                        <div class="d-flex">
+                            @foreach($last_groups as $row)
+                                <div id="link_tag_{{ $row['public_id'] }}_{{ $row['public_id'] }}" class="newmesnobg" style="padding:0px;padding-top:10px;">
+                                    <div class="onefriend">
+                                        <a href="/public{{ $row['public_id'] }}" onclick="Page.Go(this.href); return false">
+                                            <div>
+                                                <img src="{{ $row['ava'] }}" alt="{{ $row['name'] }}" class="avatar-img" style="width: 120px;height: 120px;"
+                                                     onmouseover="wall.showTag({{ $row['public_id'] }}, {{ $row['id'] }}, 1)" onmouseout="wall.hideTag({{ $row['public_id'] }}, {{ $row['public_id'] }}, 1)">
+                                            </div>
+                                            <div>
+                                                {{ $row['name'] }}
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                    </div>
+
+                    <div class="card mt-3">
+                        <a href="" style="text-decoration:none" onclick="Page.Go(this.href); return false">
+                            <div class="albtitle">Аудиозаписи<span class="pl-2">{{ $audios_count }}</span></div>
+                        </a>
+                        @foreach($audios as $row)
+                            <div class="audioPage audioElem search search_item"
+                                 id="audio_{$row['id']}_{$row['oid']}_{$plname}"
+                                 onclick="playNewAudio('{$row['id']}_{$row['oid']}_{$plname}', event);">
+                                <div class="area">
+                                    <table cellspacing="0" cellpadding="0" width="100%">
+                                        <tbody>
+                                        <tr>
+                                            <td>
+                                                <div class="audioPlayBut new_play_btn"><div class="bl"><div class="figure"></div></div></div>
+                                                <input type="hidden" value="{$row['url']},{$row['duration']},page"
+                                                       id="audio_url_{$row['id']}_{$row['oid']}_{$plname}">
+                                            </td>
+                                            <td class="info">
+                                                <div class="audioNames"><b class="author" onclick="Page.Go('/?go=search&query=&type=5&q='+this.innerHTML);" id="artist">{{ $row['artist'] }}</b> – <span
+                                                            class="name" id="name">{{ $row['title'] }}</span> <div class="clear"></div></div>
+                                                <div class="audioElTime" id="audio_time_{$row['id']}_{$row['oid']}_{$plname}">{$stime}</div>
+                                                <div class="vk_audio_dl_btn cursor_pointer fl_l" href="{$row['url']}" style="
+position: absolute;
+right: 28px;
+top: 9px;
+display: none;
+" onclick="vkDownloadFile(this,'{$row['artist']} - {$row['title']} - kalibri.co.ua');
+cancelEvent(event);" onMouseOver="myhtml.title('{$row['id']}', 'Скачать песню', 'ddtrack_', 4)"
+                                                     id="ddtrack_{$row['id']}"></div>
+                                                <div class="audioSettingsBut"><li class="icon-plus-6"
+                                                                                  onClick="gSearch.addAudio('{$row['id']}_{$row['oid']}_{$plname}')"
+                                                                                  onmouseover="showTooltip(this, {text: 'Добавить в мой список', shift: [6,5,0]});"
+                                                                                  id="no_play"></li><div class="clear"></div></div>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                    <div id="player{$row['id']}_{$row['oid']}_{$plname}" class="audioPlayer" border="0"
+                                         cellpadding="0">
+                                        <table cellspacing="0" cellpadding="0" width="100%">
+                                            <tbody>
+                                            <tr>
+                                                <td style="width: 100%;">
+                                                    <div class="progressBar fl_l" style="width: 100%;" onclick="cancelEvent(event);"
+                                                         onmousedown="audio_player.progressDown(event, this);" id="no_play"
+                                                         onmousemove="audio_player.playerPrMove(event, this)"
+                                                         onmouseout="audio_player.playerPrOut()">
+                                                        <div class="audioTimesAP" id="main_timeView"><div
+                                                                    class="audioTAP_strlka">100%</div></div>
+                                                        <div class="audioBGProgress"></div>
+                                                        <div class="audioLoadProgress"></div>
+                                                        <div class="audioPlayProgress" id="playerPlayLine"><div class="audioSlider"></div></div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="audioVolumeBar fl_l" onclick="cancelEvent(event);"
+                                                         onmousedown="audio_player.volumeDown(event, this);" id="no_play">
+                                                        <div class="audioTimesAP"><div class="audioTAP_strlka">100%</div></div>
+                                                        <div class="audioBGProgress"></div>
+                                                        <div class="audioPlayProgress" id="playerVolumeBar"><div class="audioSlider"></div></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="card mt-3">
+                        <a href="" style="text-decoration:none" onclick="Page.Go(this.href); return false">
+                            <div class="albtitle">Видеозаписи<span class="pl-2">2</span></div>
+                        </a>
+                        {videos}
+                    </div>
+
+
                 @elseif($type == 4)
                     @include('search.groups', $search)
                 @elseif($type == 5)
                     @include('search.audios', $search)
                 @endif
                 {{ $navigation }}
-            @endif
         </div>
 
     <div class="col-2 d-none d-sm-none d-md-block  col-md-4 col-lg-2"></div>

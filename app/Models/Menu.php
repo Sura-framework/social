@@ -76,7 +76,7 @@ class Menu
         $go = 'Page.Go(this.href); return false;';
 
         $uid = str_replace('u', '', $path);
-        $uid = intval($uid['1']);
+        $uid = (int)$uid['1'];
 
         if (is_int($uid))
             $id = $user_info['user_id'];
@@ -105,5 +105,22 @@ class Menu
                 ->setActive($_SERVER['REQUEST_URI'])
                 ->wrap('div', ['class' => 'wrapper'])
                 ->render();
+    }
+
+    public static function bugs(): string
+    {
+//        $lang = langs::get_langs();
+        $go = 'Page.Go(this.href); return false;';
+
+        return \Sura\Menu\Menu::new()
+            ->addClass('navigation nav text-left pl-2')
+            ->add(Link::to('/bugs/', 'Все баги')->setAttribute('onClick', $go))
+            ->add(Link::to('/bugs/open/', 'Открытые')->setAttribute('onClick', $go))
+            ->add(Link::to('/bugs/complete/', 'Исправленные')->setAttribute('onClick', $go))
+            ->add(Link::to('/bugs/close/', 'Отклоненные')->setAttribute('onClick', $go))
+            ->add(Link::to('/bugs/my/', 'Мои баги')->setAttribute('onClick', $go))
+            ->setActive($_SERVER['REQUEST_URI'])
+            ->wrap('div', ['class' => 'wrapper'])
+            ->render();
     }
 }

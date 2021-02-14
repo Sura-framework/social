@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Libs\Status;
 use Sura\Libs\Validation;
 
 class DistinguishController extends Module{
@@ -11,9 +12,12 @@ class DistinguishController extends Module{
     /**
      * Отмечаем человека на фото
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function mark($params){
+    public function mark(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = langs::get_langs();
         $db = $this->db();
@@ -33,21 +37,30 @@ class DistinguishController extends Module{
             $muser_id = (int)$request['user_id'];
             $mphoto_name = Validation::ajax_utf8(Validation::strip_data(Validation::textFilter($request['user_name'], false, true)));
             $msettings_pos = $i_left.", ".$i_top.", ".$i_width.", ".$i_height;
-            if($user_id == $muser_id) $approve = 1;
-            else $approve = 0;
+            if($user_id == $muser_id) {
+                $approve = 1;
+            }
+            else {
+                $approve = 0;
+            }
 
-            if($mphoto_name AND $muser_id == 0)
-                $row_no = $db->super_query("SELECT COUNT(*) AS cnt FROM `photos_mark` WHERE mphoto_id = '".$photo_id."' AND mphoto_name = '".$mphoto_name."'");
-            else
-                $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `photos_mark` WHERE muser_id = '".$muser_id."' AND mphoto_id = '".$photo_id."'");
+            if($mphoto_name AND $muser_id == 0) {
+                $row_no = $db->super_query("SELECT COUNT(*) AS cnt FROM `photos_mark` WHERE mphoto_id = '" . $photo_id . "' AND mphoto_name = '" . $mphoto_name . "'");
+            }
+            else {
+                $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `photos_mark` WHERE muser_id = '" . $muser_id . "' AND mphoto_id = '" . $photo_id . "'");
+            }
 
-            if($row['cnt'])
-                $db->query("UPDATE `photos_mark` SET msettings_pos = '".$msettings_pos."' WHERE muser_id = '".$muser_id."' AND mphoto_id = '".$photo_id."'");
-            elseif($row_no['cnt'])
-                $db->query("UPDATE `photos_mark` SET msettings_pos = '".$msettings_pos."' WHERE mphoto_id = '".$photo_id."' AND mphoto_name = '".$mphoto_name."'");
+            if($row['cnt']) {
+                $db->query("UPDATE `photos_mark` SET msettings_pos = '" . $msettings_pos . "' WHERE muser_id = '" . $muser_id . "' AND mphoto_id = '" . $photo_id . "'");
+            }
+            elseif($row_no['cnt']) {
+                $db->query("UPDATE `photos_mark` SET msettings_pos = '" . $msettings_pos . "' WHERE mphoto_id = '" . $photo_id . "' AND mphoto_name = '" . $mphoto_name . "'");
+            }
             else
-                if($request['user_ok'] == 'yes')
-                    $server_time = \Sura\Libs\Tools::time();
+                if($request['user_ok'] == 'yes') {
+                    $server_time = \Sura\Libs\Date::time();
+                }
             $db->query("INSERT INTO `photos_mark` SET muser_id = '".$muser_id."', mphoto_id = '".$photo_id."', mdate = '".$server_time."', msettings_pos = '".$msettings_pos."', mapprove = '".$approve."', mmark_user_id = '".$user_id."'");
 
             if($user_id != $muser_id){
@@ -55,18 +68,27 @@ class DistinguishController extends Module{
             } else{
                 $db->query("INSERT INTO `photos_mark` SET muser_id = '" . rand(0, 100000) . "', mphoto_id = '" . $photo_id . "', mdate = '" . $server_time . "', msettings_pos = '" . $msettings_pos . "', mphoto_name = '" . $mphoto_name . "', mmark_user_id = '" . $user_id . "', mapprove = 1");
             }
-//            Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
-            $Cache = cache_init(array('type' => 'file'));
-            $Cache->delete('photos/photos_mark/p'.$photo_id);
+
+            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+            $cache = new \Sura\Cache\Cache($storage, 'photos');
+            $cache->remove("photos_mark/p{$photo_id}");
+
+            $status = Status::OK;
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      *  Удаление отметки
      *
-     * @param $params
+     * @throws \Throwable
      */
-    public function mark_del($params){
+    public function mark_del(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -83,10 +105,12 @@ class DistinguishController extends Module{
             $mphoto_name = Validation::ajax_utf8(Validation::strip_data(Validation::textFilter($request['user_name'], false, true)));
             $row = $db->super_query("SELECT user_id FROM `photos` WHERE id = '".$photo_id."'");
 
-            if($mphoto_name AND $muser_id == 0)
-                $row_mark = $db->super_query("SELECT mmark_user_id FROM `photos_mark` WHERE mphoto_id = '".$photo_id."' AND mphoto_name = '".$mphoto_name."'");
-            else
-                $row_mark = $db->super_query("SELECT mmark_user_id, mapprove FROM `photos_mark` WHERE mphoto_id = '".$photo_id."' AND muser_id = '".$muser_id."'");
+            if($mphoto_name AND $muser_id == 0) {
+                $row_mark = $db->super_query("SELECT mmark_user_id FROM `photos_mark` WHERE mphoto_id = '" . $photo_id . "' AND mphoto_name = '" . $mphoto_name . "'");
+            }
+            else {
+                $row_mark = $db->super_query("SELECT mmark_user_id, mapprove FROM `photos_mark` WHERE mphoto_id = '" . $photo_id . "' AND muser_id = '" . $muser_id . "'");
+            }
 
             if($row['user_id'] == $user_id OR $user_id == $muser_id OR $user_id == $row_mark['mmark_user_id']){
                 if($mphoto_name AND $muser_id == 0)
@@ -97,19 +121,29 @@ class DistinguishController extends Module{
                     if(!$row_mark['mapprove'])
                         $db->query("UPDATE `users` SET user_new_mark_photos = user_new_mark_photos-1 WHERE user_id = '".$muser_id."'");
                 }
-//                Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete('photos/photos_mark/p'.$photo_id);
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'photos');
+                $cache->remove("photos_mark/p{$photo_id}");
+
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Подтверждение отметки
      *
-     * @param $params
+     * @throws \Throwable
      */
-    public function mark_ok($params){
+    public function mark_ok(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -126,19 +160,28 @@ class DistinguishController extends Module{
             if($row AND !$row['mapprove']){
                 $db->query("UPDATE `photos_mark` SET mapprove = '1' WHERE mphoto_id = '".$photo_id."' AND muser_id = '".$user_id."'");
                 $db->query("UPDATE `users` SET user_new_mark_photos = user_new_mark_photos-1 WHERE user_id = '".$user_id."'");
-//                Cache::mozg_clear_cache_file('photos_mark/p'.$photo_id);
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete('photos/photos_mark/p'.$photo_id);
+
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'photos');
+                $cache->remove("photos_mark/p{$photo_id}");
+
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Загрузка 110 друзей из списка
      *
-     * @param $params
      */
-    public function load_friends($params){
+    public function load_friends(): void{
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -152,8 +195,12 @@ class DistinguishController extends Module{
 
             $photo_id = (int)$request['photo_id'];
             $all_limit = 110;
-            if($request['page'] == 2) $limit = $all_limit.", ".($all_limit*2);
-            else $limit = "0, ".$all_limit;
+            if($request['page'] == 2) {
+                $limit = $all_limit . ", " . ($all_limit * 2);
+            }
+            else {
+                $limit = "0, " . $all_limit;
+            }
 
             $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.user_search_pref FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '".$user_id."' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 0 ORDER by `user_search_pref` LIMIT ".$limit, 1);
 
@@ -171,7 +218,7 @@ class DistinguishController extends Module{
 
             }
 
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
             echo <<<HTML
                     <script type="text/javascript" src="/templates/{$config['temp']}/js/fave.filter.js"></script>

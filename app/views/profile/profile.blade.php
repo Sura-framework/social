@@ -10,9 +10,9 @@
         if($('.profile_onefriend_happy').size() > 4) $('#happyAllLnk').show();
         @endif
     });
-    // $(document).click(function(event){
+/*    // $(document).click(function(event){
     // 	wall.event(event);
-    // });
+    // });*/
 </script>
 
 
@@ -54,7 +54,7 @@
                             <hr>
                             <div class="row">
                                 <div class="col-10">
-                                    @if($not_owner)
+                                    @if(!$owner)
                                     <div class="row">
                                         {{ $privacy_msg }}
                                         <a href="/" onClick="gifts.box('{{ $user_id }}'); return false">
@@ -125,12 +125,13 @@
                                 </div>
                                 <div class="col-2">
                                     <div class="dropdown">
-                                        <a href="#" onclick="openUserMenu(this);" onmouseout="hideUserMenu()" onmouseover="removeTimer('hideusermenu')" id="usermenubut" class="dropdown-ellipses dropdown-toggle bg-secondary rounded text-white pl-1 pr-1" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-size: 2em">
+                                        <button type="button" onclick="openUserMenu(this);" onmouseout="hideUserMenu()" onmouseover="removeTimer('hideusermenu')" id="usermenubut" class="dropdown-ellipses dropdown-toggle bg-secondary rounded text-white pl-1 pr-1" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-size: 2em">
                                             <svg class="bi bi-chat-dots" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                                 <path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"></path>
                                             </svg>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right user_menu" onmouseover="removeTimer('hideusermenu')" onmouseout="hideUserMenu()">@if($owner)
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-right user_menu" onmouseover="removeTimer('hideusermenu')" onmouseout="hideUserMenu()">
+                                            @if($owner)
                                             <a href="/my_stats/" class="dropdown-item">@_e('stats_profile')</a>
                                             <a href="/docs/" class="dropdown-item">@_e('my_docs')</a>
                                             <a href="/edit/" class="dropdown-item">@_e('edit_profile')</a>
@@ -138,62 +139,61 @@
                                             <a href="#" onClick="Profile.LoadPhoto(); return false;" class="dropdown-item">@_e('edit_min_photo')</a>
                                             <a href="#" onClick="Profile.DelPhoto(); return false;" id="del_pho_but" {{ $display_ava }} class="dropdown-item">@_e('dell_min_photo')</a>
                                             @else
-                                            @if($yes_fave_block)<a href="/" class="dropdown-item" onClick="fave.add({{ $user_id }}); return false" id="addfave_but">
-                                                <svg class="bi bi-star-fill" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.283.95l-3.523 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
-                                                </svg>
-                                                <span><span id="text_add_fave">@_e('add_fave')</span>
-                                                    <img src="/images/loading_mini.gif" alt="" id="addfave_load" class="no_display" />
-                                                </span>
-                                                </a>
-                                            @else
-                                                <a href="/" class="dropdown-item" onClick="fave.delet({{ $user_id }}); return false" id="addfave_but">
-                                                <svg class="bi bi-star" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                                    <path fill-rule="evenodd" d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.523-3.356c.329-.314.158-.888-.283-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767l-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288l1.847-3.658 1.846 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.564.564 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
-                                                </svg>
-                                                <div><span id="text_add_fave">@_e('remove_fave')</span> <img src="/images/loading_mini.gif" alt="" id="addfave_load" class="no_display" /></div></a>
-                                            @endif
-                                            @if(!$blacklist)<a href="/" class="dropdown-item" onClick="settings.addblacklist({{ $user_id }}); return false" id="addblacklist_but">
-                                                <svg class="bi bi-exclamation-circle-fill" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                                    <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
-                                                </svg>
-                                                <span><span id="text_add_blacklist">@_e('block')</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></span></a>
-                                            @else
-                                            <a href="/" class="dropdown-item" onClick="settings.delblacklist({{ $user_id }}, 1); return false" id="addblacklist_but">
-                                                <svg class="bi bi-exclamation-circle" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                                    <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                                                    <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
-                                                </svg>
-                                                <span><span id="text_add_blacklist">@_e('unblock')</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></span></a>
-                                            @endif
+                                                @if($yes_fave_block)<a href="/" class="dropdown-item" onClick="fave.add({{ $user_id }}); return false" id="addfave_but">
+                                                    <svg class="bi bi-star-fill" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.283.95l-3.523 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                                                    </svg>
+                                                    <span><span id="text_add_fave">@_e('add_fave')</span>
+                                                        <img src="/images/loading_mini.gif" alt="" id="addfave_load" class="no_display" />
+                                                    </span>
+                                                    </a>
+                                                @else
+                                                    <a href="/" class="dropdown-item" onClick="fave.delet({{ $user_id }}); return false" id="addfave_but">
+                                                    <svg class="bi bi-star" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                        <path fill-rule="evenodd" d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.523-3.356c.329-.314.158-.888-.283-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767l-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288l1.847-3.658 1.846 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.564.564 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+                                                    </svg>
+                                                    <span><span id="text_add_fave">@_e('remove_fave')</span> <img src="/images/loading_mini.gif" alt="" id="addfave_load" class="no_display" /></span></a>
+                                                @endif
+                                                @if(!$blacklist)<a href="/" class="dropdown-item" onClick="settings.addblacklist({{ $user_id }}); return false" id="addblacklist_but">
+                                                    <svg class="bi bi-exclamation-circle-fill" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                        <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+                                                    </svg>
+                                                    <span><span id="text_add_blacklist">@_e('block')</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></span></a>
+                                                @else
+                                                <a href="/" class="dropdown-item" onClick="settings.delblacklist({{ $user_id }}, 1); return false" id="addblacklist_but">
+                                                    <svg class="bi bi-exclamation-circle" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                        <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                                                    </svg>
+                                                    <span><span id="text_add_blacklist">@_e('unblock')</span> <img src="/images/loading_mini.gif" alt="" id="addblacklist_load" class="no_display" /></span></a>
+                                                @endif
 
-                                            @if($no_friends_block AND $yes_blacklist_block)<a class="nav-link active" href="/" onClick="friends.add({{ $user_id }}); return false">
-                                                <svg class="bi bi-person-plus" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                                    <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm4.5 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
-                                                    <path fill-rule="evenodd" d="M13 7.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>
-                                                </svg>
-                                                <span>@_e('add')</span></a>@endif
-                                            @if($yes_friends)<a class="nav-link active" href="/" onClick="friends.delet({{ $user_id }}, 1); return false">
-                                                <svg class="bi bi-person-dash" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                                    <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
-                                                </svg>
-                                                <span>@_e('remove')</span></a>@endif
-                                            @if(!$blacklist AND !$yes_subscription)
-                                                <a class="nav-link active" href="/" onClick="subscriptions.add({{ $user_id }}); return false" id="lnk_unsubscription">
-                                                    <div>
-                                                        <span id="text_add_subscription">@_e('subscribe')</span>
-                                                        <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" />
-                                                    </div>
-                                                </a>
-                                                @elseif(!$blacklist AND $yes_subscription)
-                                                <a class="nav-link active" href="/" onClick="subscriptions.del({{ $user_id }}); return false" id="lnk_unsubscription">
-                                                    <div>
-                                                        <span id="text_add_subscription">@_e('unsubscribe')</span>
-                                                        <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" />
-                                                    </div>
-                                                </a>
-                                            @endif
-
+                                                @if(!$yes_friends AND $yes_blacklist_block)<a class="nav-link active" href="/" onClick="friends.add({{ $user_id }}); return false">
+                                                    <svg class="bi bi-person-plus" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                        <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm4.5 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+                                                        <path fill-rule="evenodd" d="M13 7.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>
+                                                    </svg>
+                                                    <span>@_e('add')</span></a>@endif
+                                                @if($yes_friends)<a class="nav-link active" href="/" onClick="friends.delet({{ $user_id }}, 1); return false">
+                                                    <svg class="bi bi-person-dash" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                        <path fill-rule="evenodd" d="M11 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM1.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
+                                                    </svg>
+                                                    <span>@_e('remove')</span></a>@endif
+                                                @if(!$blacklist AND !$yes_subscription)
+                                                    <a class="nav-link active" href="/" onClick="subscriptions.add({{ $user_id }}); return false" id="lnk_unsubscription">
+                                                        <div>
+                                                            <span id="text_add_subscription">@_e('subscribe')</span>
+                                                            <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" />
+                                                        </div>
+                                                    </a>
+                                                    @elseif(!$blacklist AND $yes_subscription)
+                                                    <a class="nav-link active" href="/" onClick="subscriptions.del({{ $user_id }}); return false" id="lnk_unsubscription">
+                                                        <div>
+                                                            <span id="text_add_subscription">@_e('unsubscribe')</span>
+                                                            <img src="/images/loading_mini.gif" alt="" id="addsubscription_load" class="no_display" style="margin-right:-13px" />
+                                                        </div>
+                                                    </a>
+                                                @endif
                                             @endif
                                         </div>
                                     </div>
@@ -249,7 +249,8 @@
                                                 <a href="/u{{ $row['user_id'] }}" onClick="Page.Go(this.href); return false">
                                                     <div>
                                                         <img src="{{ $row['ava'] }}" alt="" />
-                                                    </div>{{ $row['name'] }}<br /><span>{{ $row['last_name'] }}</span>
+                                                    </div>
+                                                    <p class="p-2"> {{ $row['name'] }} </p>
                                                 </a>
                                             </div>
                                         @endforeach
@@ -355,25 +356,8 @@
                     <div class="card-body">
                         <div class="padcont2 mt-3 shadow2">
                             <div class="profiewr">
-                                @if($owner)<div class="set_status_bg no_display" id="set_status_bg">
-                                    <label for="status_text"></label>
-                                    <input type="text" id="status_text" class="status_inp" value="{status-text}" style="width:500px;" maxlength="255" onKeyPress="if(event.keyCode == 13)gStatus.set()" />
-                                    <div class="fl_l status_text"><span class="no_status_text [status]no_display[/status]">@_e('status_vallue')</span><a href="/" class="yes_status_text [no-status]no_display[/no-status]" onClick="gStatus.set(1); return false">Удалить статус</a></div>
-                                    {{ $status_block2 }}
-                                    <div class="fl_r status_but"><button class="btn btn-secondary" id="status_but" onClick="gStatus.set()">@_e('save')</button></div>
-                                </div>@endif
                                 <div class="titleu">{{ $name }} {{ $lastname }}
-                                    <a class="fl_r color777" style="text-decoration:none"><b>{{ $online }}</b></a></div>
-                                <div class="status">
-                                    {{ $status_text }}
-                                    @if($owner)
-                                    <span id="tellBlockPos"></span>
-                                    <div class="status_tell_friends no_display">
-                                        <div class="status_str"></div>
-                                        <div class="html_checkbox" id="tell_friends" onClick="myhtml.checkbox(this.id); gStatus.startTell()">@_e('status_public')</div>
-                                    </div>
-                                    <a href="#" onClick="gStatus.open(); return false" id="status_link" {{ $status_block }}>@_e('set_status')</a>
-                                    @endif
+                                    <a class="fl_r color777" style="text-decoration:none"><b>{{ $online }}</b></a>
                                 </div>
                                 <div class="profile_rate_pos">
                                     @if($owner)
@@ -400,171 +384,193 @@
                                         </div>
                                     @endif
                                 </div>
+                                @if(!$blacklist)
                                 <div style="min-height:50px">
                                     @if($not_all_country_block)
-                                    <div class="flpodtext">@_e('country'):</div> <div class="flpodinfo">
+                                        <div class="flpodtext">@_e('country'):</div>
+                                        <div class="flpodinfo">
                                         <a href="/search/?country={country-id}" onClick="Page.Go(this.href); return false">{country}</a>
-                                        </div>
                                         </div>
                                     @endif
                                     @if($not_all_city_block)
-                                    <div class="flpodtext">@_e('city'):</div> <div class="flpodinfo">
+                                        <div class="flpodtext">@_e('city'):</div> <div class="flpodinfo">
                                         <a href="/search/?country={country-id}&city={city-id}" onClick="Page.Go(this.href); return false">{city}</a>
-                                    </div></div>
+                                    </div>
                                     @endif
                                     @if($not_all_birthday_block AND !$blacklist)
                                         <div class="flpodtext">@_e('birthday'):</div> <div class="flpodinfo">{{ $birth_day }}</div>
                                     @endif
                                     @if($sp AND $privacy_info_block)
-                                    <div class="flpodtext">@_e('marital_status'):</div> <div class="flpodinfo">{{ $sp }}</div>
+                                        <div class="flpodtext">@_e('marital_status'):</div> <div class="flpodinfo">{{ $sp }}</div>
                                     @endif
                                 </div>
-                                <div class="cursor_pointer" onClick="Profile.MoreInfo(); return false" id="moreInfoLnk"><div class="public_wall_all_comm profile_hide_opne" id="moreInfoText">Показать подробную информацию</div></div>
-                                <div id="moreInfo" class="no_display">
-                                @if($privacy_info AND $not_block_contact AND $not_owner)
+                                @endif
+
+                                @if($not_block_contact && $not_block_info)
+                                <div class="cursor_pointer" onClick="Profile.MoreInfo(); return false" id="moreInfoLnk">
+                                    <div class="public_wall_all_comm profile_hide_opne" id="moreInfoText">Показать подробную информацию</div>
+                                </div>
+                                @endif
+
+                                {{-- no_display --}}
+                                <div id="moreInfo" class="">
+                                @if($privacy_info AND $not_block_contact AND !$owner)
                                 <div class="fieldset"><div class="w2_a" >@_e('contacts_info')
                                          </div></div>
                                 @elseif($owner)
-                                <div class="fieldset"><div class="w2_a" >@_e('contacts_info')Контактная информация <span><a href="/edit/contact/" onClick="Page.Go(this.href); return false;">редактировать</a></span></div></div>
+                                <div class="fieldset">
+                                    <div class="" >@_e('contacts_info')
+                                        <span>
+                                            <a href="/edit/contact/" onClick="Page.Go(this.href); return false;">редактировать</a>
+                                        </span>
+                                    </div>
+                                </div>
                                 @endif
-                                @if($privacy_info AND $not_block_contact AND $not_contact_phone)
-                                <div class="flpodtext">@_e('mobile'):</div> <div class="flpodinfo">{phone}</div>
+
+                                @if($not_block_contact)
+                                    @if($privacy_info AND $phone)
+                                        <div class="flpodtext">@_e('mobile'):</div> <div class="flpodinfo">{{ $phone }}</div>
+                                    @endif
+                                    @if($privacy_info AND $vk)
+                                        <div class="flpodtext">@_e('vk'):</div> <div class="flpodinfo">{{ $vk }}</div>
+                                    @endif
+                                    @if($privacy_info AND $od)
+                                        <div class="flpodtext">@_e('ok')
+                                            :</div> <div class="flpodinfo">{{ $od }}</div>
+                                    @endif
+                                    @if($privacy_info AND $fb)
+                                        <div class="flpodtext">@_e('fb'):</div> <div class="flpodinfo">{{ $fb }}</div>
+                                    @endif
+                                    @if($privacy_info AND $skype)
+                                        <div class="flpodtext">@_e('skype'):</div> <div class="flpodinfo"><a href="skype:{{ $skype }}">{{ $skype }}</a></div>
+                                    @endif
+                                    @if($privacy_info AND $icq)
+                                        <div class="flpodtext">@_e('icq'):</div> <div class="flpodinfo">{{ $icq }}</div>
+                                    @endif
+                                    @if($privacy_info AND $site)
+                                        <div class="flpodtext">
+                                            @_e('web'):</div> <div class="flpodinfo">{{ $site }}</div>
+                                    @endif
                                 @endif
-                                @if($privacy_info AND $not_block_contact AND $not_contact_vk)
-                                <div class="flpodtext">@_e('vk'):</div> <div class="flpodinfo">{{ $vk }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_contact AND $not_contact_od)
-                                <div class="flpodtext">@_e('ok')
-                                    :</div> <div class="flpodinfo">{{ $od }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_contact AND $not_contact_fb)
-                                <div class="flpodtext">@_e('fb'):</div> <div class="flpodinfo">{{ $fb }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_contact AND $not_contact_skype)
-                                <div class="flpodtext">@_e('skype'):</div> <div class="flpodinfo"><a href="skype:{{ $skype }}">{{ $skype }}</a></div>
-                                @endif
-                                @if($privacy_info AND $not_block_contact AND $not_contact_icq)
-                                <div class="flpodtext">@_e('icq'):</div> <div class="flpodinfo">{{ $icq }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_contact AND $not_contact_site)
-                                <div class="flpodtext">
-                                    @_e('web'):</div> <div class="flpodinfo">{{ $site }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_info AND $not_owner)
+
+
+
+                                @if($privacy_info AND $not_block_info AND !$owner)
                                 <div class="fieldset"><div class="w2_b" >@_e('private_info')</div></div>
                                 @elseif($owner)
                                 <div class="fieldset"><div class="w2_b" style="width:200px;">@_e('private_info')<span>
                                 <a href="/edit/interests/" onClick="Page.Go(this.href); return false;">@_e('edit')</a></span></div></div>
                                 @endif
-                                @if($privacy_info AND $not_block_info AND $not_info_activity)
-                                    <div class="flpodtext">@_e('work'):</div> <div class="flpodinfo">{{ $activity }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_info AND $not_info_interests)
-                                    <div class="flpodtext">@_e('Interests'):</div> <div class="flpodinfo">{{ $interests }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_info AND $not_info_music)
-                                    <div class="flpodtext">@_e('favorite_music'):</div> <div class="flpodinfo">{{ $music }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_info AND $not_info_kino)
-                                    <div class="flpodtext">@_e('favorite_movie'):</div> <div class="flpodinfo">{{ $kino }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_info AND $not_info_books)
-                                    <div class="flpodtext">@_e('favorite_book'):</div> <div class="flpodinfo">{{ $books }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_info AND $not_info_games)
-                                    <div class="flpodtext">@_e('favorite_game'):</div> <div class="flpodinfo">{{ $games }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_info AND $not_info_quote)
-                                    <div class="flpodtext">@_e('favorite_quote'):</div> <div class="flpodinfo">{{ $quote }}</div>
-                                @endif
-                                @if($privacy_info AND $not_block_info AND $not_info_myinfo)
-                                    <div class="flpodtext">@_e('about'):</div> <div class="flpodinfo">{{ $myinfo }}</div>
-                                @endif
-                        </div>
 
-                        @if($albums AND !$blacklist)
-                            <a href="/albums/{{ $user_id }}" onClick="Page.Go(this.href); return false" style="text-decoration:none">
-                                <div class="albtitle" style="margin-top:5px">@_e('albums') <span>{{ $albums_num }}</span>
-                                    <div><b>@_e('all')</b></div>
-                                </div>
-                            </a>
-                            @foreach($albums as $row)
-                                <a href="/albums/view/{{ $row['aid'] }}" onClick="Page.Go(this.href); return false" style="text-decoration:none">
-                                    <div class="profile_albums">
-                                        <img src="{{ $row['album_cover'] }}"  alt="{{ $row['name'] }}"/>
-                                        <div class="profile_title_album">{{ $row['name'] }}</div>{{ $row['photo_num'] }} {{ $row['albums_photonums'] }}<br />Обновлён {{ $row['date'] }}
-                                        <div class="clear"></div>
+                                @if($not_block_info)
+                                    @if($privacy_info AND $not_info_activity)
+                                        <div class="flpodtext">@_e('work'):</div> <div class="flpodinfo">{{ $activity }}</div>
+                                    @endif
+                                    @if($privacy_info AND $not_info_interests)
+                                        <div class="flpodtext">@_e('Interests'):</div> <div class="flpodinfo">{{ $interests }}</div>
+                                    @endif
+                                    @if($privacy_info AND $not_info_music)
+                                        <div class="flpodtext">@_e('favorite_music'):</div> <div class="flpodinfo">{{ $music }}</div>
+                                    @endif
+                                    @if($privacy_info AND $not_info_kino)
+                                        <div class="flpodtext">@_e('favorite_movie'):</div> <div class="flpodinfo">{{ $kino }}</div>
+                                    @endif
+                                    @if($privacy_info AND $not_info_books)
+                                        <div class="flpodtext">@_e('favorite_book'):</div> <div class="flpodinfo">{{ $books }}</div>
+                                    @endif
+                                    @if($privacy_info AND $not_info_games)
+                                        <div class="flpodtext">@_e('favorite_game'):</div> <div class="flpodinfo">{{ $games }}</div>
+                                    @endif
+                                    @if($privacy_info AND $not_info_quote)
+                                        <div class="flpodtext">@_e('favorite_quote'):</div> <div class="flpodinfo">{{ $quote }}</div>
+                                    @endif
+                                    @if($privacy_info AND $not_info_myinfo)
+                                        <div class="flpodtext">@_e('about'):</div> <div class="flpodinfo">{{ $myinfo }}</div>
+                                    @endif
+                                @endif
+                            </div>
+                            @if(!$blacklist)
+                                @if($albums)
+                                    <a href="/albums/{{ $user_id }}" onClick="Page.Go(this.href); return false" style="text-decoration:none">
+                                        <div class="albtitle" style="margin-top:5px">@_e('albums') <span>{{ $albums_num }}</span>
+                                            <div><b>@_e('all')</b></div>
+                                        </div>
+                                    </a>
+                                    @foreach($albums as $row)
+                                        <a href="/albums/view/{{ $row['aid'] }}" onClick="Page.Go(this.href); return false" style="text-decoration:none">
+                                            <div class="profile_albums">
+                                                <img src="{{ $row['album_cover'] }}"  alt="{{ $row['name'] }}"/>
+                                                <div class="profile_title_album">{{ $row['name'] }}</div>{{ $row['photo_num'] }} {{ $row['albums_photonums'] }}<br />Обновлён {{ $row['date'] }}
+                                                <div class="clear"></div>
+                                            </div>
+                                        </a>
+                                    @endforeach
+                                @endif
+                                @if($audios)
+                                <div id="jquery_jplayer"></div>
+                                <input type="hidden" id="teck_id" value="1" />
+                                <a href="/audio/{{ $user_id }}/" onClick="Page.Go(this.href); return false" style="text-decoration:none">
+                                    <div class="albtitle" style="margin-top:5px">{{ $audios_num }}
+                                        <div><b>@_e('all')</b></div>
                                     </div>
                                 </a>
-                            @endforeach
-                        @endif
-
-                        @if($audios AND !$blacklist)
-                        <div id="jquery_jplayer"></div>
-                        <input type="hidden" id="teck_id" value="1" />
-                        <a href="/audio/{{ $user_id }}/" onClick="Page.Go(this.href); return false" style="text-decoration:none">
-                            <div class="albtitle" style="margin-top:5px">{{ $audios_num }}
-                                <div><b>@_e('all')</b></div>
-                            </div>
-                        </a>
-                        @foreach($audios as $row)
-                            {{-- Deprecated html tags!!! --}}
-                                <div class="audioPage audioElem" id="audio_{{ $row['id'] }}_{{ $user_id }}_{{ $row['plname'] }}"
-                                     onclick="playNewAudio('{{ $row['id'] }}_{{ $user_id }}_{{ $row['plname'] }}', event);">
-                                    <div class="area">
-                                        <table cellspacing="0" cellpadding="0" width="100%">
-                                            <tbody>
-                                            <tr>
-                                                <td>
-                                                    <div class="audioPlayBut new_play_btn"><div class="bl"><div class="figure"></div></div></div>
-                                                    <input type="hidden" value="{{ $row['url'] }},{{ $row['duration'] }},page" id="audio_url_{{ $row['id'] }}_{{ $user_id }}_{{ $row['plname'] }}">
-                                                </td>
-                                                <td class="info">
-                                                    <div class="audioNames"><b class="author" onclick="Page.Go('/?go=search&query={{ $row['search_artist'] }}&type=5&n=1'); return false;"
-                                                                               id="artist">{{ $row['artist'] }}</b> –
-                                                        <span class="name" id="name">{{ $row['title'] }}</span> <div class="clear"></div></div>
-                                                    <div class="audioElTime" id="audio_time_{{ $row['id'] }}_{{ $user_id }}_{{ $row['plname'] }}">{{ $row['stime'] }}</div>
-                                                </td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                        <div id="player{{ $row['id'] }}_{{ $user_id }}_{{ $row['plname'] }}" class="audioPlayer" border="0"
-                                             cellpadding="0">
-                                            <table cellspacing="0" cellpadding="0" width="100%">
-                                                <tbody>
-                                                <tr>
-                                                    <td style="width: 100%;">
-                                                        <div class="progressBar fl_l" style="width: 100%;" onclick="cancelEvent(event);"
-                                                             onmousedown="audio_player.progressDown(event, this);" id="no_play"
-                                                             onmousemove="audio_player.playerPrMove(event, this)"
-                                                             onmouseout="audio_player.playerPrOut()">
-                                                            <div class="audioTimesAP" id="main_timeView">
-                                                                <div class="audioTAP_strlka">100%</div>
-                                                            </div>
-                                                            <div class="audioBGProgress"></div>
-                                                            <div class="audioLoadProgress"></div>
-                                                            <div class="audioPlayProgress" id="playerPlayLine"><div class="audioSlider"></div></div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="audioVolumeBar fl_l ml-2" onclick="cancelEvent(event);"
-                                                             onmousedown="audio_player.volumeDown(event, this);" id="no_play">
-                                                            <div class="audioTimesAP"><div class="audioTAP_strlka">100%</div></div>
-                                                            <div class="audioBGProgress"></div>
-                                                            <div class="audioPlayProgress" id="playerVolumeBar"><div class="audioSlider"></div></div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                </tbody>
-                                            </table>
+                                @foreach($audios as $row)
+                                    {{-- Deprecated html tags!!! --}}
+                                        <div class="audioPage audioElem" id="audio_{{ $row['id'] }}_{{ $user_id }}_{{ $row['plname'] }}"
+                                             onclick="playNewAudio('{{ $row['id'] }}_{{ $user_id }}_{{ $row['plname'] }}', event);">
+                                            <div class="area">
+                                                <table cellspacing="0" cellpadding="0" width="100%">
+                                                    <tbody>
+                                                    <tr>
+                                                        <td>
+                                                            <div class="audioPlayBut new_play_btn"><div class="bl"><div class="figure"></div></div></div>
+                                                            <input type="hidden" value="{{ $row['url'] }},{{ $row['duration'] }},page" id="audio_url_{{ $row['id'] }}_{{ $user_id }}_{{ $row['plname'] }}">
+                                                        </td>
+                                                        <td class="info">
+                                                            <div class="audioNames"><b class="author" onclick="Page.Go('/?go=search&query={{ $row['search_artist'] }}&type=5&n=1'); return false;"
+                                                                                       id="artist">{{ $row['artist'] }}</b> –
+                                                                <span class="name" id="name">{{ $row['title'] }}</span> <div class="clear"></div></div>
+                                                            <div class="audioElTime" id="audio_time_{{ $row['id'] }}_{{ $user_id }}_{{ $row['plname'] }}">{{ $row['stime'] }}</div>
+                                                        </td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                                <div id="player{{ $row['id'] }}_{{ $user_id }}_{{ $row['plname'] }}" class="audioPlayer" border="0"
+                                                     cellpadding="0">
+                                                    <table cellspacing="0" cellpadding="0" width="100%">
+                                                        <tbody>
+                                                        <tr>
+                                                            <td style="width: 100%;">
+                                                                <div class="progressBar fl_l" style="width: 100%;" onclick="cancelEvent(event);"
+                                                                     onmousedown="audio_player.progressDown(event, this);" id="no_play"
+                                                                     onmousemove="audio_player.playerPrMove(event, this)"
+                                                                     onmouseout="audio_player.playerPrOut()">
+                                                                    <div class="audioTimesAP" id="main_timeView">
+                                                                        <div class="audioTAP_strlka">100%</div>
+                                                                    </div>
+                                                                    <div class="audioBGProgress"></div>
+                                                                    <div class="audioLoadProgress"></div>
+                                                                    <div class="audioPlayProgress" id="playerPlayLine"><div class="audioSlider"></div></div>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div class="audioVolumeBar fl_l ml-2" onclick="cancelEvent(event);"
+                                                                     onmousedown="audio_player.volumeDown(event, this);" id="no_play">
+                                                                    <div class="audioTimesAP"><div class="audioTAP_strlka">100%</div></div>
+                                                                    <div class="audioBGProgress"></div>
+                                                                    <div class="audioPlayProgress" id="playerVolumeBar"><div class="audioSlider"></div></div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                        @endforeach
-                        <div class="clear"></div>
-                        @endif
-
-                        @if($gifts AND !$blacklist)
+                                @endforeach
+                                <div class="clear"></div>
+                                @endif
+                                @if($gifts)
                             <a href="/gifts{{ $user_id }}" onClick="Page.Go(this.href); return false" style="text-decoration:none">
                                 <div class="albtitle" style="margin-top:5px">{{ $gifts_num }}<div>
                                         <b>@_e('all')</b>
@@ -578,16 +584,12 @@
                                 <div class="clear"></div>
                             </a>
                         @endif
+                            @endif
+                            </div>
+                        </div>
                     </div>
-                    <div class="clear"></div>
                 </div>
-            </div>
-
-        </div>
-        <!-- </div> -->
-
-
-        <div class="padcont2 mt-3 shadow2">
+                <div class="padcont2 mt-3 shadow2">
             <div class="profiewr">
                 <a href="/wall/{{ $user_id }}/" onClick="Page.Go(this.href); return false" style="text-decoration:none">
                     <div class="albtitle" style="border-bottom:0px">
@@ -653,20 +655,20 @@
                     <div class="clear"></div>
                     <input id="vaLattach_files" type="hidden" />
                     <div class="clear"></div>
-                    <div class=" fl_l margin_top_10"><button onClick="wall.send(); return false" id="wall_send" class="btn btn-secondary">@_e('ttt')
-                            Отправить</button></div>
+                    <div class=" fl_l margin_top_10"><button onClick="wall.send(); return false" id="wall_send" class="btn btn-secondary">@_e('Отправить')
+                            </button></div>
                     <div class="wall_attach fl_r" onClick="wall.attach_menu('open', this.id, 'wall_attach_menu')" onMouseOut="wall.attach_menu('close', this.id, 'wall_attach_menu')" id="wall_attach">Прикрепить</div>
                     <div class="wall_attach_menu no_display" onMouseOver="wall.attach_menu('open', 'wall_attach', 'wall_attach_menu')" onMouseOut="wall.attach_menu('close', 'wall_attach', 'wall_attach_menu')" id="wall_attach_menu">
-                        <div class="wall_attach_icon_smile" id="wall_attach_link" onClick="wall.attach_addsmile()">@_e('ttt')
-                            Смайлик</div>
-                        <div class="wall_attach_icon_photo" id="wall_attach_link" onClick="wall.attach_addphoto()">@_e('ttt')
-                            Фотографию</div>
-                        <div class="wall_attach_icon_video" id="wall_attach_link" onClick="wall.attach_addvideo()">@_e('ttt')
-                            Видеозапись</div>
-                        <div class="wall_attach_icon_audio" id="wall_attach_link" onClick="wall.attach_addaudio()">@_e('ttt')
-                            Аудиозапись</div>
-                        <div class="wall_attach_icon_doc" id="wall_attach_link" onClick="wall.attach_addDoc()">@_e('ttt')
-                            Документ</div>
+                        <div class="wall_attach_icon_smile" id="wall_attach_link" onClick="wall.attach_addsmile()">@_e('Смайлик')
+                            </div>
+                        <div class="wall_attach_icon_photo" id="wall_attach_link" onClick="wall.attach_addphoto()">@_e('Фотографию')
+                            </div>
+                        <div class="wall_attach_icon_video" id="wall_attach_link" onClick="wall.attach_addvideo()">@_e('Видеозапись')
+                            </div>
+                        <div class="wall_attach_icon_audio" id="wall_attach_link" onClick="wall.attach_addaudio()">@_e('Аудиозапись')
+                            </div>
+                        <div class="wall_attach_icon_doc" id="wall_attach_link" onClick="wall.attach_addDoc()">@_e('Документ')
+                            </div>
                         <div class="wall_attach_icon_vote" id="wall_attach_link" onClick="$('#attach_block_vote').slideDown('fast');wall.attach_menu('close', 'wall_attach', 'wall_attach_menu');$('#vote_title').focus();$('#vaLattach_files').val($('#vaLattach_files').val()+'vote|start||')">Опрос</div>
                     </div>
                     </div>
@@ -691,10 +693,8 @@
                 @endif
         </div>
     </div>
-
-</div>
-</div>
-
-</div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

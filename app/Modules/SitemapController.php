@@ -11,9 +11,8 @@ class SitemapController
 {
 
     /**
-     * @param $params
      */
-    public function main($params)
+    public function main(): int
     {
         $yourSiteUrl = 'https://sura.qd2.ru';
 

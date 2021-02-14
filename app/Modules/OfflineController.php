@@ -13,10 +13,10 @@ class OfflineController extends Module
     /**
      * offline
      */
-	public static function index(): string
+	public static function index(): int
     {
         $tpl = new Templates();
-        $config = Settings::loadsettings();
+        $config = Settings::load();
         $tpl->dir = __DIR__.'/../templates/'.$config['temp'];
 
 		// if($user_info['user_group'] != '1'){

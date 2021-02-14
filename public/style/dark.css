@@ -1,0 +1,119 @@
+html,body{
+    background-color: #18191a;
+}
+a,.footer{
+    color: #b0b3b8!important;
+}
+.albtitle{
+    color: #b0b3b8;
+    border-bottom: 1px solid #18191a;
+}
+.albtitle div b{
+    color: #b0b3b8;
+}
+.audioPage .audioNames .author{
+    color: #b0b3b8;
+}
+.audioPage .audioNames .name{
+    color: #b0b3b8;
+}
+.card,.newmesnobg{
+    background-color: #242526;
+}
+.bg-light,header,.bg-white{
+    background-color: #242526!important;
+}
+.navbar-light .navbar-brand{
+    color: #FFFFFF;
+}
+.btn-outline-primary{
+    border-color: #3a3b3c;
+    color: #FFFFFF;
+}
+.profile_rate_add{
+    background-color: #545658;
+}
+.profile_hide_opne, .profile_block_happy_friends_lnk {
+    background: #3a3b3c;
+    color: #abb3ae;
+}
+.profile_hide_opne:hover, .profile_block_happy_friends_lnk:hover {
+    background: rgb(84 86 88);
+    color: #abb3ae;
+}
+.audioPage .area:hover {
+    background: rgb(84 86 88);
+}
+.newmes, .newmesnobg{
+   background-color: #242526;
+}
+.wall_inpst{
+    background-color: #3a3b3c;
+    border: 1px solid #3a3b3c;
+}
+.wall_fast_form, .wall_fast_opened_form{
+    background: #242526;
+}
+.public_wall_like{
+    color: #FFFFFF;
+}
+.wall_upgwi {
+    background-color: #242526;
+    width: auto;
+    border: 0;
+    margin-top: 11px;
+    color: #6c757d!important;
+}
+.wall-avatar.wall-avatar-offline::before, .wall-avatar.wall-avatar-online::before{
+    border: 3px solid #121315;
+}
+.tt_default, .tt_default_right {
+    border: 1px solid #c5d0db00;
+    background: #fff0;
+
+}
+.wrapped.card{
+     border: 1px solid black;
+}
+.form-control{
+   background-color: #3a3b3c;
+    border: 1px solid #3a3b3c;
+}
+.titleu{
+    color: #b0b3b8!important;
+}
+.left_row:hover {
+    background: #3a3b3c;
+    text-decoration: none;
+    border-radius: 2px;
+}
+.wall_tell_all, .wall_delete, .public_wall_like_no, .public_wall_like_yes{
+    background-color: #fff;
+}
+.miniature_title{
+    color: #b0b3b8!important;
+}
+.wall_text, .wall_user{
+    color: #b0b3b8!important;
+}
+#qnotifications_news, #qnotifications_notification{
+    background-color: #3a3b3c;
+    border: 1px solid #3a3b3c;
+}
+#qnotifications_box .notification{
+    background-color: #3a3b3c;
+    border: 1px solid #3a3b3c;
+}
+#qnotifications_box .notification:hover {
+    background-color: #505050;
+    cursor: pointer;
+}
+#qnotifications_box .qnotifications_head{
+    border-bottom: 1px solid #3a3b3c;
+}
+.notification122 > div > span{
+    color: #FFFFFF;
+}
+.bg_im_lcard{
+    background-color: #323333;
+}

@@ -26,14 +26,14 @@
 </ul>
 <div class="kj_head_menu d-none mr-2" onmouseover="removeTimer('hidetopmenu')" onmouseout="hideTopMenu()">
     <div class="kj_head_menu_arrow">
-        <a href="{{ '/u'.$user['user_info']['user_id'] }}" class="d-flex m-2" onclick="Page.Go(this.href); return false;">
+        <a href="{{ '/u'.\App\Libs\Support::getUser('user_id') }}" class="d-flex m-2" onclick="Page.Go(this.href); return false;">
             <div class="row">
-                <div class="col-3"><img src="{{ $user['user_info']['ava'] }}" class="rounded-circle" alt=""></div>
-                <div class="col"><h2>{{ $user['user_info']['user_search_pref'] }} </h2><p class="text-muted">@_e('view_profile')</p></div>
+                <div class="col-3"><img src="{{ \App\Libs\Support::getUser('ava') }}" class="rounded-circle" alt=""></div>
+                <div class="col"><h2>{{ \App\Libs\Support::getUser('user_search_pref') }} </h2><p class="text-muted">@_e('view_profile')</p></div>
             </div>
         </a>
         <div class="explode"></div>
-        <a href="{{ '/u'.$user['user_info']['user_id'] }}" class="d-flex m-2" onclick="Page.Go(this.href); return false;">
+        <a href="#{{ '/u'.\App\Libs\Support::getUser('user_id') }}" >
             <div class="row" style="max-width: 280px;">
                 <div class="col-2">
                     <div class=" rounded-circle bg-dark">
@@ -48,8 +48,9 @@
                     <div class="row">
                         <h4>Ночной режим</h4>
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault">
-                            <label class="form-check-label" for="flexSwitchCheckDefault"></label>
+{{--                            <div class="form-check-input html_checkbox" id="v_img_border" onClick="myhtml.checkbox(this.id)" style="margin-top:5px"></div>--}}
+                            <input class="form-check-input" onClick="theme.edit(this.id)" type="checkbox" id="theme" {{ \App\Libs\Support::checkTheme('Darcula') }}>
+                            <label class="form-check-label" for="theme"></label>
                         </div>
                     </div>
 

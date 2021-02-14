@@ -26,7 +26,8 @@
                     </div>
                 </div> <!-- / .row -->
             </div>
-            <p class="mb-3">
+            <!-- action_text -->
+            <p class="mb-3">action_text
                 {{ $row['action_text'] }}
             </p>
             @if($row['comments_link'])

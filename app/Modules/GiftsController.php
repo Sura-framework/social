@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
@@ -13,7 +14,8 @@ class GiftsController extends Module{
      * Страница всех подарков
      *
      */
-    public function view(){
+    public function view(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -32,16 +34,13 @@ class GiftsController extends Module{
 
             $sql_ = $db->super_query("SELECT gid, img, price FROM `gifts_list` ORDER by `gid` DESC", 1);
 
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
             foreach($sql_ as $gift){
 
                 if($config['temp'] == 'mobile')
-
                     echo "<a href=\"\" class=\"gifts_onegif\" onClick=\"gifts.select('{$gift['img']}', '{$for_user_id}'); return false\"><img src=\"/uploads/gifts/{$gift['img']}.png\"  alt=\"\"/><div class=\"gift_count\" id=\"g{$gift['img']}\">{$gift['price']} голос</div></a>";
-
                 else
-
                     echo "<a href=\"\" class=\"gifts_onegif\" onMouseOver=\"gifts.showgift('{$gift['img']}')\" onMouseOut=\"gifts.showhide('{$gift['img']}')\" onClick=\"gifts.select('{$gift['img']}', '{$for_user_id}'); return false\"><img src=\"/uploads/gifts/{$gift['img']}.png\"  alt=\"\"/><div class=\"gift_count no_display\" id=\"g{$gift['img']}\">{$gift['price']} голос</div></a>";
 
             }
@@ -55,8 +54,11 @@ class GiftsController extends Module{
     /**
      * Отправка подарка в БД
      *
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function send(){
+    public function send(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -82,7 +84,7 @@ class GiftsController extends Module{
             $row = $db->super_query("SELECT user_balance FROM `users` WHERE user_id = '{$user_id}'");
             if($gifts['price'] AND $user_id != $for_user_id){
                 if($row['user_balance'] >= $gifts['price']){
-                    $server_time = \Sura\Libs\Tools::time();
+                    $server_time = \Sura\Libs\Date::time();
                     $db->query("INSERT INTO `gifts` SET uid = '{$for_user_id}', gift = '{$gift}', msg = '{$msg}', privacy = '{$privacy}', gdate = '{$server_time}', from_uid = '{$user_id}', status = 1");
                     $db->query("UPDATE `users` SET user_balance = user_balance-{$gifts['price']} WHERE user_id = '{$user_id}'");
                     $db->query("UPDATE `users` SET user_gifts = user_gifts+1 WHERE user_id = '{$for_user_id}'");
@@ -91,6 +93,9 @@ class GiftsController extends Module{
                     $check2 = $db->super_query("SELECT user_last_visit, notifications_list FROM `users` WHERE user_id = '{$for_user_id}'");
 
                     $update_time = $server_time - 70;
+
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'users');
 
                     if($check2['user_last_visit'] >= $update_time){
 
@@ -107,41 +112,29 @@ class GiftsController extends Module{
 
                         $db->query("INSERT INTO `updates` SET for_user_id = '{$for_user_id}', from_user_id = '{$from_user_id}', type = '7', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/gifts{$for_user_id}?new=1'");
 
-//                        Cache::mozg_create_cache("user_{$for_user_id}/updates", 1);
-
-                        $Cache = cache_init(array('type' => 'file'));
-                        $Cache->delete("users/{$for_user_id}/updates");
-
+                        $cache->remove("{$for_user_id}/updates");
                         //ИНАЧЕ Добавляем +1 юзеру для оповещания
                     } else {
-
-//                        $cntCacheNews = Cache::mozg_cache("user_{$for_user_id}/new_gift");
-//                        Cache::mozg_create_cache("user_{$for_user_id}/new_gift", ($cntCacheNews+1));
-
-                        $Cache = cache_init(array('type' => 'file'));
-                        $cntCacheNews = $Cache->get("users/{$for_user_id}/new_gift");
-                        $Cache->set("users/{$for_user_id}/new_gift", $cntCacheNews+1);
+                        $cntCacheNews = $cache->load("{$for_user_id}/new_gift");
+                        $cache->save("{$for_user_id}/new_gift", $cntCacheNews+1);
                     }
 
                     $generateLastTime = $server_time-10800;
                     $row_news = $db->super_query("SELECT ac_id, action_text, action_time FROM `news` WHERE action_time > '{$generateLastTime}' AND action_type = 21 AND obj_id = '{$gift}'");
-                    if($row_news) $db->query("UPDATE `news` SET action_text = '|u{$user_info['user_id']}|{$row_news['action_text']}', action_time = '{$server_time}' WHERE obj_id = '{$gift}' AND action_type = 21 AND action_time = '{$row_news['action_time']}'");
-                    else $db->query("INSERT INTO `news` SET ac_user_id = '{$user_info['user_id']}', action_type = 21, action_text = '|u{$user_info['user_id']}|', obj_id = '{$gift}', for_user_id = '{$for_user_id}', action_time = '{$server_time}'");
+                    if($row_news) {
+                        $db->query("UPDATE `news` SET action_text = '|u{$user_info['user_id']}|{$row_news['action_text']}', action_time = '{$server_time}' WHERE obj_id = '{$gift}' AND action_type = 21 AND action_time = '{$row_news['action_time']}'");
+                    } else {
+                        $db->query("INSERT INTO `news` SET ac_user_id = '{$user_info['user_id']}', action_type = 21, action_text = '|u{$user_info['user_id']}|', obj_id = '{$gift}', for_user_id = '{$for_user_id}', action_time = '{$server_time}'");
+                    }
                     if(stripos($check2['notifications_list'], "settings_likes_gifts|") === false){
-//                        $cntCacheNews = Cache::mozg_cache('user_'.$for_user_id.'/new_news');
-//                        Cache::mozg_create_cache('user_'.$for_user_id.'/new_news', ($cntCacheNews+1));
-                        $cntCacheNews = $Cache->get("users/{$for_user_id}/new_news");
-                        $Cache->set("users/{$for_user_id}/new_news", $cntCacheNews+1);
+                        $cntCacheNews = $cache->load("{$for_user_id}/new_news");
+                        $cache->save("{$for_user_id}/new_news", $cntCacheNews+1);
                     }
 
-//                    Cache::mozg_mass_clear_cache_file("
-//                    user_{$for_user_id}/profile_{$for_user_id}|
-//                    user_{$for_user_id}/gifts");
+                    $cache->remove("{$for_user_id}/profile_{$for_user_id}");
+                    $cache->remove("{$for_user_id}/gifts");
 
-                    $Cache->delete("users/{$for_user_id}/profile_{$for_user_id}");
-                    $Cache->delete("users/{$for_user_id}/gifts");
-
-                    $config = Settings::loadsettings();
+                    $config = Settings::load();
 
                     //Если цена подарка выше бонусного, то начисляем цену подарка на рейтинг
                     if($gifts['price'] > $config['bonus_rate']){
@@ -150,8 +143,7 @@ class GiftsController extends Module{
                         $db->query("UPDATE `users` SET user_rating = user_rating + {$gifts['price']} WHERE user_id = '{$user_id}'");
 
                         //Чистим кеш
-//                        Cache::mozg_clear_cache_file("user_{$user_id}/profile_{$user_id}");
-                        $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                        $cache->remove("{$user_id}/profile_{$user_id}");
                     }
 
                     //Отправка уведомления на E-mail
@@ -168,17 +160,30 @@ class GiftsController extends Module{
 //                            $mail->send($rowUserEmail['user_email'], 'Вам отправили новый подарок', $rowEmailTpl['text']);
                         }
                     }
-                } else
-                    echo '1';
+
+                    $status = Status::OK;
+                } else {
+                    $status = Status::NOT_MONEY;
+                }
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Удаление подарка
      *
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function del(){
+    public function del(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -198,21 +203,30 @@ class GiftsController extends Module{
             if($user_id == $row['uid']){
                 $db->query("DELETE FROM `gifts` WHERE gid = '{$gid}'");
                 $db->query("UPDATE `users` SET user_gifts = user_gifts-1 WHERE user_id = '{$user_id}'");
-//                Cache::mozg_mass_clear_cache_file("
-//                user_{$user_id}/profile_{$user_id}|
-//                user_{$user_id}/gifts");
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("users/{$user_id}/profile_{$user_id}");
-                $Cache->delete("users/{$user_id}/gifts");
+
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $cache->remove("{$user_id}/profile_{$user_id}");
+                $cache->remove("{$user_id}/gifts");
+
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Всех подарков пользователя
      *
+     * @throws \Throwable
      */
-    public function index(): string
+    public function index(): int
     {
 //        $tpl = $params['tpl'];
 
@@ -220,8 +234,6 @@ class GiftsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
 
         $request = (Request::getRequest()->getGlobal());
 
@@ -269,10 +281,9 @@ class GiftsController extends Module{
                 $sql_where = "AND status = 1";
                 $gcount = 50;
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->set("users/{$user_id}/new_gift", '');
-
-//                Cache::mozg_create_cache("user_{$user_id}/new_gift", '');
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $cache->save("{$user_id}/new_gift", '');
             } else {
                 $sql_where = '';
 //                $tpl->set('[no-new]', '');
@@ -302,7 +313,7 @@ class GiftsController extends Module{
 //                        $tpl->set('[/link]', '');
                     }
 //                    $tpl->set('{gift}', $row['gift']);
-                    $date = megaDate(strtotime($row['gdate']), 1, 1);
+                    $date = \Sura\Libs\Date::megaDate(strtotime($row['gdate']), 1, 1);
 //                    $tpl->set('{date}', $date);
 //                    $tpl->set('[privacy]', '');
 //                    $tpl->set('[/privacy]', '');

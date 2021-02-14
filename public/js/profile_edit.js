@@ -1,19 +1,27 @@
-var sp = {
+const sp = {
 	openfriends: function(ifalse, page_num){
-		var sex = $('#sex').val();
+		let page;
+		let sp;
+		const sex = $('#sex').val();
 		if(sex == 1)
-			var sp = $('#sp').val();
+			{
+				sp = $('#sp').val();
+			}
 		else
-			var sp = $('#sp_w').val();
+			{
+				sp = $('#sp_w').val();
+			}
 
 		if(sp == 1 || sp == 0 || sp == 7){
 			$('#sp_type').hide();
 			$('#sp_val').val('');
 		} else {
 			if(page_num)
-				var page = '&page='+page_num;
+				{
+					page = '&page='+page_num;
+				}
 			else {
-				var page = '';
+				page = '';
 				var page_num = 1;
 			}
 
@@ -44,12 +52,13 @@ var sp = {
 		}
 	},
 	select: function(name, user_id){
-		var sex = $('#sex').val();
-		
+		let sp;
+		const sex = $('#sex').val();
+
 		Box.Close();
 		
 		if(sex == 1){
-			var sp = $('#sp').val();
+			sp = $('#sp').val();
 			if(sp == 2)
 				$('#sp_text').text(lang_editprof_sptext_1);
 			else if(sp == 3)
@@ -61,7 +70,7 @@ var sp = {
 			else
 				$('#sp_text').text(lang_editprof_sptext_5);
 		} else {
-			var sp = $('#sp_w').val();
+			sp = $('#sp_w').val();
 			if(sp == 2)
 				$('#sp_text').text(lang_editprof_asptext_1);
 			else if(sp == 3)
@@ -141,6 +150,10 @@ $(document).ready(function(){
 	
 	//Сохранение контактов
 	$('#saveform_contact').click(function(){
+		let errors_icq;
+		let errors_fb;
+		let errors_od;
+		let errors_vk;
 		var vk = $("#vk").val();
 		var od = $("#od").val();
 		var fb = $("#fb").val();
@@ -154,16 +167,16 @@ $(document).ready(function(){
 			if(isValidVk(vk)){
 				$("#vk").css('background', '#fff');
 				$("#validVk").html('');
-				var errors_vk = 0;
+				errors_vk = 0;
 			} else {
 				$("#vk").css('background', '#ffefef');
 				$("#validVk").html('<span class="form_error">'+lang_no_vk+'</span>');
-				var errors_vk = 1;
+				errors_vk = 1;
 			}
 		} else {
 			$("#vk").css('background', '#fff');
 			$("#validVk").html('');
-			var errors_vk = 0;
+			errors_vk = 0;
 		}
 
 		//Проверка OD
@@ -171,16 +184,16 @@ $(document).ready(function(){
 			if(isValidOd(od)){
 				$("#od").css('background', '#fff');
 				$("#validOd").html('');
-				var errors_od = 0;
+				errors_od = 0;
 			} else {
 				$("#od").css('background', '#ffefef');
 				$("#validOd").html('<span class="form_error">'+lang_no_od+'</span>');
-				var errors_od = 1;
+				errors_od = 1;
 			}
 		} else {
 			$("#od").css('background', '#fff');
 			$("#validOd").html('');
-			var errors_od = 0;
+			errors_od = 0;
 		}
 		
 		//Проверка FB
@@ -188,16 +201,16 @@ $(document).ready(function(){
 			if(isValidFb(fb)){
 				$("#fb").css('background', '#fff');
 				$("#validFb").html('');
-				var errors_fb = 0;
+				errors_fb = 0;
 			} else {
 				$("#fb").css('background', '#ffefef');
 				$("#validFb").html('<span class="form_error">'+lang_no_fb+'</span>');
-				var errors_fb = 1;
+				errors_fb = 1;
 			}
 		} else {
 			$("#fb").css('background', '#fff');
 			$("#validFb").html('');
-			var errors_fb = 0;
+			errors_fb = 0;
 		}
 		
 		//Проверка ICQ
@@ -205,16 +218,16 @@ $(document).ready(function(){
 			if(isValidICQ(icq)){
 				$("#icq").css('background', '#fff');
 				$("#validIcq").html('');
-				var errors_icq = 0;
+				errors_icq = 0;
 			} else {
 				$("#icq").css('background', '#ffefef');
 				$("#validIcq").html('<span class="form_error">'+lang_no_icq+'</span>');
-				var errors_icq = 1;
+				errors_icq = 1;
 			}
 		} else {
 			$("#icq").css('background', '#fff');
 			$("#validIcq").html('');
-			var errors_icq = 0;
+			errors_icq = 0;
 		}
 		
 		//Проверям, если есть ошибки то делаем СТОП а если нет, то пропускаем
@@ -238,11 +251,11 @@ $(document).ready(function(){
 	
 	//Сохранение интересов
 	$('#saveform_interests').click(function(){
-		var activity = $("#activity").val();
-		var interests = $("#interests").val();
-		var myinfo = $("#myinfo").val();
-		var music = $("#music").val();
-		var kino = $("#kino").val();
+		const activity = $("#activity").val();
+		const interests = $("#interests").val();
+		const myinfo = $("#myinfo").val();
+		const music = $("#music").val();
+		const kino = $("#kino").val();
 		var books = $("#books").val();
 		var games = $("#games").val();
 		var quote = $("#quote").val();
@@ -262,15 +275,16 @@ $(document).ready(function(){
 	});
 });
 function CheckLength(name, infoname, num){
-	var xname = $('#'+name).val().length;
-	var valname = $('#'+name).val();
+	let errors;
+	const xname = $('#' + name).val().length;
+	// const valname = $('#' + name).val();
 	if(xname >= num){
 		$('#'+infoname).html('');
-		var errors = 0;
+		errors = 0;
 	} else {
 		$('#'+infoname).html('<span class="form_error">Не менее '+num+' символов</span>');
-		$('#'+name).css('background', '#ffefef');	
-		var errors = 1;
+		$('#'+name).css('background', '#ffefef');
+		errors = 1;
 	}
 	a = errors;
 	return a;

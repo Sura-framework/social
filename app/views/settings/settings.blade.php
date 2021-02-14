@@ -8,10 +8,10 @@
             <div class="col-8">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item active" aria-current="page">@_e('settings')</li>
+                        <li class="breadcrumb-item"><a href="/settings/">@_e('settings')</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Настройки аккаунта</li>
                     </ol>
                 </nav>
-
                 <div class="card mb-2">
                     <div class="card-body">
                         <h2>Настройки аккаунта</h2>

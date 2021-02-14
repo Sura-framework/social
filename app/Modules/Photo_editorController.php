@@ -11,11 +11,9 @@ class Photo_editorController extends Module{
     /**
      * Отмена редактирования
      *
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function close($params): string
+    public function close(): int
     {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
@@ -41,11 +39,9 @@ class Photo_editorController extends Module{
     /**
      * Сохранение отредактированной фотки
      *
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function index($params): string
+    public function index(): int
     {
 //        $tpl = $params['tpl'];
 
@@ -60,7 +56,7 @@ class Photo_editorController extends Module{
 
             $user_id = $user_info['user_id'];
 
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
             //Разришенные форматы
             $allowed_files = explode(', ', $config['photo_format']);
@@ -96,7 +92,7 @@ class Photo_editorController extends Module{
                     $image->save($upload_dir.'c_'.$image_rename, 90);
 
 //                    $tpl->load_template('photos/editor.tpl');
-                    $server_time = \Sura\Libs\Tools::time();
+                    $server_time = \Sura\Libs\Date::time();
 //                    $tpl->set('{photo}', "/uploads/users/{$user_id}/albums/{$row['album_id']}/{$row['photo_name']}?{$server_time}");
 //                    $tpl->compile('content');
 

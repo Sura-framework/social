@@ -3,18 +3,18 @@
     <div class="container">
 
         @if($all_albums)
-        @if($admin_drag) @if($owner)
-                <script type="text/javascript">
+            @if($admin_drag) @if($owner)
+        <script type="text/javascript">
             $(document).ready(function(){
                 Albums.Drag();
             });
         </script>@endif @endif
         <div class="buttonsprofile albumsbuttonsprofile" style="height:10px;">
             <div class="activetab"><a href="/albums/{{ $user_id }}/" onClick="Page.Go(this.href); return false;">
-                    <div>@if($not_owner)Все альбомы {name}@endif @if($owner)Все альбомы@endif</div></a></div>
+                    <div>@if(!$owner)Все альбомы {name}@endif @if($owner)Все альбомы@endif</div></a></div>
             @if($owner)<a href="" onClick="Albums.CreatAlbum(); return false;">Создать альбом</a>@endif
             <a href="/albums/comments/{{ $user_id }}/" onClick="Page.Go(this.href); return false;">Комментарии к альбомам</a>
-            @if($not_owner)<a href="/u{{ $user_id }}" onClick="Page.Go(this.href); return false;">К странице {{ $name }}</a>@endif
+            @if(!$owner)<a href="/u{{ $user_id }}" onClick="Page.Go(this.href); return false;">К странице {{ $name }}</a>@endif
             @if($new_photos)<a href="/albums/newphotos/" onClick="Page.Go(this.href); return false;">Новые фотографии со мной (<b>{{ $num }}</b>)</a>@endif
         </div>
         <div class="clear"></div>

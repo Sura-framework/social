@@ -11,11 +11,9 @@ use Sura\Libs\Gramatic;
 class Static_pageController extends Module{
 
     /**
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function index($params): string
+    public function index(): int
     {
         $tpl = $params['tpl'];
 
@@ -23,8 +21,6 @@ class Static_pageController extends Module{
         $logged = Registry::get('logged');
         // $user_info = Registry::get('user_info');
         $lang = $this->get_langs();
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             $request = (Request::getRequest()->getGlobal());

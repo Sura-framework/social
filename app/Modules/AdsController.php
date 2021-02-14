@@ -14,9 +14,8 @@ use Sura\Libs\Gramatic;
 class AdsController extends Module{
 
     /**
-     * @param $params
      */
-    public function clickgo($params){
+    public function clickgo(){
         $user_info = Registry::get('user_info');
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -65,7 +64,7 @@ class AdsController extends Module{
     /**
      * @param $params
      */
-    public function status_ad($params){
+    public function status_ad(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -134,7 +133,7 @@ class AdsController extends Module{
      * @param $params
      * @return bool
      */
-    public function cabinet($params){
+    public function cabinet(){
         $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
@@ -238,7 +237,7 @@ class AdsController extends Module{
             $tpl->compile('content');
 
             $params['tpl'] = $tpl;
-            Page::generate($params);
+            Page::generate();
             return true;
         }
     }
@@ -247,7 +246,7 @@ class AdsController extends Module{
      * @param $params
      * @return bool
      */
-    public function create($params){
+    public function create(){
         $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
@@ -284,7 +283,7 @@ class AdsController extends Module{
             $tpl->compile('content');
 
             $params['tpl'] = $tpl;
-            Page::generate($params);
+            Page::generate();
             return true;
         }
     }
@@ -292,7 +291,7 @@ class AdsController extends Module{
     /**
      * @param $params
      */
-    public function optionad($params){
+    public function optionad(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -363,7 +362,7 @@ class AdsController extends Module{
     /**
      * @param $params
      */
-    public function checkurl($params){
+    public function checkurl(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -410,7 +409,7 @@ class AdsController extends Module{
     /**
      * @param $params
      */
-    public function bigtype($params){
+    public function bigtype(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -478,7 +477,7 @@ class AdsController extends Module{
     /**
      * @param $params
      */
-    public function nextcreate($params){
+    public function nextcreate(){
         $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
@@ -530,7 +529,7 @@ class AdsController extends Module{
     /**
      * @param $params
      */
-    public function loadage($params){
+    public function loadage(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -578,7 +577,7 @@ class AdsController extends Module{
     /**
      * @param $params
      */
-    public function uploadimg($params){
+    public function uploadimg(){
         $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();
@@ -619,7 +618,7 @@ class AdsController extends Module{
     /**
      * @param $params
      */
-    public function upload($params){
+    public function upload(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -657,7 +656,7 @@ class AdsController extends Module{
             //Получаем данные о фотографии
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = \Sura\Libs\Tools::time();
+            $server_time = \Sura\Libs\Date::time();
             $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
             $array = explode(".", $image_name);
@@ -695,7 +694,7 @@ class AdsController extends Module{
     /**
      * @param $params
      */
-    public function createad($params){
+    public function createad(){
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -790,7 +789,7 @@ class AdsController extends Module{
      * @param $params
      * @return bool
      */
-    public function index($params)
+    public function index()
     {
         $tpl = $params['tpl'];
 
@@ -837,14 +836,14 @@ class AdsController extends Module{
         }
 
         $params['tpl'] = $tpl;
-        Page::generate($params);
+        Page::generate();
         return true;
     }
 
     /**
      * @param $params
      */
-    public function view_ajax($params){
+    public function view_ajax(){
         $user_info = $this->user_info();
         $logged = $this->logged();
         $db = $this->db();
@@ -856,7 +855,7 @@ class AdsController extends Module{
 
             $user_sex = $user_info['user_sex'];
             $user_birthday = explode('-', $user_info['user_birthday']);
-            $user_age = user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+            $user_age = \App\Libs\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
             //$ad = $db->super_query("SELECT * FROM `ads` WHERE price != '0' and active = '1' ORDER BY RAND() LIMIT 5");
             $ad = $db->super_query("SELECT tb1.whads, id, link, image, text, description, type, views, price, active, tb2.idad, country, city, sex, agef, agel, sp FROM `ads` tb1, `ads_settings` tb2 WHERE (tb1.price != '0' and tb1.active = '1' AND tb1.id = tb2.idad) AND ((tb2.country = '{$user_info['user_country']}' OR tb2.country = 0) AND (tb2.sex = 0 OR tb2.sex = '{$user_sex}') AND (tb2.agef >= '{$user_age}' OR tb2.agef = 0) AND (tb2.agel <= '{$user_age}' OR tb2.agel = 0)) ORDER BY RAND() LIMIT 5");
             if($ad){

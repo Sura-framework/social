@@ -12,17 +12,22 @@
     }
   ],
   "require": {
+    "ext-gd": "*",
+    "ext-iconv": "*",
+    "ext-json": "*",
+    "ext-mysqli": "*",
+    "ext-pdo": "*",
+    "php": "^8.0",
+    "char0n/ffmpeg-php": "^3.0.0",
     "intervention/image": "^2.5",
     "james-heinrich/getid3": "^1.9",
-    "sura/framework": "^0.9.1",
+    "sura/framework": "^0.9.6",
+    "sura/cache": "^2.0",
+    "sura/database": "^1.1",
+    "sura/url": "^1.1",
     "sura/menu": "^1.1",
-    "sura/cache": "^1.1",
-    "sura/view": ">=1.1",
-    "char0n/ffmpeg-php": "^3.0.0",
-    "php": "^8.0",
-    "ext-gd": "*",
-    "ext-json": "*",
-    "ext-iconv": "*"
+    "sura/view": "^1.4",
+    "gregwar/captcha": "1.*"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.1"

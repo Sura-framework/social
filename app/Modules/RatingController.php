@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use Exception;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 
 class RatingController extends Module{
@@ -10,11 +11,10 @@ class RatingController extends Module{
     /**
      * view
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
+     * @throws \JsonException
      */
-    public function view($params): string
+    public function view(): int
     {
         Tools::NoAjaxRedirect();
         $logged = $this->logged();
@@ -23,8 +23,10 @@ class RatingController extends Module{
             $user_info = $this->user_info();
             $limit_news = 10;
 
-            if($_POST['page_cnt'] > 0) $page_cnt = intval($_POST['page_cnt']) * $limit_news;
+            if($_POST['page_cnt'] > 0) $page_cnt = (int)$_POST['page_cnt'] * $limit_news;
             else $page_cnt = 0;
+
+            $params = array();
 
             //Выводим список
             $sql_ = $db->super_query("SELECT tb1.user_id, addnum, date, tb2.user_search_pref, user_photo FROM `users_rating` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND for_user_id = '{$user_info['user_id']}' ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_news}", 1);
@@ -35,12 +37,16 @@ class RatingController extends Module{
                     else
                         $sql_[$key]['ava'] = "/images/no_ava_50.png";
                     $sql_[$key]['rate'] = $row['addnum'];
-                    $date = megaDate(strtotime($row['date']));
+                    $date = \Sura\Libs\Date::megaDate($row['date']);
                     $sql_[$key]['date'] = $date;
                 }
                 $params['users'] = $sql_;
             }
-                return view('profile.rating.view', $params);
+                $row =  view_data('profile.rating.view', $params);
+
+            return _e_json(array(
+                'content' => $row,
+            ) );
         }
         return view('info.info', $params);
     }
@@ -48,9 +54,12 @@ class RatingController extends Module{
     /**
      * add
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function add($params){
+    public function add(): int
+    {
         Tools::NoAjaxRedirect();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -83,31 +92,37 @@ class RatingController extends Module{
                     $db->query("UPDATE `users` SET user_rating = user_rating + {$num} WHERE user_id = '{$for_user_id}'");
 
                     //Вставляем в лог
-                    $server_time = \Sura\Libs\Tools::time();
+                    $server_time = \Sura\Libs\Date::time();
                     $db->query("INSERT INTO `users_rating` SET user_id = '{$user_id}', for_user_id = '{$for_user_id}', addnum = '{$num}', date = '{$server_time}'");
 
-                    //Чистим кеш
-//                    Cache::mozg_clear_cache_file("user_{$for_user_id}/profile_{$for_user_id}");
+                    /** Чистим кеш */
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $cache->remove("{$for_user_id}/user_{$for_user_id}");
 
-                    $Cache = cache_init(array('type' => 'file'));
-                    $Cache->delete("users/{$for_user_id}/user_{$for_user_id}");
-
-                } else
-                    echo 1;
-            } else
-                echo 1;
+                    $status = Status::OK;
+                }else{
+                    $status = Status::NOT_MONEY;
+                }
+            }else{
+                $status = Status::NOT_FOUND;
+            }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
-        //TODO JSON output
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * index
      *
      * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
+     * @throws \JsonException
      */
-    public function index($params): string
+    public function index($params): int
     {
         Tools::NoAjaxRedirect();
         $logged = $this->logged();
@@ -116,10 +131,14 @@ class RatingController extends Module{
             $user_info = $this->user_info();
             //Выводим текущий баланс свой
             $row = $db->super_query("SELECT user_balance FROM `users` WHERE user_id = '{$user_info['user_id']}'");
-            $params['user_id'] = intval($_POST['for_user_id']);
+            $params['user_id'] = (int)$_POST['for_user_id'];
             $params['num'] = $row['user_balance']-1;
             $params['balance'] = $row['user_balance'];
-            return view('profile.rating.main', $params);
+            $row = view_data('profile.rating.main', $params);
+
+            return _e_json(array(
+                'content' => $row,
+            ) );
         }else
             return view('info.info', $params);
     }

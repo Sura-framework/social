@@ -11,11 +11,9 @@ class My_statsController extends Module{
     /**
      * Статистика моей страницы
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function index($params): string
+    public function index(): int
     {
 //        $tpl = $params['tpl'];
 
@@ -23,8 +21,6 @@ class My_statsController extends Module{
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
 
         $request = (Request::getRequest()->getGlobal());
 
@@ -56,7 +52,7 @@ class My_statsController extends Module{
 
             } else {
 
-                $server_time = \Sura\Libs\Tools::time();
+                $server_time = \Sura\Libs\Date::time();
                 $stat_date = date('Ym', $server_time);
                 $r_month = date('m', $server_time);
 

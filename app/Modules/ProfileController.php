@@ -1,16 +1,20 @@
 <?php
-
+declare(strict_types = 1);
 namespace App\Modules;
 
 use App\Libs\Wall;
-use Exception;
+use JetBrains\PhpStorm\NoReturn;
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
 use Sura\Libs\Db;
+use Sura\Libs\Langs;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use App\Models\Profile;
+use Throwable;
 
 class ProfileController extends Module{
 
@@ -18,22 +22,17 @@ class ProfileController extends Module{
      * Просмотр страницы пользователей
      *
      * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
+     * @throws Throwable
      */
-    public function index($params): string
+    public function index($params): int
     {
         $lang = $this->get_langs();
         $db = Db::getDB();
 
-//        $lang = langs::check_lang();
-//        var_dump($lang);
-//        exit();
-
         $user_info = $this->user_info();
         $logged = $this->logged();
-        $Profile = new Profile;
-        Tools::NoAjaxRedirect();
+
 
         $user_id = $user_info['user_id'];
         $params['user_id'] = $user_id;
@@ -42,35 +41,52 @@ class ProfileController extends Module{
 
         if($logged){
 
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
             /*
              * ID user page
              */
-            $server = Request::getRequest()->server;
+            if (isset($params['alias'])){
+                $id = (int)$params['alias'];
+            }else{
+                $server = Request::getRequest()->server;
 
-            $path = explode('/', $server['REQUEST_URI']);
-            $id = str_replace('u', '', $path);
-            $id = (int)$id['1'];
+                $path = explode('/', $server['REQUEST_URI']);
+                $id = str_replace('u', '', $path);
+                $id = (int)$id['1'];
+            }
 
-            $Cache = cache_init(array('type' => 'file'));
-            try {
-                $value = $Cache->get("users/{$id}/profile_{$id}", $default = null);
-                $row = unserialize($value);
-                $row_online = $Profile->user_online($id);
-            }catch (Exception $e){
-                $dir = __DIR__.'/../cache/users/'.$id.'/';
-                if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
-                    throw new \Exception(sprintf('Directory "%s" was not created', $dir));
-                }
 
+            $storage = new MemcachedStorage('localhost');
+            $cache = new Cache($storage, 'users');
+
+            $key = $id.'/profile_'.$id;
+            $value = $cache->load($key, function (&$dependencies) {
+                $dependencies[Cache::EXPIRE] = '20 minutes';
+            });
+
+            $Profile = new Profile;
+
+            if ($value == NULL){
                 $row = $Profile->user_row($id);
                 $value = serialize($row);
-
-                $Cache->set("users/{$id}/profile_{$id}", $value);
-                $row_online['user_last_visit'] = $row['user_last_visit'];
-                $row_online['user_logged_mobile'] = $row['user_logged_mobile'];
+                $cache->save($key, $value);
+            }else{
+                $row = unserialize($value, $options = []);
             }
+
+            $row_online['user_last_visit'] = $row['user_last_visit'];
+            $row_online['user_logged_mobile'] = $row['user_logged_mobile'];
+
+            if($user_info['user_id'] == $row['user_id']){
+                $params['owner'] = true;
+                $row_online['user_last_visit'] = $user_info['user_last_visit'];
+            } else {
+                $params['owner'] = false;
+            }
+
+
+
 
             //Если есть такой, юзер то продолжаем выполнение скрипта
             if(isset($row) ){
@@ -78,17 +94,19 @@ class ProfileController extends Module{
 //                $params['title'] = $row['user_search_pref'].' | Sura';
 
 //                $server_time = (int)$_SERVER['REQUEST_TIME'];
-                $server_time = \Sura\Libs\Tools::time();
+                $server_time = \Sura\Libs\Date::time();
 
                 //Если удалена
                 if(isset($row['user_delet']) AND $row['user_delet'] == 1){
 //                    $user_name_lastname_exp = explode(' ', $row['user_search_pref']);
+                    return 0;//FIXME
                 }
                 //Если заблокирована
                 elseif(isset($row['user_ban_date'])  AND $row['user_ban_date'] == 1){
                     if ( $row['user_ban_date'] >= $server_time OR $row['user_ban_date'] == '0')
                     {
 //                        $user_name_lastname_exp = explode(' ', $row['user_search_pref']);
+                        return 0;//FIXME
                     }
                 }
                 //Если все хорошо, то выводим дальше
@@ -96,8 +114,8 @@ class ProfileController extends Module{
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if($user_id != $id){
-                        $CheckBlackList = Tools::CheckBlackList($row['user_id']);
-                        $CheckFriends = Tools::CheckFriends($row['user_id']);
+                        $CheckBlackList = \App\Libs\Friends::CheckBlackList($row['user_id']);
+                        $CheckFriends = \App\Libs\Friends::CheckFriends($row['user_id']);
 
                     }else{
                         $CheckBlackList = false;
@@ -128,7 +146,12 @@ class ProfileController extends Module{
                             $friend_info = explode(' ', $row_friends['user_search_pref']);
                             $sql_friends[$key]['user_id'] = $row_friends['friend_id'];
                             $sql_friends[$key]['name'] = $friend_info['0'];
-                            $sql_friends[$key]['last_name'] = $friend_info['1'];
+                            if (isset($friend_info['1'])){
+                                $sql_friends[$key]['last_name'] = $friend_info['1'];
+
+                            }else{
+                                $sql_friends[$key]['last_name'] = 'Неизвестный пользователь';
+                            }
                             if($row_friends['user_photo']){
                                 $sql_friends[$key]['ava'] = $config['home_url'].'uploads/users/'.$row_friends['friend_id'].'/50_'.$row_friends['user_photo'];
                             }else{
@@ -151,12 +174,18 @@ class ProfileController extends Module{
                         $online_friends = $Profile->friends_online_cnt($id, $online_time);
                         //Если друзья на сайте есть то идем дальше
                         if($online_friends['cnt']){
-                            $sql_friends_online = $Profile->friends_online($id, $online_time);
+                            $sql_friends_online = $Profile->friends_online($id, (int)$online_time);
                             foreach($sql_friends_online as $key => $row_friends_online){
                                 $friend_info_online = explode(' ', $row_friends_online['user_search_pref']);
                                 $sql_friends_online[$key]['user_id'] = $row_friends_online['user_id'];
-                                $sql_friends_online[$key]['name'] = $friend_info_online[0];
-                                $sql_friends_online[$key]['lastname'] = $friend_info_online[1];
+                                $sql_friends_online[$key]['name'] = $friend_info_online['0'];
+//                                $sql_friends_online[$key]['lastname'] = $friend_info_online[1]
+                                if (isset($friend_info_online['1'])){
+                                    $sql_friends_online[$key]['last_name'] = $friend_info['1'];
+
+                                }else{
+                                    $sql_friends_online[$key]['last_name'] = 'Неизвестный пользователь';
+                                }
                                 if($row_friends_online['user_photo']){
                                     $sql_friends_online[$key]['ava'] = $config['home_url'].'uploads/users/'.$row_friends_online['user_id'].'/50_'.$row_friends_online['user_photo'];
                                 }else{
@@ -202,7 +231,7 @@ class ProfileController extends Module{
                             $sql_videos[$key]['title'] = stripslashes($row_videos['title']);
                             $titles = array('комментарий', 'комментария', 'комментариев');//comments
                             $sql_videos[$key]['comm_num'] = $row_videos['comm_num'].' '.Gramatic::declOfNum($row_videos['comm_num'], $titles);
-                            $date = megaDate(strtotime($row_videos['add_date']), '');
+                            $date = \Sura\Libs\Date::megaDate(strtotime($row_videos['add_date']), '');
                             $sql_videos[$key]['date'] = $date;
                         }
                         $params['videos_num'] = $video_cnt['cnt'];
@@ -215,7 +244,7 @@ class ProfileController extends Module{
                      */
                     if($row['user_subscriptions_num'] > 0 AND !$CheckBlackList){
                         $cache_pref_subscriptions = '/subscr_user_'.$id;
-                        if(!$subscriptions){
+//                        if(!$subscriptions){
                             $sql_subscriptions = $Profile->subscriptions($id, $cache_pref_subscriptions);
                             foreach($sql_subscriptions as $key => $row_subscr){
                                 $sql_subscriptions[$key]['user_id'] = $row_subscr['friend_id'];
@@ -235,7 +264,7 @@ class ProfileController extends Module{
                             $params['subscriptions'] = $sql_subscriptions;
                             $params['subscriptions_num'] = $row['user_subscriptions_num'];
                     //                            Cache::mozg_create_cache('/subscr_user_'.$id, $tpl->result['subscriptions']);
-                        }
+//                        }
                     }else
                         $params['subscriptions'] = false;
 
@@ -245,7 +274,7 @@ class ProfileController extends Module{
                     if($row['user_audio']  AND !$CheckBlackList AND $config['audio_mod'] == 'yes'){
                         $sql_audio = $Profile->audio($id);
                         foreach($sql_audio as $key => $row_audio){
-                            $sql_audio[$key]['stime'] = gmdate("i:s", $row_audio['duration']);
+                            $sql_audio[$key]['stime'] = gmdate("i:s", (int)$row_audio['duration']);
                             if(!$row_audio['artist']) $row_audio['artist'] = 'Неизвестный исполнитель';
                             if(!$row_audio['title']) $row_audio['title'] = 'Без названия';
                             $sql_audio[$key]['search_artist'] = urlencode($row_audio['artist']);
@@ -269,7 +298,7 @@ class ProfileController extends Module{
                             $sql_happy_friends[$key]['user_id'] = $happy_row_friends['friend_id'];
                             $sql_happy_friends[$key]['name'] = $happy_row_friends['user_search_pref'];
                             $user_birthday = explode('-', $happy_row_friends['user_birthday']);
-                            $sql_happy_friends[$key]['age'] = user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+                            $sql_happy_friends[$key]['age'] = \App\Libs\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
                             if($happy_row_friends['user_photo']) {
                                 $sql_happy_friends[$key]['ava'] = '/uploads/users/'.$happy_row_friends['friend_id'].'/100_'.$happy_row_friends['user_photo'];
                             }else{
@@ -413,14 +442,18 @@ class ProfileController extends Module{
                         }
 
                         if(!$CheckBlackList){
+
+                            if (!isset($where_sql))
+                                $where_sql = '';
+
                             if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $CheckFriends OR $user_id == $id) {
-                                $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
+                                $query = $db->super_query("SELECT tb1.id, author_user_id, for_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
                             }
                             elseif($wallAuthorId['author_user_id'] == $id) {
-                                $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
+                                $query = $db->super_query("SELECT tb1.id, author_user_id, for_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
                             }
                             else {
-                                $query = $db->super_query("SELECT tb1.id, author_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 AND tb1.author_user_id = '{$id}' ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
+                                $query = $db->super_query("SELECT tb1.id, author_user_id, for_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 AND tb1.author_user_id = '{$id}' ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
                             }
 
 
@@ -434,7 +467,7 @@ class ProfileController extends Module{
 //                                else
 //                                    $id = $user_id;
 
-                                $walluid = $id;
+//                                $walluid = $id;
 
                                 /**
                                  * @deprecated
@@ -450,515 +483,12 @@ class ProfileController extends Module{
                                 }*/
 
                                 $server_time = (int)$_SERVER['REQUEST_TIME'];
-                                $config = Settings::loadsettings();
+                                $config = Settings::load();
 
                                 /**
                                  * wall records
                                  *
                                  */
-/*
-                                foreach($query as $key => $row_wall){
-                                    $query[$key]['rec_id'] = $row_wall['id']; //!
-                                    $query[$key]['action_type'] = 1;
-                                    //КНопка Показать полностью..
-                                    $expBR = explode('<br />', $row_wall['text']);
-                                    $textLength = count($expBR);
-                                    $strTXT = strlen($row_wall['text']);
-                                    if($textLength > 9 OR $strTXT > 600)
-                                        $row_wall['text'] = '<div class="wall_strlen" id="hide_wall_rec'.$row_wall['id'].'">'.$row_wall['text'].'</div><div class="wall_strlen_full" onMouseDown="wall.FullText('.$row_wall['id'].', this.id)" id="hide_wall_rec_lnk'.$row_wall['id'].'">Показать полностью..</div>';
-
-                                    //Прикрипленные файлы
-                                    if($row_wall['attach']){
-                                        $attach_arr = explode('||', $row_wall['attach']);
-                                        $cnt_attach = 1;
-                                        $cnt_attach_link = 1;
-                    //                                        $jid = 0;
-                                        $attach_result = '';
-                                        $attach_result .= '<div class="clear"></div>';
-                                        foreach($attach_arr as $attach_file){
-                                            $attach_type = explode('|', $attach_file);
-
-                                            //Фото со стены сообщества
-                                            if($attach_type[0] == 'photo' AND file_exists(__DIR__."/../../public/uploads/groups/{$row_wall['tell_uid']}/photos/c_{$attach_type[1]}")){
-                                                if($cnt_attach < 2)
-                                                    $attach_result .= "<div class=\"profile_wall_attach_photo cursor_pointer page_num{$row_wall['id']}\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$row_wall['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\"><img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$row_wall['tell_uid']}/photos/{$attach_type[1]}\"  alt=\"\" /></div>";
-                                                else
-                                                    $attach_result .= "<img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$row_wall['tell_uid']}/photos/c_{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$row_wall['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row_wall['id']}\"  alt=\"\"/>";
-
-                                                $cnt_attach++;
-
-                                                $resLinkTitle = '';
-
-                                                //Фото со стены юзера
-                                            } elseif($attach_type[0] == 'photo_u'){
-
-                                                if (!isset($rodImHeigh))
-                                                    $rodImHeigh = null;
-
-                                                if($row_wall['tell_uid']) $attauthor_user_id = $row_wall['tell_uid'];
-                                                else $attauthor_user_id = $row_wall['author_user_id'];
-
-                                                if($attach_type[1] == 'attach' AND file_exists(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}")){
-
-                                                    if($cnt_attach == 1)
-
-                                                        $attach_result .= "<div class=\"profile_wall_attach_photo cursor_pointer page_num{$row_wall['id']}\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$attauthor_user_id}', '{$attach_type[1]}', '{$cnt_attach}', 'photo_u')\"><img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/{$attach_type[2]}\"  alt=\"\"/></div>";
-
-                                                    else
-
-                                                        $attach_result .= "<img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}\" style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row_wall['id']}\" height=\"{$rodImHeigh}\"  alt=\"\"/>";
-
-
-                                                    $cnt_attach++;
-
-
-                                                } elseif(file_exists(__DIR__."/../../public/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}")){
-
-                                                    if($cnt_attach < 2)
-                                                        $attach_result .= "<div class=\"profile_wall_attach_photo cursor_pointer page_num{$row_wall['id']}\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$attauthor_user_id}', '{$attach_type[1]}', '{$cnt_attach}', 'photo_u')\"><img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/{$attach_type[1]}\"  alt=\"\"/></div>";
-                                                    else
-                                                        $attach_result .= "<img id=\"photo_wall_{$row_wall['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row_wall['id']}', '{$row_wall['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row_wall['id']}\"  alt=\"\"/>";
-
-                                                    $cnt_attach++;
-                                                }
-
-                                                $resLinkTitle = '';
-
-                                                //Видео
-                                            } elseif($attach_type[0] == 'video' AND file_exists(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}")){
-
-                                                $for_cnt_attach_video = explode('video|', $row_wall['attach']);
-                                                $cnt_attach_video = count($for_cnt_attach_video)-1;
-
-                                                if($row_wall['tell_uid']) $attauthor_user_id = $row_wall['tell_uid'];
-
-                                                if($cnt_attach_video == 1 AND preg_match('/(photo|photo_u)/i', $row_wall['attach']) == false){
-
-                                                    $video_id = intval($attach_type[2]);
-
-                                                    $row_video = $Profile->row_video($video_id);
-                                                    $row_video['title'] = stripslashes($row_video['title']);
-                                                    $row_video['video'] = stripslashes($row_video['video']);
-                                                    $row_video['video'] = strtr($row_video['video'], array('width="770"' => 'width="390"', 'height="420"' => 'height="310"'));
-
-
-                                                    if ($row_video['download'] == '1') {
-                                                        $attach_result .= "<div class=\"cursor_pointer clear\" href=\"/video{$attauthor_user_id}_{$video_id}_sec=wall/fuser={$attauthor_user_id}\" id=\"no_video_frame{$video_id}\" onClick=\"videos.show({$video_id}, this.href, '/u{$attauthor_user_id}')\">
-							                            <div class=\"video_inline_icon\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"width: 175px;height: 131px;margin-top:3px;max-width: 500px;\" height=\"350\"  alt=\"\"/></div><div id=\"video_frame{$video_id}\" class=\"no_display\" style=\"padding-top:3px\">{$row_video['video']}</div>";
-                                                    }else{
-                                                        $attach_result .= "<div class=\"cursor_pointer clear\" href=\"/video{$attauthor_user_id}_{$video_id}_sec=wall/fuser={$attauthor_user_id}\" id=\"no_video_frame{$video_id}\" onClick=\"videos.show({$video_id}, this.href, '/u{$attauthor_user_id}')\">
-							                            <div class=\"video_inline_icon\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;max-width: 500px;\" height=\"350\"  alt=\"\"/></div><div id=\"video_frame{$video_id}\" class=\"no_display\" style=\"padding-top:3px\">{$row_video['video']}</div>";
-                                                    }
-                                                } else {
-
-                                                    if ($row_video['download'] == '1') {//bug: undefined
-                                                        $attach_result .= "<div class=\"fl_l\"><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><div class=\"video_inline_icon video_inline_icon2\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"width: 175px;height: 131px;margin-top:3px;margin-right:3px\"  alt=\"\"/></a></div>";
-                                                    }else{
-                                                        $attach_result .= "<div class=\"fl_l\"><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><div class=\"video_inline_icon video_inline_icon2\"></div><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"width: 175px;height: 131px;margin-top:3px;margin-right:3px\"  alt=\"\"/></a></div>";
-                                                    }
-                                                }
-
-                                                $resLinkTitle = '';
-
-                                                //Музыка
-                                            } elseif($attach_type[0] == 'audio'){
-                                                $data = explode('_', $attach_type[1]);
-                                                $audio_id = intval($data[0]);
-                                                $row_audio = $Profile->row_audio($audio_id);
-                                                if($row_audio){
-                                                    $stime = gmdate("i:s", $row_audio['duration']);
-                                                    if(!$row_audio['artist']) $row_audio['artist'] = 'Неизвестный исполнитель';
-                                                    if(!$row_audio['title']) $row_audio['title'] = 'Без названия';
-                                                    $plname = 'wall';
-                                                    if($row_audio['oid'] != $user_info['user_id']) $q_s = <<<HTML
-                                                    <div class="audioSettingsBut"><li class="icon-plus-6"
-                                                    onClick="gSearch.addAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}')"
-                                                    onmouseover="showTooltip(this, {text: 'Добавить в мой список', shift: [6,5,0]});"
-                                                    id="no_play"></li><div class="clear"></div></div>
-                                                    HTML;
-                                                    else $q_s = '';
-                                                    $qauido = "<div class=\"audioPage audioElem search search_item\"
-                                                    id=\"audio_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
-                                                    onclick=\"playNewAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}', event);\"><div
-                                                    class=\"area\"><table cellspacing=\"0\" cellpadding=\"0\"
-                                                    width=\"100%\"><tbody><tr><td><div class=\"audioPlayBut new_play_btn\"><div
-                                                    class=\"bl\"><div class=\"figure\"></div></div></div><input type=\"hidden\"
-                                                    value=\"{$row_audio['url']},{$row_audio['duration']},page\"
-                                                    id=\"audio_url_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"></td><td
-                                                    class=\"info\"><div class=\"audioNames\" style=\"width: 275px;\"><b class=\"author\"
-                                                    onclick=\"Page.Go('/?go=search&query=&type=5&q='+this.innerHTML);\"
-                                                    id=\"artist\">{$row_audio['artist']}</b> – <span class=\"name\"
-                                                    id=\"name\">{$row_audio['title']}</span> <div class=\"clear\"></div></div><div
-                                                    class=\"audioElTime\"
-                                                    id=\"audio_time_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\">{$stime}</div>{$q_s}</td
-                                                    ></tr></tbody></table><div id=\"player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
-                                                    class=\"audioPlayer player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\" border=\"0\"
-                                                    cellpadding=\"0\"><table cellpadding=\"0\" width=\"100%\"><tbody><tr><td
-                                                    style=\"width: 100%;\"><div class=\"progressBar fl_l\" style=\"width: 100%;\"
-                                                    onclick=\"cancelEvent(event);\" onmousedown=\"audio_player.progressDown(event, this);\"
-                                                    id=\"no_play\" onmousemove=\"audio_player.playerPrMove(event, this)\"
-                                                    onmouseout=\"audio_player.playerPrOut()\"><div class=\"audioTimesAP\"
-                                                    id=\"main_timeView\"><div class=\"audioTAP_strlka\">100%</div></div><div
-                                                    class=\"audioBGProgress\"></div><div class=\"audioLoadProgress\"></div><div
-                                                    class=\"audioPlayProgress\" id=\"playerPlayLine\"><div
-                                                    class=\"audioSlider\"></div></div></div></td><td><div class=\"audioVolumeBar fl_l ml-2\"
-                                                    onclick=\"cancelEvent(event);\" onmousedown=\"audio_player.volumeDown(event, this);\"
-                                                    id=\"no_play\"><div class=\"audioTimesAP\"><div
-                                                    class=\"audioTAP_strlka\">100%</div></div><div class=\"audioBGProgress\"></div><div
-                                                    class=\"audioPlayProgress\" id=\"playerVolumeBar\"><div
-                                                    class=\"audioSlider\"></div></div></div> </td></tr></tbody></table></div></div></div>";
-                                                    $attach_result .= $qauido;
-                                                }
-                                                $resLinkTitle = '';
-                                                //Смайлик
-                                            } elseif($attach_type[0] == 'smile' AND file_exists(__DIR__."/../../public/uploads/smiles/{$attach_type[1]}")){
-                                                $attach_result .= '<img src=\"/uploads/smiles/'.$attach_type[1].'\" style="margin-right:5px" />';
-
-                                                $resLinkTitle = '';
-
-                                                //Если ссылка
-                                            } elseif($attach_type[0] == 'link' AND preg_match('/http:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1 AND stripos(str_replace('http://www.', 'http://', $attach_type[1]), $config['home_url']) === false){
-                    //                                                $count_num = count($attach_type);
-                                                $domain_url_name = explode('/', $attach_type[1]);
-                                                $rdomain_url_name = str_replace('http://', '', $domain_url_name[2]);
-
-                                                $attach_type[3] = stripslashes($attach_type[3]);
-                                                $attach_type[3] = iconv_substr($attach_type[3], 0, 200, 'utf-8');
-
-                                                $attach_type[2] = stripslashes($attach_type[2]);
-                                                $str_title = iconv_substr($attach_type[2], 0, 55, 'utf-8');
-
-                                                if(stripos($attach_type[4], '/uploads/attach/') === false){
-                                                    $attach_type[4] = '/images/no_ava_groups_100.gif';
-                                                    $no_img = false;
-                                                } else
-                                                    $no_img = true;
-
-                                                if(!$attach_type[3]) $attach_type[3] = '';
-
-                                                if($no_img AND $attach_type[2]){
-                                                    if($row_wall['tell_comm']) $no_border_link = 'border:0px';
-
-                                                    $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away/?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div><div class="clear"></div><div class="wall_show_block_link" style="'.$no_border_link.'"><a href="/away.php?url='.$attach_type[1].'" target="_blank"><div style="width:108px;height:80px;float:left;text-align:center"><img src="'.$attach_type[4].'"  alt=""/></div></a><div class="attatch_link_title"><a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$str_title.'</a></div><div style="max-height:50px;overflow:hidden">'.$attach_type[3].'</div></div></div>';
-
-                                                    $resLinkTitle = $attach_type[2];
-                                                    $resLinkUrl = $attach_type[1];
-                                                } else if($attach_type[1] AND $attach_type[2]){
-                                                    $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away/?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div></div><div class="clear"></div>';
-
-                                                    $resLinkTitle = $attach_type[2];
-                                                    $resLinkUrl = $attach_type[1];
-                                                }
-
-                                                $cnt_attach_link++;
-
-                                                //Если документ
-                                            } elseif($attach_type[0] == 'doc'){
-
-                                                $doc_id = intval($attach_type[1]);
-
-                                                $row_doc = $Profile->row_doc($doc_id);
-
-                                                if($row_doc){
-
-                                                    $attach_result .= '<div style="margin-top:5px;margin-bottom:5px" class="clear"><div class="doc_attach_ic fl_l" style="margin-top:4px;margin-left:0"></div><div class="attach_link_block_te"><div class="fl_l">Файл <a href="/index.php?go=doc&act=download&did='.$doc_id.'" target="_blank" onMouseOver="myhtml.title(\''.$doc_id.$cnt_attach.$row_wall['id'].'\', \'<b>Размер файла: '.$row_doc['dsize'].'</b>\', \'doc_\')" id="doc_'.$doc_id.$cnt_attach.$row_wall['id'].'">'.$row_doc['dname'].'</a></div></div></div><div class="clear"></div>';
-
-                                                    $cnt_attach++;
-                                                }
-
-                                                //Если опрос
-                                            } elseif($attach_type[0] == 'vote'){
-
-                                                $vote_id = intval($attach_type[1]);
-
-                                                $row_vote = $Profile->row_vote($vote_id);
-
-                                                if($vote_id){
-
-                                                    $checkMyVote = $Profile->vote_check($vote_id, $user_id);
-
-                                                    $row_vote['title'] = stripslashes($row_vote['title']);
-
-                                                    if(!$row_wall['text'])
-                                                        $row_wall['text'] = $row_vote['title'];
-
-                                                    $arr_answe_list = explode('|', stripslashes($row_vote['answers']));
-                                                    $max = $row_vote['answer_num'];
-
-                                                    $sql_answer = $Profile->vote_answer($vote_id);
-                                                    $answer = array();
-                                                    foreach($sql_answer as $row_answer){
-                                                        $answer[$row_answer['answer']]['cnt'] = $row_answer['cnt'];
-                                                    }
-
-                                                    $attach_result .= "<div class=\"clear\" style=\"height:10px\"></div><div id=\"result_vote_block{$vote_id}\"><div class=\"wall_vote_title\">{$row_vote['title']}</div>";
-
-                                                    for($ai = 0; $ai < sizeof($arr_answe_list); $ai++){
-
-                                                        if(!$checkMyVote['cnt']){
-
-                                                            $attach_result .= "<div class=\"wall_vote_oneanswe\" onClick=\"Votes.Send({$ai}, {$vote_id})\" id=\"wall_vote_oneanswe{$ai}\"><input type=\"radio\" name=\"answer\" /><span id=\"answer_load{$ai}\">{$arr_answe_list[$ai]}</span></div>";
-
-                                                        } else {
-
-                                                            $num = $answer[$ai]['cnt'];
-
-                                                            if(!$num ) $num = 0;
-                                                            if($max != 0) $proc = (100 * $num) / $max;
-                                                            else $proc = 0;
-                                                            $proc = round($proc, 2);
-
-                                                            $attach_result .= "<div class=\"wall_vote_oneanswe cursor_default\">
-                                                            {$arr_answe_list[$ai]}<br />
-                                                            <div class=\"wall_vote_proc fl_l\"><div class=\"wall_vote_proc_bg\" style=\"width:".intval($proc)."%\"></div><div style=\"margin-top:-16px\">{$num}</div></div>
-                                                            <div class=\"fl_l\" style=\"margin-top:-1px\"><b>{$proc}%</b></div>
-                                                            </div><div class=\"clear\"></div>";
-
-                                                        }
-
-                                                    }
-                                                    $titles = array('человек', 'человека', 'человек');//fave
-                                                    if($row_vote['answer_num']) $answer_num_text = Gramatic::declOfNum($row_vote['answer_num'], $titles);
-                                                    else $answer_num_text = 'человек';
-
-                                                    if($row_vote['answer_num'] <= 1) $answer_text2 = 'Проголосовал';
-                                                    else $answer_text2 = 'Проголосовало';
-
-                                                    $attach_result .= "{$answer_text2} <b>{$row_vote['answer_num']}</b> {$answer_num_text}.<div class=\"clear\" style=\"margin-top:10px\"></div></div>";
-
-                                                }
-
-                                            } else
-
-                                                $attach_result .= '';
-
-                                        }
-
-                                        if($resLinkTitle AND $row_wall['text'] == $resLinkUrl OR !$row_wall['text'])
-                                            $row_wall['text'] = $resLinkTitle.$attach_result;
-                                        else if($attach_result)
-                                            $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']).$attach_result;
-                                        else
-                                            $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']);
-                                    } else {
-                                        $row_wall['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_wall['text']);
-                                    }
-
-                                    $resLinkTitle = '';
-
-                                    //Если это запись с "рассказать друзьям"
-                                    if($row_wall['tell_uid']){
-                                        if($row_wall['public']) {
-                                            $rowUserTell = $Profile->user_tell_info($row_wall['tell_uid'], 2);
-                                        }
-                                        else {
-                                            $rowUserTell = $Profile->user_tell_info($row_wall['tell_uid'], 1);
-                                        }
-
-                                        if(date('Y-m-d', $row_wall['tell_date']) == date('Y-m-d', $server_time))
-                                            $dateTell = langdate('сегодня в H:i', $row_wall['tell_date']);
-                                        elseif(date('Y-m-d', $row_wall['tell_date']) == date('Y-m-d', ($server_time-84600)))
-                                            $dateTell = langdate('вчера в H:i', $row_wall['tell_date']);
-                                        else
-                                            $dateTell = langdate('j F Y в H:i', $row_wall['tell_date']);
-
-                                        if($row_wall['public']){
-                                            $rowUserTell['user_search_pref'] = stripslashes($rowUserTell['title']);
-                                            $tell_link = 'public';
-                                            if($rowUserTell['photo'])
-                                                $avaTell = '/uploads/groups/'.$row_wall['tell_uid'].'/50_'.$rowUserTell['photo'];
-                                            else
-                                                $avaTell = '/images/no_ava_50.png';
-                                        } else {
-                                            $tell_link = 'u';
-                                            if($rowUserTell['user_photo'])
-                                                $avaTell = '/uploads/users/'.$row_wall['tell_uid'].'/50_'.$rowUserTell['user_photo'];
-                                            else
-                                                $avaTell = '/images/no_ava_50.png';
-                                        }
-
-                                        if($row_wall['tell_comm']) $border_tell_class = 'wall_repost_border'; else $border_tell_class = 'wall_repost_border2';
-
-                                        $row_wall['text'] = <<<HTML
-                                        {$row_wall['tell_comm']}
-                                        <div class="{$border_tell_class}">
-                                        <div class="wall_tell_info"><div class="wall_tell_ava"><a href="/{$tell_link}{$row_wall['tell_uid']}" onClick="Page.Go(this.href); return false"><img src="{$avaTell}" width="30"  alt=""/></a></div><div class="wall_tell_name"><a href="/{$tell_link}{$row_wall['tell_uid']}" onClick="Page.Go(this.href); return false"><b>{$rowUserTell['user_search_pref']}</b></a></div><div class="wall_tell_date">{$dateTell}</div></div>{$row_wall['text']}
-                                        <div class="clear"></div>
-                                        </div>
-                                        HTML;
-                                    }
-
-                                    $query[$key]['text'] = stripslashes($row_wall['text']);
-                                    $query[$key]['name'] = $row_wall['user_search_pref'];
-                                    $query[$key]['user_id'] = $row_wall['author_user_id'];
-                                    $online = Online($row_wall['user_last_visit'], $row_wall['user_logged_mobile']);
-                                    $query[$key]['online'] = $online;
-                                    $date = megaDate($row_wall['add_date']);
-                                    $query[$key]['date'] = $date;
-
-                                    if($row_wall['user_photo']){
-                                        $query[$key]['ava'] = '/uploads/users/'.$row_wall['author_user_id'].'/50_'.$row_wall['user_photo'];
-                                    }
-                                    else{
-                                        $query[$key]['ava'] = '/images/no_ava_50.png';
-                                    }
-
-                                    //Мне нравится
-                                    if(stripos($row_wall['likes_users'], "u{$user_id}|") !== false){
-                                        $query[$key]['yes_like'] = 'public_wall_like_yes';
-                                        $query[$key]['yes_like_color'] = 'public_wall_like_yes_color';
-                                        $query[$key]['like_js_function'] = 'groups.wall_remove_like('.$row_wall['id'].', '.$user_id.', \'uPages\')';
-                                    } else {
-                                        $query[$key]['yes_like'] = '';
-                                        $query[$key]['yes_like_color'] = '';
-                                        $query[$key]['like_js_function'] = 'groups.wall_add_like('.$row_wall['id'].', '.$user_id.', \'uPages\')';
-                                    }
-
-                                    if($row_wall['likes_num']){
-                                        $query[$key]['likes'] = $row_wall['likes_num'];
-                                        $titles = array('человеку', 'людям', 'людям');//like
-                                        $query[$key]['likes_text'] = '<span id="like_text_num'.$row_wall['id'].'">'.$row_wall['likes_num'].'</span> '.Gramatic::declOfNum($row_wall['likes_num'], $titles);
-                                    } else {
-                                        $query[$key]['likes'] = '';
-                                        $query[$key]['likes_text'] = '<span id="like_text_num'.$row_wall['id'].'">0</span> человеку';
-                                    }
-
-                                    //Выводим информцию о том кто смотрит страницу для себя
-                                    $query[$key]['viewer_id'] = $user_id;
-                                    if($user_info['user_photo']){
-                                        $query[$key]['viewer_ava'] = '/uploads/users/'.$user_id.'/50_'.$user_info['user_photo'];
-                                    }else{
-                                        $query[$key]['viewer_ava'] = '/images/no_ava_50.png';
-                                    }
-
-                                    if($row_wall['type']){
-                                        $query[$key]['type'] = $row_wall['type'];
-                                    }else{
-                                        $query[$key]['type'] = '';
-                                    }
-
-                                    //Тег Owner означает показ записей только для владельца страницы или для того кто оставил запись
-                                    if($user_id == $row_wall['author_user_id'] OR $user_id == $id){
-                                        $query[$key]['owner'] = true;
-                                    } else{
-                                        $query[$key]['owner'] = false;
-                                    }
-
-                                    //Показа кнопки "Рассказать др" только если это записи владельца стр.
-                                    if($row_wall['author_user_id'] == $id AND $user_id != $id){
-                                        $query[$key]['author_user_id'] = true;
-                                    } else{
-                                        $query[$key]['author_user_id'] = false;
-                                    }
-
-                                    //Если есть комменты к записи, то выполняем след. действия / Приватность
-                                    if($row_wall['fasts_num']){
-                                        $query[$key]['if_comments'] = false;
-                                    } else {
-                                        $query[$key]['if_comments'] = true;
-                                    }
-
-                                    //Приватность комментирования записей
-                                    if($user_privacy['val_wall3'] == 1 OR $user_privacy['val_wall3'] == 2 AND $CheckFriends OR $user_id == $id){
-                                        $query[$key]['privacy_comment'] = true;
-                                    } else{
-                                        $query[$key]['privacy_comment'] = false;
-                                    }
-
-                                    $query[$key]['record'] = true;
-                                    $query[$key]['comment'] = false;
-                                    $query[$key]['comment_form'] = false;
-                                    $query[$key]['all_comm'] = false;
-
-                                    //Помещаем все комменты в id wall_fast_block_{id} это для JS
-                    //                                    $tpl->result[$compile] .= '<div id="wall_fast_block_'.$row_wall['id'].'">';
-
-                                    //Если есть комменты к записи, то открываем форму ответа уже в развернутом виде и выводим комменты к записи
-                                    if($user_privacy['val_wall3'] == 1 OR $user_privacy['val_wall3'] == 2 AND $CheckFriends OR $user_id == $id){
-                                        if($row_wall['fasts_num']){
-
-                                            if($row_wall['fasts_num'] > 3)
-                                                $comments_limit = $row_wall['fasts_num']-3;
-                                            else
-                                                $comments_limit = 0;
-
-                                            $sql_comments = $Profile->comments($row_wall['id'], $comments_limit);
-
-                                            //Загружаем кнопку "Показать N запсии"
-                                            $titles1 = array('предыдущий', 'предыдущие', 'предыдущие');//prev
-                                            $titles2 = array('комментарий', 'комментария', 'комментариев');//comments
-                                            $query[$key]['gram_record_all_comm'] = Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles1).' '.($row_wall['fasts_num']-3).' '.Gramatic::declOfNum(($row_wall['fasts_num']-3), $titles2);
-
-                                            if($row_wall['fasts_num'] < 4){
-                                                $query[$key]['all_comm_block'] = false;
-                                            }else {
-                                                $query[$key]['rec_id'] = $row_wall['id'];
-                                            }
-                                            $query[$key]['author_id'] = $id;
-
-                                            $query[$key]['record_block'] = false;
-                                            $query[$key]['comment_form_block'] = false;
-                                            $query[$key]['comment_block'] = false;
-
-                                            //Сообственно выводим комменты
-                                            foreach($sql_comments as $key => $row_comments){
-                                                $sql_comments[$key]['name'] = $row_comments['user_search_pref'];
-                                                if($row_comments['user_photo']){
-                                                    $sql_comments[$key]['ava'] = '/uploads/users/'.$row_comments['author_user_id'].'/50_'.$row_comments['user_photo'];
-                                                }else{
-                                                    $sql_comments[$key]['ava'] = '/images/no_ava_50.png';
-                                                }
-
-                                                $sql_comments[$key]['rec_id'] = $row_wall['id'];
-                                                $sql_comments[$key]['comm_id'] = $row_comments['id'];
-                                                $sql_comments[$key]['user_id'] = $row_comments['author_user_id'];
-
-                                                $expBR2 = explode('<br />', $row_comments['text']);
-                                                $textLength2 = count($expBR2);
-                                                $strTXT2 = strlen($row_comments['text']);
-                                                if($textLength2 > 6 OR $strTXT2 > 470)
-                                                    $row_comments['text'] = '<div class="wall_strlen" id="hide_wall_rec'.$row_comments['id'].'" style="max-height:102px"">'.$row_comments['text'].'</div><div class="wall_strlen_full" onMouseDown="wall.FullText('.$row_comments['id'].', this.id)" id="hide_wall_rec_lnk'.$row_comments['id'].'">Показать полностью..</div>';
-
-                                                //Обрабатываем ссылки
-                                                $row_comments['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away/?url=$1" target="_blank">$1</a>', $row_comments['text']);
-
-                                                $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
-
-                                                $date = megaDate($row_comments['add_date']);
-                                                $sql_comments[$key]['date'] = $date;
-                                                if($user_id == $row_comments['author_user_id'] || $user_id == $id){
-                                                    $sql_comments[$key]['owner_block'] = true;
-                                                } else{
-                                                    $sql_comments[$key]['owner_block'] = false;
-                                                }
-
-                                                if($user_id == $row_comments['author_user_id']){
-                                                    $sql_comments[$key]['not_owner'] = false;
-                                                }else {
-                                                    $sql_comments[$key]['not_owner_block'] = true;
-                                                }
-
-                                                $sql_comments[$key]['comment_block'] = true;
-                                                $sql_comments[$key]['record_block'] = false;
-                                                $sql_comments[$key]['comment_form_block'] = false;
-                                                $sql_comments[$key]['all_comm_block'] = false;
-                                            }
-
-                                            //Загружаем форму ответа
-                                            $query[$key]['rec_id'] = $row_wall['id'];
-                                            $query[$key]['author_id'] = $id;
-                                            $query[$key]['comment_form_block'] = true;
-                                            $query[$key]['record_block'] = false;
-                                            $query[$key]['comment_block'] = false;
-                                            $query[$key]['all-comm_block'] = false;
-                                        }
-                                    }
-
-                                    //Закрываем блок для JS
-                    //                                    $tpl->result[$compile] .= '</div>';
-                                }
-                                $params['wall_records'] = $query;
-                                */
                                 $params['wall_records'] = Wall::build($query);
 
                         }
@@ -1011,10 +541,12 @@ class ProfileController extends Module{
                     }
 
                     //Если человек сидит с мобильнйо версии
-                    if($row_online['user_logged_mobile'])
+                    if($row_online['user_logged_mobile']) {
                         $mobile_icon = '<img src="/images/spacer.gif" class="mobile_online"  alt=\"\" />';
-                    else
+                    }
+                    else {
                         $mobile_icon = '';
+                    }
 
                     if($row_online['user_last_visit'] >= $online_time){
                         $params['online'] = $lang['online'].$mobile_icon;
@@ -1025,14 +557,14 @@ class ProfileController extends Module{
                             $row_online['user_last_visit'] = 0;
                         }
 
-                        if(date('Y-m-d', $row_online['user_last_visit']) == date('Y-m-d', $server_time))
+                        if(date('Y-m-d', (int)$row_online['user_last_visit']) == date('Y-m-d', $server_time))
                         {
-                            $dateTell = langdate('сегодня в H:i', $row_online['user_last_visit']);
+                            $dateTell = Langs::lang_date('сегодня в H:i', (int)$row_online['user_last_visit']);
                         }
-                        elseif(date('Y-m-d', $row_online['user_last_visit']) == date('Y-m-d', ($server_time-84600)))
-                            $dateTell = langdate('вчера в H:i', $row_online['user_last_visit']);
+                        elseif(date('Y-m-d', (int)$row_online['user_last_visit']) == date('Y-m-d', ($server_time-84600)))
+                            $dateTell = Langs::lang_date('вчера в H:i', (int)$row_online['user_last_visit']);
                         else
-                            $dateTell = langdate('j F Y в H:i', $row_online['user_last_visit']);
+                            $dateTell = Langs::lang_date('j F Y в H:i', (int)$row_online['user_last_visit']);
                         if($row['user_sex'] == 2){
                         //                            $tpl->set('{online}', 'последний раз была '.$dateTell.$mobile_icon);
                             $params['online'] = 'последний раз была '.$dateTell.$mobile_icon;
@@ -1044,14 +576,14 @@ class ProfileController extends Module{
 
                     //Конакты
                     $xfields = xfieldsdataload($row['user_xfields']);
-                    $preg_safq_name_exp = explode(', ', 'phone, vk, od, skype, fb, icq, site');
-                    foreach($preg_safq_name_exp as $preg_safq_name){
-                        if(isset($xfields[$preg_safq_name])){
-                            $params['not_contact'.$preg_safq_name.'_block'] = true;
-                        } else{
-                            $params['not_contact'.$preg_safq_name.'_block'] = false;
-                        }
-                    }
+//                    $preg_safq_name_exp = explode(', ', 'phone, vk, od, skype, fb, icq, site');
+//                    foreach($preg_safq_name_exp as $preg_safq_name){
+//                        if(isset($xfields[$preg_safq_name])){
+//                            $params['not_contact'.$preg_safq_name] = true;
+//                        } else{
+//                            $params['not_contact'.$preg_safq_name] = false;
+//                        }
+//                    }
                     if (isset($xfields['vk']))
                         $params['vk'] = '<a href="'.stripslashes($xfields['vk']).'" target="_blank">'.stripslashes($xfields['vk']).'</a>';
                     else
@@ -1093,11 +625,16 @@ class ProfileController extends Module{
                         $params['site'] = '';
                     }
 
-                    if(empty($xfields['vk']) && empty($xfields['od']) && empty($xfields['fb'])
-                        && empty($xfields['skype']) && empty($xfields['icq'])
-                        && empty($xfields['phone']) && empty($xfields['site'])){
+                    if (empty($xfields['vk'])
+                        && empty($xfields['od'])
+                        && empty($xfields['fb'])
+                        && empty($xfields['skype'])
+                        && empty($xfields['icq'])
+                        && empty($xfields['phone'])
+                        && empty($xfields['site']))
+                    {
                         $params['not_block_contact'] = false;
-                    }else {
+                    } else {
                         $params['not_block_contact'] = true;
                     }
 
@@ -1109,9 +646,9 @@ class ProfileController extends Module{
                         AND empty($xfields_all['myinfo']) AND empty($xfields_all['music'])
                         AND empty($xfields_all['kino']) AND empty($xfields_all['books'])
                         AND empty($xfields_all['games']) AND empty($xfields_all['quote'])){
-                        $params['not_block_info'] = '<div style="color:#999;">Информация отсутствует.</div>';
+                        $params['not_block_info'] = false;
                     }else{
-                        $params['not_block_info'] = '';
+                        $params['not_block_info'] = true;
                     }
 
                     foreach($preg_safq_name_exp as $preg_safq_name){
@@ -1152,9 +689,9 @@ class ProfileController extends Module{
                         $params['not_all_birthday_block'] = true;
                         if($row['user_day'] && $row['user_month'] && $row['user_year'] > 1929 && $row['user_year'] < 2012 ){
                     //                            $tpl->set('{birth-day}', '<a href="/?go=search&day='.$row['user_day'].'&month='.$row['user_month'].'&year='.$row['user_year'].'" onClick="Page.Go(this.href); return false">'.langdate('j F Y', strtotime($row['user_year'].'-'.$row['user_month'].'-'.$row['user_day'])).' г.</a>');
-                            $params['birth_day'] = '<a href="/?go=search&day='.$row['user_day'].'&month='.$row['user_month'].'&year='.$row['user_year'].'" onClick="Page.Go(this.href); return false">'.langdate('j F Y', strtotime($row['user_year'].'-'.$row['user_month'].'-'.$row['user_day'])).' г.</a>';
+                            $params['birth_day'] = '<a href="/?go=search&day='.$row['user_day'].'&month='.$row['user_month'].'&year='.$row['user_year'].'" onClick="Page.Go(this.href); return false">'.Langs::lang_date('j F Y', strtotime($row['user_year'].'-'.$row['user_month'].'-'.$row['user_day'])).' г.</a>';
                         }else{
-                            $params['birth_day'] = '<a href="/?go=search&day='.$row['user_day'].'&month='.$row['user_month'].'" onClick="Page.Go(this.href); return false">'.langdate('j F', strtotime($row['user_year'].'-'.$row['user_month'].'-'.$row['user_day'])).'</a>';
+                            $params['birth_day'] = '<a href="/?go=search&day='.$row['user_day'].'&month='.$row['user_month'].'" onClick="Page.Go(this.href); return false">'.Langs::lang_date('j F', strtotime($row['user_year'].'-'.$row['user_month'].'-'.$row['user_day'])).'</a>';
                         }
                     } else {
                         $params['not_all_birthday_block'] = false;
@@ -1195,7 +732,7 @@ class ProfileController extends Module{
                      * Альбомы
                      */
                     if($user_id == $id){
-                        $albums_privacy = false;
+                        $albums_privacy = '';
                         $albums_count['cnt'] = $row['user_albums_num'];
                     } else if($CheckFriends){
                         $albums_privacy = "AND SUBSTRING(privacy, 1, 1) regexp '[[:<:]](1|2)[[:>:]]'";
@@ -1211,16 +748,19 @@ class ProfileController extends Module{
                         $cache_pref = null;
 
                     $sql_albums = $Profile->row_albums($id, $albums_privacy, $cache_pref);//cache_pref undefined
+                    unset($key2);
                     if($sql_albums AND $config['album_mod'] == 'yes'){
-                        foreach($sql_albums as $key => $row_albums){
-                            $sql_albums[$key]['name'] = stripslashes($row_albums['name']);
-                            $sql_albums[$key]['date'] = megaDate($row_albums['adate']);
+                        foreach($sql_albums as $key2 => $row_albums){
+                            $sql_albums[$key2]['name'] = stripslashes($row_albums['name']);
+                            $sql_albums[$key2]['date'] = \Sura\Libs\Date::megaDate($row_albums['adate']);
                             $titles = array('фотография', 'фотографии', 'фотографий');//photos
-                            $sql_albums[$key]['albums_photonums'] = Gramatic::declOfNum($row_albums['photo_num'], $titles);
-                            if($row_albums['cover'])
-                                $sql_albums[$key]['album_cover'] = "/uploads/users/{$id}/albums/{$row_albums['aid']}/c_{$row_albums['cover']}";
-                            else
-                                $sql_albums[$key]['album_cover'] = '/images/no_cover.png';
+                            $sql_albums[$key2]['albums_photonums'] = Gramatic::declOfNum($row_albums['photo_num'], $titles);
+                            if($row_albums['cover']) {
+                                $sql_albums[$key2]['album_cover'] = "/uploads/users/{$id}/albums/{$row_albums['aid']}/c_{$row_albums['cover']}";
+                            }
+                            else {
+                                $sql_albums[$key2]['album_cover'] = '/images/no_cover.png';
+                            }
                         }
                         $params['albums_num'] = $albums_count['cnt'];
                         $params['albums'] = $sql_albums;
@@ -1232,20 +772,20 @@ class ProfileController extends Module{
 
 
                         $check_yes_demands = $db->super_query("SELECT for_user_id FROM `friends_demands` WHERE for_user_id = '{$id}' AND from_user_id = '{$user_info['user_id']}'");
-                        if($check_yes_demands['for_user_id']){
+                        if(isset($check_yes_demands['for_user_id']) ){
                             $params['yesf'] = true;
                         } else {
                             $params['yesf'] = false;
                         }
 
                         $check_yes_demands = $db->super_query("SELECT for_user_id FROM `friends_demands` WHERE for_user_id = '{$user_info['user_id']}' AND from_user_id = '{$id}'");
-                        if($check_yes_demands['for_user_id']){
+                        if(isset($check_yes_demands['for_user_id'])){
                             $params['yes_friend'] = true;
                         } else {
                             $params['yes_friend'] = false;
                         }
 
-                        $CheckFriends = Tools::CheckFriends($row['user_id']);
+                        $CheckFriends = \App\Libs\Friends::CheckFriends($row['user_id']);
 
                         //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                         if($CheckFriends == true){
@@ -1284,8 +824,8 @@ class ProfileController extends Module{
                         }
 
                     }
-                    else{
-                                 }
+//                    else{
+//                                 }
                     $author_info = explode(' ', $row['user_search_pref']);
                     $params['gram_name'] = Gramatic::gramatikName($author_info[0]);
 
@@ -1446,26 +986,34 @@ class ProfileController extends Module{
                      */
                     if($row['user_public_num'] > 0  AND !$CheckBlackList){
                         $sql_groups = $Profile->groups($id);
-                        foreach($sql_groups as $key => $row_groups){
-                            if($row_groups['adres']) {
-                                $sql_groups[$key]['adres'] = $row_groups['adres'];
-                            }else{
-                                $sql_groups[$key]['adres'] = 'public'.$row_groups['id'];
-                            }
-                            if($row_groups['photo']){
+                        $sql_groups = null;//FIXME
+                        if (is_array($sql_groups)){
+                            foreach($sql_groups as $key => $row_groups){
+
+                                if(isset($row_groups['adres']) ) {
+                                    $sql_groups[$key]['adres'] = $row_groups['adres'];
+                                }else{
+                                $sql_groups[$key]['adres']
+                                    = 'public'.$row_groups['id'];
+                                }
+                                if(isset($row_groups['photo'])){
 //                                $ava_groups = "/uploads/groups/{$row_groups['id']}/50_{$row_groups['photo']}";
-                                $sql_groups[$key]['ava'] = "/uploads/groups/{$row_groups['id']}/50_{$row_groups['photo']}";
-                            }else{
+                                    $sql_groups[$key]['ava'] = "/uploads/groups/{$row_groups['id']}/50_{$row_groups['photo']}";
+                                }else{
 //                                $ava_groups = "/images/no_ava_50.png";
                                 $sql_groups[$key]['ava'] = "/images/no_ava_50.png";
-                            }
+                                }
                             $row_groups['info'] = iconv_substr($row_groups['status_text'], 0, 24, 'utf-8');
-                            //                            $groups .= '<div class="onesubscription onesubscriptio2n cursor_pointer" onClick="Page.Go(\'/'.$adres.'\')"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false"><img src="'.$ava_groups.'" /></a><div class="onesubscriptiontitle"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false">'.stripslashes($row_groups['title']).'</a></div><span class="color777 size10">'.stripslashes($row_groups['status_text']).'</span></div>';
-                            $sql_groups[$key]['user_id'] = $row_groups['user_id'];
-                            $sql_groups[$key]['name'] = $row_groups['title'];
-                            $sql_groups[$key]['title'] = $row_groups['title'];
+                                //                            $groups .= '<div class="onesubscription onesubscriptio2n cursor_pointer" onClick="Page.Go(\'/'.$adres.'\')"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false"><img src="'.$ava_groups.'" /></a><div class="onesubscriptiontitle"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false">'.stripslashes($row_groups['title']).'</a></div><span class="color777 size10">'.stripslashes($row_groups['status_text']).'</span></div>';
+                                $sql_groups[$key]['user_id'] = $row_groups['user_id'];
+                                $sql_groups[$key]['name'] = $row_groups['title'];
+                                $sql_groups[$key]['title'] = $row_groups['title'];
 
+                            }
+                        }else{
+                            $params['groups'] = false;
                         }
+
                         $params['groups'] = $sql_groups;
                         $params['groups_num'] = $row['user_public_num'];
                     } else{
@@ -1494,6 +1042,7 @@ class ProfileController extends Module{
 //                        $preg_safe_name = preg_quote($value[0], "'");
                         if(empty($xfieldsdata[$value[0]])){
                     //                            $tpl->copy_template = preg_replace("'\\[xfgiven_{$preg_safe_name}](.*?)\\[/xfgiven_{$preg_safe_name}]'is", "", $tpl->copy_template);
+
                         } else {
                         //                            $tpl->copy_template = str_replace("[xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
                         //                            $tpl->copy_template = str_replace("[/xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
@@ -1562,7 +1111,7 @@ class ProfileController extends Module{
                     }
 
                 }
-                $params['title'] = $user_info['user_search_pref'].' | Sura';
+                $params['title'] = $row['user_search_pref'].' | Sura';
                 return view('profile.profile', $params);
             }
             else {
@@ -1581,21 +1130,23 @@ class ProfileController extends Module{
     }
 
     /**
-     * 
+     * @deprecated
      */
     public static function ban()
     {
 //        $tpl = new Templates();
-//        $config = Settings::loadsettings();
+//        $config = Settings::load();
 //        $tpl->dir = __DIR__.'/../templates/'.$config['temp'];
 
         $user_info = Registry::get('user_info');
         if($user_info['user_group'] != '1'){
 //            $tpl->load_template('profile/profile_baned.tpl');
             if($user_info['user_ban_date']){
+                return die();
 //                $tpl->set('{date}', langdate('j F Y в H:i', $user_info['user_ban_date']));
             }else{
-//                $tpl->set('{date}', 'Неограниченно');
+                return die();
+                //                $tpl->set('{date}', 'Неограниченно');
             }
 //            $tpl->compile('main');
 //            echo $tpl->result['main'];
@@ -1606,11 +1157,12 @@ class ProfileController extends Module{
 
     /**
      *
+     * @deprecated
      */
-    public static function delete()
+    #[NoReturn] public static function delete()
     {
 //        $tpl = new Templates();
-//        $config = Settings::loadsettings();
+//        $config = Settings::load();
 //        $tpl->dir = __DIR__.'/../templates/'.$config['temp'];
 
         $user_info = Registry::get('user_info');
@@ -1619,6 +1171,7 @@ class ProfileController extends Module{
 //            $tpl->compile('main');
             //echo str_replace('{theme}', '/templates/'.$config['temp'], $tpl->result['main']);
 //            echo $tpl->result['main'];
+            return die();
         }
 
         return die();

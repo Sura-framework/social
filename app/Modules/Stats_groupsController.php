@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 use Exception;
+use Sura\Libs\Langs;
 use Sura\Libs\Request;
 use Sura\Libs\Tools;
 
@@ -11,19 +12,15 @@ class Stats_groupsController extends Module{
     /**
      * Статистика сообщества
      *
-     * @param $params
-     * @return string
-     * @throws Exception
+     * @return int
      */
-    public function index($params): string
+    public function index(): int
     {
         $tpl = $params['tpl'];
 
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
 
         if($logged){
             $request = (Request::getRequest()->getGlobal());
@@ -43,7 +40,7 @@ class Stats_groupsController extends Module{
             //ПРоверка на админа
             if(strpos($owner['admin'], "u{$user_info['user_id']}|") !== false){
 
-                $server_time = \Sura\Libs\Tools::time();
+                $server_time = \Sura\Libs\Date::time();
 
                 if($month AND $year){
 
@@ -61,7 +58,7 @@ class Stats_groupsController extends Module{
 
                 $stat_date = strtotime($stat_date);
 
-                $t_date = langdate('F', $stat_date);
+                $t_date = Langs::lang_date('F', $stat_date);
 
                 //Составляем массив для вывода за этот месяц
                 $sql_ = $db->super_query("SELECT cnt, date, hits, new_users, exit_users FROM `communities_stats` WHERE gid = '{$gid}' AND date_x = '{$stat_date}' ORDER by `date` ", 1);

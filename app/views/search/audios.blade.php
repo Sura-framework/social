@@ -1,3 +1,5 @@
+@if($search)
+    @foreach($search as $row)
 <div class="audioPage audioElem search search_item"
 id="audio_{$row['id']}_{$row['oid']}_{$plname}"
 onclick="playNewAudio('{$row['id']}_{$row['oid']}_{$plname}', event);">
@@ -11,8 +13,8 @@ onclick="playNewAudio('{$row['id']}_{$row['oid']}_{$plname}', event);">
                 id="audio_url_{$row['id']}_{$row['oid']}_{$plname}">
                 </td>
             <td class="info">
-                <div class="audioNames"><b class="author" onclick="Page.Go('/?go=search&query=&type=5&q='+this.innerHTML);" id="artist">{$row['artist']}</b> – <span
-                    class="name" id="name">{$row['title']}</span> <div class="clear"></div></div>
+                <div class="audioNames"><b class="author" onclick="Page.Go('/?go=search&query=&type=5&q='+this.innerHTML);" id="artist">{{ $row['artist'] }}</b> – <span
+                    class="name" id="name">{{ $row['title'] }}</span> <div class="clear"></div></div>
                 <div class="audioElTime" id="audio_time_{$row['id']}_{$row['oid']}_{$plname}">{$stime}</div>
                 <div class="vk_audio_dl_btn cursor_pointer fl_l" href="{$row['url']}" style="
 position: absolute;
@@ -61,3 +63,5 @@ cellpadding="0">
 </div>
 </div>
 </div>
+    @endforeach
+@endif

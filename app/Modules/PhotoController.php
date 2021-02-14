@@ -3,8 +3,11 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
+use Sura\Libs\Db;
+use Sura\Libs\Langs;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 
@@ -13,11 +16,10 @@ class PhotoController extends Module{
     /**
      * Добавления комментария
      *
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
+     * @throws \Throwable
      */
-    public function addcomm($params): string
+    public function addcomm(): int
     {
 //        $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -33,7 +35,7 @@ class PhotoController extends Module{
 
             $pid = intval($request['pid']);
             $comment = ajax_utf8(textFilter($request['comment']));
-            $server_time = \Sura\Libs\Tools::time();
+            $server_time = \Sura\Libs\Date::time();
             $date = date('Y-m-d H:i:s', $server_time);
             $hash = md5($user_id.$server_time.$_IP.$user_info['user_email'].rand(0, 1000000000)).$comment.$pid;
 
@@ -57,7 +59,7 @@ class PhotoController extends Module{
                 $db->query("UPDATE `photos` SET comm_num = comm_num+1 WHERE id = '{$pid}'");
                 $db->query("UPDATE `albums` SET comm_num = comm_num+1 WHERE aid = '{$check_photo['album_id']}'");
 
-                $date = langdate('сегодня в H:i', $server_time);
+                $date = Langs::lang_date('сегодня в H:i', $server_time);
 //                $tpl->load_template('photo_comment.tpl');
 //                $tpl->set('{author}', $user_info['user_search_pref']);
 //                $tpl->set('{comment}', stripslashes($comment));
@@ -65,7 +67,7 @@ class PhotoController extends Module{
 //                $tpl->set('{hash}', $hash);
 //                $tpl->set('{id}', $id);
 
-                $config = Settings::loadsettings();
+                $config = Settings::load();
 
                 if($user_info['user_photo'])
                 {
@@ -82,6 +84,9 @@ class PhotoController extends Module{
 //                $tpl->set('[/owner]', '');
 //                $tpl->compile('content');
 
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+
                 //Добавляем действие в ленту новостей "ответы" владельцу фотографии
                 if($user_id != $check_photo['user_id']){
                     $comment = str_replace("|", "&#124;", $comment);
@@ -91,19 +96,17 @@ class PhotoController extends Module{
                     $row_userOW = $db->super_query("SELECT user_last_visit FROM `users` WHERE user_id = '{$check_photo['user_id']}'");
                     $update_time = $server_time - 70;
 
-                    $Cache = cache_init(array('type' => 'file'));
 
                     if($row_userOW['user_last_visit'] >= $update_time){
 
                         $db->query("INSERT INTO `updates` SET for_user_id = '{$check_photo['user_id']}', from_user_id = '{$user_id}', type = '2', date = '{$server_time}', text = '{$comment}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/photo{$check_photo['user_id']}_{$pid}_{$check_photo['album_id']}'");
 
 //                        Cache::mozg_create_cache("user_{$check_photo['user_id']}/updates", 1);
-
-                        $Cache->set("users/{$check_photo['user_id']}/updates", 1);
+                        $cache->save("{$check_photo['user_id']}/updates", 1);
                     } else {
                         //Добавляем +1 юзеру для оповещания
-                        $cntCacheNews = $Cache->get("users/{$check_photo['user_id']}/new_news" );
-                        $Cache->set("users/{$check_photo['user_id']}/new_news", $cntCacheNews+1);
+                        $value = $cache->load("users/{$check_photo['user_id']}/new_news");
+                        $cache->save("users/{$check_photo['user_id']}/new_news", $value+1);
                     }
 
                     //Отправка уведомления на E-mail
@@ -122,17 +125,9 @@ class PhotoController extends Module{
                     }
                 }
 
-                //Чистим кеш кол-во комментов
-//                Cache::mozg_mass_clear_cache_file("
-//                user_{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm
-//                |user_{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_all|
-//                user_{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_friends");
-
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("users/{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm");
-                $Cache->delete("users/{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_all");
-                $Cache->delete("users/{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_friends");
-
+                $cache->remove("{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm");
+                $cache->remove("{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_all");
+                $cache->remove("{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_friends");
 
                 return view('info.info', $params);
             } else
@@ -144,9 +139,12 @@ class PhotoController extends Module{
     /**
      * Удаление комментария
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function del_comm($params){
+    public function del_comm(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -173,20 +171,33 @@ class PhotoController extends Module{
 //                user_{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_all|
 //                user_{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_friends");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("users/{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm");
-                $Cache->delete("users/{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_all");
-                $Cache->delete("users/{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_friends");
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+
+                $cache->remove("{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm");
+                $cache->remove("{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_all");
+                $cache->remove("{$check_comment['owner_id']}/albums_{$check_comment['owner_id']}_comm_friends");
+
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * Помещение фотографии на свою страницу
      *
-     * @param $params
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function crop($params){
+    public function crop(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -207,7 +218,7 @@ class PhotoController extends Module{
             $check_photo = $db->super_query("SELECT photo_name, album_id FROM `photos` WHERE id = '{$pid}' AND user_id = '{$user_id}'");
             if($check_photo AND $i_width >= 100 AND $i_height >= 100 AND $i_left >= 0 AND $i_height >= 0){
                 $imgInfo = explode('.', $check_photo['photo_name']);
-                $server_time = \Sura\Libs\Tools::time();
+                $server_time = \Sura\Libs\Date::time();
                 $image_rename = substr(md5($server_time.$check_photo['check_photo']), 0, 15).".".$imgInfo[1];
                 $upload_dir = __DIR__."/../../public/uploads/users/{$user_id}/";
 
@@ -252,23 +263,28 @@ class PhotoController extends Module{
                 //Обновляем имя фотки в бд
                 $db->query("UPDATE `users` SET user_photo = '{$image_rename}', user_wall_id = '{$dbid}' WHERE user_id = '{$user_id}'");
 
-//                Cache::mozg_clear_cache_file("user_{$user_id}/profile_{$user_id}");
-//                Cache::mozg_clear_cache();
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $cache->remove("{$user_id}/profile_{$user_id}");
 
-                $Cache = cache_init(array('type' => 'file'));
-                $Cache->delete("users/{$user_id}/profile_{$user_id}");
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      *  Показ всех комментариев
      *
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function all_comm($params): string
+    public function all_comm(): int
     {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -289,7 +305,7 @@ class PhotoController extends Module{
                 $sql_comm = $db->super_query("SELECT tb1.user_id,text,date,id,hash,pid, tb2.user_search_pref, user_photo, user_last_visit, user_logged_mobile FROM `photos_comments` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND tb1.pid = '{$pid}' ORDER by `date` ASC LIMIT 0, {$limit}", 1);
 
                 $tpl->load_template('photo_comment.tpl');
-                $config = Settings::loadsettings();
+                $config = Settings::load();
                 foreach($sql_comm as $row_comm){
                     $tpl->set('{comment}', stripslashes($row_comm['text']));
                     $tpl->set('{uid}', $row_comm['user_id']);
@@ -302,9 +318,9 @@ class PhotoController extends Module{
                     else
                         $tpl->set('{ava}', '/images/no_ava_50.png');
 
-                    $online = Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
+                    $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                     $tpl->set('{online}', $online);
-                    $date = megaDate(strtotime($row_comm['date']));
+                    $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['date']));
                     $tpl->set('{date}', $date);
 
                     $row_photo = $db->super_query("SELECT user_id FROM `photos` WHERE id = '{$row_comm['pid']}'");
@@ -327,11 +343,9 @@ class PhotoController extends Module{
     /**
      * Просмотр ПРОСТОЙ фотографии не из альбома
      *
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function profile($params): string
+    public function profile(): int
     {
 //        $tpl = $params['tpl'];
         //$lang = $this->get_langs();
@@ -341,11 +355,13 @@ class PhotoController extends Module{
         if($logged){
             $request = (Request::getRequest()->getGlobal());
 
-            $uid = intval($request['uid']);
-            if($request['type'])
-                $photo = __DIR__."/../../public/uploads/attach/{$uid}/c_{$request['photo']}";
-            else
-                $photo = __DIR__."/../../public/uploads/users/{$uid}/o_{$request['photo']}";
+            $uid = (int)$request['uid'];
+            if($request['type']) {
+                $photo = __DIR__ . "/../../public/uploads/attach/{$uid}/c_{$request['photo']}";
+            }
+            else {
+                $photo = __DIR__ . "/../../public/uploads/users/{$uid}/o_{$request['photo']}";
+            }
 
             if(!file_exists($photo)){
                 $photo = '/../../public/images/no_ava_50.png';
@@ -375,9 +391,11 @@ class PhotoController extends Module{
     /**
      * Поворот фотографии
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function rotation($params){
+    public function rotation(): int
+    {
         $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
@@ -409,16 +427,28 @@ class PhotoController extends Module{
                 $image->save(__DIR__.'/../../public/uploads/users/'.$user_id.'/albums/'.$row['album_id'].'/c_'.$row['photo_name'], 90);
 
                 echo '/uploads/users/'.$user_id.'/albums/'.$row['album_id'].'/'.$row['photo_name'];
+
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * add rating
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
+     * @throws \Throwable
      */
-    public function addrating($params){
+    public function addrating(): int
+    {
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -427,7 +457,7 @@ class PhotoController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
             Tools::NoAjaxRedirect();
 
@@ -468,7 +498,7 @@ class PhotoController extends Module{
                 }
 
                 //Вставляем в лог, что юзер поставил оценку
-                $server_time = \Sura\Libs\Tools::time();
+                $server_time = \Sura\Libs\Date::time();
                 $db->query("INSERT INTO `photos_rating` SET photo_id = '{$pid}', user_id = '{$user_id}', date = '{$server_time}', rating = '{$rating}', owner_user_id = '{$row['user_id']}'");
                 $id = $db->insert_id();
 
@@ -489,30 +519,38 @@ class PhotoController extends Module{
                 $row_owner = $db->super_query("SELECT user_last_visit FROM `users` WHERE user_id = '{$row['user_id']}'");
                 $update_time = $server_time - 70;
 
-                $Cache = cache_init(array('type' => 'file'));
+                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                $cache = new \Sura\Cache\Cache($storage, 'users');
+
                 if($row_owner['user_last_visit'] >= $update_time){
 
                     $db->query("INSERT INTO `updates` SET for_user_id = '{$row['user_id']}', from_user_id = '{$user_info['user_id']}', type = '9', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/photo{$row['user_id']}_{$pid}_{$row['album_id']}'");
 
-                $Cache->set("users/{$row['user_id']}/updates", 1);
+                    $cache->save("{$row['user_id']}/updates", 1);
                 }
                 else {
-                //Добавляем +1 юзеру для оповещания
-                $cntCacheNews = $Cache->get("users/{$row['user_id']}/new_news" );
-                $Cache->set("users/{$row['user_id']}/new_news", $cntCacheNews+1);
+                    /** Добавляем +1 юзеру для оповещания */
+                    $value = $cache->load("{$row['user_id']}/new_news");
+                    $cache->save("{$row['user_id']}/new_news", $value+1);
                 }
 
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
      * view rating
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function view_rating($params): string
+    public function view_rating(): int
     {
         $tpl = $params['tpl'];
         //$lang = $this->get_langs();
@@ -555,7 +593,7 @@ class PhotoController extends Module{
                         if($row['user_photo']) $tpl->set('{ava}', "/uploads/users/{$row['user_id']}/50_{$row['user_photo']}");
                         else $tpl->set('{ava}', "/images/no_ava_50.png");
 
-                        $date = megaDate(strtotime($row['date']));
+                        $date = \Sura\Libs\Date::megaDate(strtotime($row['date']));
                         $tpl->set('{date}', $date);
 
                         $tpl->compile('rates_users');
@@ -596,9 +634,11 @@ class PhotoController extends Module{
     /**
      * del rate
      *
-     * @param $params
+     * @return int
+     * @throws \JsonException
      */
-    public function del_rate($params){
+    public function del_rate(): int
+    {
         //$tpl = $params['tpl'];
         //$lang = $this->get_langs();
         $db = $this->db();
@@ -630,17 +670,49 @@ class PhotoController extends Module{
                 //Обновляем данные у фото
                 $db->query("UPDATE `photos` SET rating_num = rating_num-{$row['rating']}, rating_all = rating_all-1 {$rating_max} WHERE id = '{$row['photo_id']}'");
 
+                $status = Status::OK;
+            }else{
+                $status = Status::NOT_FOUND;
             }
+        }else{
+            $status = Status::BAD_LOGGED;
         }
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
-
+	
+	/**
+	 *
+	 * FIXME move and update cashe system
+	 * @param $uid
+	 * @param false $aid
+	 */
+	function GenerateAlbumPhotosPosition($uid, $aid = false)
+	{
+		$db = Db::getDB();
+		//Выводим все фотографии из альбома и обновляем их позицию только для просмотра альбома
+		if ($uid and $aid) {
+			$sql_ = $db->super_query("SELECT id FROM `photos` WHERE album_id = '{$aid}' ORDER by `position` ASC", 1);
+			$count = 1;
+			$photo_info = '';
+			foreach ($sql_ as $row) {
+				$db->query("UPDATE LOW_PRIORITY `photos` SET position = '{$count}' WHERE id = '{$row['id']}'");
+				$photo_info .= $count . '|' . $row['id'] . '||';
+				$count++;
+			}
+//            Sura\Libs\Cache::mozg_create_cache('user_' . $uid . '/position_photos_album_' . $aid, $photo_info);
+		}
+	}
+	
     /**
      * Просмотр фотографии
      *
-     * @param $params
-     * @return bool
+     * @return int
+     * @throws \Throwable
      */
-    public function index($params){
+    public function index(): int
+    {
         $tpl = $params['tpl'];
 
         //$lang = $this->get_langs();
@@ -658,12 +730,12 @@ class PhotoController extends Module{
 
             Tools::NoAjaxRedirect();
 
-            $uid = intval($request['uid']);
-            $photo_id = intval($request['pid']);
-            $fuser = intval($request['fuser']);
+            $uid = (int)$request['uid'];
+            $photo_id = (int)$request['pid'];
+            $fuser = (int)$request['fuser'];
             $section = $request['section'];
 
-            $config = Settings::loadsettings();
+            $config = Settings::load();
 
             //ЧС
             $CheckBlackList = CheckBlackList($uid);
@@ -677,17 +749,15 @@ class PhotoController extends Module{
                     //Проверяем на наличии файла с позициям только для этого фоток
 //                    $check_pos = Cache::mozg_cache('
 //                    user_'.$uid.'/position_photos_album_'.$check_album['album_id']);
-                    $Cache = cache_init(array('type' => 'file'));
-                    $check_pos = $Cache->get("users/{$uid}/position_photos_album_{$check_album['album_id']}");
+                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
+                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $check_pos = $cache->load("{$uid}/position_photos_album_{$check_album['album_id']}");
 
-                    //Если нету, то вызываем функцию генерации
+                    /** Если нету, то вызываем функцию генерации */
                     if(!$check_pos){
-                        GenerateAlbumPhotosPosition($uid, $check_album['album_id']);
-//                        $check_pos = Cache::mozg_cache('user_'.$uid.'/position_photos_album_'.$check_album['album_id']);
-                        $check_pos = $Cache->get("users/{$uid}/position_photos_album_{$check_album['album_id']}");
-
+                        PhotoController::GenerateAlbumPhotosPosition($uid, $check_album['album_id']);
+                        $check_pos = $cache->load("{$uid}/position_photos_album_{$check_album['album_id']}");
                     }
-
                     $position = xfieldsdataload($check_pos);
                 }
 
@@ -733,10 +803,10 @@ class PhotoController extends Module{
                                 else
                                     $tpl->set('{ava}', '/images/no_ava_50.png');
 
-                                $online = Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
+                                $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                                 $tpl->set('{online}', $online);
 
-                                $date = megaDate(strtotime($row_comm['date']));
+                                $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['date']));
                                 $tpl->set('{date}', $date);
 
                                 if($row_comm['user_id'] == $user_info['user_id'] OR $row['user_id'] == $user_info['user_id']){
@@ -751,7 +821,7 @@ class PhotoController extends Module{
 
                         //Сама фотография
                         $tpl->load_template('photo_view.tpl');
-                        $server_time = \Sura\Libs\Tools::time();
+                        $server_time = \Sura\Libs\Date::time();
                         $tpl->set('{photo}', $config['home_url'].'uploads/users/'.$row['user_id'].'/albums/'.$check_album['album_id'].'/'.$row['photo_name'].'?'.$server_time);
                         $sizephoto = getimagesize(__DIR__.'/../../public/uploads/users/'.$row['user_id'].'/albums/'.$check_album['album_id'].'/'.$row['photo_name']);
                         $tpl->set('{height}', $sizephoto[1]);
@@ -818,7 +888,7 @@ class PhotoController extends Module{
                         else $tpl->set('{author-info}', '');
                         if($author_info[1]) $tpl->set('{author-info}', $author_info[0].', '.$author_info[1].'<br />');
 
-                        $date = megaDate(strtotime($row['date']), 1, 1);
+                        $date = \Sura\Libs\Date::megaDate(strtotime($row['date']), 1, 1);
                         $tpl->set('{date}', $date);
 
                         if($uid == $user_info['user_id']){
@@ -869,7 +939,7 @@ class PhotoController extends Module{
                             $tpl->set_block("'\\[add-comm\\](.*?)\\[/add-comm\\]'si","");
 
                         //Выводим отмеченых людей на фото если они есть
-                        $sql_mark = $db->super_query("SELECT muser_id, mphoto_name, msettings_pos, mmark_user_id, mapprove FROM `photos_mark` WHERE mphoto_id = '".$photo_id."' ORDER by `mdate` ASC", 1, 'photos_mark/p'.$photo_id);
+                        $sql_mark = $db->super_query("SELECT muser_id, mphoto_name, msettings_pos, mmark_user_id, mapprove FROM `photos_mark` WHERE mphoto_id = '".$photo_id."' ORDER by `mdate` ASC", 1);
                         if($sql_mark){
                             $cnt_mark = 0;
                             $mark_peoples = '<div class="fl_l" id="peopleOnPhotoText'.$photo_id.'" style="margin-right:5px">На этой фотографии:</div>';
@@ -965,15 +1035,21 @@ class PhotoController extends Module{
 
 
                     } else
-                        echo 'err_privacy';
+                    {
+                        echo 'err_privacy';//BAD_RIGHTS
+                    }
                 } else
-                    echo 'no_photo';
+                {
+                    echo 'no_photo';//NOT_FOUND
+                }
             } else
-                echo 'err_privacy';
+            {
+                echo 'err_privacy';//PRIVACY
+            }
             $tpl->clear();
             $db->free();
         } else
-            echo 'no_photo';
+            echo 'no_photo';//NOT_FOUND
 
     }
 }

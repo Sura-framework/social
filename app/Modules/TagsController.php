@@ -15,11 +15,9 @@ class TagsController  extends Module
      *
      * @throws \JsonException
      */
-    public function Index(): string
+    public function Index(): int
     {
         Tools::NoAjaxRedirect();
-
-        //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
 
@@ -27,14 +25,16 @@ class TagsController  extends Module
 
         $id = (int)$request['id'];
         $rand = (int)$request['rand'];
+        $type = (int)$request['type'];
+        if (!$id || !$rand || !$type){
+            $row = false;
+        }
 
         /**
          * @var int $type - тип записи
          * 1 - человек
          * 2 - сообщество
          */
-        $type = (int)$request['type'];
-
         if($type == 1){
             $row = $db->super_query("SELECT user_id, user_search_pref, user_photo FROM `users` WHERE user_id = '{$id}'");
             $name = $row['user_search_pref'];
@@ -59,7 +59,7 @@ class TagsController  extends Module
              * check friends
              */
 //            $check1 = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_info['user_id']}' AND friend_id = '{$id}' AND subscriptions = 0");
-            $check1 = Tools::CheckFriends($id);
+            $check1 = \App\Libs\Friends::CheckFriends($id);
 
             if (!$CheckBlackList){
                 if($id == $user_info['user_id']){
@@ -79,20 +79,29 @@ class TagsController  extends Module
                 $button = '<button class="btn btn-secondary">Вы заблокированы</button>';
             }
 
-        } else {
+        }
+        elseif($type == 2) {
             $row = $db->super_query("SELECT id, title, traf, photo FROM `communities` WHERE id = '{$id}'");
-            $name = $row['title'];
-            $titles = array('подписчик', 'подписчика', 'подписчиков');//subscribers
-            $status = $row['traf'].' '. Gramatic::declOfNum($row['traf'], $titles);
-            $photo = $row['photo'];
-            $link = 'public'.$id;
-            $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `friends` WHERE friend_id = '{$id}' AND user_id = '{$user_info['user_id']}' AND subscriptions = 2");
+            if ($row){
+                $name = $row['title'];
+                $titles = array('подписчик', 'подписчика', 'подписчиков');//subscribers
+                if ($row['traf'] > 0){
+                    $row['traf'] = 0;
+                }
+                $status = $row['traf'].' '. Gramatic::declOfNum($row['traf'], $titles);
+                $photo = $row['photo'];
+                $link = 'public'.$id;
+                $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `friends` WHERE friend_id = '{$id}' AND user_id = '{$user_info['user_id']}' AND subscriptions = 2");
 
-            if($check['cnt']){
-                $button = '<button  class="btn btn-secondary">Вы подписаны</button>';
-            } else {
-                $button = '<button  class="btn btn-secondary">Подписаться</button>';
+                if($check['cnt']){
+                    $button = '<button  class="btn btn-secondary">Вы подписаны</button>';
+                } else {
+                    $button = '<button  class="btn btn-secondary">Подписаться</button>';
+                }
             }
+
+        }else{
+            $photo = false;
         }
 
         if($photo){
@@ -109,7 +118,7 @@ class TagsController  extends Module
         }
 
         if($row){
-            $data = '<div class="tt_w tt_default mention_tt mention_has_actions tt_down"  onmouseover="removeTimer(\'hidetag\')" onmouseout="wall.hideTag('.$id.', '.$rand.', 1)" style="position: absolute; display: none; opacity: 1;" id="tt_wind2">
+            $data = '<div class="tt_w tt_default mention_tt mention_has_actions tt_down"  onmouseover="removeTimer(\'hidetag\')" onmouseout="wall.hideTag('.$id.', '.$rand.', 1)" style="position: absolute; display: block; opacity: 1;" id="tt_wind2">
         <div class="wrapped card"><div class="card-body mention_tt_wrap ">
         <a href="/'.$link.'" class="mention_tt_photo"><img class="mention_tt_img" src="'.$ava.'" alt="'.$name.'"></a>
         <div class="mention_tt_data">
@@ -121,9 +130,11 @@ class TagsController  extends Module
         </div>
         <div class="card-footer">
         '.$button.'
-        </div></div></div>';
+        </div></div>
+        <div class="wrapped_t" style="width: auto;height: 30px;"></div>
+        </div>';
         } else {
-            $data = '<div class="tt_w tt_default mention_tt mention_has_actions tt_down" style="position: absolute; display: none; opacity: 1;" id="tt_wind2">
+            $data = '<div class="tt_w tt_default mention_tt mention_has_actions tt_down" style="position: absolute; display: block; opacity: 1;" id="tt_wind2">
         <div class="wrapped"><div class="mention_tt_wrap">
         <a href="/" class="mention_tt_photo"><img class="mention_tt_img" src="/images/100_no_ava.png" alt="Неизвестная страница"></a>
         <div class="mention_tt_data">
@@ -134,7 +145,9 @@ class TagsController  extends Module
         </div>
         </div>
         <div class="mention_tt_actions">
-        </div></div></div>';
+        </div></div>
+        <div class="wrapped_t" style="width: auto;height: 30px;"></div>
+        </div>';
         }
 
         $result = array(
@@ -142,6 +155,6 @@ class TagsController  extends Module
         );
 
         header('Content-Type: application/json');
-        return _e( json_encode($result, JSON_THROW_ON_ERROR) );
+        return _e_json($result);
     }
 }

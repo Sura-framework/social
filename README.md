@@ -22,7 +22,7 @@ However, if you are not using Homestead, you will need to make sure your server 
 
 <div class="content-list" markdown="1" style="display: flex;flex-direction: column">
 
-- PHP >= 7.4
+- PHP ^8.0
 - JSON PHP Extension
 - ICONV PHP Extension
 - GD PHP extension
@@ -35,7 +35,7 @@ However, if you are not using Homestead, you will need to make sure your server 
 It's recommended that you use [Composer](https://getcomposer.org/) to install Sura.
 
 ```bash
-$ composer create-project sura/sura:^0.9 MYPROJECT --prefer-dist
+$ composer create-project sura/sura:^1.0 MYPROJECT --prefer-dist
 ```
 
 The database configuration is located in config/config.php

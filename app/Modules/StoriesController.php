@@ -16,11 +16,9 @@ class StoriesController  extends Module
     /**
      * Open pop-up box to add stories img
      *
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function addbox($params): string
+    public function addbox(): int
     {
         //FIXME add logged
         $tpl = $params['tpl'];
@@ -39,9 +37,8 @@ class StoriesController  extends Module
     /**
      * upload
      *
-     * @param $params
      */
-    public function upload($params)
+    public function upload(): int
     {
         //$tpl = $params['tpl'];
         $lang = $this->get_langs();
@@ -72,7 +69,7 @@ class StoriesController  extends Module
             //Получаем данные о фотографии
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = \Sura\Libs\Tools::time();
+            $server_time = \Sura\Libs\Date::time();
             $image_rename = substr(md5($server_time+rand(1,100000)), 0, 15); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
             $array = explode(".", $image_name);
@@ -108,7 +105,7 @@ class StoriesController  extends Module
                         //  $res_type = $db->safesql($res_type);
 
 
-                        $config = Settings::loadsettings();
+                        $config = Settings::load();
 
                         $url = $config['home_url'].'uploads/users/'.$user_id.'/stories/'.$image_rename.'.webp';
 
@@ -129,26 +126,23 @@ class StoriesController  extends Module
                         echo $config['home_url'].'uploads/users/'.$user_id.'/'.$image_rename.$res_type;
 
                     } else
-                        echo 'bad';
+                        echo 'bad';//BAD_MOVE
                 } else
-                    echo 'big_size';
+                    echo 'big_size';//BIG_SIZE
             } else
-                echo 'bad_format';
+                echo 'bad_format';//BAD_FORMAT
         }
     }
 
     /**
      * show
      *
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function show($params): string
+    public function show(): int
     {
         $db = $this->db();
-        $tpl = $params['tpl'];
-        $user_info = $params['user']['user_info'];
+//        $user_info = $params['user']['user_info'];
         $user_id = $user_info['user_id'];
 
         $request = (Request::getRequest()->getGlobal());
@@ -179,7 +173,7 @@ class StoriesController  extends Module
         $stories = $db->super_query("SELECT * FROM `stories` WHERE user_id = '{$user_id}' ORDER by `add_date` DESC LIMIT {$num}, 1 ");
 
         //Удаляем историю спустя сутки
-//        $server_time = \Sura\Libs\Tools::time();
+//        $server_time = \Sura\Libs\Date::time();
 //        $online_time = $server_time - 86400;//сутки
 //        if ($stories['add_date'] <= $online_time){
 //            $db->query("DELETE FROM `stories` WHERE id = '{$stories['id']}'");
@@ -202,11 +196,9 @@ class StoriesController  extends Module
     /**
      * show next
      *
-     * @param $params
-     * @return string
-     * @throws \Exception
+     * @return int
      */
-    public function show_next($params): string
+    public function show_next(): int
     {
         $db = $this->db();
 //        $user_info = $params['user']['user_info'];
@@ -235,12 +227,12 @@ class StoriesController  extends Module
             $stories_url = str_replace('stories/', 'stories/o_', $stories['url']);
 
             //Удаляем историю спустя сутки
-            $server_time = \Sura\Libs\Tools::time();
+            $server_time = \Sura\Libs\Date::time();
             $online_time = $server_time - 86400;//сутки
             if ($stories['add_date'] <= $online_time){
                 $db->query("DELETE FROM `stories` WHERE id = '{$stories['id']}'");
 
-                $config = Settings::loadsettings();
+                $config = Settings::load();
                 $stories_file = str_replace($config['home_url'], '', $stories['url']);
                 $stories_file2 = str_replace($config['home_url'], '', $stories_url);
 
