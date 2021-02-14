@@ -8,7 +8,8 @@ use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 
-class SearchController extends Module{
+class SearchController extends Module
+{
 
     /**
      * Поиск
@@ -30,131 +31,130 @@ class SearchController extends Module{
         $request = (Request::getRequest()->getGlobal());
         $server = (Request::getRequest()->server);
 
-        if($logged){
-            $params['title'] = $lang['search'].' | Sura';
+        if ($logged) {
+            $params['title'] = $lang['search'] . ' | Sura';
 
             $server['QUERY_STRING'] = strip_tags($server['QUERY_STRING']);
             $query_string = preg_replace("/&page=[0-9]+/i", '', $server['QUERY_STRING']);
             $user_id = $user_info['user_id'];
 
-            if(isset($request['page']) AND $request['page'] > 0) {
+            if (isset($request['page']) and $request['page'] > 0) {
                 $page = (int)$request['page'];
-            }
-            else {
+            } else {
                 $page = 1;
             }
             $g_count = 20;
-            $limit_page =($page-1)*$g_count;
+            $limit_page = ($page - 1) * $g_count;
 
-            if (isset($request['query'])){
+            if (isset($request['query'])) {
 //                $query = $db->safesql(Validation::ajax_utf8(Validation::strip_data(urldecode($request['query']))));
                 $query = Validation::strip_data(urldecode($request['query']));
-                if(isset($request['n']) AND $request['n']) {
+                if (isset($request['n']) and $request['n']) {
                     $query = Validation::strip_data(urldecode($request['query']));
                 }
                 //Заменяем пробелы на проценты чтоб поиск был точнее
                 $query = strtr($query, array(' ' => '%'));
-            }else {
+            } else {
                 $query = false;
             }
 
-            if (isset($request['type'])){
+            if (isset($request['type'])) {
                 $type = (int)$request['type'];
-            }else{
+            } else {
                 $type = 1;
             }
 
             //Задаём параметры сортировки
             $sql_sort = '';
-            if(isset($request['sex'])) {
+            if (isset($request['sex'])) {
                 $sex = (int)$request['sex'];
                 $sql_sort .= "AND user_sex = '{$sex}'";
-            }else{
+            } else {
                 $sex = '';
             }
 
-            if(isset($request['day'])) {
+            if (isset($request['day'])) {
                 $day = (int)$request['day'];
                 $sql_sort .= "AND user_day = '{$day}'";
-            }else{
+            } else {
                 $day = '';
             }
 
-            if(isset($request['month'])) {
+            if (isset($request['month'])) {
                 $month = (int)$request['month'];
                 $sql_sort .= "AND user_month = '{$month}'";
-            }else{
+            } else {
                 $month = '';
             }
 
-            if(isset($request['year'])) {
+            if (isset($request['year'])) {
                 $year = (int)$request['year'];
                 $sql_sort .= "AND user_year = '{$year}'";
-            }else{
+            } else {
                 $year = '';
             }
 
-            if(isset($request['country'])) {
+            if (isset($request['country'])) {
                 $country = (int)$request['country'];
                 $sql_sort .= "AND user_country = '{$country}'";
-            }else{
+            } else {
                 $country = 0;
             }
 
-            if(isset($request['city'])) {
+            if (isset($request['city'])) {
                 $city = (int)$request['city'];
                 $sql_sort .= "AND user_city = '{$city}'";
-            }else{
+            } else {
                 $city = 0;
             }
 
-            if(isset($request['online'])) {
+            if (isset($request['online'])) {
                 $online = (int)$request['online'];
                 $server_time = \Sura\Libs\Date::time();
                 $online_time = $server_time - 60;
                 $sql_sort .= "AND user_last_visit >= '{$online_time}'";
-            }else{
+            } else {
                 $online = '';
             }
 
-            if(isset($request['user_photo'])) {
+            if (isset($request['user_photo'])) {
                 $user_photo = (int)$request['user_photo'];
                 $sql_sort .= "AND user_photo != ''";
-            }else {
+            } else {
                 $user_photo = '';
             }
 
-            if(isset($request['sp'])) {
+            if (isset($request['sp'])) {
                 $sp = (int)$request['sp'];
                 $sql_sort .= "AND SUBSTRING(user_sp, 1, 1) regexp '[[:<:]]({$sp})[[:>:]]'";
             }
 
             $where_sql_gen = null;//bug: undefined
 
-            if($query OR $sql_sort) {
+            if ($query or $sql_sort) {
                 $where_sql_gen = "WHERE user_search_pref LIKE '%{$query}%' AND user_delet = '0' AND user_ban = '0'";
             }
 
-            if(!$where_sql_gen) {
+            if (!$where_sql_gen) {
                 $where_sql_gen = "WHERE user_delet = '0' AND user_ban = '0'";
             }
 
             $gcount = 30;
 
             //Делаем SQL Запрос в БД на вывод данных
-            if($type == 1){ //Если критерий поиск "по людям"
+            if ($type == 1) { //Если критерий поиск "по людям"
                 $sql_query = "SELECT user_id, user_search_pref, user_photo, user_birthday, user_country_city_name, user_last_visit, user_logged_mobile FROM `users` {$where_sql_gen} {$sql_sort} ORDER by `user_rating` DESC LIMIT {$limit_page}, {$gcount}";
                 $sql_count = "SELECT COUNT(*) AS cnt FROM `users` {$where_sql_gen} {$sql_sort}";
-            } elseif($type == 2 AND $config['video_mod'] == 'yes' AND $config['video_mod_search'] == 'yes'){ //Если критерий поиск "по видеозаписям"
+            } elseif ($type == 2 and $config['video_mod'] == 'yes' and $config['video_mod_search'] == 'yes') { //Если критерий поиск "по видеозаписям"
                 $sql_query = "SELECT id, photo, title, add_date, comm_num, owner_user_id FROM `videos` WHERE title LIKE '%{$query}%' AND privacy = 1 ORDER by `add_date` DESC LIMIT {$limit_page}, {$gcount}";
                 $sql_count = "SELECT COUNT(*) AS cnt FROM `videos` WHERE title LIKE '%{$query}%' AND privacy = 1";
-            } elseif($type == 4){ //Если критерий поиск "по сообщества"
+            } elseif ($type == 4) { //Если критерий поиск "по сообщества"
                 $sql_query = "SELECT id, title, photo, traf, adres FROM `communities` WHERE title LIKE '%{$query}%' AND del = '0' AND ban = '0' ORDER by `traf` DESC, `photo` DESC LIMIT {$limit_page}, {$gcount}";
                 $sql_count = "SELECT COUNT(*) AS cnt FROM `communities` WHERE title LIKE '%{$query}%' AND del = '0' AND ban = '0'";
-            } elseif($type == 5 AND $config['audio_mod'] == 'yes' AND $config['audio_mod_search'] == 'yes'){ //Если критерий поиск "по аудиозаписи"
+            } elseif ($type == 5 and $config['audio_mod'] == 'yes' and $config['audio_mod_search'] == 'yes') { //Если критерий поиск "по аудиозаписи"
                 $sql_query = "SELECT audio.id, url, artist, title, oid, duration,users.user_search_pref FROM audio LEFT JOIN users ON audio.oid = users.user_id WHERE MATCH (title, artist) AGAINST ('%{$query}%') OR artist LIKE '%{$query}%' OR title LIKE '%{$query}%' ORDER by `add_count` DESC LIMIT {$limit_page}, {$gcount}";
                 $sql_count = "SELECT COUNT(*) AS cnt FROM `audio` WHERE MATCH (title, artist) AGAINST ('%{$query}%') OR artist LIKE '%{$query}%' OR title LIKE '%{$query}%'";
-            } elseif($type == 3 ){ //Если критерий поиск "по аудиозаписи"
+            } elseif ($type == 3) { //Если критерий поиск "по аудиозаписи"
                 $last_users = $db->super_query("SELECT `user_id`, `user_search_pref`, user_photo, user_birthday, `user_country_city_name`, user_last_visit, user_logged_mobile FROM `users` ORDER BY `user_rating` DESC LIMIT 6", 1);
                 $last_tracks = $db->super_query("SELECT id, url, artist, title, oid, duration FROM `audio` ORDER BY `add_count` LIMIT 3", 1);
                 $last_videos = $db->super_query("SELECT `id`, `owner_user_id`, `photo`, `comm_num`, `title` FROM `videos` ORDER BY id DESC LIMIT 7", 1);
@@ -176,40 +176,39 @@ class SearchController extends Module{
                 $sql_count = false;
             }
 
-            if(isset($sql_query)){
+            if (isset($sql_query)) {
                 $sql_ = $db->super_query($sql_query, true);
                 $count = $db->super_query($sql_count);
-            }else{
+            } else {
                 $sql_ = array();
                 $count = array();
                 $count['cnt'] = 0;
             }
 
-           if($query) {
+            if ($query) {
                 $query = stripslashes(strtr($query, array('%' => ' ')));
-            }else {
+            } else {
                 $query = '';
             }
 
-            $params['query_all'] = 'query='.$query.'&type=3';
-            $params['query_people'] = 'query='.$query.'&type=1';
-            $params['query_videos'] = 'query='.$query.'&type=2';
-            $params['query_groups'] = 'query='.$query.'&type=4';
-            $params['query_audios'] = 'query='.$query.'&type=5';
+            $params['query_all'] = 'query=' . $query . '&type=3';
+            $params['query_people'] = 'query=' . $query . '&type=1';
+            $params['query_videos'] = 'query=' . $query . '&type=2';
+            $params['query_groups'] = 'query=' . $query . '&type=4';
+            $params['query_audios'] = 'query=' . $query . '&type=5';
 
             $params['type'] = $type;
 
-            if($type == 1){
+            if ($type == 1) {
 
-                if($online)
+                if ($online)
                     $params['checked_online'] = 'checked';
                 else
                     $params['checked_online'] = '';
 
-                if($user_photo) {
+                if ($user_photo) {
                     $params['checked_user_photo'] = 'checked';
-                }
-                else {
+                } else {
                     $params['checked_user_photo'] = '';
                 }
 
@@ -223,10 +222,9 @@ class SearchController extends Module{
                  */
                 $params['country'] = (new \App\Libs\Support)->allCountry($country);
                 $params['city'] = (new \App\Libs\Support)->allCity($country, $city);
-            }
-            elseif ($type == 3){
+            } elseif ($type == 3) {
                 $sql_ = array();
-            } else{
+            } else {
                 $params['search_tab'] = false;
             }
 
@@ -234,177 +232,172 @@ class SearchController extends Module{
 
             //Загружаем шаблон на вывод если он есть одного юзера и выводим
 
-                //Если критерий поиск "по людям"
-                if($type == 1){
+            //Если критерий поиск "по людям"
+            if ($type == 1) {
 //                    $tpl->load_template('search/result_people.tpl');
-                    foreach($sql_ as $key => $row){
-                        $sql_[$key]['user_id'] = $row['user_id'];
-                        $sql_[$key]['name'] = $row['user_search_pref'];
-                        if($row['user_photo']) {
-                            $sql_[$key]['ava'] = $config['home_url'] . 'uploads/users/' . $row['user_id'] . '/100_' . $row['user_photo'];
-                        } else {
-                            $sql_[$key]['ava'] = '/images/100_no_ava.png';
-                        }
-                        //Возраст юзера
-                        $user_birthday = explode('-', $row['user_birthday']);
-                        $sql_[$key]['age'] = \App\Libs\Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
-                        $user_country_city_name = explode('|', $row['user_country_city_name']);
-                        $sql_[$key]['country'] = $user_country_city_name['0'];
-                        if(isset($user_country_city_name['1'])){
-                            $sql_[$key]['city'] = ', ' . $user_country_city_name['1'];
-                        } else {
-                            $sql_[$key]['city'] = '';
-                        }
-                        if($row['user_id'] != $user_id){
-                            $sql_[$key]['owner'] = true;
-                        } else {
-                            $sql_[$key]['owner'] = false;
-                        }
-                        $online = Tools::Online($row['user_last_visit']);
-                        if ($online){
-                            $sql_[$key]['online'] = $lang['online'];
-                            $sql_[$key]['ava_online'] = 'avatar-online';
-                        }else{
-                            $sql_[$key]['ava_online'] = '';
-                            $sql_[$key]['online'] = '';
-                        }
+                foreach ($sql_ as $key => $row) {
+                    $sql_[$key]['user_id'] = $row['user_id'];
+                    $sql_[$key]['name'] = $row['user_search_pref'];
+                    if ($row['user_photo']) {
+                        $sql_[$key]['ava'] = $config['home_url'] . 'uploads/users/' . $row['user_id'] . '/100_' . $row['user_photo'];
+                    } else {
+                        $sql_[$key]['ava'] = '/images/100_no_ava.png';
+                    }
+                    //Возраст юзера
+                    $user_birthday = explode('-', $row['user_birthday']);
+                    $sql_[$key]['age'] = \App\Libs\Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
+                    $user_country_city_name = explode('|', $row['user_country_city_name']);
+                    $sql_[$key]['country'] = $user_country_city_name['0'];
+                    if (isset($user_country_city_name['1'])) {
+                        $sql_[$key]['city'] = ', ' . $user_country_city_name['1'];
+                    } else {
+                        $sql_[$key]['city'] = '';
+                    }
+                    if ($row['user_id'] != $user_id) {
+                        $sql_[$key]['owner'] = true;
+                    } else {
+                        $sql_[$key]['owner'] = false;
+                    }
+                    $online = Tools::Online($row['user_last_visit']);
+                    if ($online) {
+                        $sql_[$key]['online'] = $lang['online'];
+                        $sql_[$key]['ava_online'] = 'avatar-online';
+                    } else {
+                        $sql_[$key]['ava_online'] = '';
+                        $sql_[$key]['online'] = '';
                     }
                 }
-                elseif($type == 2){
+            } elseif ($type == 2) {
 //                    $tpl->load_template('search/result_video.tpl');
-                    foreach($sql_ as $key => $row){
+                foreach ($sql_ as $key => $row) {
 //                        $tpl->set('{photo}', );
-                        $sql_[$key]['photo'] = $row['photo'];
+                    $sql_[$key]['photo'] = $row['photo'];
 //                        $tpl->set('{title}', );
-                        $sql_[$key]['title'] = stripslashes($row['title']);
+                    $sql_[$key]['title'] = stripslashes($row['title']);
 //                        $tpl->set('{user-id}', );
-                        $sql_[$key]['user_id'] = $row['owner_user_id'];
+                    $sql_[$key]['user_id'] = $row['owner_user_id'];
 //                        $tpl->set('{id}', );
-                        $sql_[$key]['id'] = $row['id'];
+                    $sql_[$key]['id'] = $row['id'];
 //                        $tpl->set('{close-link}', );
-                        $sql_[$key]['close_link'] = '/index.php?'.$query_string.'&page='.$page;
-                        $titles = array('комментарий', 'комментария', 'комментариев');//comments
+                    $sql_[$key]['close_link'] = '/index.php?' . $query_string . '&page=' . $page;
+                    $titles = array('комментарий', 'комментария', 'комментариев');//comments
 //                        $tpl->set('{comm}', );
-                        $sql_[$key]['comm'] = $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles);
+                    $sql_[$key]['comm'] = $row['comm_num'] . ' ' . Gramatic::declOfNum($row['comm_num'], $titles);
 
-                        $date = \Sura\Libs\Date::megaDate(strtotime($row['add_date']), 1, 1);
+                    $date = \Sura\Libs\Date::megaDate(strtotime($row['add_date']), 1, 1);
 //                        $tpl->set('{date}', );
-                        $sql_[$key]['date'] = $date;
+                    $sql_[$key]['date'] = $date;
 //                        $tpl->compile('content');
-                    }
-
                 }
-                elseif($type == 3){
-                    foreach($last_users as $key1 => $row){
-                        $last_users[$key1]['user_id'] = $row['user_id'];
-                        $last_users[$key1]['name'] = $row['user_search_pref'];
-                        if($row['user_photo']) {
-                            $last_users[$key1]['ava'] = $config['home_url'] . 'uploads/users/' . $row['user_id'] . '/100_' . $row['user_photo'];
-                        } else {
-                            $last_users[$key1]['ava'] = '/images/100_no_ava.png';
-                        }
-                        //Возраст юзера
-                        $user_birthday = explode('-', $row['user_birthday']);
-                        $sql_[$key1]['age'] = \App\Libs\Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
-                        $user_country_city_name = explode('|', $row['user_country_city_name']);
-                        $sql_[$key1]['country'] = $user_country_city_name['0'];
-                        if(isset($user_country_city_name['1'])){
-                            $sql_[$key1]['city'] = ', ' . $user_country_city_name['1'];
-                        } else {
-                            $sql_[$key1]['city'] = '';
-                        }
-                        if($row['user_id'] != $user_id){
-                            $sql_[$key1]['owner'] = true;
-                        } else {
-                            $sql_[$key1]['owner'] = false;
-                        }
-                        $online = Tools::Online($row['user_last_visit']);
-                        if ($online){
-                            $sql_[$key1]['online'] = $lang['online'];
-                            $sql_[$key1]['ava_online'] = 'avatar-online';
-                        }else{
-                            $sql_[$key1]['ava_online'] = '';
-                            $sql_[$key1]['online'] = '';
-                        }
-                    }
-                    $params['last_users'] = $last_users;
-                    foreach($last_tracks as $key2 => $row){
-                        if(!$row['artist']) {
-                            $last_tracks[$key2]['artist'] = 'Неизвестный исполнитель';
-                        }
-                        if(!$row['title']) {
-                            $last_tracks[$key2]['title'] = 'Без названия';
-                        }
-                    }
-                    $params['users_count'] = $users['cnt'];
-                    $params['audios'] = $last_tracks;
-                    $params['audios_count'] = $tracks['cnt'];
-                    $params['videos'] = true;
 
-                    foreach($last_group as $key3 => $row){
-                        if($row['photo']){
-                            $last_group[$key3]['ava'] = '/uploads/groups/' . $row['id'] . '/100_' . $row['photo'];
-                        }else{
-                            $last_group[$key3]['ava'] = '/images/no_ava_groups_100.gif';
-                        }
-                        $last_group[$key3]['public_id'] = $row['id'];
-                        $last_group[$key3]['name'] = stripslashes($row['title']);
-                        $titles = array('участник', 'участника', 'участников');//groups_users
-                        $last_group[$key3]['traf'] = $row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles);
-                        if($row['adres']) {
-                            $last_group[$key3]['adres'] = $row['adres'];
-                        }
-                        else {
-                            $last_group[$key3]['adres'] = 'public' . $row['id'];
-                        }
+            } elseif ($type == 3) {
+                foreach ($last_users as $key1 => $row) {
+                    $last_users[$key1]['user_id'] = $row['user_id'];
+                    $last_users[$key1]['name'] = $row['user_search_pref'];
+                    if ($row['user_photo']) {
+                        $last_users[$key1]['ava'] = $config['home_url'] . 'uploads/users/' . $row['user_id'] . '/100_' . $row['user_photo'];
+                    } else {
+                        $last_users[$key1]['ava'] = '/images/100_no_ava.png';
                     }
-                    $params['last_groups'] = $last_group;
-                    $sql_ = array();
-                    $params['navigation'] = '';
+                    //Возраст юзера
+                    $user_birthday = explode('-', $row['user_birthday']);
+                    $sql_[$key1]['age'] = \App\Libs\Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
+                    $user_country_city_name = explode('|', $row['user_country_city_name']);
+                    $sql_[$key1]['country'] = $user_country_city_name['0'];
+                    if (isset($user_country_city_name['1'])) {
+                        $sql_[$key1]['city'] = ', ' . $user_country_city_name['1'];
+                    } else {
+                        $sql_[$key1]['city'] = '';
+                    }
+                    if ($row['user_id'] != $user_id) {
+                        $sql_[$key1]['owner'] = true;
+                    } else {
+                        $sql_[$key1]['owner'] = false;
+                    }
+                    $online = Tools::Online($row['user_last_visit']);
+                    if ($online) {
+                        $sql_[$key1]['online'] = $lang['online'];
+                        $sql_[$key1]['ava_online'] = 'avatar-online';
+                    } else {
+                        $sql_[$key1]['ava_online'] = '';
+                        $sql_[$key1]['online'] = '';
+                    }
                 }
-                elseif($type == 4){
+                $params['last_users'] = $last_users;
+                foreach ($last_tracks as $key2 => $row) {
+                    if (!$row['artist']) {
+                        $last_tracks[$key2]['artist'] = 'Неизвестный исполнитель';
+                    }
+                    if (!$row['title']) {
+                        $last_tracks[$key2]['title'] = 'Без названия';
+                    }
+                }
+                $params['users_count'] = $users['cnt'];
+                $params['audios'] = $last_tracks;
+                $params['audios_count'] = $tracks['cnt'];
+                $params['videos'] = true;
+
+                foreach ($last_group as $key3 => $row) {
+                    if ($row['photo']) {
+                        $last_group[$key3]['ava'] = '/uploads/groups/' . $row['id'] . '/100_' . $row['photo'];
+                    } else {
+                        $last_group[$key3]['ava'] = '/images/no_ava_groups_100.gif';
+                    }
+                    $last_group[$key3]['public_id'] = $row['id'];
+                    $last_group[$key3]['name'] = stripslashes($row['title']);
+                    $titles = array('участник', 'участника', 'участников');//groups_users
+                    $last_group[$key3]['traf'] = $row['traf'] . ' ' . Gramatic::declOfNum($row['traf'], $titles);
+                    if ($row['adres']) {
+                        $last_group[$key3]['adres'] = $row['adres'];
+                    } else {
+                        $last_group[$key3]['adres'] = 'public' . $row['id'];
+                    }
+                }
+                $params['last_groups'] = $last_group;
+                $sql_ = array();
+                $params['navigation'] = '';
+            } elseif ($type == 4) {
 //                    $tpl->load_template('search/result_groups.tpl');
-                    foreach($sql_ as $key => $row){
-                        if($row['photo']){
-                            $sql_[$key]['ava'] = '/uploads/groups/' . $row['id'] . '/100_' . $row['photo'];
-                        }else{
-                            $sql_[$key]['ava'] = '/images/no_ava_groups_100.gif';
-                        }
-                        $sql_[$key]['public_id'] = $row['id'];
-                        $sql_[$key]['name'] = stripslashes($row['title']);
-                            $titles = array('участник', 'участника', 'участников');//groups_users
-                        $sql_[$key]['traf'] = $row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles);
-                        if($row['adres']) {
-                            $sql_[$key]['adres'] = $row['adres'];
-                        }else {
-                            $sql_[$key]['adres'] = 'public' . $row['id'];
-                        }
+                foreach ($sql_ as $key => $row) {
+                    if ($row['photo']) {
+                        $sql_[$key]['ava'] = '/uploads/groups/' . $row['id'] . '/100_' . $row['photo'];
+                    } else {
+                        $sql_[$key]['ava'] = '/images/no_ava_groups_100.gif';
                     }
-
-                    //Если критерий поиск "по аудизаписям"
-                }
-                elseif($type == 5){
-                    foreach($sql_ as $key => $row){
-                        $stime = gmdate("i:s", $row['duration']);
-                        if(!$row['artist']) {
-                            $sql_[$key]['artist'] = 'Неизвестный исполнитель';
-                        }
-                        if(!$row['title']) {
-                            $sql_[$key]['title'] = 'Без названия';
-                        }
+                    $sql_[$key]['public_id'] = $row['id'];
+                    $sql_[$key]['name'] = stripslashes($row['title']);
+                    $titles = array('участник', 'участника', 'участников');//groups_users
+                    $sql_[$key]['traf'] = $row['traf'] . ' ' . Gramatic::declOfNum($row['traf'], $titles);
+                    if ($row['adres']) {
+                        $sql_[$key]['adres'] = $row['adres'];
+                    } else {
+                        $sql_[$key]['adres'] = 'public' . $row['id'];
                     }
+                }
 
+                //Если критерий поиск "по аудизаписям"
+            } elseif ($type == 5) {
+                foreach ($sql_ as $key => $row) {
+                    $stime = gmdate("i:s", $row['duration']);
+                    if (!$row['artist']) {
+                        $sql_[$key]['artist'] = 'Неизвестный исполнитель';
+                    }
+                    if (!$row['title']) {
+                        $sql_[$key]['title'] = 'Без названия';
+                    }
                 }
-                $params['search'] = $sql_;
-                if ($type != 3){
-                    $params['navigation'] = Tools::navigation($gcount, $count['cnt'], '/search/?'.$query_string.'&page=');
-                }
+
+            }
+            $params['search'] = $sql_;
+            if ($type != 3) {
+                $params['navigation'] = Tools::navigation($gcount, $count['cnt'], '/search/?' . $query_string . '&page=');
+            }
 
             return view('search.search', $params);
         }
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
 
     }
 }
