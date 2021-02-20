@@ -50,7 +50,7 @@ class EditprofileController extends Module{
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
 //            $image_name = random_bytes(10);
-            $server_time = \Sura\Libs\Date::time();
+            $server_time = \Sura\Time\Date::time();
             $permitted_chars = '0123456789abcdefghijklmnopqrstuvwxyz';
 //            $image_rename = substr(md5($server_time+rand(1,100000)), 0, 15); // имя фотографии
             $image_rename = substr(str_shuffle($permitted_chars), 0, 15); // имя фотографии

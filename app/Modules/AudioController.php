@@ -207,7 +207,7 @@ class AudioController extends Module{
             $id = (int)$request['id'];
             $check = $db->super_query("SELECT url, artist, title, duration, filename FROM `audio` WHERE id = '{$id}'");
             if($check){
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
                 $db->query("INSERT INTO `audio` SET filename = '{$check['filename']}', original = '{$id}', duration = '{$check['duration']}',oid = '{$user_info['user_id']}', url = '{$db->safesql($check['url'])}', artist = '{$db->safesql($check['artist'])}', title = '{$db->safesql($check['title'])}', date = '{$server_time}'");
 //                $dbid = $db->insert_id();
                 $db->query("UPDATE `users` SET user_audio = user_audio + 1 WHERE user_id = '{$user_info['user_id']}'");
@@ -428,7 +428,7 @@ class AudioController extends Module{
             $getID3 = new getID3;
             $file_tmp = $_FILES['uploadfile']['tmp_name'];
             $file_name = Gramatic::totranslit($_FILES['uploadfile']['name']);
-            $server_time = \Sura\Libs\Date::time();
+            $server_time = \Sura\Time\Date::time();
             $file_rename = substr(md5($server_time+rand(1,100000)), 0, 15);
             $file_size = $_FILES['uploadfile']['size'];
             $tmp = explode('.', $file_name);

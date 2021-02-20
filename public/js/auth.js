@@ -198,14 +198,13 @@ const restore = {
 		if(email.val() !== 0 && email.val() !== 'Ваш электронный адрес' && isValidEmailAddress(email.val())){
 			butloading('send', '32', 'disabled', '');
 			$.post('/restore/next/', {email: email.val()}, function(data){
-				if(data === 'no_user'){
+				if(data.status === 16){
 					$('#err').show().html('Пользователь <b>'+email.val()+'</b> не найден.<br />Пожалуйста, убедитесь, что правильно ввели e-mail.');
 				} else {
-					const exp = data.split('|');
 					step1.hide();
 					step2.show();
-					$('#c_src').attr('src', exp[1]);
-					$('#c_name').html('<b>'+exp[0]+'</b>');
+					$('#c_src').attr('src', data.photo);
+					$('#c_name').html('<b>'+data.name+'</b>');
 				}
 			});
 			butloading('send', '32', 'enabled', 'Далее');

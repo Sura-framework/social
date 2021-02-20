@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Modules;
 
@@ -16,6 +17,7 @@ use Sura\Libs\Settings;
 use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
+use Sura\Time\Date;
 
 class AuthController extends Module
 {
@@ -210,11 +212,11 @@ class AuthController extends Module
                     $user_city = 0;
                 }
 
-                $_POST['password_first'] = Validation::textFilter($_POST['password_first']);
-                $_POST['password_second'] = Validation::textFilter($_POST['password_second']);
+//                $_POST['password_first'] = Validation::textFilter($_POST['password_first']);
+//                $_POST['password_second'] = Validation::textFilter($_POST['password_second']);
 
-                $password_first = $_POST['password_first'];
-                $password_second = $_POST['password_second'];
+                $password_first = Validation::textFilter($_POST['password_first']);
+                $password_second = Validation::textFilter($_POST['password_second']);
                 $user_birthday = $user_year . '-' . $user_month . '-' . $user_day;
 
                 $errors = 0;
@@ -259,8 +261,8 @@ class AuthController extends Module
                         $user_group = '5';
 
                         if ($user_country > 0 or $user_city > 0) {
-                            $country_info = Register::country_info($user_country);
-                            $city_info = Register::city_info($user_city);
+                            $country_info = Register::country_info((int)$user_country);
+                            $city_info = Register::city_info((int)$user_city);
 
                             $user_country_city_name = $country_info['name'] . '|' . $city_info['name'];
                         }else{
@@ -272,7 +274,7 @@ class AuthController extends Module
                         //Hash ID
                         $_IP = Request::getRequest()->getClientIP();
 
-                        $server_time = \Sura\Libs\Date::time();
+                        $server_time = Date::time();
 
                         //FIXME update db query
 //                        $db->query("INSERT INTO `users` (user_email, user_password, user_name, user_lastname, user_sex,
@@ -374,7 +376,7 @@ class AuthController extends Module
                         $_SESSION['user_id'] = (int)$id;
 
                         //Записываем COOKIE
-                        Tools::set_cookie("user_id", (int)$id, 365);
+                        Tools::set_cookie("user_id", (string)$id, 365);
 //                        Tools::set_cookie("password", md5(md5($password_first)), 365);
                         Tools::set_cookie("hash", $pass_hash, 365);
 
@@ -452,10 +454,10 @@ class AuthController extends Module
 
             $request = (Request::getRequest()->getGlobal());
 //
-            $email = Validation::ajax_utf8($request['email']);
+            $email = Validation::check_email($request['email']);
             $check = $db->super_query("SELECT user_name FROM `users` WHERE user_email = '{$email}'");
 
-            $server_time = \Sura\Libs\Date::time();
+            $server_time = Date::time();
 
             if ($check) {
                 //Удаляем все предыдущие запросы на воостановление
@@ -468,7 +470,7 @@ class AuthController extends Module
                 }
                 $hash = md5($server_time . $email . rand(0, 100000) . $rand_lost . $check['user_name']);
 
-                $_IP = $_SERVER['REMOTE_ADDR'];
+                $_IP = Request::getRequest()->getClientIP();
 
                 //Вставляем в базу
                 $db->query("INSERT INTO `restore` SET email = '{$email}', hash = '{$hash}', ip = '{$_IP}'");
@@ -489,6 +491,7 @@ class AuthController extends Module
                         
                         {$config['home_url']}
                         HTML;
+
                 $mail->send($email, $lang['lost_subj'], $message);
 
                 $status = Status::OK;
@@ -526,7 +529,7 @@ class AuthController extends Module
             $requests = Request::getRequest();
             $request = ($requests->getGlobal());
 
-            $hash = $db->safesql(Validation::strip_data($request['h']));
+            $hash = Validation::strip_data($request['h']);
             $_IP = $requests->getClientIP();
             $row = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$hash}' AND ip = '{$_IP}'");
             if ($row) {
@@ -534,16 +537,17 @@ class AuthController extends Module
 //                $tpl->load_template('restore/prefinish.tpl');
 //                $tpl->set('{name}', $info['user_name']);
 
-                $salt = "abchefghjkmnpqrstuvwxyz0123456789";
-                $rand_lost = 0;
-                for ($i = 0; $i < 15; $i++) {
-                    $rand_lost .= $salt[rand(0, 33)];
-                }
-                $server_time = \Sura\Libs\Date::time();
+//                $salt = "abchefghjkmnpqrstuvwxyz0123456789";
+//                $rand_lost = 0;
+//                for ($i = 0; $i < 15; $i++) {
+//                    $rand_lost .= $salt[rand(0, 33)];
+//                }
+//                $server_time = Date::time();
 
-                $newhash = md5($server_time . $row['email'] . rand(0, 100000) . $rand_lost);
+//                $newhash = md5($server_time . $row['email'] . rand(0, 100000) . $rand_lost);
+                $new_hash = password_hash($row['email'], PASSWORD_DEFAULT);
 //                $tpl->set('{hash}', $newhash);
-                $db->query("UPDATE `restore` SET hash = '{$newhash}' WHERE email = '{$row['email']}'");
+                $db->query("UPDATE `restore` SET hash = '{$new_hash}' WHERE email = '{$row['email']}'");
 
 //                $tpl->compile('content');
                 return view('info.info', $params);
@@ -575,18 +579,16 @@ class AuthController extends Module
             $request = (Request::getRequest()->getGlobal());
 //
             $hash = $db->safesql(Validation::strip_data($request['hash']));
-            $_IP = '';
+            $_IP = Request::getRequest()->getClientIP();
             $row = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$hash}' AND ip = '{$_IP}'");
             if ($row) {
 
-                $request['new_pass'] = Validation::ajax_utf8($request['new_pass']);
-                $request['new_pass2'] = Validation::ajax_utf8($request['new_pass2']);
+                $request['new_pass'] = Validation::textFilter($request['new_pass']);
+                $request['new_pass2'] = Validation::textFilter($request['new_pass2']);
 
-                $new_pass = md5(md5($request['new_pass']));
-                $new_pass2 = md5(md5($request['new_pass2']));
-
-                if (strlen($new_pass) >= 6 and $new_pass == $new_pass2) {
-                    $db->query("UPDATE `users` SET user_password = '{$new_pass}' WHERE user_email = '{$row['email']}'");
+                if (strlen($request['new_pass']) >= 6 and $request['new_pass'] == $request['new_pass2']) {
+                    $pass_hash = password_hash($request['new_pass'], PASSWORD_DEFAULT);
+                    $db->query("UPDATE `users` SET user_password = '{$pass_hash}' WHERE user_email = '{$row['email']}'");
                     $db->query("DELETE FROM `restore` WHERE email = '{$row['email']}'");
                 }
                 $status = Status::OK;
@@ -654,7 +656,7 @@ class AuthController extends Module
                 else
                     $check['user_photo'] = "/images/no_ava_50.png";
            
-                echo $check['user_search_pref'] . "|" . $check['user_photo'];
+//                echo $check['user_search_pref'] . "|" . $check['user_photo'];
 	            $status = Status::OK;
                 return _e_json(array(
                     'status' => $status,

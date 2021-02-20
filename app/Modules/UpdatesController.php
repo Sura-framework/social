@@ -1,10 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules;
 
-use Sura\Libs\Date;
+use JsonException;
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
+use Sura\Time\Date;
 use Sura\Libs\Status;
-use Sura\Libs\Tools;
+use Throwable;
 
 class UpdatesController extends Module
 {
@@ -12,8 +17,8 @@ class UpdatesController extends Module
     /**
      * Моментальные оповещения
      *
-     * @throws \JsonException
-     * @throws \Throwable
+     * @throws JsonException
+     * @throws Throwable
      */
     public function index(): int
     {
@@ -24,8 +29,8 @@ class UpdatesController extends Module
         if ($logged) {
             $user_id = $user_info['user_id'];
 
-            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-            $cache = new \Sura\Cache\Cache($storage, 'users');
+            $storage = new MemcachedStorage('localhost');
+            $cache = new Cache($storage, 'users');
 //
 //            $cntCacheUp = $cache->load("{$user_id}/updates");
             $cntCacheUp2 = true;
@@ -62,19 +67,15 @@ class UpdatesController extends Module
 
                     $status = Status::NOT_FOUND;
                     $res = false;
-//                        return _e( json_encode(array('error' => 'error'), JSON_THROW_ON_ERROR) );
                 }
             } else {
                 $status = Status::NOT_FOUND;
                 $res = false;
-//                    return _e( json_encode(array('error' => 'error'), JSON_THROW_ON_ERROR) );
             }
         } else {
             $status = Status::BAD_LOGGED;
             $res = false;
-//            return _e( json_encode(array('error' => 'error'), JSON_THROW_ON_ERROR) );
         }
-
         return _e_json(array('status' => $status, 'res' => $res));
     }
 }

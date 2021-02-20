@@ -3,13 +3,11 @@
 namespace App\Modules;
 
 use Intervention\Image\ImageManager;
-use Sura\Libs\Date;
 use Sura\Libs\Langs;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Status;
-use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
 class AttachController extends Module{
@@ -47,7 +45,7 @@ class AttachController extends Module{
             //Получаем данные о фотографии
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = \Sura\Libs\Date::time();
+            $server_time = \Sura\Time\Date::time();
             $image_rename = substr(md5($server_time+random_int(1,100000)), 0, 20); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
             $array = explode(".", $image_name);
@@ -143,7 +141,7 @@ class AttachController extends Module{
                 //Получаем данные о фотографии
                 $image_tmp = $_FILES['uploadfile']['tmp_name'];
                 $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
                 $image_rename = substr(md5($server_time+rand(1,100000)), 0, 20); // имя фотографии
                 $image_size = $_FILES['uploadfile']['size']; // размер файла
                 $array = explode(".", $image_name);
@@ -316,9 +314,9 @@ class AttachController extends Module{
 
             //Если фотка есть
             if(isset($text) AND !empty($text) AND $row['cnt']){
-                $server_time = Date::time();
+                $server_time = \Sura\Time\Date::time();
                 if($tab_photos){
-//                    $server_time = \Sura\Libs\Date::time();
+//                    $server_time = Date::time();
                     $hash = md5($user_id.$server_time.$user_info['user_email'].random_int(0, 1000000000)).$text.$purl;
 
                     $db->query("INSERT INTO `photos_comments` (pid, user_id, text, date, hash, album_id, owner_id, photo_name) VALUES ('{$row['id']}', '{$user_id}', '{$text}', NOW(), '{$hash}', '{$row['album_id']}', '{$row['user_id']}', '{$row['photo_name']}')");
@@ -439,7 +437,7 @@ class AttachController extends Module{
                 $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                 $tpl->set('{online}', $online);
 
-                $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['adate']));
+                $date = \Sura\Time\Date::megaDate(strtotime($row_comm['adate']));
                 $tpl->set('{date}', $date);
 
                 if($row_comm['auser_id'] == $user_id OR $row['ouser_id'] == $user_id){
@@ -541,7 +539,7 @@ class AttachController extends Module{
                         $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                         $tpl->set('{online}', $online);
 
-                        $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['adate']));
+                        $date = \Sura\Time\Date::megaDate(strtotime($row_comm['adate']));
                         $tpl->set('{date}', $date);
 
                         if($row_comm['auser_id'] == $user_id OR $row['ouser_id'] == $user_id){
@@ -574,7 +572,7 @@ class AttachController extends Module{
                 $tpl->set('{purl-js}', substr($foSQLurl, 0, 20));
 
                 if($row['add_date']){
-                    $date = \Sura\Libs\Date::megaDate(strtotime($row['add_date']));
+                    $date = \Sura\Time\Date::megaDate(strtotime($row['add_date']));
                     $tpl->set('{date}', $date);
                 }else {
                     $tpl->set('{date}', '');

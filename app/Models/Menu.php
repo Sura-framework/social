@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Models;
 
@@ -41,19 +42,22 @@ class Menu
     public static function public_edit(): string
     {
         $path = explode('/', $_SERVER['REQUEST_URI']);
-        if (isset($path['4'])) {
+        if (isset($path['4']))
+        {
             $id = $path['4'];
-        } else {
+        }else
+        {
             $id = $path['3'];
         }
+//        $lang = langs::get_langs();
         $go = 'Page.Go(this.href); return false;';
-        return \Sura\Menu\Menu::new()
+        return  \Sura\Menu\Menu::new()
             ->addClass('navigation nav flex-column text-left pl-2')
-            ->add(Link::to('/public/edit/' . $id, 'Информация')->setAttribute('onClick', $go))
-            ->add(Link::to('/public/edit/users/' . $id, 'Участники')->setAttribute('onClick', $go))
-            ->add(Link::to('/public/edit/users/' . $id . '/admin', 'Руководители')->setAttribute('onClick', $go))
-            ->add(Link::to('/public/edit/blacklist/' . $id, 'Черный список')->setAttribute('onClick', $go))
-            ->add(Link::to('/public/edit/link/' . $id, 'Ссылки')->setAttribute('onClick', $go))
+            ->add(Link::to('/public/edit/'.$id, 'Информация')->setAttribute('onClick', $go))
+            ->add(Link::to('/public/edit/users/'.$id, 'Участники')->setAttribute('onClick', $go))
+            ->add(Link::to('/public/edit/users/'.$id.'/admin', 'Руководители')->setAttribute('onClick', $go))
+            ->add(Link::to('/public/edit/blacklist/'.$id, 'Черный список')->setAttribute('onClick', $go))
+            ->add(Link::to('/public/edit/link/'.$id, 'Ссылки')->setAttribute('onClick', $go))
             ->setActive($_SERVER['REQUEST_URI'])
             ->wrap('div', ['class' => 'wrapper'])
             ->render();
@@ -80,31 +84,33 @@ class Menu
         elseif (!isset($id))
             $id = $user_info['user_id'];
 
-        if ($user_info['user_id'] == $id) {
+        if ($user_info['user_id'] == $id)
+        {
             return \Sura\Menu\Menu::new()
                 ->addClass('navigation nav text-left pl-2')
-                ->add(Link::to('/friends/' . $id . '/', $lang['friends_all'])->setAttribute('onClick', $go))
-                ->add(Link::to('/friends/' . $id . '/online/', $lang['friends_online'])->setAttribute('onClick', $go))
+                ->add(Link::to('/friends/'.$id.'/', $lang['friends_all'])->setAttribute('onClick', $go))
+                ->add(Link::to('/friends/'.$id.'/online/', $lang['friends_online'])->setAttribute('onClick', $go))
                 ->add(Link::to('/friends/requests/', $lang['friends_requests'])->setAttribute('onClick', $go))
-                ->add(Link::to('/friends/' . $id . '/common/', $lang['friends_common'])->setAttribute('onClick', $go))
-                ->add(Link::to('/u' . $id, $lang['to_page'])->setAttribute('onClick', $go))
+                ->add(Link::to('/friends/'.$id.'/common/', $lang['friends_common'])->setAttribute('onClick', $go))
+                ->add(Link::to('/u'.$id, $lang['to_page'])->setAttribute('onClick', $go))
                 ->setActive($_SERVER['REQUEST_URI'])
                 ->wrap('div', ['class' => 'wrapper'])
                 ->render();
         }
-        return \Sura\Menu\Menu::new()
-            ->addClass('navigation nav text-left pl-2')
-            ->add(Link::to('/friends/' . $id, $lang['friends_all'])->setAttribute('onClick', $go))
-            ->add(Link::to('/friends/' . $id . '/online/', $lang['friends_online'])->setAttribute('onClick', $go))
-            ->add(Link::to('/friends/' . $id . '/common/', $lang['friends_common'])->setAttribute('onClick', $go))
-            ->add(Link::to('/u' . $id, $lang['to_page'])->setAttribute('onClick', $go))
-            ->setActive($_SERVER['REQUEST_URI'])
-            ->wrap('div', ['class' => 'wrapper'])
-            ->render();
+            return \Sura\Menu\Menu::new()
+                ->addClass('navigation nav text-left pl-2')
+                ->add(Link::to('/friends/'.$id, $lang['friends_all'])->setAttribute('onClick', $go))
+                ->add(Link::to('/friends/'.$id.'/online/', $lang['friends_online'])->setAttribute('onClick', $go))
+                ->add(Link::to('/friends/'.$id.'/common/', $lang['friends_common'])->setAttribute('onClick', $go))
+                ->add(Link::to('/u'.$id, $lang['to_page'])->setAttribute('onClick', $go))
+                ->setActive($_SERVER['REQUEST_URI'])
+                ->wrap('div', ['class' => 'wrapper'])
+                ->render();
     }
 
     public static function bugs(): string
     {
+//        $lang = langs::get_langs();
         $go = 'Page.Go(this.href); return false;';
 
         return \Sura\Menu\Menu::new()

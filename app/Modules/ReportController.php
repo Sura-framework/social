@@ -30,7 +30,7 @@ class ReportController extends Module{
 //            if($act == 'wall')
 //                $type_report = 6;
             if(in_array($act, $arr_act) AND $mid AND $type_report <= 6 AND $type_report > 0){
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
 
                 $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `report` WHERE ruser_id = '".$user_info['user_id']."' AND mid = '".$mid."' AND act = '".$act."'");
                 if(!$check['cnt']) {

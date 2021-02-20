@@ -48,7 +48,7 @@ class SubscriptionsController extends Module{
                         //Вставляем событие в моментальные оповещания
                         $row_owner = $db->super_query("SELECT user_last_visit, user_sex FROM `users` WHERE user_id = '{$for_user_id}'");
 
-                        $server_time = \Sura\Libs\Date::time();
+                        $server_time = \Sura\Time\Date::time();
 
                         $update_time = $server_time - 70;
 

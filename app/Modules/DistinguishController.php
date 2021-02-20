@@ -59,7 +59,7 @@ class DistinguishController extends Module{
             }
             else
                 if($request['user_ok'] == 'yes') {
-                    $server_time = \Sura\Libs\Date::time();
+                    $server_time = \Sura\Time\Date::time();
                 }
             $db->query("INSERT INTO `photos_mark` SET muser_id = '".$muser_id."', mphoto_id = '".$photo_id."', mdate = '".$server_time."', msettings_pos = '".$msettings_pos."', mapprove = '".$approve."', mmark_user_id = '".$user_id."'");
 

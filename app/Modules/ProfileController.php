@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Modules;
 
+use App\Libs\Friends;
 use App\Libs\Wall;
 use JetBrains\PhpStorm\NoReturn;
 use Sura\Cache\Cache;
@@ -12,9 +13,9 @@ use Sura\Libs\Langs;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
-use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use App\Models\Profile;
+use Sura\Time\Date;
 use Throwable;
 
 class ProfileController extends Module
@@ -94,34 +95,31 @@ class ProfileController extends Module
 //                $params['title'] = $row['user_search_pref'].' | Sura';
 
 //                $server_time = (int)$_SERVER['REQUEST_TIME'];
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = Date::time();
 
                 //Если удалена
                 if (isset($row['user_delet']) and $row['user_delet'] == 1) {
 //                    $user_name_lastname_exp = explode(' ', $row['user_search_pref']);
-                    return 0;//FIXME
+                    self::delete();
                 } //Если заблокирована
                 elseif (isset($row['user_ban_date']) and $row['user_ban_date'] == 1) {
                     if ($row['user_ban_date'] >= $server_time or $row['user_ban_date'] == '0') {
 //                        $user_name_lastname_exp = explode(' ', $row['user_search_pref']);
-                        return 0;//FIXME
+                        self::ban();
                     }
                 } //Если все хорошо, то выводим дальше
                 else {
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if ($user_id != $id) {
-                        $CheckBlackList = \App\Libs\Friends::CheckBlackList($row['user_id']);
-                        $CheckFriends = \App\Libs\Friends::CheckFriends($row['user_id']);
+                        $CheckBlackList = Friends::CheckBlackList($row['user_id']);
+                        $CheckFriends = Friends::CheckFriends($row['user_id']);
 
                     } else {
                         $CheckBlackList = false;
                         $CheckFriends = false;
-
                     }
-
                     $user_privacy = xfieldsdataload($row['user_privacy']);
-
                     $user_name_lastname_exp = explode(' ', $row['user_search_pref']);
                     $user_country_city_name_exp = explode('|', $row['user_country_city_name']);
 
@@ -145,6 +143,7 @@ class ProfileController extends Module
                             } else {
                                 $sql_friends[$key]['last_name'] = 'Неизвестный пользователь';
                             }
+
                             if ($row_friends['user_photo']) {
                                 $sql_friends[$key]['ava'] = $config['home_url'] . 'uploads/users/' . $row_friends['friend_id'] . '/50_' . $row_friends['user_photo'];
                             } else {
@@ -159,7 +158,7 @@ class ProfileController extends Module
                     /**
                      * Друзья на сайте
                      *
-                     * @var $sql_friends_online array()
+                     * @var $sql_friends_online array
                      */
                     $online_time = $server_time - 60;
                     //Кол-во друзей в онлайне
@@ -208,11 +207,6 @@ class ProfileController extends Module
                             $cache_pref_videos = "_all";
                         }
 
-                        //Если страницу смотрит другой юзер, то считаем кол-во видео
-                        //                        if($user_id != $id){
-                        //                            $row['user_videos_num'] = $video_cnt['cnt'];
-                        //                        }
-
                         $video_cnt = $Profile->videos_online_cnt($id, $sql_privacy, $cache_pref_videos);
                         $row['user_videos_num'] = $video_cnt['cnt'];
 
@@ -224,7 +218,7 @@ class ProfileController extends Module
                             $sql_videos[$key]['title'] = stripslashes($row_videos['title']);
                             $titles = array('комментарий', 'комментария', 'комментариев');//comments
                             $sql_videos[$key]['comm_num'] = $row_videos['comm_num'] . ' ' . Gramatic::declOfNum($row_videos['comm_num'], $titles);
-                            $date = \Sura\Libs\Date::megaDate(strtotime($row_videos['add_date']), '');
+                            $date = Date::megaDate(strtotime($row_videos['add_date']), '');
                             $sql_videos[$key]['date'] = $date;
                         }
                         $params['videos_num'] = $video_cnt['cnt'];
@@ -377,7 +371,7 @@ class ProfileController extends Module
 
                             if ($row['user_wall_num'] > 0) {
                                 //ЧС
-                                $CheckBlackList = Tools::CheckBlackList($id);
+                                $CheckBlackList = Friends::CheckBlackList($id);
                                 if (!$CheckBlackList) {
 
                                     if ($user_privacy['val_wall1'] == 1 or $user_privacy['val_wall1'] == 2 and $CheckFriends or $user_id == $id)
@@ -432,11 +426,13 @@ class ProfileController extends Module
 
                         }
 
-                        if (!$CheckBlackList) {
+                        if (!isset($wallAuthorId)){
+                            $wallAuthorId = array();//FIXME
+                        }
 
+                        if (!$CheckBlackList) {
                             if (!isset($where_sql))
                                 $where_sql = '';
-
                             if ($user_privacy['val_wall1'] == 1 or $user_privacy['val_wall1'] == 2 and $CheckFriends or $user_id == $id) {
                                 $query = $db->super_query("SELECT tb1.id, author_user_id, for_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
                             } elseif ($wallAuthorId['author_user_id'] == $id) {
@@ -541,7 +537,7 @@ class ProfileController extends Module
                     } else {
 
                         if ($row_online['user_last_visit'] <= 0) {
-                            $row_online['user_last_visit'] = 0;
+                            $row_online['user_last_visit'] = 0; //FIXME
                         }
 
                         if (date('Y-m-d', (int)$row_online['user_last_visit']) == date('Y-m-d', $server_time)) {
@@ -551,10 +547,8 @@ class ProfileController extends Module
                         else
                             $dateTell = Langs::lang_date('j F Y в H:i', (int)$row_online['user_last_visit']);
                         if ($row['user_sex'] == 2) {
-                            //                            $tpl->set('{online}', 'последний раз была '.$dateTell.$mobile_icon);
                             $params['online'] = 'последний раз была ' . $dateTell . $mobile_icon;
                         } else {
-                            //                            $tpl->set('{online}', 'последний раз был '.$dateTell.$mobile_icon);
                             $params['online'] = 'последний раз был ' . $dateTell . $mobile_icon;
                         }
                     }
@@ -701,14 +695,10 @@ class ProfileController extends Module
                      * Аватарка
                      */
                     if ($row['user_photo']) {
-                        //                        $tpl->set('{ava}', $config['home_url'].'uploads/users/'.$row['user_id'].'/'.$avaPREFver.$row['user_photo']);
                         $params['ava'] = $config['home_url'] . 'uploads/users/' . $row['user_id'] . '/' . $avaPREFver . $row['user_photo'];
-                        //                        $tpl->set('{display-ava}', 'style="display:block;"');
                         $params['display_ava'] = 'style="display:block;"';
                     } else {
-                        //                        $tpl->set('{ava}', '/images/'.$noAvaPrf);
                         $params['ava'] = '/images/' . $noAvaPrf;
-                        //                        $tpl->set('{display-ava}', 'style="display:none;"');
                         $params['display_ava'] = 'style="display:none;"';
                     }
 
@@ -736,7 +726,7 @@ class ProfileController extends Module
                     if ($sql_albums and $config['album_mod'] == 'yes') {
                         foreach ($sql_albums as $key2 => $row_albums) {
                             $sql_albums[$key2]['name'] = stripslashes($row_albums['name']);
-                            $sql_albums[$key2]['date'] = \Sura\Libs\Date::megaDate($row_albums['adate']);
+                            $sql_albums[$key2]['date'] = Date::megaDate($row_albums['adate']);
                             $titles = array('фотография', 'фотографии', 'фотографий');//photos
                             $sql_albums[$key2]['albums_photonums'] = Gramatic::declOfNum($row_albums['photo_num'], $titles);
                             if ($row_albums['cover']) {
@@ -752,8 +742,6 @@ class ProfileController extends Module
 
                     //Делаем проверки на существования запрашиваемого юзера у себя в друзьяз, заклаках, в подписка, делаем всё это если страницу смотрет другой человек
                     if ($user_id != $id) {
-
-
                         $check_yes_demands = $db->super_query("SELECT for_user_id FROM `friends_demands` WHERE for_user_id = '{$id}' AND from_user_id = '{$user_info['user_id']}'");
                         if (isset($check_yes_demands['for_user_id'])) {
                             $params['yesf'] = true;
@@ -768,7 +756,7 @@ class ProfileController extends Module
                             $params['yes_friend'] = false;
                         }
 
-                        $CheckFriends = \App\Libs\Friends::CheckFriends($row['user_id']);
+                        $CheckFriends = Friends::CheckFriends($row['user_id']);
 
                         //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                         if ($CheckFriends == true) {
@@ -797,7 +785,7 @@ class ProfileController extends Module
                         }
 
                         //Проверка естьли запрашиваемый юзер в черном списке
-                        $MyCheckBlackList = Tools::CheckBlackList($id);
+                        $MyCheckBlackList = Friends::CheckBlackList($id);
                         if ($MyCheckBlackList) {
                             $params['yes_blacklist_block'] = true;
                             $params['no_$server_time'] = false;
@@ -812,21 +800,9 @@ class ProfileController extends Module
                     $author_info = explode(' ', $row['user_search_pref']);
                     $params['gram_name'] = Gramatic::gramatikName($author_info[0]);
 
-
-                    //Если человек пришел после реги, то открываем ему окно загрузи фотографии
-                    //                    if(intval($request['after'])){
-                    //                        $tpl->set('[after-reg]', '');
-                    //                        $tpl->set('[/after-reg]', '');
-                    //                    } else
-                    //                        $tpl->set_block("'\\[after-reg\\](.*?)\\[/after-reg\\]'si","");
-
                     //Стена
                     //                    $tpl->set('{records}', $tpl->result['wall']);
                     //                    $params['records'] = $tpl->result['wall'];
-
-
-                    //Статус
-                    //                    $tpl->set('{status-text}', stripslashes($row['user_status']));
 
                     if (!$CheckBlackList and !$params['owner']) {
                         $params['status_text'] = stripslashes($row['user_status']);
@@ -903,7 +879,7 @@ class ProfileController extends Module
                         $spUserName = 'erorr';//bug
 
                     if (!isset($user_sp['1']))
-                        $user_sp['1'] = null; //bug: undefined
+                        $user_sp['1'] = ''; //FIXME
 
                     $sp6 = "партнёр <a href=\"/u" . $user_sp['1'] . "\" onClick=\"Page.Go(this.href); return false\">" . $spUserName . "</a>";
                     $sp6_6 = '<a href="/search/?sp=6" onClick="Page.Go(this.href); return false">всё сложно</a>';
@@ -968,10 +944,8 @@ class ProfileController extends Module
                      */
                     if ($row['user_public_num'] > 0 and !$CheckBlackList) {
                         $sql_groups = $Profile->groups($id);
-                        $sql_groups = null;//FIXME
                         if (is_array($sql_groups)) {
                             foreach ($sql_groups as $key => $row_groups) {
-
                                 if (isset($row_groups['adres'])) {
                                     $sql_groups[$key]['adres'] = $row_groups['adres'];
                                 } else {
@@ -979,18 +953,15 @@ class ProfileController extends Module
                                         = 'public' . $row_groups['id'];
                                 }
                                 if (isset($row_groups['photo'])) {
-//                                $ava_groups = "/uploads/groups/{$row_groups['id']}/50_{$row_groups['photo']}";
                                     $sql_groups[$key]['ava'] = "/uploads/groups/{$row_groups['id']}/50_{$row_groups['photo']}";
                                 } else {
-//                                $ava_groups = "/images/no_ava_50.png";
                                     $sql_groups[$key]['ava'] = "/images/no_ava_50.png";
                                 }
                                 $row_groups['info'] = iconv_substr($row_groups['status_text'], 0, 24, 'utf-8');
                                 //                            $groups .= '<div class="onesubscription onesubscriptio2n cursor_pointer" onClick="Page.Go(\'/'.$adres.'\')"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false"><img src="'.$ava_groups.'" /></a><div class="onesubscriptiontitle"><a href="/'.$adres.'" onClick="Page.Go(this.href); return false">'.stripslashes($row_groups['title']).'</a></div><span class="color777 size10">'.stripslashes($row_groups['status_text']).'</span></div>';
-                                $sql_groups[$key]['user_id'] = $row_groups['user_id'];
+                                $sql_groups[$key]['user_id'] = $row_groups['id'];
                                 $sql_groups[$key]['name'] = $row_groups['title'];
                                 $sql_groups[$key]['title'] = $row_groups['title'];
-
                             }
                         } else {
                             $params['groups'] = false;
@@ -1017,20 +988,20 @@ class ProfileController extends Module
                     }
 
                     //################### Обработка дополнительных полей ###################//
-                    $xfieldsdata = xfieldsdataload($row['xfields']);
-                    $xfields = profileload();
+//                    $xfieldsdata = xfieldsdataload($row['xfields']);
+//                    $xfields = profileload();
 
-                    foreach ($xfields as $value) {
+//                    foreach ($xfields as $value) {
 //                        $preg_safe_name = preg_quote($value[0], "'");
-                        if (empty($xfieldsdata[$value[0]])) {
+//                        if (empty($xfieldsdata[$value[0]])) {
                             //                            $tpl->copy_template = preg_replace("'\\[xfgiven_{$preg_safe_name}](.*?)\\[/xfgiven_{$preg_safe_name}]'is", "", $tpl->copy_template);
 
-                        } else {
+//                        } else {
                             //                            $tpl->copy_template = str_replace("[xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
                             //                            $tpl->copy_template = str_replace("[/xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
-                        }
+//                        }
                         //                        $tpl->copy_template = preg_replace( "'\\[xfvalue_{$preg_safe_name}]'i", stripslashes($xfieldsdata[$value[0]]), $tpl->copy_template);
-                    }
+//                    }
 
                     //what? (deprecated)
                     //                    if($id == 7) $tpl->set('{group}', '<font color="#f87d7d">Модератор</font>');
@@ -1106,13 +1077,12 @@ class ProfileController extends Module
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
         }
-
     }
 
     /**
-     * @deprecated
+     * @return int
      */
-    public static function ban()
+    #[NoReturn] public static function ban(): int
     {
 //        $tpl = new Templates();
 //        $config = Settings::load();
@@ -1122,24 +1092,23 @@ class ProfileController extends Module
         if ($user_info['user_group'] != '1') {
 //            $tpl->load_template('profile/profile_baned.tpl');
             if ($user_info['user_ban_date']) {
-                return die();
+                return 1;
 //                $tpl->set('{date}', langdate('j F Y в H:i', $user_info['user_ban_date']));
             } else {
-                return die();
+                return 1;
                 //                $tpl->set('{date}', 'Неограниченно');
             }
 //            $tpl->compile('main');
 //            echo $tpl->result['main'];
         }
 
-        return die();
+        return 1;
     }
 
     /**
-     *
-     * @deprecated
+     * @return int
      */
-    #[NoReturn] public static function delete()
+    #[NoReturn] public static function delete(): int
     {
 //        $tpl = new Templates();
 //        $config = Settings::load();
@@ -1151,9 +1120,9 @@ class ProfileController extends Module
 //            $tpl->compile('main');
             //echo str_replace('{theme}', '/templates/'.$config['temp'], $tpl->result['main']);
 //            echo $tpl->result['main'];
-            return die();
+            return 1;
         }
 
-        return die();
+        return 1;
     }
 }

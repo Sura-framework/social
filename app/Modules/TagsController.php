@@ -3,6 +3,7 @@
 namespace App\Modules;
 
 
+use App\Libs\Friends;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
 use Sura\Libs\Tools;
@@ -31,7 +32,6 @@ class TagsController  extends Module
         }
 
         /**
-         * @var int $type - тип записи
          * 1 - человек
          * 2 - сообщество
          */
@@ -49,17 +49,13 @@ class TagsController  extends Module
                 $yesf = false;
             }
 
-            $CheckBlackList = Tools::CheckBlackList($id);
+            $CheckBlackList = Friends::CheckBlackList($id);
 
-            /**
-             * check send friend
-             */
+            /** check send friend */
             $check2 = $db->super_query("SELECT for_user_id FROM `friends_demands` WHERE for_user_id = '{$id}' AND from_user_id = '{$user_info['user_id']}'");
-            /**
-             * check friends
-             */
+            /** check friends */
 //            $check1 = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_info['user_id']}' AND friend_id = '{$id}' AND subscriptions = 0");
-            $check1 = \App\Libs\Friends::CheckFriends($id);
+            $check1 = Friends::CheckFriends($id);
 
             if (!$CheckBlackList){
                 if($id == $user_info['user_id']){
@@ -100,8 +96,11 @@ class TagsController  extends Module
                 }
             }
 
+            if (!isset($photo)) {
+                $photo = '';//FIXME
+            }
         }else{
-            $photo = false;
+            $photo = '';
         }
 
         if($photo){

@@ -1,8 +1,12 @@
 <?php
 declare(strict_types=1);
 
+use JetBrains\PhpStorm\Deprecated;
 use JetBrains\PhpStorm\Pure;
+use Sura\Libs\Db;
+use Sura\Libs\Gramatic;
 use Sura\Libs\Langs;
+use Sura\Libs\Settings;
 
 if (!function_exists('GetVar')) {
     /**
@@ -45,9 +49,6 @@ if (!function_exists('msg_box')) {
 }
 
 if (!function_exists('check_smartphone')) {
-    /**
-     * @return bool
-     */
     #[Pure] function check_smartphone(): bool
     {
 
@@ -79,10 +80,6 @@ if (!function_exists('installationSelected')) {
 }
 
 if (!function_exists('xfieldsdataload')) {
-    /**
-     * @param $string
-     * @return array
-     */
     function xfieldsdataload($string): array
     {
         $x_fields_data = array_trim_end(explode("||", $string));
@@ -97,11 +94,7 @@ if (!function_exists('xfieldsdataload')) {
     }
 }
 
-/**
- * @param $array
- * @return mixed
- */
-function array_trim_end($array): mixed
+function array_trim_end($array)
 {
     $num = count($array);
     --$num;
@@ -111,9 +104,6 @@ function array_trim_end($array): mixed
 }
 
 if (!function_exists('profileload')) {
-    /**
-     * @return bool|array
-     */
     function profileload(): bool|array
     {
         $path = __DIR__ . '/../config/xfields.txt';

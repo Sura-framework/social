@@ -37,7 +37,7 @@ class RatingController extends Module{
                     else
                         $sql_[$key]['ava'] = "/images/no_ava_50.png";
                     $sql_[$key]['rate'] = $row['addnum'];
-                    $date = \Sura\Libs\Date::megaDate($row['date']);
+                    $date = \Sura\Time\Date::megaDate($row['date']);
                     $sql_[$key]['date'] = $date;
                 }
                 $params['users'] = $sql_;
@@ -92,7 +92,7 @@ class RatingController extends Module{
                     $db->query("UPDATE `users` SET user_rating = user_rating + {$num} WHERE user_id = '{$for_user_id}'");
 
                     //Вставляем в лог
-                    $server_time = \Sura\Libs\Date::time();
+                    $server_time = \Sura\Time\Date::time();
                     $db->query("INSERT INTO `users_rating` SET user_id = '{$user_id}', for_user_id = '{$for_user_id}', addnum = '{$num}', date = '{$server_time}'");
 
                     /** Чистим кеш */

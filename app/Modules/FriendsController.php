@@ -1,16 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules;
 
 use App\Libs\Antispam;
 use App\Libs\Friends;
-use Exception;
+use App\Libs\Profile;
+use App\Models\Menu;
+use JsonException;
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
 use Sura\Libs\Mail;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
+use Throwable;
 
 class FriendsController extends Module{
 
@@ -18,14 +25,14 @@ class FriendsController extends Module{
      * Отправка заявки в друзья
      *
      * @return int
-     * @throws \JsonException
-     * @throws \Throwable
+     * @throws JsonException
+     * @throws Throwable
      */
     public function send(): int
     {
         $path = explode('/', $_SERVER['REQUEST_URI']);
 
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -76,8 +83,8 @@ class FriendsController extends Module{
 
                                 $db->query("INSERT INTO `updates` SET for_user_id = '{$for_user_id}', from_user_id = '{$user_info['user_id']}', type = '11', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/friends/requests'");
 
-                                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                                $cache = new \Sura\Cache\Cache($storage, 'users');
+                                $storage = new MemcachedStorage('localhost');
+                                $cache = new Cache($storage, 'users');
                                 $cache->save("{$for_user_id}/updates", '1');
                             }
 
@@ -124,8 +131,8 @@ class FriendsController extends Module{
      * Принятие заявки на дружбу
      *
      * @return int
-     * @throws \JsonException
-     * @throws \Throwable
+     * @throws JsonException
+     * @throws Throwable
      */
     public function take(): int
     {
@@ -203,8 +210,8 @@ class FriendsController extends Module{
 
                     $db->query("INSERT INTO `updates` SET for_user_id = '{$take_user_id}', from_user_id = '{$user_info['user_id']}', type = '12', date = '{$server_time}', text = '{$action_update_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/u{$take_user_id}'");
 
-                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $storage = new MemcachedStorage('localhost');
+                    $cache = new Cache($storage, 'users');
                     $cache->save("{$take_user_id}/updates", '1');
                 }
 
@@ -223,8 +230,8 @@ class FriendsController extends Module{
                 }
 
                 //Чистим кеш владельцу стр и тому кого добавляем в др.
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 $cache->remove("{$user_id}/profile_{$user_id}");
                 $cache->remove("{$take_user_id}/profile_{$take_user_id}");
 
@@ -251,7 +258,7 @@ class FriendsController extends Module{
      * Отклонение заявки на дружбу
      *
      * @return int
-     * @throws \JsonException
+     * @throws JsonException
      */
     public function reject(): int
     {
@@ -294,8 +301,8 @@ class FriendsController extends Module{
      * Удаления друга из списка друзей
      *
      * @return int
-     * @throws \JsonException
-     * @throws \Throwable
+     * @throws JsonException
+     * @throws Throwable
      */
     public function delete(): int
     {
@@ -327,8 +334,8 @@ class FriendsController extends Module{
                 $db->query("UPDATE `users` SET user_friends_num = user_friends_num-1 WHERE user_id = '{$delet_user_id}'");
 
                 //Чистим кеш владельцу стр и тому кого удаляем из др.
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 $cache->remove("{$user_id}/profile_{$user_id}");
                 $cache->remove("{$user_id}/profile_{$delet_user_id}");
 
@@ -429,7 +436,7 @@ class FriendsController extends Module{
                     $sql_[$key]['user_id'] = $row['from_user_id'];
                     $sql_[$key]['name'] = $row['user_search_pref'];
 
-                    $online = Tools::Online($row['user_last_visit']);
+                    $online = Profile::Online($row['user_last_visit']);
                     if ($online){
                         $sql_[$key]['online'] = $lang['online'];
                         $sql_[$key]['ava_online'] = 'avatar-online';
@@ -454,27 +461,27 @@ class FriendsController extends Module{
 
                         //Возраст юзера
                     $user_birthday = explode('-', $row['user_birthday']);
-                    $sql_[$key]['age'] = \App\Libs\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+                    $sql_[$key]['age'] = Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
                 }
                 $params['friends'] = $sql_;
 //                Tools::navigation($gcount, $user_info['user_friends_demands'], $config['home_url'].'friends/requests/page/', $tpl);
 
-                $limit = $gcount;
-                $count_all = $user_info['user_friends_demands'];
-                $page_num = (int)$request['page'];
-                $navi = new Navigation( "/friends/requests/" );
-                $navi->tpl = "{page}/";
-                $navi->spread = 4;
-                $template = $navi->build( $limit, $count_all, $page_num );
-                $params['nav'] = $template;
+//                $limit = $gcount;
+//                $count_all = $user_info['user_friends_demands'];
+//                $page_num = (int)$request['page'];
+//                $navi = new Navigation( "/friends/requests/" );
+//                $navi->tpl = "{page}/";
+//                $navi->spread = 4;
+//                $template = $navi->build( $limit, $count_all, $page_num );
+//                $params['nav'] = $template;
             }
-            else{
+//            else{
 //                msgbox('', $lang['no_requests'], 'info_2');
 //                $params['info'] = $lang['no_requests'];
 //                return view('friends.request', $params);
-            }
+//            }
 
-            $params['menu'] = \App\Models\Menu::friends();
+            $params['menu'] = Menu::friends();
             return view('friends.request', $params);
         }
 
@@ -519,7 +526,7 @@ class FriendsController extends Module{
             $params['user_id'] = $get_user_id;
 
             //ЧС
-            $CheckBlackList = Tools::CheckBlackList($get_user_id);
+            $CheckBlackList = Friends::CheckBlackList($get_user_id);
             if(!$CheckBlackList){
 
                 if($get_user_id === $user_info['user_id']) {
@@ -545,11 +552,11 @@ class FriendsController extends Module{
                     $gram_name = 'Вас';
                 }
 
-                if($sql_)
+//                if($sql_)
                     //Кол-во друзей в онлайне
-                {
+//                {
 //                    $online_friends = $db->super_query("SELECT COUNT(*) AS cnt FROM `users` tb1, `friends` tb2 WHERE tb1.user_id = tb2.friend_id AND tb2.user_id = '{$get_user_id}' AND tb1.user_last_visit >= '{$online_time}' AND tb2.subscriptions = 0");
-                }
+//                }
 
                 //Верх
                 if($user_info['user_id'] !== $get_user_id) {
@@ -591,12 +598,12 @@ class FriendsController extends Module{
                         else
                             $sql_[$key]['ava'] = '/images/100_no_ava.png';
 
-                            $online = \App\Libs\Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
+                            $online = Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
                         $sql_[$key]['online'] = $online;
 
                             //Возраст юзера
                         $user_birthday = explode('-', $row['user_birthday']);
-                        $sql_[$key]['age'] = \App\Libs\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+                        $sql_[$key]['age'] = Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
 
                         if($get_user_id == $user_info['user_id']){
                             $sql_[$key]['owner'] = true;
@@ -612,16 +619,17 @@ class FriendsController extends Module{
                     }
                     $params['friends'] = $sql_;
 //                    $tpl = Tools::navigation($gcount, $online_friends['cnt'], $config['home_url'].'friends/online/'.$get_user_id.'/page/', $tpl);
-                } else{
-//                    msgbox('', $lang['no_requests_online'], 'info_2');
-
                 }
-            } else {
-                //$user_speedbar = $lang['error'];
-//                msgbox('', $lang['no_notes'], 'info');
+//                else{
+////                    msgbox('', $lang['no_requests_online'], 'info_2');
+//                }
             }
+//            else {
+//                //$user_speedbar = $lang['error'];
+////                msgbox('', $lang['no_notes'], 'info');
+//            }
 
-            $params['menu'] = \App\Models\Menu::friends();
+            $params['menu'] = Menu::friends();
 
             return view('friends.online', $params);
         }else{
@@ -676,7 +684,7 @@ class FriendsController extends Module{
                 $count = $db->super_query("SELECT COUNT(*) AS cnt FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$user_id}' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 0 AND tb2.user_sex = '{$sql_usSex}'");
 
                 if($count['cnt']){
-                    $config = Settings::load();
+//                    $config = Settings::load();
 
                     $sql_ = $db->super_query("SELECT tb1.friend_id, tb2.user_photo, user_search_pref FROM `friends` tb1, `users` tb2 WHERE tb1.user_id = '{$user_id}' AND tb1.friend_id = tb2.user_id AND tb1.subscriptions = 0 AND tb2.user_sex = '{$sql_usSex}' ORDER by `views` DESC LIMIT {$limit_page}, {$gcount}", 1);
 //                    $tpl->load_template('friends/box_friend.tpl');
@@ -697,9 +705,13 @@ class FriendsController extends Module{
                     }
 //                    box_navigation($gcount, $count['cnt'], "''", 'sp.openfriends', '');
                 } else
-                    msg_box( '<div class="clear" style="margin-top:140px"></div>'.$lang['no_requests'], 'info_2');
+                {
+//                    msg_box( '<div class="clear" style="margin-top:140px"></div>'.$lang['no_requests'], 'info_2');
+                }
             } else
-                msg_box( '<div class="clear" style="margin-top:140px"></div>'.$lang['no_requests'], 'info_2');
+            {
+//                msg_box( '<div class="clear" style="margin-top:140px"></div>'.$lang['no_requests'], 'info_2');
+            }
 
             return view('info.info', $params);
         }
@@ -810,14 +822,14 @@ class FriendsController extends Module{
 //                                $tpl->set('{ava}', );
                                 $sql_[$key]['ava'] = "/images/{$noAvaPrf}";
 
-                            $online = \App\Libs\Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
+                            $online = Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
 //                            $tpl->set('{online}', );
                             $sql_[$key]['online'] = $online;
 
                             //Возраст юзера
                             $user_birthday = explode('-', $row['user_birthday']);
 //                            $tpl->set('{age}', );
-                            $sql_[$key]['age'] = \App\Libs\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+                            $sql_[$key]['age'] = Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
 
                             if (!isset($get_user_id))
                                 $get_user_id = null;
@@ -846,11 +858,11 @@ class FriendsController extends Module{
                 }
 
             }
-            else {
-//            msg_box('', 'У Вас с этим пользователем нет общих друзей.', 'info_2');
-            }
+//            else {
+////            msg_box('', 'У Вас с этим пользователем нет общих друзей.', 'info_2');
+//            }
 
-            $params['menu'] = \App\Models\Menu::friends();
+            $params['menu'] = Menu::friends();
 
             return view('friends.common', $params);
 
@@ -887,15 +899,15 @@ class FriendsController extends Module{
 
             $path = explode('/', $_SERVER['REQUEST_URI']);
             if (empty($path['2']) ){
-                $get_user_id = $user_info['user_id'];
+                $get_user_id = (int)$user_info['user_id'];
             }else{
-                $get_user_id = $path['2'];
+                $get_user_id = (int)$path['2'];
             }
 
             $params['user_id'] = $get_user_id;
 
             //ЧС
-            $CheckBlackList = Tools::CheckBlackList($get_user_id);
+            $CheckBlackList = Friends::CheckBlackList($get_user_id);
             if(!$CheckBlackList){
                 //Выводим кол-во друзей из таблицы юзеров
                 $friends_sql = $db->super_query("SELECT user_name, user_friends_num FROM `users` WHERE user_id = '{$get_user_id}'");
@@ -977,10 +989,10 @@ class FriendsController extends Module{
                                 $sql_[$key]['ava'] = "/images/{$noAvaPrf}";
                             }
 
-                            $online = \App\Libs\Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
+                            $online = Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
                             $sql_[$key]['online'] = $online;
                             $user_birthday = explode('-', $row['user_birthday']);
-                            $sql_[$key]['age'] = \App\Libs\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+                            $sql_[$key]['age'] = Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
                             if($get_user_id == $user_info['user_id']){
                                 $sql_[$key]['owner'] = true;
                             } else{
@@ -998,23 +1010,24 @@ class FriendsController extends Module{
 //                        $tpl = Tools::navigation($gcount, $friends_sql['user_friends_num'], $config['home_url'].'friends/'.$get_user_id.'/page/', $tpl);
 
                         $params['friends'] = $sql_;
-                    } else{
-//                        msg_box('', $lang['no_requests'], 'info_2');
-
                     }
-
-                } else{
-//                    msg_box('', $lang['no_requests'], 'info_2');
+//                    else{
+////                        msg_box('', $lang['no_requests'], 'info_2');
+//                    }
 
                 }
-            } else {
-//                $user_speedbar = $lang['error'];
-//                msg_box('', $lang['no_notes'], 'info');
+//                else{
+////                    msg_box('', $lang['no_requests'], 'info_2');
+//                }
             }
+//            else {
+////                $user_speedbar = $lang['error'];
+////                msg_box('', $lang['no_notes'], 'info');
+//            }
 //            $db->free();
 //            $tpl->clear();
 
-            $params['menu'] = \App\Models\Menu::friends();
+            $params['menu'] = Menu::friends();
 
             return view('friends.friends', $params);
         } else {
@@ -1022,7 +1035,5 @@ class FriendsController extends Module{
             $params['info'] = $lang['not_logged'];
             return view('info.info', $params);
         }
-
-        return view('info.info', $params);
     }
 }

@@ -43,7 +43,7 @@ if (PHP_SAPI === 'cli') {
 //            App\Modules\ProfileController::ban();
 //        }
 
-        Profile_check::time_zone($user['user_info']['time_zone']);
+        \Sura\Time\Zone::zone($user['user_info']['time_zone']);
     }
 
     $app->make('app');

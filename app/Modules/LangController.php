@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules;
 
 use Sura\Libs\Langs;
-use Sura\Libs\Settings;
 use Sura\Libs\Tools;
 
 class LangController extends Module{
@@ -46,25 +47,19 @@ class LangController extends Module{
     /**
      * Меняем язык
      */
-    public function change_lang()
+    public function change_lang(): int
     {
         //Смена языка
-//        $langId = (int)$_GET['id'];
         $path = explode('/', $_SERVER['REQUEST_URI']);
         $langId = $path['3'];
-//        var_dump($langId);
-//        exit();
-
-//        $config = Settings::load();
-//        $config['lang_list'] = nl2br($config['lang_list']);
-//        $expLangList = explode('<br />', $config['lang_list']);
         $num_lang = count(Langs::lang_list());
         if($langId < $num_lang){
             Tools::set_cookie("lang", $langId, 365);
         }
         $langReferer = $_SERVER['HTTP_REFERER'];
 
-        return  header("Location: {$langReferer}");
+        header("Location: {$langReferer}");
+        return 1;
 
     }
 }

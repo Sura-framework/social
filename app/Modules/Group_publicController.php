@@ -94,7 +94,7 @@ class Group_publicController extends Module{
                 {
 //                    $wall->compile('wall');
                 }
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
 //                $wall->select($public_admin, $server_time);
 
                 //Если страница вывзана через "к предыдущим записям"
@@ -230,7 +230,7 @@ class Group_publicController extends Module{
 //                $tpl->set('{users}', $users);
 
 //                $tpl->set('{id}', $row['id']);
-                $date = \Sura\Libs\Date::megaDate(strtotime($row['date']), 1, 1);
+                $date = \Sura\Time\Date::megaDate(strtotime($row['date']), 1, 1);
 //                $tpl->set('{date}', $date);
 
                 //Комментарии включены
@@ -401,7 +401,7 @@ HTML;
                         $titles = array('сообщение', 'сообщения', 'сообщений');//msg
                         $msg_num = $row_forum['msg_num'].' '.Gramatic::declOfNum($row_forum['msg_num'], $titles);
 
-                        $last_date = \Sura\Libs\Date::megaDate($row_forum['lastdate']);
+                        $last_date = \Sura\Time\Date::megaDate($row_forum['lastdate']);
 
                         $thems .= "<div class=\"forum_bg\"><div class=\"forum_title cursor_pointer\" onClick=\"Page.Go('/forum{$row['id']}?act=view&id={$row_forum['fid']}'); return false\">{$row_forum['title']}</div><div class=\"forum_bottom\">{$msg_num}. Последнее от <a href=\"/u{$row_forum['lastuser_id']}\" onClick=\"Page.Go(this.href); return false\">{$row_last_user['user_search_pref']}</a>, {$last_date}</div></div>";
 
@@ -451,7 +451,7 @@ HTML;
                     foreach($sql_videos as $row_video){
 
                         $row_video['title'] = stripslashes($row_video['title']);
-                        $date_video = \Sura\Libs\Date::megaDate(strtotime($row_video['add_date']));
+                        $date_video = \Sura\Time\Date::megaDate(strtotime($row_video['add_date']));
 
                         $titles = array('комментарий', 'комментария', 'комментариев');//comments
                         $comm_num = $row_video['comm_num'].' '.Gramatic::declOfNum($row_video['comm_num'], $titles);

@@ -40,7 +40,7 @@ class Stats_groupsController extends Module{
             //ПРоверка на админа
             if(strpos($owner['admin'], "u{$user_info['user_id']}|") !== false){
 
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
 
                 if($month AND $year){
 

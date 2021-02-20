@@ -69,7 +69,7 @@ class StoriesController  extends Module
             //Получаем данные о фотографии
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = \Sura\Libs\Date::time();
+            $server_time = \Sura\Time\Date::time();
             $image_rename = substr(md5($server_time+rand(1,100000)), 0, 15); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
             $array = explode(".", $image_name);
@@ -173,7 +173,7 @@ class StoriesController  extends Module
         $stories = $db->super_query("SELECT * FROM `stories` WHERE user_id = '{$user_id}' ORDER by `add_date` DESC LIMIT {$num}, 1 ");
 
         //Удаляем историю спустя сутки
-//        $server_time = \Sura\Libs\Date::time();
+//        $server_time = \Sura\Time\Date::time();
 //        $online_time = $server_time - 86400;//сутки
 //        if ($stories['add_date'] <= $online_time){
 //            $db->query("DELETE FROM `stories` WHERE id = '{$stories['id']}'");
@@ -227,7 +227,7 @@ class StoriesController  extends Module
             $stories_url = str_replace('stories/', 'stories/o_', $stories['url']);
 
             //Удаляем историю спустя сутки
-            $server_time = \Sura\Libs\Date::time();
+            $server_time = \Sura\Time\Date::time();
             $online_time = $server_time - 86400;//сутки
             if ($stories['add_date'] <= $online_time){
                 $db->query("DELETE FROM `stories` WHERE id = '{$stories['id']}'");

@@ -56,7 +56,7 @@ class DocController extends Module{
                         @chmod($upload_dir, 0777);
                     }
 
-                    $server_time = \Sura\Libs\Date::time();
+                    $server_time = \Sura\Time\Date::time();
                     $downl_file_name = substr(md5($file_name.rand(0, 1000).$server_time), 0, 25);
 
                     //Загружаем сам файл
@@ -91,7 +91,7 @@ class DocController extends Module{
                             $file_name = substr($file_name, 0, 50).'...'.$res_type;
                         }
 
-                        $server_time = \Sura\Libs\Date::time();
+                        $server_time = \Sura\Time\Date::time();
                         //Вставляем файл в БД
                         $db->query("INSERT INTO `doc` SET duser_id = '{$user_id}', dname = '{$file_name}', dsize = '{$dsize}', ddate = '{$server_time}', ddownload_name = '{$downl_file_name}{$res_type}'");
 
@@ -317,7 +317,7 @@ class DocController extends Module{
                 $tpl->set('{format}', end($array));
                 $tpl->set('{did}', $row['did']);
                 $tpl->set('{size}', $row['dsize']);
-                $date = \Sura\Libs\Date::megaDate(strtotime($row['ddate']));
+                $date = \Sura\Time\Date::megaDate(strtotime($row['ddate']));
                 $tpl->set('{date}', $date);
 
                 $tpl->compile('content');
@@ -383,7 +383,7 @@ class DocController extends Module{
 //                $tpl->set('{format}', end($array));
 //                $tpl->set('{did}', $row['did']);
 
-                $date = \Sura\Libs\Date::megaDate(strtotime($row['ddate']));
+                $date = \Sura\Time\Date::megaDate(strtotime($row['ddate']));
 //                $tpl->set('{date}', $date);
 
 //                $tpl->compile('content');

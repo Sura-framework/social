@@ -41,7 +41,7 @@ class Groups_forum extends Module{
             if(stripos($row['ulist'], "|{$user_id}|") !== false AND $row['discussion'] AND isset($title) AND !empty($title) AND isset($text) AND !empty($text) OR isset($attach_files) AND !empty($attach_files)){
 
                 //Вставляем тему в БД
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
                 $db->query("INSERT INTO `communities_forum` SET public_id = '{$public_id}', fuser_id = '{$user_id}', title = '{$title}', text = '{$text}', attach = '{$attach_files}', fdate = '{$server_time}', lastuser_id = '{$user_id}', lastdate = '{$server_time}', msg_num = 1");
                 $dbid = $db->insert_id();
 
@@ -147,7 +147,7 @@ class Groups_forum extends Module{
                         $msg = str_replace($check2['user_name'], "<a href=\"/u{$row_owner2['muser_id']}\" onClick=\"Page.Go(this.href); return false\">{$check2['user_name']}</a>", $msg);
 
                         //Всталвяем саму запись в БД
-                        $server_time = \Sura\Libs\Date::time();
+                        $server_time = \Sura\Time\Date::time();
                         $db->query("INSERT INTO `communities_forum_msg` SET fid = '{$fid}', muser_id = '{$user_id}', msg = '{$msg}', mdate = '{$server_time}'");
                         $dbid = $db->insert_id();
 
@@ -177,7 +177,7 @@ class Groups_forum extends Module{
                 } else {
 
                     //Всталвяем саму запись в БД
-                    $server_time = \Sura\Libs\Date::time();
+                    $server_time = \Sura\Time\Date::time();
                     $db->query("INSERT INTO `communities_forum_msg` SET fid = '{$fid}', muser_id = '{$user_id}', msg = '{$msg}', mdate = '{$server_time}'");
                     $dbid = $db->insert_id();
 
@@ -188,7 +188,7 @@ class Groups_forum extends Module{
                 $cache->remove("{$row['public_id']}/forum{$row['public_id']}");
 
                 //Обновляем данные в теме
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
                 $db->query("UPDATE `communities_forum` SET msg_num = msg_num+1, lastdate = '{$server_time}', lastuser_id = '{$user_id}' WHERE fid = '{$fid}'");
 
                 $tpl->load_template('forum/msg.tpl');
@@ -274,7 +274,7 @@ class Groups_forum extends Module{
                     $tpl->set('{text}', stripslashes($row_comm['msg']));
                     $tpl->set('{user-id}', $row_comm['muser_id']);
                     $tpl->set('{mid}', $row_comm['mid']);
-                    $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['mdate']));
+                    $date = \Sura\Time\Date::megaDate(strtotime($row_comm['mdate']));
                     $tpl->set('{date}', $date);
                     $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                     $tpl->set('{online}', $online);
@@ -813,7 +813,7 @@ class Groups_forum extends Module{
                         $tpl->set('{mid}', $row_comm['mid']);
                         $tpl->set('{user-id}', $row_comm['muser_id']);
 
-                        $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['mdate']));
+                        $date = \Sura\Time\Date::megaDate(strtotime($row_comm['mdate']));
                         $tpl->set('{date}', $date);
                         $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                         $tpl->set('{online}', $online);
@@ -949,7 +949,7 @@ class Groups_forum extends Module{
                 $tpl->set('{msg-num}', $row['msg_num']);
                 $online = \App\Libs\Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
                 $tpl->set('{online}', $online);
-                $date = \Sura\Libs\Date::megaDate(strtotime($row['fdate']));
+                $date = \Sura\Time\Date::megaDate(strtotime($row['fdate']));
                 $tpl->set('{date}', $date);
                 if($row['user_photo'])
                     $tpl->set('{ava}', "/uploads/users/{$row['fuser_id']}/50_{$row['user_photo']}");
@@ -1159,7 +1159,7 @@ class Groups_forum extends Module{
                         else if($row['fixed']) $tpl->set('{status}', 'тема закреплена');
                         else $tpl->set('{status}', '');
 
-                        $date = \Sura\Libs\Date::megaDate(strtotime($row['lastdate']));
+                        $date = \Sura\Time\Date::megaDate(strtotime($row['lastdate']));
                         $tpl->set('{date}', $date);
 
                         $tpl->compile('content');

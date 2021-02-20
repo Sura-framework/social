@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules;
 
 use Sura\Libs\Gramatic;
@@ -41,11 +43,13 @@ class NotificationsController extends Module{
                 $settings_likes_gifts = 'html_checked';
             else
                 $settings_likes_gifts = '';
-            echo '<div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_posts");><i class="icn icn-gray icn-like"></i><span>Оценки записей</span> <div class="html_checkbox '.$settings_likes_posts.'" id="settings_likes_posts"></div></div>
-<div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_photos");><i class="icn icn-gray icn-like"></i><span>Оценки фотографий</span> <div class="html_checkbox '.$settings_likes_photos.'" id="settings_likes_photos"></div></div>
-<div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_compare");><i class="icn icn-gray icn-like"></i><span>Оценки в дуэлях</span> <div class="html_checkbox '.$settings_likes_compare.'" id="settings_likes_compare"></div></div>
-<div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_gifts");><i class="icn icn-gray icn-gift"></i><span>Новый подарок</span> <div class="html_checkbox '.$settings_likes_gifts.'" id="settings_likes_gifts"></div></div>';
 
+            return _e('<div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_posts");><i class="icn icn-gray icn-like"></i><span>Оценки записей</span> <div class="html_checkbox '.$settings_likes_posts.'" id="settings_likes_posts"></div></div>
+            <div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_photos");><i class="icn icn-gray icn-like"></i><span>Оценки фотографий</span> <div class="html_checkbox '.$settings_likes_photos.'" id="settings_likes_photos"></div></div>
+            <div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_compare");><i class="icn icn-gray icn-like"></i><span>Оценки в дуэлях</span> <div class="html_checkbox '.$settings_likes_compare.'" id="settings_likes_compare"></div></div>
+            <div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_gifts");><i class="icn icn-gray icn-gift"></i><span>Новый подарок</span> <div class="html_checkbox '.$settings_likes_gifts.'" id="settings_likes_gifts"></div></div>');
+        }else{
+            return _e('');
         }
     }
 
@@ -168,7 +172,7 @@ class NotificationsController extends Module{
                             $params['ava'] = $luAva;
                             $params['uid'] = $likeUser;
                             $params['name'] = $rowUser['user_search_pref'];
-                            $date = \Sura\Libs\Date::megaDate(strtotime($row['action_time']), 1, 1);
+                            $date = \Sura\Time\Date::megaDate(strtotime($row['action_time']), 1, 1);
                             $params['date'] = $date;
                             //$last_date = date('d.m.Y', $row['action_time']);
                         }

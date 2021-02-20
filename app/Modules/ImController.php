@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules;
 
 use App\Libs\Antispam;
+use App\Libs\Friends;
 use Sura\Cache\Cache;
 use Sura\Cache\Storages\MemcachedStorage;
 use Sura\Libs\Gramatic;
@@ -12,6 +15,7 @@ use Sura\Libs\Settings;
 use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
+use Sura\Time\Date;
 
 class ImController extends Module{
 
@@ -59,11 +63,11 @@ class ImController extends Module{
                     $user_privacy = xfieldsdataload($row['user_privacy']);
 
                     //ЧС
-                    $CheckBlackList = \App\Libs\Friends::CheckBlackList($for_user_id);
+                    $CheckBlackList = Friends::CheckBlackList($for_user_id);
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if($user_privacy['val_msg'] == 2)
-                        $check_friend = \App\Libs\Friends::CheckFriends($for_user_id);
+                        $check_friend = Friends::CheckFriends($for_user_id);
                     else{
                         $check_friend = false;
                     }
@@ -77,10 +81,10 @@ class ImController extends Module{
 
                         Antispam::LogInsert(4, $user_id, $msg.$attach_files );
 
-                        if(!\App\Libs\Friends::CheckFriends($for_user_id))
+                        if(!Friends::CheckFriends($for_user_id))
                             Antispam::LogInsert(2, $user_id);
 
-                        $server_time = \Sura\Libs\Date::time();
+                        $server_time = Date::time();
 
                         //Отправляем сообщение получателю
                         $db->query("INSERT INTO `messages` SET theme = '...', text = '".$msg."', for_user_id = '".$for_user_id."', from_user_id = '".$user_id."', date = '".$server_time."', pm_read = 'no', folder = 'inbox', history_user_id = '".$user_id."', attach = '".$attach_files."'");
@@ -152,14 +156,14 @@ class ImController extends Module{
 
                                         $size = getimagesize(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}");
 
-                                        $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\" />";
+                                        $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\"  alt=\"photo\"/>";
 
                                         $cnt_attach++;
                                     } elseif(file_exists(__DIR__."/../../public/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}")){
 
                                         $size = getimagesize(__DIR__."/../../public/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}");
 
-                                        $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\" />";
+                                        $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\"  alt=\"photo\"/>";
 
                                         $cnt_attach++;
                                     }
@@ -167,7 +171,7 @@ class ImController extends Module{
                                     //Видео
                                 }
                                 elseif($attach_type[0] == 'video' AND file_exists(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}")){
-                                    $attach_result .= "<div><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" align=\"left\" /></a></div>";
+                                    $attach_result .= "<div><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\"  alt=\"photo\"/></a></div>";
 
                                 }
                                 //Музыка
@@ -187,8 +191,8 @@ class ImController extends Module{
                                         $qauido = "<div class=\"audioPage audioElem search search_item\"
 									id=\"audio_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
 									onclick=\"playNewAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}', event);\"><div
-									class=\"area\"><table cellspacing=\"0\" cellpadding=\"0\"
-									width=\"100%\"><tbody><tr><td><div class=\"audioPlayBut new_play_btn\"><div
+									class=\"area\"><table 
+									><tbody><tr><td><div class=\"audioPlayBut new_play_btn\"><div
 									class=\"bl\"><div class=\"figure\"></div></div></div><input type=\"hidden\"
 									value=\"{$row_audio['url']},{$row_audio['duration']},page\"
 									id=\"audio_url_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"></td><td
@@ -199,8 +203,7 @@ class ImController extends Module{
 									class=\"audioElTime\"
 									id=\"audio_time_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\">{$stime}</div>{$q_s}</td
 									></tr></tbody></table><div id=\"player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
-									class=\"audioPlayer player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\" border=\"0\"
-									cellpadding=\"0\"><table cellspacing=\"0\" cellpadding=\"0\" width=\"100%\"><tbody><tr><td
+									class=\"audioPlayer player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\" ><table ><tbody><tr><td
 									style=\"width: 100%;\"><div class=\"progressBar fl_l\" style=\"width: 100%;\"
 									onclick=\"cancelEvent(event);\" onmousedown=\"audio_player.progressDown(event, this);\"
 									id=\"no_play\" onmousemove=\"audio_player.playerPrMove(event, this)\"
@@ -216,7 +219,7 @@ class ImController extends Module{
 									class=\"audioSlider\"></div></div></div> </td></tr></tbody></table></div></div></div>";
                                         $attach_result .= $qauido;
                                     }
-                                    $resLinkTitle = '';
+//                                    $resLinkTitle = '';
 
                                     //Смайлик
                                 }
@@ -228,7 +231,7 @@ class ImController extends Module{
 
                                     $doc_id = intval($attach_type[1]);
 
-                                    $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false, "wall/doc{$doc_id}");
+                                    $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false);
 
                                     if($row_doc){
 
@@ -329,11 +332,12 @@ class ImController extends Module{
 
             $storage = new MemcachedStorage('localhost');
             $cache = new Cache($storage, 'users');
+
             try {
                 $cache->save("{$for_user_id}/typograf{$user_id}", "");
             } catch (\Throwable $e) {
-                //TODO update
             }
+
 
             $config = Settings::load();
 
@@ -351,11 +355,12 @@ class ImController extends Module{
                     $db->query("UPDATE `im` SET msg_num = msg_num-{$newMSGnum} WHERE iuser_id = '".$user_id."' AND im_user_id = '".$for_user_id."'");
                     $db->query("UPDATE `users` SET user_pm_num = user_pm_num-{$newMSGnum} WHERE user_id = '".$user_id."'");
                     //Читисм кеш обновлений
+
                     try {
                         $cache->remove("{$for_user_id}/im");
                     } catch (\Throwable $e) {
-                        //TODO update
                     }
+
                 }
                 $limit_msg = 5;
             } else {
@@ -375,17 +380,20 @@ class ImController extends Module{
                 else
                     $limit = 0;
             }
+            if (!isset($sql_sort)){
+                $sql_sort = '';//FIXME
+            }
 
             $sql_ = $db->super_query("SELECT tb1.id, text, date, pm_read, folder, history_user_id, from_user_id, attach, tell_uid, tell_date, public, tell_comm, tb2.user_name, user_photo FROM `messages` tb1, `users` tb2 WHERE tb1.for_user_id = '".$user_id."' AND tb1.from_user_id = '".$for_user_id."' AND tb1.history_user_id = tb2.user_id {$sql_sort} ORDER by `date` DESC LIMIT ".$limit.", ".$limit_msg, true);
-            if(!$first_id){
+//            if(!$first_id){
 
-                if($count['all_msg_num'] > $limit_msg){
-                    $stylesMOB = 'width:520px';
+//                if($count['all_msg_num'] > $limit_msg){
+//                    $stylesMOB = 'width:520px';
 //                    $tpl->result['content'] .= '<div class="cursor_pointer" onClick="im.page('.$for_user_id.'); return false" id="wall_all_records" style="'.$stylesMOB.'"><div class="public_wall_all_comm" id="load_wall_all_records" style="margin-left:0px">Показать предыдущие сообщения</div></div><div id="prevMsg"></div>';
-                }
+//                }
 
                 // $tpl->result['content'] .= '<div id="im_scroll">';
-            }
+//            }
 
             if($sql_){
                 foreach($sql_ as $key => $row){
@@ -393,11 +401,11 @@ class ImController extends Module{
                     $sql_[$key]['folder'] = $row['folder'];
                     $sql_[$key]['user-id'] = $row['history_user_id'];
                     $sql_[$key]['msg-id'] = $row['id'];
-                    $server_time = \Sura\Libs\Date::time();
-                    if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time)) {
-                        $sql_[$key]['date'] = Langs::lang_date('H:i:s', $row['date']);
+                    $server_time = Date::time();
+                    if(date('Y-m-d', (int)$row['date']) == date('Y-m-d', $server_time)) {
+                        $sql_[$key]['date'] = Langs::lang_date('H:i:s', (int)$row['date']);
                     }else{
-                        $sql_[$key]['date'] = Langs::lang_date('d.m.y', $row['date']);
+                        $sql_[$key]['date'] = Langs::lang_date('d.m.y', (int)$row['date']);
                     }
                     if($row['user_photo']){
                         $sql_[$key]['ava'] = '/uploads/users/'.$row['history_user_id'].'/50_'.$row['user_photo'];
@@ -427,7 +435,7 @@ class ImController extends Module{
 
                                 $size = getimagesize(__DIR__."/../../public/uploads/groups/{$row['tell_uid']}/photos/c_{$attach_type[1]}");
 
-                                $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$row['tell_uid']}/photos/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row['id']}', '{$row['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\" />";
+                                $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$row['tell_uid']}/photos/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row['id']}', '{$row['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\"  alt=\"photo\"/>";
 
                                 $cnt_attach++;
 
@@ -444,7 +452,7 @@ class ImController extends Module{
 
                                     $size = getimagesize(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}");
 
-                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\" />";
+                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\"  alt=\"photo\"/>";
 
                                     $cnt_attach++;
 
@@ -452,7 +460,7 @@ class ImController extends Module{
 
                                     $size = getimagesize(__DIR__."/../../public/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}");
 
-                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\" />";
+                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\"  alt=\"photo\"/>";
 
                                     $cnt_attach++;
                                 }
@@ -465,7 +473,7 @@ class ImController extends Module{
 
                                 $size = getimagesize(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}");
 
-                                $attach_result .= "<div><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" {$size[3]} align=\"left\" /></a></div>";
+                                $attach_result .= "<div><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" {$size[3]}  alt=\"photo\"/></a></div>";
 
                                 $resLinkTitle = '';
 
@@ -489,8 +497,7 @@ class ImController extends Module{
                                     $qauido = "<div class=\"audioPage audioElem search search_item\"
 									id=\"audio_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
 									onclick=\"playNewAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}', event);\"><div
-									class=\"area\"><table cellspacing=\"0\" cellpadding=\"0\"
-									width=\"100%\"><tbody><tr><td><div class=\"audioPlayBut new_play_btn\"><div
+									class=\"area\"><table><tbody><tr><td><div class=\"audioPlayBut new_play_btn\"><div
 									class=\"bl\"><div class=\"figure\"></div></div></div><input type=\"hidden\"
 									value=\"{$row_audio['url']},{$row_audio['duration']},page\"
 									id=\"audio_url_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"></td><td
@@ -501,8 +508,7 @@ class ImController extends Module{
 									class=\"audioElTime\"
 									id=\"audio_time_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\">{$stime}</div>{$q_s}</td
 									></tr></tbody></table><div id=\"player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
-									class=\"audioPlayer player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\" border=\"0\"
-									cellpadding=\"0\"><table cellspacing=\"0\" cellpadding=\"0\" width=\"100%\"><tbody><tr><td
+									class=\"audioPlayer player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\" ><table ><tbody><tr><td
 									style=\"width: 100%;\"><div class=\"progressBar fl_l\" style=\"width: 100%;\"
 									onclick=\"cancelEvent(event);\" onmousedown=\"audio_player.progressDown(event, this);\"
 									id=\"no_play\" onmousemove=\"audio_player.playerPrMove(event, this)\"
@@ -529,7 +535,7 @@ class ImController extends Module{
                                 //Если ссылка
                             }
                             elseif($attach_type[0] == 'link' AND preg_match('/http:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1 AND stripos(str_replace('http://www.', 'http://', $attach_type[1]), $config['home_url']) === false){
-                                $count_num = count($attach_type);
+//                                $count_num = count($attach_type);
                                 $domain_url_name = explode('/', $attach_type[1]);
                                 $rdomain_url_name = str_replace('http://', '', $domain_url_name[2]);
 
@@ -549,7 +555,7 @@ class ImController extends Module{
 
                                 if($no_img AND $attach_type[2]){
 
-                                    $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0px"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div><div class="clear"></div><div class="wall_show_block_link" style="border:0px"><a href="/away.php?url='.$attach_type[1].'" target="_blank"><div style="width:108px;height:80px;float:left;text-align:center"><img src="'.$attach_type[4].'" /></div></a><div class="attatch_link_title"><a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$str_title.'</a></div><div style="max-height:50px;overflow:hidden">'.$attach_type[3].'</div></div></div>';
+                                    $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0px"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div><div class="clear"></div><div class="wall_show_block_link" style="border:0px"><a href="/away.php?url='.$attach_type[1].'" target="_blank"><div style="width:108px;height:80px;float:left;text-align:center"><img src="'.$attach_type[4].'"  alt=\"photo\"/></div></a><div class="attatch_link_title"><a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$str_title.'</a></div><div style="max-height:50px;overflow:hidden">'.$attach_type[3].'</div></div></div>';
 
                                     $resLinkTitle = $attach_type[2];
                                     $resLinkUrl = $attach_type[1];
@@ -568,7 +574,7 @@ class ImController extends Module{
 
                                 $doc_id = intval($attach_type[1]);
 
-                                $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false, "wall/doc{$doc_id}");
+                                $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false);
 
                                 if($row_doc){
 
@@ -583,11 +589,11 @@ class ImController extends Module{
 
                                 $vote_id = intval($attach_type[1]);
 
-                                $row_vote = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false, "votes/vote_{$vote_id}");
+                                $row_vote = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false);
 
                                 if($vote_id){
 
-                                    $checkMyVote = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$vote_id}'", false, "votes/check{$user_id}_{$vote_id}");
+                                    $checkMyVote = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$vote_id}'", false);
 
                                     $row_vote['title'] = stripslashes($row_vote['title']);
 
@@ -597,7 +603,7 @@ class ImController extends Module{
                                     $arr_answe_list = explode('|', stripslashes($row_vote['answers']));
                                     $max = $row_vote['answer_num'];
 
-                                    $sql_answer = $db->super_query("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$vote_id}' GROUP BY answer", 1, "votes/vote_answer_cnt_{$vote_id}");
+                                    $sql_answer = $db->super_query("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$vote_id}' GROUP BY answer", true);
                                     $answer = array();
                                     foreach($sql_answer as $row_answer){
 
@@ -643,11 +649,14 @@ class ImController extends Module{
                                 }
 
                             }
-                            else
+                            else{
                                 $attach_result .= '';
+                                $resLinkTitle = '';
+                                $resLinkUrl = '';
+                            }
                         }
 
-                        if($resLinkTitle AND $row['text'] == $resLinkUrl OR !$row['text'])
+                        if(!empty($resLinkTitle) AND $row['text'] == $resLinkUrl OR !$row['text'])
                             $row['text'] = $resLinkTitle.'<div class="clear"></div>'.$attach_result;
                         else if($attach_result)
                             $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']).$attach_result;
@@ -663,7 +672,7 @@ class ImController extends Module{
                     //Если это запись с "рассказать друзьям"
                     if($row['tell_uid']){
                         if($row['public'])
-                            $rowUserTell = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$row['tell_uid']}'", false, "wall/group{$row['tell_uid']}");
+                            $rowUserTell = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$row['tell_uid']}'", false);
                         else
                             $rowUserTell = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$row['tell_uid']}'");
 
@@ -708,10 +717,11 @@ class ImController extends Module{
 //                    $tpl->set('{text}', stripslashes($row['text']));
 //                    $tpl->compile('content');
                 }
-            }else{
+            }
+//            else{
                 //$tpl->result['content'] .= '<div class="info_center"><div style="padding-top:210px">Здесь будет выводиться история переписки.</div></div>';
 
-            }
+//            }
             $params['im'] = $sql_;
             if(!$first_id){
                 $params['first_id'] = false;
@@ -876,6 +886,10 @@ class ImController extends Module{
      */
     public function update(): int
     {
+        if (!isset($params))
+        {
+            $params = array();
+        }
 //        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
@@ -883,6 +897,7 @@ class ImController extends Module{
         $logged = $this->logged();
 
         Tools::NoAjaxRedirect();
+
 
         if($logged){
             $user_id = $user_info['user_id'];
@@ -918,24 +933,33 @@ class ImController extends Module{
             $cache->save("{$user_id}/im", $last_id);
 
             if($sql_){
-                $tpl->load_template('im/msg.tpl');
+//                $tpl->load_template('im/msg.tpl');
                 $config = Settings::load();
                 foreach($sql_ as $row){
-                    $tpl->set('{name}', $row['user_name']);
-                    $tpl->set('{folder}', $row['folder']);
-                    $tpl->set('{user-id}', $row['history_user_id']);
-                    $tpl->set('{msg-id}', $row['id']);
-                    $server_time = \Sura\Libs\Date::time();
-                    if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time)) $tpl->set('{date}', Langs::lang_date('H:i:s', $row['date']));
-                    else $tpl->set('{date}', Langs::lang_date('d.m.y', $row['date']));
-                    if($row['user_photo']) $tpl->set('{ava}', '/uploads/users/'.$row['history_user_id'].'/50_'.$row['user_photo']);
-                    else $tpl->set('{ava}', '/images/no_ava_50.png');
+//                    $tpl->set('{name}', $row['user_name']);
+//                    $tpl->set('{folder}', $row['folder']);
+//                    $tpl->set('{user-id}', $row['history_user_id']);
+//                    $tpl->set('{msg-id}', $row['id']);
+                    $server_time = Date::time();
+                    if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time)) {
+//                        $tpl->set('{date}', Langs::lang_date('H:i:s', $row['date']));
+                    }
+                    else {
+//                        $tpl->set('{date}', Langs::lang_date('d.m.y', $row['date']));
+                    }
+                    if($row['user_photo'])
+                    {
+//                        $tpl->set('{ava}', '/uploads/users/'.$row['history_user_id'].'/50_'.$row['user_photo']);
+                    }
+                    else {
+//                        $tpl->set('{ava}', '/images/no_ava_50.png');
+                    }
                     if($row['pm_read'] == 'no'){
-                        $tpl->set('{new}', 'im_class_new');
-                        $tpl->set('{read-js-func}', 'onMouseOver="im.read(\''.$row['id'].'\', '.$row['history_user_id'].', '.$user_id.')"');
+//                        $tpl->set('{new}', 'im_class_new');
+//                        $tpl->set('{read-js-func}', 'onMouseOver="im.read(\''.$row['id'].'\', '.$row['history_user_id'].', '.$user_id.')"');
                     } else {
-                        $tpl->set('{new}', '');
-                        $tpl->set('{read-js-func}', '');
+//                        $tpl->set('{new}', '');
+//                        $tpl->set('{read-js-func}', '');
                     }
 
                     //Прикрипленные файлы
@@ -943,7 +967,7 @@ class ImController extends Module{
                         $attach_arr = explode('||', $row['attach']);
                         $cnt_attach = 1;
                         $cnt_attach_link = 1;
-                        $jid = 0;
+//                        $jid = 0;
                         $attach_result = '';
 
 
@@ -955,7 +979,7 @@ class ImController extends Module{
 
                                 $size = getimagesize(__DIR__."/../../public/uploads/groups/{$row['tell_uid']}/photos/c_{$attach_type[1]}");
 
-                                $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$row['tell_uid']}/photos/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row['id']}', '{$row['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\" />";
+                                $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$row['tell_uid']}/photos/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row['id']}', '{$row['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\"  alt=\"photo\"/>";
 
                                 $cnt_attach++;
 
@@ -971,7 +995,7 @@ class ImController extends Module{
 
                                     $size = getimagesize(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}");
 
-                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\" />";
+                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\"  alt=\"photo\"/>";
 
                                     $cnt_attach++;
 
@@ -979,7 +1003,7 @@ class ImController extends Module{
 
                                     $size = getimagesize(__DIR__."/../../public/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}");
 
-                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\" />";
+                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\"  alt=\"photo\" />";
 
                                     $cnt_attach++;
                                 }
@@ -991,7 +1015,7 @@ class ImController extends Module{
 
                                 $size = getimagesize(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}");
 
-                                $attach_result .= "<div><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" {$size[3]} align=\"left\" /></a></div>";
+                                $attach_result .= "<div><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" {$size[3]}  alt=\"photo\"/></a></div>";
 
                                 $resLinkTitle = '';
 
@@ -1014,8 +1038,7 @@ class ImController extends Module{
                                     $qauido = "<div class=\"audioPage audioElem search search_item\"
 									id=\"audio_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
 									onclick=\"playNewAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}', event);\"><div
-									class=\"area\"><table cellspacing=\"0\" cellpadding=\"0\"
-									width=\"100%\"><tbody><tr><td><div class=\"audioPlayBut new_play_btn\"><div
+									class=\"area\"><table ><tbody><tr><td><div class=\"audioPlayBut new_play_btn\"><div
 									class=\"bl\"><div class=\"figure\"></div></div></div><input type=\"hidden\"
 									value=\"{$row_audio['url']},{$row_audio['duration']},page\"
 									id=\"audio_url_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"></td><td
@@ -1026,8 +1049,7 @@ class ImController extends Module{
 									class=\"audioElTime\"
 									id=\"audio_time_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\">{$stime}</div>{$q_s}</td
 									></tr></tbody></table><div id=\"player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
-									class=\"audioPlayer player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\" border=\"0\"
-									cellpadding=\"0\"><table cellspacing=\"0\" cellpadding=\"0\" width=\"100%\"><tbody><tr><td
+									class=\"audioPlayer player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\" ><table ><tbody><tr><td
 									style=\"width: 100%;\"><div class=\"progressBar fl_l\" style=\"width: 100%;\"
 									onclick=\"cancelEvent(event);\" onmousedown=\"audio_player.progressDown(event, this);\"
 									id=\"no_play\" onmousemove=\"audio_player.playerPrMove(event, this)\"
@@ -1052,7 +1074,7 @@ class ImController extends Module{
                                 $resLinkTitle = '';
                                 //Если ссылка
                             } elseif($attach_type[0] == 'link' AND preg_match('/http:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1 AND stripos(str_replace('http://www.', 'http://', $attach_type[1]), $config['home_url']) === false){
-                                $count_num = count($attach_type);
+//                                $count_num = count($attach_type);
                                 $domain_url_name = explode('/', $attach_type[1]);
                                 $rdomain_url_name = str_replace('http://', '', $domain_url_name[2]);
 
@@ -1072,7 +1094,7 @@ class ImController extends Module{
 
                                 if($no_img AND $attach_type[2]){
 
-                                    $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0px"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div><div class="clear"></div><div class="wall_show_block_link" style="border:0px"><a href="/away.php?url='.$attach_type[1].'" target="_blank"><div style="width:108px;height:80px;float:left;text-align:center"><img src="'.$attach_type[4].'" /></div></a><div class="attatch_link_title"><a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$str_title.'</a></div><div style="max-height:50px;overflow:hidden">'.$attach_type[3].'</div></div></div>';
+                                    $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0px"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div><div class="clear"></div><div class="wall_show_block_link" style="border:0px"><a href="/away.php?url='.$attach_type[1].'" target="_blank"><div style="width:108px;height:80px;float:left;text-align:center"><img src="'.$attach_type[4].'"  alt=\"photo\"/></div></a><div class="attatch_link_title"><a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$str_title.'</a></div><div style="max-height:50px;overflow:hidden">'.$attach_type[3].'</div></div></div>';
 
                                     $resLinkTitle = $attach_type[2];
                                     $resLinkUrl = $attach_type[1];
@@ -1090,7 +1112,7 @@ class ImController extends Module{
 
                                 $doc_id = intval($attach_type[1]);
 
-                                $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false, "wall/doc{$doc_id}");
+                                $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false);
 
                                 if($row_doc){
 
@@ -1104,11 +1126,11 @@ class ImController extends Module{
 
                                 $vote_id = intval($attach_type[1]);
 
-                                $row_vote = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false, "votes/vote_{$vote_id}");
+                                $row_vote = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false);
 
                                 if($vote_id){
 
-                                    $checkMyVote = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$vote_id}'", false, "votes/check{$user_id}_{$vote_id}");
+                                    $checkMyVote = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$vote_id}'", false);
 
                                     $row_vote['title'] = stripslashes($row_vote['title']);
 
@@ -1118,7 +1140,7 @@ class ImController extends Module{
                                     $arr_answe_list = explode('|', stripslashes($row_vote['answers']));
                                     $max = $row_vote['answer_num'];
 
-                                    $sql_answer = $db->super_query("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$vote_id}' GROUP BY answer", 1, "votes/vote_answer_cnt_{$vote_id}");
+                                    $sql_answer = $db->super_query("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$vote_id}' GROUP BY answer", true);
                                     $answer = array();
                                     foreach($sql_answer as $row_answer){
 
@@ -1183,7 +1205,7 @@ class ImController extends Module{
                     //Если это запись с "рассказать друзьям"
                     if($row['tell_uid']){
                         if($row['public'])
-                            $rowUserTell = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$row['tell_uid']}'", false, "wall/group{$row['tell_uid']}");
+                            $rowUserTell = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$row['tell_uid']}'", false);
                         else
                             $rowUserTell = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$row['tell_uid']}'");
 
@@ -1219,15 +1241,15 @@ class ImController extends Module{
                         $row['text'] = <<<HTML
                                 {$row['tell_comm']}
                                 <div class="wall_repost_border">
-                                <div class="wall_tell_info"><div class="wall_tell_ava"><a href="/{$tell_link}{$row['tell_uid']}" onClick="Page.Go(this.href); return false"><img src="{$avaTell}" width="30" /></a></div><div class="wall_tell_name"><a href="/{$tell_link}{$row['tell_uid']}" onClick="Page.Go(this.href); return false"><b>{$rowUserTell['user_search_pref']}</b></a></div><div class="wall_tell_date">{$dateTell}</div></div>{$row['text']}
+                                <div class="wall_tell_info"><div class="wall_tell_ava"><a href="/{$tell_link}{$row['tell_uid']}" onClick="Page.Go(this.href); return false"><img src="{$avaTell}" width="30"  alt=\"photo\"/></a></div><div class="wall_tell_name"><a href="/{$tell_link}{$row['tell_uid']}" onClick="Page.Go(this.href); return false"><b>{$rowUserTell['user_search_pref']}</b></a></div><div class="wall_tell_date">{$dateTell}</div></div>{$row['text']}
                                 <div class="clear"></div>
                                 </div>
                                 HTML;
                     }
 
-                    $tpl->set('{text}', stripslashes($row['text']));
+//                    $tpl->set('{text}', stripslashes($row['text']));
 
-                    $tpl->compile('content');
+//                    $tpl->compile('content');
                 }
 
                 return view('info.info', $params);
@@ -1303,7 +1325,7 @@ class ImController extends Module{
             if(!$first_id){
 
                 if($count['all_msg_num'] > $limit_msg){
-                    $stylesMOB = 'width:520px';
+//                    $stylesMOB = 'width:520px';
 //                    $tpl->result['content'] .= '<div class="cursor_pointer" onClick="im.page('.$for_user_id.'); return false" id="wall_all_records" style="'.$stylesMOB.'"><div class="public_wall_all_comm" id="load_wall_all_records" style="margin-left:0px">Показать предыдущие сообщения</div></div><div id="prevMsg"></div>';
                 }
 
@@ -1316,11 +1338,12 @@ class ImController extends Module{
                     $sql_[$key]['folder'] = $row['folder'];
                     $sql_[$key]['user-id'] = $row['history_user_id'];
                     $sql_[$key]['msg-id'] = $row['id'];
-                    $server_time = \Sura\Libs\Date::time();
-                    if(date('Y-m-d', $row['date']) == date('Y-m-d', $server_time)) {
-                        $sql_[$key]['date'] = Langs::lang_date('H:i:s', $row['date']);
+                    $server_time = Date::time();
+
+                    if(date('Y-m-d', (int)$row['date']) == date('Y-m-d', $server_time)) {
+                        $sql_[$key]['date'] = Langs::lang_date('H:i:s', (int)$row['date']);
                     }else{
-                        $sql_[$key]['date'] = Langs::lang_date('d.m.y', $row['date']);
+                        $sql_[$key]['date'] = Langs::lang_date('d.m.y', (int)$row['date']);
                     }
                     if($row['user_photo']){
                         $sql_[$key]['ava'] = '/uploads/users/'.$row['history_user_id'].'/50_'.$row['user_photo'];
@@ -1350,7 +1373,7 @@ class ImController extends Module{
 
                                 $size = getimagesize(__DIR__."/../../public/uploads/groups/{$row['tell_uid']}/photos/c_{$attach_type[1]}");
 
-                                $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$row['tell_uid']}/photos/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row['id']}', '{$row['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\" />";
+                                $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/groups/{$row['tell_uid']}/photos/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row['id']}', '{$row['tell_uid']}', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\"  alt=\"photo\"/>";
 
                                 $cnt_attach++;
 
@@ -1367,7 +1390,7 @@ class ImController extends Module{
 
                                     $size = getimagesize(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}");
 
-                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\" />";
+                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\"  alt=\"photo\"/>";
 
                                     $cnt_attach++;
 
@@ -1375,7 +1398,7 @@ class ImController extends Module{
 
                                     $size = getimagesize(__DIR__."/../../public/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}");
 
-                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" align=\"left\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\" />";
+                                    $attach_result .= "<img id=\"photo_wall_{$row['id']}_{$cnt_attach}\" src=\"/uploads/users/{$attauthor_user_id}/albums/{$attach_type[2]}/c_{$attach_type[1]}\" {$size[3]} style=\"margin-top:3px;margin-right:3px\" onClick=\"groups.wall_photo_view('{$row['id']}', '', '{$attach_type[1]}', '{$cnt_attach}')\" class=\"cursor_pointer page_num{$row['id']}\"  alt=\"photo\"/>";
 
                                     $cnt_attach++;
                                 }
@@ -1388,7 +1411,7 @@ class ImController extends Module{
 
                                 $size = getimagesize(__DIR__."/../../public/uploads/videos/{$attach_type[3]}/{$attach_type[1]}");
 
-                                $attach_result .= "<div><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" {$size[3]} align=\"left\" /></a></div>";
+                                $attach_result .= "<div><a href=\"/video{$attach_type[3]}_{$attach_type[2]}\" onClick=\"videos.show({$attach_type[2]}, this.href, location.href); return false\"><img src=\"/uploads/videos/{$attach_type[3]}/{$attach_type[1]}\" style=\"margin-top:3px;margin-right:3px\" {$size[3]}  alt=\"photo\"/></a></div>";
 
                                 $resLinkTitle = '';
 
@@ -1412,8 +1435,7 @@ class ImController extends Module{
                                     $qauido = "<div class=\"audioPage audioElem search search_item\"
 									id=\"audio_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
 									onclick=\"playNewAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}', event);\"><div
-									class=\"area\"><table cellspacing=\"0\" cellpadding=\"0\"
-									width=\"100%\"><tbody><tr><td><div class=\"audioPlayBut new_play_btn\"><div
+									class=\"area\"><table ><tbody><tr><td><div class=\"audioPlayBut new_play_btn\"><div
 									class=\"bl\"><div class=\"figure\"></div></div></div><input type=\"hidden\"
 									value=\"{$row_audio['url']},{$row_audio['duration']},page\"
 									id=\"audio_url_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"></td><td
@@ -1424,8 +1446,7 @@ class ImController extends Module{
 									class=\"audioElTime\"
 									id=\"audio_time_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\">{$stime}</div>{$q_s}</td
 									></tr></tbody></table><div id=\"player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
-									class=\"audioPlayer player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\" border=\"0\"
-									cellpadding=\"0\"><table cellspacing=\"0\" cellpadding=\"0\" width=\"100%\"><tbody><tr><td
+									class=\"audioPlayer player{$row_audio['id']}_{$row_audio['oid']}_{$plname}\" ><table ><tbody><tr><td
 									style=\"width: 100%;\"><div class=\"progressBar fl_l\" style=\"width: 100%;\"
 									onclick=\"cancelEvent(event);\" onmousedown=\"audio_player.progressDown(event, this);\"
 									id=\"no_play\" onmousemove=\"audio_player.playerPrMove(event, this)\"
@@ -1452,7 +1473,7 @@ class ImController extends Module{
                                 //Если ссылка
                             }
                             elseif($attach_type[0] == 'link' AND preg_match('/http:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1 AND stripos(str_replace('http://www.', 'http://', $attach_type[1]), $config['home_url']) === false){
-                                $count_num = count($attach_type);
+//                                $count_num = count($attach_type);
                                 $domain_url_name = explode('/', $attach_type[1]);
                                 $rdomain_url_name = str_replace('http://', '', $domain_url_name[2]);
 
@@ -1472,7 +1493,7 @@ class ImController extends Module{
 
                                 if($no_img AND $attach_type[2]){
 
-                                    $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0px"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div><div class="clear"></div><div class="wall_show_block_link" style="border:0px"><a href="/away.php?url='.$attach_type[1].'" target="_blank"><div style="width:108px;height:80px;float:left;text-align:center"><img src="'.$attach_type[4].'" /></div></a><div class="attatch_link_title"><a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$str_title.'</a></div><div style="max-height:50px;overflow:hidden">'.$attach_type[3].'</div></div></div>';
+                                    $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0px"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div><div class="clear"></div><div class="wall_show_block_link" style="border:0px"><a href="/away.php?url='.$attach_type[1].'" target="_blank"><div style="width:108px;height:80px;float:left;text-align:center"><img src="'.$attach_type[4].'"  alt=\"photo\"/></div></a><div class="attatch_link_title"><a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$str_title.'</a></div><div style="max-height:50px;overflow:hidden">'.$attach_type[3].'</div></div></div>';
 
                                     $resLinkTitle = $attach_type[2];
                                     $resLinkUrl = $attach_type[1];
@@ -1491,7 +1512,7 @@ class ImController extends Module{
 
                                 $doc_id = intval($attach_type[1]);
 
-                                $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false, "wall/doc{$doc_id}");
+                                $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false);
 
                                 if($row_doc){
 
@@ -1506,11 +1527,11 @@ class ImController extends Module{
 
                                 $vote_id = intval($attach_type[1]);
 
-                                $row_vote = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false, "votes/vote_{$vote_id}");
+                                $row_vote = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false);
 
                                 if($vote_id){
 
-                                    $checkMyVote = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$vote_id}'", false, "votes/check{$user_id}_{$vote_id}");
+                                    $checkMyVote = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$vote_id}'", false);
 
                                     $row_vote['title'] = stripslashes($row_vote['title']);
 
@@ -1520,7 +1541,7 @@ class ImController extends Module{
                                     $arr_answe_list = explode('|', stripslashes($row_vote['answers']));
                                     $max = $row_vote['answer_num'];
 
-                                    $sql_answer = $db->super_query("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$vote_id}' GROUP BY answer", 1, "votes/vote_answer_cnt_{$vote_id}");
+                                    $sql_answer = $db->super_query("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$vote_id}' GROUP BY answer", true);
                                     $answer = array();
                                     foreach($sql_answer as $row_answer){
 
@@ -1586,7 +1607,7 @@ class ImController extends Module{
                     //Если это запись с "рассказать друзьям"
                     if($row['tell_uid']){
                         if($row['public'])
-                            $rowUserTell = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$row['tell_uid']}'", false, "wall/group{$row['tell_uid']}");
+                            $rowUserTell = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$row['tell_uid']}'", false);
                         else
                             $rowUserTell = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$row['tell_uid']}'");
 
@@ -1619,10 +1640,12 @@ class ImController extends Module{
                                 $avaTell = '/images/no_ava_50.png';
                         }
 
+                        $dateTell = '';//FIXME
+
                         $row['text'] = "
                                 {$row['tell_comm']}
                                 <div class=\"wall_repost_border\">
-                                <div class=\"wall_tell_info\"><div class=\"wall_tell_ava\"><a href=\"/{$tell_link}{$row['tell_uid']}\" onClick=\"Page.Go(this.href); return false\"><img src=\"{$avaTell}\" width=\"30\" /></a></div><div class=\"wall_tell_name\"><a href=\"/{$tell_link}{$row['tell_uid']}\" onClick=\"Page.Go(this.href); return false\"><b>{$rowUserTell['user_search_pref']}</b></a></div><div class=\"wall_tell_date\">{$dateTell}</div></div>{$row['text']}
+                                <div class=\"wall_tell_info\"><div class=\"wall_tell_ava\"><a href=\"/{$tell_link}{$row['tell_uid']}\" onClick=\"Page.Go(this.href); return false\"><img src=\"{$avaTell}\" width=\"30\"  alt=\"photo\" /></a></div><div class=\"wall_tell_name\"><a href=\"/{$tell_link}{$row['tell_uid']}\" onClick=\"Page.Go(this.href); return false\"><b>{$rowUserTell['user_search_pref']}</b></a></div><div class=\"wall_tell_date\">{$dateTell}</div></div>{$row['text']}
                                 <div class=\"clear\"></div>
                                 </div>
                                 ";
@@ -1631,10 +1654,11 @@ class ImController extends Module{
 //                    $tpl->set('{text}', stripslashes($row['text']));
 //                    $tpl->compile('content');
                 }
-            }else{
+            }
+//            else{
 //                    $tpl->result['content'] .= '<div class="info_center"><div style="padding-top:210px">Здесь будет выводиться история переписки.</div></div>';
 
-            }
+//            }
             $params['im'] = $sql_;
             if(!$first_id){
                 $params['first_id'] = false;
@@ -1663,6 +1687,7 @@ class ImController extends Module{
             }
             return view('im.history', $params);
         }
+        return 1;
     }
 
     /**
@@ -1810,7 +1835,7 @@ class ImController extends Module{
             $params['review'] = false;
 //
             $params['title'] = 'Чаты';
-            $params['info'] = $lang['not_logged'];
+//            $params['info'] = 'not_logged';
             return view('im.im', $params);
         } else {
             $params['title'] = $lang['no_infooo'];

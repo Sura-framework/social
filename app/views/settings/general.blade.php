@@ -77,7 +77,7 @@
                     <div class="allbar_title">@_e('time_title')</div>
                     <div class="err_yellow no_display" id="ok_timez" style="font-weight:normal;">@_e('ok_timez')</div>
                     <div class="texta">Текущее время</div>
-                    <div style="color:#555;margin-top:13px;margin-bottom:10px">{{ $date_today }}</div>
+{{--                    <div style="color:#555;margin-top:13px;margin-bottom:10px">{{ $date_today }}</div>--}}
                     <div class="texta">@_e('time_zona')</div>
                     <label for="timezona"></label>
                     <select id="timezona" class="inpst" style="width:200px">

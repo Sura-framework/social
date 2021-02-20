@@ -2,12 +2,15 @@
 declare(strict_types=1);
 namespace App\Modules;
 
+use App\Libs\Profile;
+use App\Models\Menu;
 use Exception;
+use RuntimeException;
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
-use Sura\Libs\Settings;
 use Sura\Libs\Status;
-use Sura\Libs\Tools;
 
 class BalanceController extends Module{
 
@@ -35,7 +38,7 @@ class BalanceController extends Module{
                 if($row['activate'] == 0 AND $row['user_id'] == 0){
                     $db->super_query("UPDATE `users` SET user_balance=user_balance+'{$row['fbm']}', balance_rub=balance_rub+'{$row['rub']}', user_rating=user_rating+'{$row['rating']}' WHERE user_id='{$user_id}'");
                     $db->super_query("UPDATE `codes` SET activate = 1, user_id ='{$user_id}' WHERE code='{$code}'");
-                    $status = Status::TTT;
+                    $status = Status::OK;
                 }else{
                     $status = Status::NOT_FOUND;
                 }
@@ -68,7 +71,7 @@ class BalanceController extends Module{
             $params['uid'] = $user_id;
             $params['site'] = 'https://'.$_SERVER['HTTP_HOST'].'/u';
 
-            $params['menu'] = \App\Models\Menu::settings();
+            $params['menu'] = Menu::settings();
 
             return view('balance.invite', $params);
         }
@@ -127,9 +130,9 @@ class BalanceController extends Module{
                     //Возраст юзера
                     $user_birthday = explode('-', $row['user_birthday']);
 //                    $tpl->set('{age}', );
-                    $row['age'] = \App\Libs\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+                    $row['age'] = Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
 
-                    $online = \App\Libs\Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
+                    $online = Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
 //                    $tpl->set('{online}', );
                     $row['online'] = $online;
 
@@ -139,7 +142,7 @@ class BalanceController extends Module{
             } else{
                 $params['invited'] = false;
             }
-            $params['menu'] = \App\Models\Menu::settings();
+            $params['menu'] = Menu::settings();
 
             return view('balance.invited', $params);
         }
@@ -148,133 +151,10 @@ class BalanceController extends Module{
     }
 
     /**
-     * @return bool
-     * @deprecated
-     */
-    public function payment(){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
-        $user_info = $this->user_info();
-        $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
-
-        if($logged){
-            $user_id = $user_info['user_id'];
-            $params['title'] = $lang['balance'].' | Sura';
-//            $mobile_speedbar = $lang['balance'];
-
-
-            $owner = $db->super_query("SELECT balance_rub FROM `users` WHERE user_id = '{$user_id}'");
-
-            $tpl->load_template('balance/payment.tpl');
-
-            if($user_info['user_photo']) $tpl->set('{ava}', "/uploads/users/{$user_info['user_id']}/50_{$user_info['user_photo']}");
-            else $tpl->set('{ava}', "/images/no_ava_50.png");
-
-            $tpl->set('{rub}', $owner['balance_rub']);
-            $tpl->set('{text-rub}', Gramatic::declOfNum($owner['balance_rub'], array('рубль', 'рубля', 'рублей')));
-            $tpl->set('{user-id}', $user_info['user_id']);
-
-            $config = Settings::load();
-
-            $tpl->set('{sms_number}', $config['sms_number']);
-
-            $tpl->compile('content');
-
-
-
-            $params['tpl'] = $tpl;
-//            Page::generate();
-            return true;
-        }
-    }
-
-    /**
-     * @return bool
-     * @deprecated
-     */
-    public function payment_2(){
-        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
-        $user_info = $this->user_info();
-        $logged = $this->logged();
-
-        Tools::NoAjaxRedirect();
-
-        if($logged){
-            $user_id = $user_info['user_id'];
-            $params['title'] = $lang['balance'].' | Sura';
-//            $mobile_speedbar = $lang['balance'];
-
-            $config = Settings::load();
-
-            $owner = $db->super_query("SELECT user_balance, balance_rub FROM `users` WHERE user_id = '{$user_id}'");
-
-            $tpl->load_template('balance/payment_2.tpl');
-
-            if($user_info['user_photo']) $tpl->set('{ava}', "/uploads/users/{$user_info['user_id']}/50_{$user_info['user_photo']}");
-            else $tpl->set('{ava}', "/images/no_ava_50.png");
-
-            $tpl->set('{balance}', $owner['user_balance']);
-            $tpl->set('{rub}', $owner['balance_rub']);
-            $tpl->set('{cost}', $config['cost_balance']);
-
-            $tpl->compile('content');
-
-
-
-            $params['tpl'] = $tpl;
-//            Page::generate();
-            return true;
-        }
-    }
-
-    /**
-     * @param $params
-     * @deprecated
-     */
-    public function ok_payment(){
-//        $tpl = $params['tpl'];
-        $lang = $this->get_langs();
-        $db = $this->db();
-        $user_info = $this->user_info();
-        $logged = $this->logged();
-
-        $request = (Request::getRequest()->getGlobal());
-
-        if($logged){
-            $user_id = $user_info['user_id'];
-            $params['title'] = $lang['balance'].' | Sura';
-//            $mobile_speedbar = $lang['balance'];
-
-            $num = (int)$request['num'];
-            if($num <= 0) $num = 0;
-
-            $config = Settings::load();
-
-            $resCost = $num * $config['cost_balance'];
-
-            //Выводим тек. баланс юзера (руб.)
-            $owner = $db->super_query("SELECT balance_rub FROM `users` WHERE user_id = '{$user_id}'");
-
-            if($owner['balance_rub'] >= $resCost){
-
-                $db->query("UPDATE `users` SET user_balance = user_balance + '{$num}', balance_rub = balance_rub - '{$resCost}' WHERE user_id = '{$user_id}'");
-
-            } else
-                echo '1';
-
-            exit();
-        }
-    }
-
-    /**
      * Вывод текущего счета
      *
      * @return int
+     * @throws \Throwable
      */
     public function index(): int
     {
@@ -287,8 +167,8 @@ class BalanceController extends Module{
             $user_id = $id = $user_info['user_id'];
             $params['title'] = $lang['balance'].' | Sura';
 
-            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-            $cache = new \Sura\Cache\Cache($storage, 'users');
+            $storage = new MemcachedStorage('localhost');
+            $cache = new Cache($storage, 'users');
 
             try {
                 $value = $cache->load("{$id}/balance");
@@ -296,7 +176,7 @@ class BalanceController extends Module{
             }catch (Exception $e){
                 $dir = __DIR__.'/../cache/users/'.$id.'/';
                 if(!is_dir($dir) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
-                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $dir));
+                    throw new RuntimeException(sprintf('Directory "%s" was not created', $dir));
                 }
 
                 $row = $owner = $db->super_query("SELECT user_balance, balance_rub FROM `users` WHERE user_id = '{$user_id}'");
@@ -312,7 +192,7 @@ class BalanceController extends Module{
             $params['rub'] = $owner['balance_rub'];
             $params['text_rub'] = Gramatic::declOfNum((int)$owner['balance_rub'], array('рубль', 'рубля', 'рублей'));
 
-            $params['menu'] = \App\Models\Menu::settings();
+            $params['menu'] = Menu::settings();
 
             return view('balance.main', $params);
         }

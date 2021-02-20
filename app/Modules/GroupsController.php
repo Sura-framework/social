@@ -1315,7 +1315,7 @@ class GroupsController extends Module
 
 //                    $tpl->set('{text}', );
                     $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
-                    $date = \Sura\Libs\Date::megaDate($row['add_date']);
+                    $date = \Sura\Time\Date::megaDate($row['add_date']);
 //                    $tpl->set('{date}', $date);
                     $sql_comments[$key]['date'] = $date;
                     if(stripos($row['admin'], "u{$user_id}|") !== false OR $user_id == $row_comments['public_id']){
@@ -1528,7 +1528,7 @@ class GroupsController extends Module
 
 //                    $tpl->set('{text}', );
                     $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
-                    $date = \Sura\Libs\Date::megaDate(strtotime($row_comments['add_date']));
+                    $date = \Sura\Time\Date::megaDate(strtotime($row_comments['add_date']));
 //                    $tpl->set('{date}', );
                     $sql_comments[$key]['date'] = $date;
                     if(stripos($row['admin'], "u{$user_id}|") !== false OR $user_id == $row_comments['public_id']){

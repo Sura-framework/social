@@ -84,7 +84,7 @@ class GiftsController extends Module{
             $row = $db->super_query("SELECT user_balance FROM `users` WHERE user_id = '{$user_id}'");
             if($gifts['price'] AND $user_id != $for_user_id){
                 if($row['user_balance'] >= $gifts['price']){
-                    $server_time = \Sura\Libs\Date::time();
+                    $server_time = \Sura\Time\Date::time();
                     $db->query("INSERT INTO `gifts` SET uid = '{$for_user_id}', gift = '{$gift}', msg = '{$msg}', privacy = '{$privacy}', gdate = '{$server_time}', from_uid = '{$user_id}', status = 1");
                     $db->query("UPDATE `users` SET user_balance = user_balance-{$gifts['price']} WHERE user_id = '{$user_id}'");
                     $db->query("UPDATE `users` SET user_gifts = user_gifts+1 WHERE user_id = '{$for_user_id}'");
@@ -313,7 +313,7 @@ class GiftsController extends Module{
 //                        $tpl->set('[/link]', '');
                     }
 //                    $tpl->set('{gift}', $row['gift']);
-                    $date = \Sura\Libs\Date::megaDate(strtotime($row['gdate']), 1, 1);
+                    $date = \Sura\Time\Date::megaDate(strtotime($row['gdate']), 1, 1);
 //                    $tpl->set('{date}', $date);
 //                    $tpl->set('[privacy]', '');
 //                    $tpl->set('[/privacy]', '');

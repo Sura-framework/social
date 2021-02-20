@@ -3,7 +3,11 @@ declare(strict_types=1);
 namespace App\Modules;
 
 use App\Libs\Friends;
+use App\Models\Menu;
 use Exception;
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
+use Sura\Libs\Mail;
 use Sura\Libs\Profile_check;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
@@ -11,6 +15,7 @@ use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
+use Sura\Time\Zone;
 
 
 class SettingsController extends Module{
@@ -23,7 +28,7 @@ class SettingsController extends Module{
      */
     public function newpass(): int
     {
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -36,20 +41,17 @@ class SettingsController extends Module{
 
             $request = (Request::getRequest()->getGlobal());
 
-            $request['old_pass'] = Validation::ajax_utf8($request['old_pass']);
-            $request['new_pass'] = Validation::ajax_utf8($request['new_pass']);
-            $request['new_pass2'] = Validation::ajax_utf8($request['new_pass2']);
-
-            $old_pass = md5(md5(GetVar($request['old_pass'])));
-            $new_pass = md5(md5(GetVar($request['new_pass'])));
-            $new_pass2 = md5(md5(GetVar($request['new_pass2'])));
+            $request['old_pass'] = Validation::textFilter($request['old_pass']);
+            $request['new_pass'] = Validation::textFilter($request['new_pass']);
+            $request['new_pass2'] = Validation::textFilter($request['new_pass2']);
 
             //Выводим текущий пароль
             $row = $db->super_query("SELECT user_password FROM `users` WHERE user_id = '{$user_id}'");
-            if($row['user_password'] == $old_pass){
-                if($new_pass == $new_pass2){
-                    $db->query("UPDATE `users` SET user_password = '{$new_pass2}' WHERE user_id = '{$user_id}'");
 
+            if(password_verify($request['old_pass'], $row['user_password']) == true){
+                if(password_verify($request['new_pass'], $request['new_pass2']) == true){
+                    $pass_hash = password_hash($request['new_pass'], PASSWORD_DEFAULT);
+                    $db->query("UPDATE `users` SET user_password = '{$pass_hash}' WHERE user_id = '{$user_id}'");
                     $status = Status::OK;
                 }else{
                     $status = Status::PASSWORD_DOESNT_MATCH;
@@ -68,12 +70,13 @@ class SettingsController extends Module{
     /**
      *  Изменение имени
      *
-     * @param $params
+     * @return int
      * @throws \JsonException
+     * @throws \Throwable
      */
     public function newname(): int
     {
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -85,8 +88,8 @@ class SettingsController extends Module{
 
             $request = (Request::getRequest()->getGlobal());
 
-            $user_name = Validation::ajax_utf8(Validation::textFilter($request['name']));
-            $user_lastname = Validation::ajax_utf8(Validation::textFilter(ucfirst($request['lastname'])));
+            $user_name = Validation::textFilter($request['name']);
+            $user_lastname = Validation::textFilter($request['lastname']);
 
             //Проверка имени
             if(isset($user_name)){
@@ -117,15 +120,13 @@ class SettingsController extends Module{
                 $user_lastname = ucfirst($user_lastname);
 
                 $db->query("UPDATE `users` SET user_name = '{$user_name}', user_lastname = '{$user_lastname}', user_search_pref = '{$user_name} {$user_lastname}' WHERE user_id = '{$user_id}'");
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 $cache->remove($user_id.'/profile_'.$user_id);
 
-                if ($response == false){
-                        $status = Status::OK;
-                    }else{
-                        $status = Status::BAD;
-                    }
+
+                $status = Status::OK;
+
             } else {
                 $status = Status::BAD;//TODO update
             }
@@ -176,8 +177,8 @@ class SettingsController extends Module{
 
             $db->query("UPDATE `users` SET user_privacy = '{$user_privacy}' WHERE user_id = '{$user_id}'");
 
-            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-            $cache = new \Sura\Cache\Cache($storage, 'users');
+            $storage = new MemcachedStorage('localhost');
+            $cache = new Cache($storage, 'users');
             $cache->remove($user_id.'/profile_'.$user_id);
 
             $status = Status::OK;
@@ -192,12 +193,11 @@ class SettingsController extends Module{
     /**
      * Приватность настройки
      *
-     * @param $params
      * @return int
-     * @throws Exception
      */
     public function privacy(): int
     {
+        $params = array();
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -210,27 +210,17 @@ class SettingsController extends Module{
             $sql_ = $db->super_query("SELECT user_privacy FROM `users` WHERE user_id = '{$user_id}'");
             $row = xfieldsdataload($sql_['user_privacy']);
 //            $tpl->load_template('settings/privacy.tpl');
-//            $tpl->set('{val_msg}', $row['val_msg']);
             $params['val_msg'] = $row['val_msg'];
-//            $tpl->set('{val_msg_text}', );
             $params['val_msg_text'] = strtr($row['val_msg'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Никто'));
-//            $tpl->set('{val_wall1}', );
             $params['val_wall1'] = $row['val_wall1'];
-//            $tpl->set('{val_wall1_text}', );
             $params['val_wall1_text'] = strtr($row['val_wall1'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я'));
-//            $tpl->set('{val_wall2}', );
             $params['val_wall2'] = $row['val_wall2'];
-//            $tpl->set('{val_wall2_text}', );
             $params['val_wall2_text'] = strtr($row['val_wall2'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я'));
-//            $tpl->set('{val_wall3}', );
             $params['val_wall3'] = $row['val_wall3'];
-//            $tpl->set('{val_wall3_text}', );
             $params['val_wall3_text'] = strtr($row['val_wall3'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я'));
-//            $tpl->set('{val_info}', );
             $params['val_info'] = $row['val_info'];
-//            $tpl->set('{val_info_text}', );
             $params['val_info_text'] = strtr($row['val_info'], array('1' => 'Все пользователи', '2' => 'Только друзья', '3' => 'Только я'));
-            $params['menu'] = \App\Models\Menu::settings();
+            $params['menu'] = Menu::settings();
 
             return view('settings.privacy', $params);
         }
@@ -248,7 +238,6 @@ class SettingsController extends Module{
      */
     public function addblacklist(): int
     {
-        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -290,8 +279,8 @@ class SettingsController extends Module{
                         $db->query("UPDATE `users` SET user_friends_num = user_friends_num-1 WHERE user_id = '{$bad_user_id}'");
 
                         //Чистим кеш владельцу стр и тому кого удаляем из др.
-                        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                        $cache = new \Sura\Cache\Cache($storage, 'users');
+                        $storage = new MemcachedStorage('localhost');
+                        $cache = new Cache($storage, 'users');
                         $cache->remove($user_id.'/profile_'.$user_id);
                         $cache->remove($bad_user_id.'/profile_'.$bad_user_id);
 
@@ -429,7 +418,7 @@ class SettingsController extends Module{
 
 //            $tpl->set('{bad_user}', $tpl->result['alert_info']);
 //            $tpl->compile('content');
-            $params['menu'] = \App\Models\Menu::settings();
+            $params['menu'] = Menu::settings();
 
             return view('settings.blacklist', $params);
         }
@@ -442,7 +431,7 @@ class SettingsController extends Module{
      */
     public function change_mail(): int
     {
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -485,7 +474,7 @@ class SettingsController extends Module{
                 for($i = 0; $i < 15; $i++){
                     $rand_lost .= $salt[rand(0, 33)];
                 }
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
                 $hash = md5($server_time.$row['user_email'].rand(0, 100000).$rand_lost);
 
                 $message = <<<HTML
@@ -505,8 +494,7 @@ class SettingsController extends Module{
                         HTML;
 //                $mail->send($row['user_email'], 'Изменение почтового адреса', $message);
 
-                if (!isset($_IP))
-                    $_IP = NULL;
+                $_IP = Request::getRequest()->getClientIP();
 
                 //Вставляем в БД код 1
                 $db->query("INSERT INTO `restore` SET email = '{$email}', hash = '{$hash}', ip = '{$_IP}'");
@@ -532,6 +520,7 @@ class SettingsController extends Module{
                         проигнорируйте это письмо.С уважением,
                         Администрация {$config['home_url']}
                         HTML;
+//                $mail = new Mail();
 //                $mail->send($email, 'Изменение почтового адреса', $message);
 
                 //Вставляем в БД код 2
@@ -568,8 +557,8 @@ class SettingsController extends Module{
                 $db = $this->db();
                 $db->query("UPDATE `users` SET time_zone = '".$time_zone."'  WHERE user_id = '".$user_info['user_id']."'");
 
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 $cache->remove($user_info['user_id'].'/profile_'.$user_info['user_id']);
 
                 $status = Status::OK;
@@ -601,9 +590,6 @@ class SettingsController extends Module{
 
             $request = (Request::getRequest()->getGlobal());
 
-            //Загружаем вверх
-//            $tpl->load_template('settings/general.tpl');
-
             //Завершении смены E-mail
             $params['code_1'] = 'no_display';
             $params['code_2'] = 'no_display';
@@ -614,7 +600,7 @@ class SettingsController extends Module{
                 $code2 = Validation::strip_data($request['code2']);
 
                 if(strlen($code1) == 32){
-                    $_IP = null;
+                    $_IP = Request::getRequest()->getClientIP();
                     $code2 = '';
                     $check_code1 = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$code1}' AND ip = '{$_IP}'");
                     if($check_code1['email']){
@@ -656,13 +642,13 @@ class SettingsController extends Module{
             $epx1 = explode('@', $user_info['user_email']);
             $params['email'] = $substre.'*******@'.$epx1[1];
 
-            $time_list = Profile_check::list();
+            $time_list = Zone::list();
 
             $params['date_today'] = date("d.m.y H:i:s");
 
             $params['timezs'] = installationSelected($user_info['time_zone'], $time_list);
 
-            $params['menu'] = \App\Models\Menu::settings();
+            $params['menu'] = Menu::settings();
 
             return view('settings.general', $params);
         } else {
@@ -681,7 +667,7 @@ class SettingsController extends Module{
     public function index(): int
     {
         $lang = $this->get_langs();
-        $params['menu'] = \App\Models\Menu::settings();
+        $params['menu'] = Menu::settings();
         $logged = $this->logged();
         if($logged){
             $params['title'] = $lang['settings'].' | Sura';

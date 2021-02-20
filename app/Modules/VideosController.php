@@ -44,7 +44,7 @@ class VideosController extends Module{
             $root_dir = str_replace('/app/Modules', '', $modules_dir);
 
             $file_name = Gramatic::totranslit($_FILES['uploadfile']['name']);
-            $server_time = \Sura\Libs\Date::time();
+            $server_time = \Sura\Time\Date::time();
             $file_rename = substr(md5($server_time+rand(1,100000)), 0, 15);
             $file_size = $_FILES['uploadfile']['size'];
             $array = explode(".", $file_name);
@@ -256,7 +256,7 @@ class VideosController extends Module{
                     $photo = str_replace($config['home_url'], '/', $photo);
 
                     //Добавляем действия в ленту новостей
-                    $server_time = \Sura\Libs\Date::time();
+                    $server_time = \Sura\Time\Date::time();
                     $generateLastTime = $server_time-10800;
                     $row = $db->super_query("SELECT ac_id, action_text FROM `news` WHERE action_time > '{$generateLastTime}' AND action_type = 2 AND ac_user_id = '{$user_id}'");
                     if($row)
@@ -682,7 +682,7 @@ class VideosController extends Module{
 //                            $tpl->set('{comment}', stripslashes($row_comm['text']));
 //                            $tpl->set('{id}', $row_comm['id']);
                             //Registry::set('tpl', $tpl);
-                            $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['add_date']));
+                            $date = \Sura\Time\Date::megaDate(strtotime($row_comm['add_date']));
 //                            $tpl->set('{date}', $date);
 
                             if($row_comm['author_user_id'] == $user_id || $row['owner_user_id'] == $user_id || $public_admin){
@@ -783,7 +783,7 @@ class VideosController extends Module{
 //                    $tpl->set('{owner-id}', $row['owner_user_id']);
 //                    $tpl->set('{close-link}', $close_link);
 
-                    $date = \Sura\Libs\Date::megaDate(strtotime($row['add_date']));
+                    $date = \Sura\Time\Date::megaDate(strtotime($row['add_date']));
 //                    $tpl->set('{date}', $date);
 
                     if($row['owner_user_id'] == $user_id){
@@ -909,7 +909,7 @@ class VideosController extends Module{
                             if($user_id != $check_video['owner_user_id']){
                                 $check_video['photo'] = str_replace($config['home_url'], '/', $check_video['photo']);
                                 $comment = str_replace("|", "&#124;", $comment);
-                                $server_time = \Sura\Libs\Date::time();
+                                $server_time = \Sura\Time\Date::time();
                                 $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 9, action_text = '{$comment}|{$check_video['photo']}|{$vid}', obj_id = '{$id}', for_user_id = '{$check_video['owner_user_id']}', action_time = '{$server_time}'");
 
                                 //Вставляем событие в моментальные оповещания
@@ -1094,7 +1094,7 @@ class VideosController extends Module{
                     $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
 //                    $tpl->set('{online}', $online);
 
-                    $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['add_date']));
+                    $date = \Sura\Time\Date::megaDate(strtotime($row_comm['add_date']));
 //                    $tpl->set('{date}', $date);
 
                     if($row_comm['author_user_id'] == $user_id OR $owner_id == $user_id OR $public_admin){
@@ -1365,7 +1365,7 @@ class VideosController extends Module{
                             $titles = array('комментарий', 'комментария', 'комментариев');//comments
 //                            $tpl->set('{comm}', $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles));
 
-                            $date = \Sura\Libs\Date::megaDate(strtotime($row['add_date']));
+                            $date = \Sura\Time\Date::megaDate(strtotime($row['add_date']));
 //                            $tpl->set('{date}', $date);
                             if($get_user_id == $user_id){
 //                                $tpl->set('[owner]', '');
@@ -1502,7 +1502,7 @@ class VideosController extends Module{
                 $get_user_id = $user_id;
 
             //ЧС
-            $CheckBlackList = Tools::CheckBlackList($get_user_id);
+            $CheckBlackList = \App\Libs\Friends::CheckBlackList($get_user_id);
             if(!$CheckBlackList){
 
                 //Выводи кол-во видео записей
@@ -1567,7 +1567,7 @@ class VideosController extends Module{
                                 $titles = array('комментарий', 'комментария', 'комментариев');//comments
                                 $params[$sql_]['comm'] = $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles);
 
-                                $date = \Sura\Libs\Date::megaDate(strtotime($row['add_date']));
+                                $date = \Sura\Time\Date::megaDate(strtotime($row['add_date']));
                                 $params[$sql_]['date'] = $date;
                                 if($get_user_id == $user_id){
                                     $params[$sql_]['owner'] = true;

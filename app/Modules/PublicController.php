@@ -3,12 +3,9 @@
 namespace App\Modules;
 
 use App\Libs\Wall;
-use Exception;
-use Sura\Libs\Date;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
-use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
 class PublicController extends Module{
@@ -114,7 +111,7 @@ class PublicController extends Module{
                 //$wall = new Public_wall();
                 $query = $db->super_query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, fixed, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = '{$row['id']}' AND tb1.public_id = tb2.id AND fast_comm_id = 0 ORDER by `fixed` DESC, `add_date` DESC LIMIT {$page_cnt}, {$limit_select}", true);
 
-                $server_time = Date::time();
+                $server_time = \Sura\Time\Date::time();
 
                 //Если страница вывзана через "к предыдущим записям"
 //                if($page_cnt){
@@ -263,7 +260,7 @@ class PublicController extends Module{
 
                 $params['id'] = $row['id'];
 
-                $params['date'] = \Sura\Libs\Date::megaDate(strtotime($row['date']), 1, 1);
+                $params['date'] = \Sura\Time\Date::megaDate(strtotime($row['date']), 1, 1);
                 //Комментарии включены
                 if($row['comments']){
                     $params['settings_comments'] = 'comments';
@@ -374,7 +371,7 @@ class PublicController extends Module{
                         $titles = array('сообщение', 'сообщения', 'сообщений');//msg
                         $msg_num = $row_forum['msg_num'].' '.Gramatic::declOfNum($row_forum['msg_num'], $titles);
 
-                        $last_date = \Sura\Libs\Date::megaDate($row_forum['lastdate']);
+                        $last_date = \Sura\Time\Date::megaDate($row_forum['lastdate']);
 
                         $thems .= "<div class=\"forum_bg\"><div class=\"forum_title cursor_pointer\" onClick=\"Page.Go('/forum{$row['id']}?act=view&id={$row_forum['fid']}'); return false\">{$row_forum['title']}</div><div class=\"forum_bottom\">{$msg_num}. Последнее от <a href=\"/u{$row_forum['lastuser_id']}\" onClick=\"Page.Go(this.href); return false\">{$row_last_user['user_search_pref']}</a>, {$last_date}</div></div>";
 
@@ -391,7 +388,7 @@ class PublicController extends Module{
                     $videos = '';
                     foreach($sql_videos as $row_video){
                         $row_video['title'] = stripslashes($row_video['title']);
-                        $date_video = \Sura\Libs\Date::megaDate(strtotime($row_video['add_date']));
+                        $date_video = \Sura\Time\Date::megaDate(strtotime($row_video['add_date']));
                         $titles = array('комментарий', 'комментария', 'комментариев');//comments
                         $comm_num = $row_video['comm_num'].' '.Gramatic::declOfNum($row_video['comm_num'], $titles);
                         $videos .= "

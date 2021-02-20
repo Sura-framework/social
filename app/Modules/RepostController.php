@@ -65,7 +65,7 @@ class RepostController extends Module{
                         $row['attach'] = $db->safesql($row['attach']);
 
                         //Всталвяем себе на стену
-                        $server_time = \Sura\Libs\Date::time();
+                        $server_time = \Sura\Time\Date::time();
                         $db->query("INSERT INTO `wall` SET author_user_id = '{$user_id}', for_user_id = '{$user_id}', text = '{$row['text']}', add_date = '{$server_time}', fast_comm_id = 0, tell_uid = '{$author_user_id}', tell_date = '{$row['add_date']}', public = '{$row['public']}', attach = '{$row['attach']}', tell_comm = '{$comm}'");
                         $dbid = $db->insert_id();
                         $db->query("UPDATE `users` SET user_wall_num = user_wall_num+1 WHERE user_id = '{$user_id}'");
@@ -139,7 +139,7 @@ class RepostController extends Module{
                 $check_IdGR = '';
             }
 
-            $server_time = \Sura\Libs\Date::time();
+            $server_time = \Sura\Time\Date::time();
 
             //Проверка на админа
             $rowGroup = $db->super_query("SELECT admin, del, ban FROM `communities` WHERE id = '{$sel_group}'");
@@ -218,7 +218,7 @@ class RepostController extends Module{
                 $row['text'] = $db->safesql($row['text']);
                 $row['attach'] = $db->safesql($row['attach']);
 
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
 
                 //Вставляем саму запись в БД
                 $db->query("INSERT INTO `communities_wall` SET public_id = '{$sel_group}', text = '{$row['text']}', attach = '{$row['attach']}', add_date = '{$server_time}', tell_uid = '{$tell_uid}', tell_date = '{$tell_date}', public = '{$row['public']}', tell_comm = '{$comm}'");
@@ -320,7 +320,7 @@ class RepostController extends Module{
 
                             }
 
-                            $server_time = \Sura\Libs\Date::time();
+                            $server_time = \Sura\Time\Date::time();
 
                             //Отправляем сообщение получателю
                             $db->query("INSERT INTO `messages` SET theme = '{$theme}', text = '{$msg}', for_user_id = '{$for_user_id}', from_user_id = '{$user_id}', date = '{$server_time}', pm_read = 'no', folder = 'inbox', history_user_id = '{$user_id}', attach = '".$attach_files."', tell_uid = '{$tell_uid}', tell_date = '{$tell_date}', public = '{$row_rec['public']}', tell_comm = '{$tell_comm}'");

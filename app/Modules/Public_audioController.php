@@ -101,7 +101,7 @@ class Public_audioController extends Module{
 
                 $file_tmp = $_FILES['file']['tmp_name'];
                 $file_name = Gramatic::totranslit($_FILES['file']['name']);
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
                 $file_rename = substr(md5($server_time+rand(1,100000)), 0, 15);
                 $file_size = $_FILES['file']['size'];
                 $tmp = explode('.', $file_name);
@@ -181,7 +181,7 @@ class Public_audioController extends Module{
             $info = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$pid}'");
             $check = $db->super_query("SELECT url, artist, title, duration FROM `audio` WHERE id = '{$id}'");
             if(stripos($info['admin'], "u{$user_info['user_id']}|") !== false && $check){
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
                 $db->query("INSERT INTO `audio` SET original = '{$id}', duration = '{$check['duration']}',oid = '{$pid}', public = '1', url = '{$db->safesql($check['url'])}', artist = '{$db->safesql($check['artist'])}', title = '{$db->safesql($check['title'])}', date = '{$server_time}'");
                 $db->query("UPDATE `communities` SET audio_num = audio_num + 1 WHERE id = '{$pid}'");
                 $db->query("UPDATE `audio` SET add_count = add_count + 1 WHERE id = '{$id}'");

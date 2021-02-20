@@ -12,6 +12,7 @@ use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
+use Sura\Time\Date;
 
 class AlbumsController extends Module{
 
@@ -52,7 +53,7 @@ class AlbumsController extends Module{
 
                 if($row['user_albums_num'] < $config['max_albums']){
                     $server_time = Date::time();
-                    $_IP = '';
+                    $_IP = Request::getRequest()->getClientIP();
                     //hash
                     $hash = md5(md5($server_time).$name.$descr.md5($user_info['user_id']).md5($user_info['user_email']).$_IP);
                     $date_create = date('Y-m-d H:i:s', $server_time);
@@ -139,8 +140,8 @@ class AlbumsController extends Module{
                 $config = Settings::load();
                 if($row['user_albums_num'] < $config['max_albums']){
                     //hash
-                    $_IP = '';
-                    $server_time = \Sura\Libs\Date::time();
+                    $_IP = Request::getRequest()->getClientIP();
+                    $server_time = Date::time();
                     $hash = md5(md5($server_time).$name.$descr.md5($user_info['user_id']).md5($user_info['user_email']).$_IP);
                     $date_create = date('Y-m-d H:i:s', $server_time);
 
@@ -287,7 +288,7 @@ class AlbumsController extends Module{
                     //Получаем данные о фотографии
                     $image_tmp = $_FILES['uploadfile']['tmp_name'];
                     $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-                    $server_time = \Sura\Libs\Date::time();
+                    $server_time = Date::time();
                     $image_rename = substr(md5($server_time+random_int(1,100000)), 0, 20); // имя фотографии
                     $image_size = $_FILES['uploadfile']['size']; // размер файла
                     $image_name_arr = explode(".", $image_name);
@@ -1224,7 +1225,7 @@ class AlbumsController extends Module{
                         $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
 //                        $tpl->set('{online}', $online);
 
-                        $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['date']));
+                        $date = Date::megaDate(strtotime($row_comm['date']));
 //                        $tpl->set('{date}', $date);
 
                         if($row_comm['user_id'] == $user_info['user_id'] OR $user_info['user_id'] == $uid){
@@ -1411,7 +1412,7 @@ class AlbumsController extends Module{
             $row_album = $db->super_query("SELECT user_id, name, photo_num, privacy FROM `albums` WHERE aid = '{$aid}'");
 
             //ЧС
-            $CheckBlackList = Tools::CheckBlackList($row_album['user_id']);
+            $CheckBlackList = \App\Libs\Friends::CheckBlackList($row_album['user_id']);
             if(!$CheckBlackList){
                 $album_privacy = explode('|', $row_album['privacy']);
                 if(!$row_album)
@@ -1552,7 +1553,7 @@ class AlbumsController extends Module{
 
             if($row_owner){
                 //ЧС
-                $CheckBlackList = Tools::CheckBlackList($uid);
+                $CheckBlackList = \App\Libs\Friends::CheckBlackList($uid);
                 if(!$CheckBlackList){
                     $author_info = explode(' ', $row_owner['user_search_pref']);
 
@@ -1614,7 +1615,7 @@ class AlbumsController extends Module{
 //                                $tpl->set('{comm-num}', );
                                 $sql_[$key]['comm_num'] = $row['comm_num'].' '.Gramatic::declOfNum($row['comm_num'], $titles);
 
-                                $date = \Sura\Libs\Date::megaDate(($row['adate']), 1, 1);
+                                $date = Date::megaDate(($row['adate']), 1, 1);
 //                                $tpl->set('{date}', );
                                 $sql_[$key]['date'] = $date;
 

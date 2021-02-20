@@ -22,6 +22,7 @@ class PhotoController extends Module{
     public function addcomm(): int
     {
 //        $tpl = $params['tpl'];
+        $_IP = Request::getRequest()->getClientIP();
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -35,7 +36,7 @@ class PhotoController extends Module{
 
             $pid = intval($request['pid']);
             $comment = ajax_utf8(textFilter($request['comment']));
-            $server_time = \Sura\Libs\Date::time();
+            $server_time = \Sura\Time\Date::time();
             $date = date('Y-m-d H:i:s', $server_time);
             $hash = md5($user_id.$server_time.$_IP.$user_info['user_email'].rand(0, 1000000000)).$comment.$pid;
 
@@ -218,7 +219,7 @@ class PhotoController extends Module{
             $check_photo = $db->super_query("SELECT photo_name, album_id FROM `photos` WHERE id = '{$pid}' AND user_id = '{$user_id}'");
             if($check_photo AND $i_width >= 100 AND $i_height >= 100 AND $i_left >= 0 AND $i_height >= 0){
                 $imgInfo = explode('.', $check_photo['photo_name']);
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
                 $image_rename = substr(md5($server_time.$check_photo['check_photo']), 0, 15).".".$imgInfo[1];
                 $upload_dir = __DIR__."/../../public/uploads/users/{$user_id}/";
 
@@ -320,7 +321,7 @@ class PhotoController extends Module{
 
                     $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                     $tpl->set('{online}', $online);
-                    $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['date']));
+                    $date = \Sura\Time\Date::megaDate(strtotime($row_comm['date']));
                     $tpl->set('{date}', $date);
 
                     $row_photo = $db->super_query("SELECT user_id FROM `photos` WHERE id = '{$row_comm['pid']}'");
@@ -498,7 +499,7 @@ class PhotoController extends Module{
                 }
 
                 //Вставляем в лог, что юзер поставил оценку
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
                 $db->query("INSERT INTO `photos_rating` SET photo_id = '{$pid}', user_id = '{$user_id}', date = '{$server_time}', rating = '{$rating}', owner_user_id = '{$row['user_id']}'");
                 $id = $db->insert_id();
 
@@ -593,7 +594,7 @@ class PhotoController extends Module{
                         if($row['user_photo']) $tpl->set('{ava}', "/uploads/users/{$row['user_id']}/50_{$row['user_photo']}");
                         else $tpl->set('{ava}', "/images/no_ava_50.png");
 
-                        $date = \Sura\Libs\Date::megaDate(strtotime($row['date']));
+                        $date = \Sura\Time\Date::megaDate(strtotime($row['date']));
                         $tpl->set('{date}', $date);
 
                         $tpl->compile('rates_users');
@@ -806,7 +807,7 @@ class PhotoController extends Module{
                                 $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                                 $tpl->set('{online}', $online);
 
-                                $date = \Sura\Libs\Date::megaDate(strtotime($row_comm['date']));
+                                $date = \Sura\Time\Date::megaDate(strtotime($row_comm['date']));
                                 $tpl->set('{date}', $date);
 
                                 if($row_comm['user_id'] == $user_info['user_id'] OR $row['user_id'] == $user_info['user_id']){
@@ -821,7 +822,7 @@ class PhotoController extends Module{
 
                         //Сама фотография
                         $tpl->load_template('photo_view.tpl');
-                        $server_time = \Sura\Libs\Date::time();
+                        $server_time = \Sura\Time\Date::time();
                         $tpl->set('{photo}', $config['home_url'].'uploads/users/'.$row['user_id'].'/albums/'.$check_album['album_id'].'/'.$row['photo_name'].'?'.$server_time);
                         $sizephoto = getimagesize(__DIR__.'/../../public/uploads/users/'.$row['user_id'].'/albums/'.$check_album['album_id'].'/'.$row['photo_name']);
                         $tpl->set('{height}', $sizephoto[1]);
@@ -888,7 +889,7 @@ class PhotoController extends Module{
                         else $tpl->set('{author-info}', '');
                         if($author_info[1]) $tpl->set('{author-info}', $author_info[0].', '.$author_info[1].'<br />');
 
-                        $date = \Sura\Libs\Date::megaDate(strtotime($row['date']), 1, 1);
+                        $date = \Sura\Time\Date::megaDate(strtotime($row['date']), 1, 1);
                         $tpl->set('{date}', $date);
 
                         if($uid == $user_info['user_id']){

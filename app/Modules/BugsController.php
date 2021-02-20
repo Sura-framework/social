@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules;
 
 use App\Libs\Antispam;
@@ -70,7 +72,7 @@ class BugsController extends Module
             $user_info = $this->user_info();
             $user_id = $user_info['user_id'];
 
-            $server_time = \Sura\Libs\Date::time();
+            $server_time = \Sura\Time\Date::time();
             $date = Tools::date_convert($server_time, 'Y-m-d H:i:s');
 
             $row = $db->query("INSERT INTO `bugs` (uids, title, text, date, add_date, images) VALUES ('{$user_id}', '{$title}', '{$text}', '{$date}','{$date}', '{$file}')");
@@ -116,7 +118,7 @@ class BugsController extends Module
 //                $user_info = $this->user_info();
 //                $user_id = $user_info['user_id'];
 
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
                 $date = Tools::date_convert($server_time, 'Y-m-d H:i:s');
 
                 $row = $db->query("INSERT INTO `bugs_comments` (author_user_id, text, add_date, status, bug_id) VALUES ('{$user_id}', '{$text}', '{$date}', '{$status}', '{$bug_id}')");
@@ -145,7 +147,7 @@ class BugsController extends Module
 
         $image_tmp = $_FILES['uploadfile']['tmp_name'];
         $image_name = totranslit($_FILES['uploadfile']['name']);
-        $server_time = \Sura\Libs\Date::time();
+        $server_time = \Sura\Time\Date::time();
         $image_rename = substr(md5($server_time + rand(1, 100000)), 0, 20);
         $image_size = $_FILES['uploadfile']['size'];
         $exp = explode(".", $image_name);

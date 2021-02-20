@@ -52,7 +52,7 @@ class My_statsController extends Module{
 
             } else {
 
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
                 $stat_date = date('Ym', $server_time);
                 $r_month = date('m', $server_time);
 

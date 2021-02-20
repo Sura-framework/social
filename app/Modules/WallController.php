@@ -111,7 +111,7 @@ class WallController extends Module{
                         $xPrivasyX = false;
 
                     //ЧС
-                    $CheckBlackList = Tools::CheckBlackList($for_user_id);
+                    $CheckBlackList = \App\Libs\Friends::CheckBlackList($for_user_id);
                     if(!$CheckBlackList){
                         if($xPrivasy){
 
@@ -128,7 +128,7 @@ class WallController extends Module{
                                         $rImgUrl = str_replace("\\", "/", $rImgUrl);
                                         $img_name_arr = explode(".", $rImgUrl);
                                         $img_format = Gramatic::totranslit(end($img_name_arr));
-                                        $server_time = \Sura\Libs\Date::time();
+                                        $server_time = \Sura\Time\Date::time();
                                         $image_rename = substr(md5($server_time.md5($rImgUrl)), 0, 15);
 
                                         //Разришенные форматы
@@ -220,7 +220,7 @@ class WallController extends Module{
                                     $wall_text = str_replace($check2['user_name'], "<a href=\"/u{$row_owner2['author_user_id']}\" onClick=\"Page.Go(this.href); return false\" class=\"newcolor000\">{$check2['user_name']}</a>", $wall_text);
 
                                     //Вставляем в ленту новостей
-                                    $server_time = \Sura\Libs\Date::time();
+                                    $server_time = \Sura\Time\Date::time();
                                     $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 6, action_text = '{$wall_text}', obj_id = '{$answer_comm_id}', for_user_id = '{$row_owner2['author_user_id']}', action_time = '{$server_time}'");
 
                                     //Вставляем событие в моментальные оповещания
@@ -259,7 +259,7 @@ class WallController extends Module{
                                     $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 6, action_text = '{$wall_text}', obj_id = '{$fast_comm_id}', for_user_id = '{$row_owner['author_user_id']}', action_time = '{$str_date}'");
 
                                     //Вставляем событие в моментальные оповещания
-                                    $server_time = \Sura\Libs\Date::time();
+                                    $server_time = \Sura\Time\Date::time();
                                     $update_time = $server_time - 70;
 
                                     if($check['user_last_visit'] >= $update_time){
@@ -325,7 +325,7 @@ class WallController extends Module{
                                     //                                    $tpl->load_template('wall/record.tpl');
                                     //                                    $compile = 'content';
 
-                                    //                                    $server_time = \Sura\Libs\Date::time();
+                                    //                                    $server_time = \Sura\Time\Date::time();
 //                                    //                                  $config = Settings::load();
 
                                     //                                    $Profile = new Profile;
@@ -1032,7 +1032,7 @@ class WallController extends Module{
                 //Проверка на то что этот юзер ставил уже мне нрав или нет
                 $likes_users = explode('|', str_replace('u', '', $row['likes_users']));
                 if(!in_array($user_id, $likes_users, true)){
-                    $server_time = \Sura\Libs\Date::time();
+                    $server_time = \Sura\Time\Date::time();
                     $db->query("INSERT INTO `wall_like` SET rec_id = '{$rid}', user_id = '{$user_id}', date = '{$server_time}'");
 
                     $db->query("UPDATE `wall` SET likes_num = likes_num+1, likes_users = '|u{$user_id}|{$row['likes_users']}' WHERE id = '{$rid}'");
@@ -1359,7 +1359,7 @@ class WallController extends Module{
             $for_user_id = (int)$request['for_user_id'];
 
             //ЧС
-            $CheckBlackList = Tools::CheckBlackList($for_user_id);
+            $CheckBlackList = \App\Libs\Friends::CheckBlackList($for_user_id);
 
             if(!$CheckBlackList AND $for_user_id AND $last_id){
                 //Проверка на существование получателя
@@ -1440,7 +1440,7 @@ class WallController extends Module{
                         $row['attach'] = $db->safesql($row['attach']);
 
                         //Вставляем себе на стену
-                        $server_time = \Sura\Libs\Date::time();
+                        $server_time = \Sura\Time\Date::time();
                         $db->query("INSERT INTO `wall` SET author_user_id = '{$user_id}', for_user_id = '{$user_id}', text = '{$row['text']}', add_date = '{$server_time}', fast_comm_id = 0, tell_uid = '{$row['author_user_id']}', tell_date = '{$row['add_date']}', public = '{$row['public']}', attach = '{$row['attach']}'");
                         $dbid = $db->insert_id();
                         $db->query("UPDATE `users` SET user_wall_num = user_wall_num+1 WHERE user_id = '{$user_id}'");
@@ -1456,11 +1456,9 @@ class WallController extends Module{
 
                         $status = Status::OK;
                     } else {
-//                        echo 1;
                         $status = Status::NOT_FOUND;
                     }
                 } else {
-//                    echo 1;
                     $status = Status::OWNER;
                 }
             }else{
@@ -1714,7 +1712,7 @@ class WallController extends Module{
 
                 if($row['user_wall_num'] > 0){
                     //ЧС
-                    $CheckBlackList = Tools::CheckBlackList($id);
+                    $CheckBlackList = \App\Libs\Friends::CheckBlackList($id);
                     if(!$CheckBlackList){
 
                         if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $CheckFriends OR $user_id == $id)

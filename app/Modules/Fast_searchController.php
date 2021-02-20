@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules;
 
 use Sura\Libs\Request;
@@ -62,7 +64,7 @@ class Fast_searchController extends Module{
                                 $ava = $row['photo'];
                                 $img_width = 100;
                                 $row['user_search_pref'] = $row['title'];
-                                $country = 'Добавлено '.\Sura\Libs\Date::megaDate(strtotime($row['add_date']), 1, 1);
+                                $country = 'Добавлено '.\Sura\Time\Date::megaDate(strtotime($row['add_date']), 1, 1);
                                 $row['user_id'] = 'video'.$row['owner_user_id'].'_'.$row['id'].'" onClick="videos.show('.$row['id'].', this.href, location.href); return false';
                                 $city = '';
                                 //Если критерий поиск "по сообществам"

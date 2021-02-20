@@ -92,7 +92,7 @@ class Photo_editorController extends Module{
                     $image->save($upload_dir.'c_'.$image_rename, 90);
 
 //                    $tpl->load_template('photos/editor.tpl');
-                    $server_time = \Sura\Libs\Date::time();
+                    $server_time = \Sura\Time\Date::time();
 //                    $tpl->set('{photo}', "/uploads/users/{$user_id}/albums/{$row['album_id']}/{$row['photo_name']}?{$server_time}");
 //                    $tpl->compile('content');
 

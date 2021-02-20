@@ -75,7 +75,7 @@ class SupportController extends Module{
 
               $title = Validation::ajax_utf8(Validation::textFilter($request['title']));
             $question = Validation::ajax_utf8(Validation::textFilter($request['question']));
-            $server_time = \Sura\Libs\Date::time();
+            $server_time = \Sura\Time\Date::time();
             $limitTime = $server_time-3600;
             $rowLast = $db->super_query("SELECT COUNT(*) AS cnt FROM `support` WHERE сdate > '{$limitTime}'");
             if(!$rowLast['cnt'] AND isset($title) AND !empty($title) AND isset($question) AND !empty($question) AND $user_info['user_group'] != 4){
@@ -88,7 +88,7 @@ class SupportController extends Module{
 //                $tpl->set('{question}', stripslashes($question));
 //                $tpl->set('{qid}', $dbid);
 
-                $date = \Sura\Libs\Date::megaDate($server_time);
+                $date = \Sura\Time\Date::megaDate($server_time);
 //                $tpl->set('{date}', $date);
 //                $tpl->set('{status}', 'Вопрос ожидает обработки.');
 //                $tpl->set('{name}', $row['user_search_pref']);
@@ -288,7 +288,7 @@ class SupportController extends Module{
 
                 $answer = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<!--link:$1--><a href="$1" target="_blank">$1</a><!--/link-->', $answer);
 
-                $server_time = \Sura\Libs\Date::time();
+                $server_time = \Sura\Time\Date::time();
 
                 $db->query("INSERT INTO `support_answers` SET qid = '{$qid}', auser_id = '{$auser_id}', adate = '{$server_time}', answer = '{$answer}'");
                 $db->query("UPDATE `support` SET sfor_user_id = '{$auser_id}', sdate = '{$server_time}' WHERE id = '{$qid}'");
@@ -320,7 +320,7 @@ class SupportController extends Module{
                 $tpl->set('{uid}', $user_id);
                 $tpl->set('{answer}', stripslashes($answer));
 
-                $date = \Sura\Libs\Date::megaDate($server_time);
+                $date = \Sura\Time\Date::megaDate($server_time);
                 $tpl->set('{date}', $date);
                 $tpl->compile('content');
                 return view('info.info', $params);
@@ -404,7 +404,7 @@ class SupportController extends Module{
 //                    $tpl->set('{id}', $row_answer['id']);
 //                    $tpl->set('{uid}', $user_id);
 //                    $tpl->set('{answer}', stripslashes($row_answer['answer']));
-                    $date = \Sura\Libs\Date::megaDate(strtotime($row_answer['adate']));
+                    $date = \Sura\Time\Date::megaDate(strtotime($row_answer['adate']));
 //                    $tpl->set('{date}', $date);
 //                    $tpl->compile('answers');
                 }
@@ -414,7 +414,7 @@ class SupportController extends Module{
 //                $tpl->set('{question}', stripslashes($row['question']));
 //                $tpl->set('{qid}', $qid);
 
-                $date = \Sura\Libs\Date::megaDate(strtotime($row['sdate']));
+                $date = \Sura\Time\Date::megaDate(strtotime($row['sdate']));
 //                $tpl->set('{date}', $date);
 
                 if($row['sfor_user_id'] == $row['suser_id']) {
@@ -511,56 +511,39 @@ class SupportController extends Module{
 //                $tpl->load_template('support/question.tpl');
 
                 foreach($sql_ as $key => $row){
-//                    $tpl->set('{title}', );
                     $sql_[$key]['title'] = stripslashes($row['title']);
-                    $date = \Sura\Libs\Date::megaDate($row['sdate']);
-//                    $tpl->set('{date}', );
+                    $date = \Sura\Time\Date::megaDate($row['sdate']);
                     $sql_[$key]['date'] = $date;
                     if($row['sfor_user_id'] == $row['suser_id'] OR $user_info['user_group'] == 4){
                         if($row['sfor_user_id'] == $row['suser_id']){
-//                            $tpl->set('{status}', );
                             $sql_[$key]['status'] = 'Вопрос ожидает обработки.';
                         }
                         else{
-//                            $tpl->set('{status}', );
                             $sql_[$key]['status'] = 'Есть ответ.';
                         }
-//                        $tpl->set('{name}', );
                         $sql_[$key]['name'] = $row['user_search_pref'];
-//                        $tpl->set('{answer}', '');
                         $sql_[$key]['answer'] = '';
                         if($row['user_photo']){
-//                            $tpl->set('{ava}', );
                             $sql_[$key]['ava'] = '/uploads/users/'.$row['suser_id'].'/50_'.$row['user_photo'];
                         }
                         else{
-//                            $tpl->set('{ava}', );
                             $sql_[$key]['ava'] = '/images/no_ava_50.png';
                         }
                     } else {
-//                        $tpl->set('{name}', );
                         $sql_[$key]['name'] = 'Агент поддержки';
-//                        $tpl->set('{status}', );
                         $sql_[$key]['status'] = 'Есть ответ.';
-//                        $tpl->set('{ava}', );
                         $sql_[$key]['ava'] = '/images/support.png';
-//                        $tpl->set('{answer}', 'ответил');
                         $sql_[$key]['answer'] = 'ответил';
                     }
-//                    $tpl->set('{qid}', );
                     $sql_[$key]['qid'] = $row['id'];
-//                    $tpl->compile('alert_info');
                 }
                 $params['questions'] = $sql_;
-//                $tpl = Tools::navigation($gcount, $count['cnt'], '/support?page=', $tpl);
                 $params['navigation'] = '';
             } else{
                 if($user_info['user_group'] == 4){
-//                    $tpl->result['alert_info'] = msg_box($lang['support_no_quest3'], 'info_2');
                     $params['alert_info'] = '';
                 }
                 else{
-//                    $tpl->result['alert_info'] = msg_box($lang['support_no_quest2'], 'info_2');
                     $params['alert_info'] = '';
                 }
             }
