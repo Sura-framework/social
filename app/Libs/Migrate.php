@@ -56,7 +56,7 @@ class Migrate
   `act` tinyint(3) NOT NULL,
   `user_id` int(11) NOT NULL,
   `date` int(10) NOT NULL,
-  `txt` varchar(32) NOT NULL
+  `txt` varchar(32) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
 
         $tableSchema[] = "CREATE TABLE `apps` (
@@ -126,11 +126,12 @@ class Migrate
   `date` varchar(10) NOT NULL,
   `filename` text NOT NULL,
   `duration` varchar(5) NOT NULL,
-  `add_count` bigint(20) NOT NULL,
-  `text` text NOT NULL,
-  `genre` bigint(20) NOT NULL,
-  `original` int(11) NOT NULL,
-  `public` int(11) NOT NULL
+  `add_count` bigint(20) NOT NULL DEFAULT 0,
+  `text` text NOT NULL DEFAULT '',
+  `genre` bigint(20) NOT NULL DEFAULT 0,
+  `original` int(11) NOT NULL DEFAULT 0,
+  `public` int(11) NOT NULL DEFAULT 0,
+  `add_date` varchar(30) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
 
         $tableSchema[] = "CREATE TABLE `banned` (
@@ -159,6 +160,16 @@ class Migrate
   `admin_text` text NOT NULL,
   `admin_id` int(11) NOT NULL DEFAULT '693'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+
+        $tableSchema[] = "CREATE TABLE `bugs_comments` (
+  `id` int(11) NOT NULL,
+  `author_user_id` int(11) NOT NULL,
+  `bug_id` int(11) NOT NULL,
+  `text` varchar(255) NOT NULL,
+  `add_date` datetime NOT NULL,
+  `status` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+
 
         $tableSchema[] = "CREATE TABLE `city` (
   `id` int(11) UNSIGNED NOT NULL,
@@ -3532,29 +3543,42 @@ class Migrate
   `id` int(11) UNSIGNED NOT NULL,
   `admin` text NOT NULL,
   `title` varchar(60) NOT NULL,
-  `descr` text NOT NULL,
-  `cat` smallint(6) UNSIGNED NOT NULL,
+  `descr` text NOT NULL DEFAULT '',
+  `cat` smallint(6) UNSIGNED NOT NULL DEFAULT 0,
   `type` tinyint(3) UNSIGNED NOT NULL,
   `traf` int(11) UNSIGNED NOT NULL,
   `ulist` text NOT NULL,
   `date` datetime NOT NULL,
-  `photo` varchar(25) NOT NULL,
-  `feedback` smallint(6) UNSIGNED NOT NULL,
+  `photo` varchar(25) NOT NULL DEFAULT '',
+  `feedback` smallint(6) UNSIGNED NOT NULL DEFAULT 0,
   `comments` tinyint(1) UNSIGNED NOT NULL,
   `real_admin` int(11) UNSIGNED NOT NULL,
-  `rec_num` int(11) UNSIGNED NOT NULL,
-  `photos_num` int(11) UNSIGNED NOT NULL,
-  `del` tinyint(2) NOT NULL,
-  `ban` tinyint(2) NOT NULL,
-  `adres` varchar(40) NOT NULL,
-  `audio_num` mediumint(8) NOT NULL,
-  `forum_num` mediumint(8) NOT NULL,
-  `discussion` tinyint(1) NOT NULL,
-  `status_text` varchar(255) NOT NULL,
-  `web` varchar(255) NOT NULL,
-  `videos_num` int(11) NOT NULL,
-  `cover` varchar(25) NOT NULL,
-  `cover_pos` varchar(4) NOT NULL
+  `rec_num` int(11) UNSIGNED NOT NULL DEFAULT 0,
+  `photos_num` int(11) UNSIGNED NOT NULL DEFAULT 0,
+  `del` tinyint(2) NOT NULL DEFAULT 0,
+  `ban` tinyint(2) NOT NULL DEFAULT 0,
+  `adres` varchar(40) NOT NULL DEFAULT '',
+  `audio_num` mediumint(8) NOT NULL DEFAULT 0,
+  `forum_num` mediumint(8) NOT NULL DEFAULT 0,
+  `discussion` tinyint(1) NOT NULL DEFAULT 0,
+  `status_text` varchar(255) NOT NULL DEFAULT '',
+  `web` varchar(255) NOT NULL DEFAULT '',
+  `videos_num` int(11) NOT NULL DEFAULT 0,
+  `cover` varchar(25) NOT NULL DEFAULT '',
+  `cover_pos` varchar(4) NOT NULL DEFAULT '',
+  `data_del` text NOT NULL,
+  `ban_reason` text NOT NULL,
+  `links_num` int(11) NOT NULL,
+  `type_public` varchar(5) NOT NULL,
+  `date_created` varchar(10) NOT NULL,
+  `privacy` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+
+        $tableSchema[] = "CREATE TABLE `communities_admins` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `pid` int(11) NOT NULL,
+  `level` int(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
 
         $tableSchema[] = "CREATE TABLE `communities_audio` (
@@ -3610,13 +3634,13 @@ class Migrate
 
         $tableSchema[] = "CREATE TABLE `communities_stats` (
   `id` int(11) NOT NULL,
-  `gid` int(11) NOT NULL,
-  `date` int(10) NOT NULL,
-  `cnt` int(11) NOT NULL,
-  `hits` int(11) NOT NULL,
-  `new_users` int(11) NOT NULL,
-  `exit_users` int(11) NOT NULL,
-  `date_x` int(10) NOT NULL
+  `gid` int(11) NOT NULL DEFAULT 0,
+  `date` int(10) NOT NULL DEFAULT 0,
+  `cnt` int(11) NOT NULL DEFAULT 0,
+  `hits` int(11) DEFAULT 0,
+  `new_users` int(11) DEFAULT 0,
+  `exit_users` int(11) NOT NULL DEFAULT 0,
+  `date_x` int(10) NOT NULL DEFAULT 0
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
 
         $tableSchema[] = "CREATE TABLE `communities_stats_log` (
@@ -3687,10 +3711,11 @@ class Migrate
   `friend_id` int(11) UNSIGNED NOT NULL,
   `friends_date` datetime NOT NULL,
   `subscriptions` tinyint(3) UNSIGNED NOT NULL,
-  `views` mediumint(8) UNSIGNED NOT NULL
+  `views` mediumint(8) UNSIGNED NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
 
         $tableSchema[] = "CREATE TABLE `friends_demands` (
+  `id` int(11) NOT NULL,
   `for_user_id` int(11) UNSIGNED NOT NULL,
   `from_user_id` int(11) UNSIGNED NOT NULL,
   `demand_date` datetime NOT NULL
@@ -3943,6 +3968,21 @@ class Migrate
   `text` text NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
 
+        $tableSchema[] = "CREATE TABLE `stories` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `url` varchar(255) NOT NULL,
+  `add_date` int(11) DEFAULT NULL,
+  `time` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=MyISAM DEFAULT CHARSET=utf8";
+
+        $tableSchema[] = "CREATE TABLE `stories_feed` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `url` varchar(255) NOT NULL,
+  `add_date` varchar(255) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8";
+
         $tableSchema[] = "CREATE TABLE `support` (
   `id` int(11) UNSIGNED NOT NULL,
   `title` varchar(65) NOT NULL,
@@ -3991,7 +4031,7 @@ class Migrate
   `user_reg_date` varchar(20) NOT NULL,
   `user_lastdate` varchar(20) NOT NULL,
   `user_group` varchar(1) NOT NULL,
-  `user_hid` varchar(64) NOT NULL,
+  `user_hash` varchar(64) NOT NULL,
   `user_country_city_name` varchar(100) NOT NULL,
   `user_search_pref` varchar(60) NOT NULL,
   `user_xfields` text NOT NULL,
@@ -4032,7 +4072,14 @@ class Migrate
   `user_rating` mediumint(8) NOT NULL,
   `invties_pub_num` smallint(6) NOT NULL,
   `notifications_list` text NOT NULL,
-  `user_text` varchar(255) NOT NULL
+  `user_text` varchar(255) NOT NULL,
+  `time_zone` int(11) NOT NULL DEFAULT 0,
+  `alias` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+
+        $tableSchema[] = "CREATE TABLE `users_blacklist` (
+  `id` int(11) NOT NULL,
+  `users` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
 
         $tableSchema[] = "CREATE TABLE `users_rating` (
@@ -4177,12 +4224,18 @@ ALTER TABLE `audio` ADD FULLTEXT KEY `artist` (`artist`,`title`)";
         $tableSchema[] = "ALTER TABLE `bugs`
   ADD UNIQUE KEY `id` (`id`)";
 
-        $tableSchema[] = "ALTER TABLE `city`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `id_country` (`id_country`)";
+        $tableSchema[] = "ALTER TABLE `bugs`
+  ADD UNIQUE KEY `id` (`id`)";
+
+        $tableSchema[] = "ALTER TABLE `bugs_comments`
+  ADD PRIMARY KEY (`id`)";
 
         $tableSchema[] = "ALTER TABLE `codes`
   ADD PRIMARY KEY (`id`)";
+
+        $tableSchema[] = "ALTER TABLE `city`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_country` (`id_country`)";
 
         $tableSchema[] = "ALTER TABLE `communities`
   ADD PRIMARY KEY (`id`),
@@ -4191,6 +4244,9 @@ ALTER TABLE `audio` ADD FULLTEXT KEY `artist` (`artist`,`title`)";
   ADD KEY `traf` (`traf`),
   ADD KEY `photo` (`photo`);
 ALTER TABLE `communities` ADD FULLTEXT KEY `title` (`title`)";
+
+        $tableSchema[] = "ALTER TABLE `communities_admins`
+  ADD PRIMARY KEY (`id`)";
 
         $tableSchema[] = "ALTER TABLE `communities_audio`
   ADD PRIMARY KEY (`aid`),
@@ -4264,27 +4320,6 @@ ALTER TABLE `communities` ADD FULLTEXT KEY `title` (`title`)";
 
         $tableSchema[] = "ALTER TABLE `friends_demands`
   ADD KEY `for_fast_select1` (`for_user_id`,`from_user_id`,`demand_date`)";
-
-        $tableSchema[] = "ALTER TABLE `games`
-  ADD PRIMARY KEY (`id`);
-ALTER TABLE `games` ADD FULLTEXT KEY `title` (`title`)";
-
-        $tableSchema[] = "ALTER TABLE `games_activity`
-  ADD KEY `for_select` (`user_id`,`game_id`),
-  ADD KEY `game_id` (`game_id`)";
-
-        $tableSchema[] = "ALTER TABLE `games_files`
-  ADD KEY `hash` (`hash`,`type`),
-  ADD KEY `for_select_3` (`hash`,`user_id`),
-  ADD KEY `game_id` (`game_id`),
-  ADD KEY `for_select_4` (`game_id`,`type`),
-  ADD KEY `user_id` (`user_id`,`type`,`game_id`),
-  ADD KEY `for_select` (`hash`,`user_id`,`type`,`game_id`),
-  ADD KEY `file` (`file`)";
-
-        $tableSchema[] = "ALTER TABLE `games_users`
-  ADD KEY `for_select` (`user_id`,`game_id`),
-  ADD KEY `game_id` (`game_id`)";
 
         $tableSchema[] = "ALTER TABLE `gifts`
   ADD PRIMARY KEY (`gid`),
@@ -4401,7 +4436,7 @@ ALTER TABLE `photos_mark` ADD FULLTEXT KEY `mphoto_name` (`mphoto_name`)";
 
         $tableSchema[] = "ALTER TABLE `users`
   ADD PRIMARY KEY (`user_id`),
-  ADD KEY `user_logged_hash` (`user_hid`),
+  ADD KEY `user_logged_hash` (`user_hash`),
   ADD KEY `user_password` (`user_password`),
   ADD KEY `user_email` (`user_email`),
   ADD KEY `user_country` (`user_country`),
@@ -4472,13 +4507,13 @@ ALTER TABLE `videos` ADD FULLTEXT KEY `title` (`title`)";
   ADD KEY `date` (`date`)";
 
         $tableSchema[] = "ALTER TABLE `ads`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1";
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `albums`
-  MODIFY `aid` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1";
+  MODIFY `aid` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `antispam`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=155";
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `apps`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
@@ -4487,16 +4522,13 @@ ALTER TABLE `videos` ADD FULLTEXT KEY `title` (`title`)";
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `attach`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21";
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `attach_comm`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `audio`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21";
-
-        $tableSchema[] = "ALTER TABLE `audio_old`
-  MODIFY `aid` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `banned`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
@@ -4505,7 +4537,10 @@ ALTER TABLE `videos` ADD FULLTEXT KEY `title` (`title`)";
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `bugs`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20";
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
+
+        $tableSchema[] = "ALTER TABLE `bugs_comments`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `city`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3349";
@@ -4514,7 +4549,7 @@ ALTER TABLE `videos` ADD FULLTEXT KEY `title` (`title`)";
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2";
 
         $tableSchema[] = "ALTER TABLE `communities`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4";
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `communities_audio`
   MODIFY `aid` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
@@ -4529,16 +4564,13 @@ ALTER TABLE `videos` ADD FULLTEXT KEY `title` (`title`)";
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `communities_wall`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25";
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `country`
-  MODIFY `id` int(5) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16";
+  MODIFY `id` int(5) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `doc`
   MODIFY `did` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
-
-        $tableSchema[] = "ALTER TABLE `games`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2";
 
         $tableSchema[] = "ALTER TABLE `gifts`
   MODIFY `gid` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
@@ -4547,19 +4579,19 @@ ALTER TABLE `videos` ADD FULLTEXT KEY `title` (`title`)";
   MODIFY `gid` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83";
 
         $tableSchema[] = "ALTER TABLE `log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9";
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `mail_tpl`
   MODIFY `id` mediumint(8) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9";
 
         $tableSchema[] = "ALTER TABLE `messages`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=207";
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `news`
-  MODIFY `ac_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78";
+  MODIFY `ac_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `photos`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3";
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `photos_comments`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
@@ -4571,7 +4603,7 @@ ALTER TABLE `videos` ADD FULLTEXT KEY `title` (`title`)";
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `restore`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4";
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `reviews`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
@@ -4580,43 +4612,43 @@ ALTER TABLE `videos` ADD FULLTEXT KEY `title` (`title`)";
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `support`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3";
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `support_answers`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `updates`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=87";
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `users`
-  MODIFY `user_id` mediumint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14";
+  MODIFY `user_id` mediumint(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `users_rating`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14";
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `users_stats_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16";
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `videos`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8";
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `videos_comments`
   MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `videos_decode`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2";
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `votes`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `votes_result`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4";
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `wall`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46";
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `wall_like`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4";
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $db = Db::getDB();
 
