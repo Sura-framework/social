@@ -1,5 +1,5 @@
 {
-  "name": "sura/sura",
+  "name": "sura/social",
   "type": "project",
   "description": "The Sura framework.",
   "keywords": ["framewwork", "sura","router", "mvc"],
