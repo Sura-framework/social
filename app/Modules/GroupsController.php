@@ -2658,7 +2658,7 @@ class GroupsController extends Module
                                     $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_join` WHERE for_user_id = '{$ruser_id}' AND public_id = '{$pub_id}'");
 
                                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-                                    $check_friend = \App\Libs\Friends::CheckFriends($ruser_id);
+                                    $check_friend = (new \App\Libs\Friends)->CheckFriends($ruser_id);
 
                                     //Если нет приглашения, то отправляем приглашение
                                     if(!$check['cnt'] AND $check_friend){

@@ -53,10 +53,10 @@ class Antispam
 			20 - stories
 			21 - альбомы
 		*/
-		//Анти спам дата
+		/** @var  $antiDate -Анти спам дата */
 		$antiDate = strtotime(date('Y-m-d', $server_time));
 		$check = $db->super_query("SELECT COUNT(*) AS cnt FROM `antispam` WHERE act = '{$type}' AND user_id = '{$user_id}' AND date = '{$antiDate}' AND txt = '{$text}'");
-		//Если кол-во, логов больше, то ставим блок
+		/** Если кол-во, логов больше, то ставим блок */
 		if ($check['cnt']) {
 			if ($check['cnt'] >= self::$max_int[$type]) {
 				return true;

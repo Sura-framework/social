@@ -12,6 +12,7 @@ use Sura\Libs\Request;
 use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
+use Sura\Time\Date;
 
 class BugsController extends Module
 {
@@ -73,7 +74,7 @@ class BugsController extends Module
             $user_id = $user_info['user_id'];
 
             $server_time = \Sura\Time\Date::time();
-            $date = Tools::date_convert($server_time, 'Y-m-d H:i:s');
+            $date = Date::date_convert($server_time, 'Y-m-d H:i:s');
 
             $row = $db->query("INSERT INTO `bugs` (uids, title, text, date, add_date, images) VALUES ('{$user_id}', '{$title}', '{$text}', '{$date}','{$date}', '{$file}')");
             Antispam::LogInsert(9, $user_id);
@@ -119,7 +120,7 @@ class BugsController extends Module
 //                $user_id = $user_info['user_id'];
 
                 $server_time = \Sura\Time\Date::time();
-                $date = Tools::date_convert($server_time, 'Y-m-d H:i:s');
+                $date = Date::date_convert($server_time, 'Y-m-d H:i:s');
 
                 $row = $db->query("INSERT INTO `bugs_comments` (author_user_id, text, add_date, status, bug_id) VALUES ('{$user_id}', '{$text}', '{$date}', '{$status}', '{$bug_id}')");
                 $db->query("UPDATE `bugs` SET status = '{$status}', date = '{$date}' WHERE id = '{$bug_id}'");
@@ -272,7 +273,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id  {$where} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
 
         if ($sql_) {
-            $params['bugs'] = Bugs::getData($sql_);
+            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
         }
         $params['menu'] = Menu::bugs();
 //        $tpl->load_template('bugs/head.tpl');
@@ -305,7 +306,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id  {$where} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
 
         if ($sql_) {
-            $params['bugs'] = Bugs::getData($sql_);
+            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
         }
         $params['menu'] = Menu::bugs();
 //        $tpl->load_template('bugs/head.tpl');
@@ -321,7 +322,6 @@ class BugsController extends Module
      */
     public function close(): int
     {
-//        $tpl = $params['tpl'];
         $db = $this->db();
 
         $request = (Request::getRequest()->getGlobal());
@@ -338,7 +338,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id  {$where} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
 
         if ($sql_) {
-            $params['bugs'] = Bugs::getData($sql_);
+            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
         }
         $params['menu'] = Menu::bugs();
 //        $tpl->load_template('bugs/head.tpl');
@@ -375,7 +375,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id  {$where} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
 
         if ($sql_) {
-            $params['bugs'] = Bugs::getData($sql_);
+            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
         }
 //        $tpl->load_template('bugs/head.tpl');
 //        $tpl->set('{load}', $tpl->result['bugs']);
@@ -404,7 +404,7 @@ class BugsController extends Module
 //        $bugs = $db->super_query("SELECT admin_id, admin_text FROM `bugs` WHERE admin_id = '{$sql_['user_id']}'");
 
         if ($sql_) {
-            $params['bugs'] = Bugs::getData($sql_);
+            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
             $status = Status::OK;
         }else{
             $status = Status::NOT_FOUND;
@@ -457,7 +457,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.id = '{$id}' AND tb1.uids = tb2.user_id", true);
 //        $bugs = $db->super_query("SELECT admin_id, admin_text FROM `bugs` WHERE admin_id = '{$sql_['user_id']}'");
         if ($sql_) {
-            $params['bugs'] = Bugs::getData($sql_);
+            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
         }
         $params['menu'] = Menu::bugs();
         return view('bugs.view_page', $params);
@@ -487,7 +487,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id {$where_sql} {$where_cat} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", true);
 
         if ($sql_) {
-            $params['bugs'] = Bugs::getData($sql_);
+            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
         }
 //        $query = Validation::strip_data(urldecode($request['query']));
 //        Tools::navigation($page_cnt, $limit_num, '/index.php'.$query.'&page_cnt=');

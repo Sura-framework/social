@@ -37,7 +37,7 @@ class SubscriptionsController extends Module{
             $check = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$for_user_id}' AND subscriptions = 1");
 
             //ЧС
-            $CheckBlackList = Friends::CheckBlackList($check['user_id']);
+            $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($check['user_id']);
 
             if ($for_user_id != $user_id){
                 if (!$check){

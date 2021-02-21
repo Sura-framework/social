@@ -1105,11 +1105,11 @@ class AlbumsController extends Module{
                 }
             }
 
-            $CheckBlackList = \App\Libs\Friends::CheckBlackList($uid);
+            $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($uid);
 
             if($user_id != $uid)
                 //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-                $check_friend = \App\Libs\Friends::CheckFriends($uid);
+                $check_friend = (new \App\Libs\Friends)->CheckFriends($uid);
 
             if($aid AND $album_privacy){
                 if($album_privacy[0] == 1 OR $album_privacy[0] == 2 AND $check_friend OR $user_id == $uid) {
@@ -1412,7 +1412,7 @@ class AlbumsController extends Module{
             $row_album = $db->super_query("SELECT user_id, name, photo_num, privacy FROM `albums` WHERE aid = '{$aid}'");
 
             //ЧС
-            $CheckBlackList = \App\Libs\Friends::CheckBlackList($row_album['user_id']);
+            $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($row_album['user_id']);
             if(!$CheckBlackList){
                 $album_privacy = explode('|', $row_album['privacy']);
                 if(!$row_album)
@@ -1420,7 +1420,7 @@ class AlbumsController extends Module{
 
                 //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                 if($user_id != $row_album['user_id'])
-                    $check_friend = \App\Libs\Friends::CheckFriends($row_album['user_id']);
+                    $check_friend = (new \App\Libs\Friends)->CheckFriends($row_album['user_id']);
 
                 //Приватность
                 if($album_privacy[0] == 1 OR $album_privacy[0] == 2 AND $check_friend OR $user_info['user_id'] == $row_album['user_id']){
@@ -1553,7 +1553,7 @@ class AlbumsController extends Module{
 
             if($row_owner){
                 //ЧС
-                $CheckBlackList = \App\Libs\Friends::CheckBlackList($uid);
+                $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($uid);
                 if(!$CheckBlackList){
                     $author_info = explode(' ', $row_owner['user_search_pref']);
 
@@ -1573,7 +1573,7 @@ class AlbumsController extends Module{
 
                         //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                         if($user_info['user_id'] != $uid)
-                            $check_friend = \App\Libs\Friends::CheckFriends($uid);
+                            $check_friend = (new \App\Libs\Friends)->CheckFriends($uid);
 
                         foreach($sql_ as $key => $row){
 

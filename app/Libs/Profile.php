@@ -62,9 +62,6 @@ class Profile
 		if ($time >= $online_time) {
 			return $lang['online'] . $mobile_icon;
 		}
-		
 		return '';
 	}
-	
-
 }

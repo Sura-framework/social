@@ -10,6 +10,12 @@ use Sura\Libs\Registry;
 use Sura\Menu\Html;
 use Sura\Menu\Link;
 
+/**
+ * Class Menu
+ * TODO add full translate
+ *
+ * @package App\Models
+ */
 class Menu
 {
     /**
@@ -21,12 +27,13 @@ class Menu
         $go = 'Page.Go(this.href); return false;';
         return \Sura\Menu\Menu::new()
             ->addClass('navigation nav flex-column text-left pl-2')
-            ->add(Link::to('/settings/general/', $lang['settings'])->setAttribute('onClick', $go))
+            ->add(Link::to('/settings/', $lang['settings'])->setAttribute('onClick', $go))
+            ->add(Link::to('/settings/general/', $lang['settings_general'])->setAttribute('onClick', $go))
             ->add(Link::to('/settings/privacy/', $lang['settings_privacy'])->setAttribute('onClick', $go))
             ->add(Link::to('/settings/blacklist/', $lang['blacklist'])->setAttribute('onClick', $go))
             ->add(Html::raw('<hr>'))
-            ->add(Link::to('/settings/', $lang['notify'])->setAttribute('onClick', $go))
-            ->add(Html::raw('<hr>'))
+//            ->add(Link::to('/settings/', $lang['notify'])->setAttribute('onClick', $go))
+//            ->add(Html::raw('<hr>'))
             ->add(Link::to('/balance/', $lang['balance'])->setAttribute('onClick', $go))
             ->add(Link::to('/balance/invite/', $lang['friend_invite'])->setAttribute('onClick', $go))
             ->add(Link::to('/balance/invited/', $lang['friend_invited'])->setAttribute('onClick', $go))
@@ -71,21 +78,14 @@ class Menu
     public static function friends(): string
     {
         $path = explode('/', $_SERVER['REQUEST_URI']);
-        $id = $path['2'];
+//        $id = $path['2'];
         $user_info = Registry::get('user_info');
         $lang = langs::get_langs();
         $go = 'Page.Go(this.href); return false;';
 
-        $uid = str_replace('u', '', $path);
-        $uid = (int)$uid['1'];
-
-        if (is_int($uid))
-            $id = $user_info['user_id'];
-        elseif (!isset($id))
-            $id = $user_info['user_id'];
-
-        if ($user_info['user_id'] == $id)
+        if (!is_numeric($path['2']) || $path['2'] == $user_info['user_id'])
         {
+            $id = $user_info['user_id'];
             return \Sura\Menu\Menu::new()
                 ->addClass('navigation nav text-left pl-2')
                 ->add(Link::to('/friends/'.$id.'/', $lang['friends_all'])->setAttribute('onClick', $go))
@@ -96,16 +96,19 @@ class Menu
                 ->setActive($_SERVER['REQUEST_URI'])
                 ->wrap('div', ['class' => 'wrapper'])
                 ->render();
-        }
+        }else{
+            $id = $path['2'];
             return \Sura\Menu\Menu::new()
                 ->addClass('navigation nav text-left pl-2')
-                ->add(Link::to('/friends/'.$id, $lang['friends_all'])->setAttribute('onClick', $go))
+                ->add(Link::to('/friends/'.$id.'/', $lang['friends_all'])->setAttribute('onClick', $go))
                 ->add(Link::to('/friends/'.$id.'/online/', $lang['friends_online'])->setAttribute('onClick', $go))
                 ->add(Link::to('/friends/'.$id.'/common/', $lang['friends_common'])->setAttribute('onClick', $go))
                 ->add(Link::to('/u'.$id, $lang['to_page'])->setAttribute('onClick', $go))
                 ->setActive($_SERVER['REQUEST_URI'])
                 ->wrap('div', ['class' => 'wrapper'])
                 ->render();
+        }
+
     }
 
     public static function bugs(): string

@@ -29,7 +29,7 @@ return array(
     'save'=>'Сохранить',
     'all'=>'Все',
     'attach'=>'Прикрепить',
-    'to_page'=>'Редактировать',
+    'to_page'=>'На страницу',
     'and'=>'и',
     'close'=>'Закрыть',
     'online' => 'Online',
@@ -82,6 +82,7 @@ return array(
     'news_next'=>'Показать предыдущие новости',
 
     //settings
+    'settings_general'=>'Основные',
     'settings_privacy'=>'Приватность',
     'blacklist'=>'Черный список',
     'blacklist_num'=>'В Вашем черном списке находится',

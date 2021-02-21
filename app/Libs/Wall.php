@@ -478,7 +478,7 @@ class Wall
                 }
 
                 if (isset($row['author_user_id'])) {
-                    $CheckFriends = Friends::CheckFriends((int)$row['author_user_id']);
+                    $CheckFriends = (new Friends)->CheckFriends((int)$row['author_user_id']);
                 } else {
                     $CheckFriends = false;
                 }

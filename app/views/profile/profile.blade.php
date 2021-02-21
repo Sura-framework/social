@@ -389,12 +389,12 @@
                                     @if($not_all_country_block)
                                         <div class="flpodtext">@_e('country'):</div>
                                         <div class="flpodinfo">
-                                        <a href="/search/?country={country-id}" onClick="Page.Go(this.href); return false">{country}</a>
+                                        <a href="/search/?country={country-id}" onClick="Page.Go(this.href); return false">{{ $country }}</a>
                                         </div>
                                     @endif
                                     @if($not_all_city_block)
                                         <div class="flpodtext">@_e('city'):</div> <div class="flpodinfo">
-                                        <a href="/search/?country={country-id}&city={city-id}" onClick="Page.Go(this.href); return false">{city}</a>
+                                        <a href="/search/?country={country-id}&city={city-id}" onClick="Page.Go(this.href); return false">{{ $city }}</a>
                                     </div>
                                     @endif
                                     @if($not_all_birthday_block AND !$blacklist)

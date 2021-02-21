@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Exception;
-use Sura\Libs\Db;
 use Sura\Libs\Model;
 
 class Profile
@@ -95,7 +94,6 @@ class Profile
 	 */
 	public function videos_online_cnt(int $id, string $sql_privacy, string $cache_pref_videos): array
 	{
-		$db = Db::getDB();
 //        $dir = resolve('app')->get('path.base');
 		$storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
 		$cache = new \Sura\Cache\Cache($storage, 'users');

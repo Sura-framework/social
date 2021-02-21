@@ -91,7 +91,7 @@ class WallController extends Module{
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if($user_privacy['val_wall2'] == 2 OR $user_privacy['val_wall1'] == 2 OR $user_privacy['val_wall3'] == 2 AND $user_id != $for_user_id)
-                        $check_friend = \App\Libs\Friends::CheckFriends($for_user_id);
+                        $check_friend = (new \App\Libs\Friends)->CheckFriends($for_user_id);
 
                     if(!$fast_comm_id){
                         if($user_privacy['val_wall2'] == 1 OR $user_privacy['val_wall2'] == 2 AND $check_friend OR $user_id == $for_user_id)
@@ -111,7 +111,7 @@ class WallController extends Module{
                         $xPrivasyX = false;
 
                     //ЧС
-                    $CheckBlackList = \App\Libs\Friends::CheckBlackList($for_user_id);
+                    $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($for_user_id);
                     if(!$CheckBlackList){
                         if($xPrivasy){
 
@@ -1359,7 +1359,7 @@ class WallController extends Module{
             $for_user_id = (int)$request['for_user_id'];
 
             //ЧС
-            $CheckBlackList = \App\Libs\Friends::CheckBlackList($for_user_id);
+            $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($for_user_id);
 
             if(!$CheckBlackList AND $for_user_id AND $last_id){
                 //Проверка на существование получателя
@@ -1622,8 +1622,8 @@ class WallController extends Module{
         $user_id = $user_info['user_id'];
 
         if($user_id !== $id){
-            $CheckBlackList = \App\Libs\Friends::CheckBlackList($row['user_id']);
-            $CheckFriends = \App\Libs\Friends::CheckFriends($row['user_id']);
+            $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($row['user_id']);
+            $CheckFriends = (new \App\Libs\Friends)->CheckFriends($row['user_id']);
         }else{
             $CheckBlackList = false;
             $CheckFriends = false;
@@ -1712,7 +1712,7 @@ class WallController extends Module{
 
                 if($row['user_wall_num'] > 0){
                     //ЧС
-                    $CheckBlackList = \App\Libs\Friends::CheckBlackList($id);
+                    $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($id);
                     if(!$CheckBlackList){
 
                         if($user_privacy['val_wall1'] == 1 OR $user_privacy['val_wall1'] == 2 AND $CheckFriends OR $user_id == $id)

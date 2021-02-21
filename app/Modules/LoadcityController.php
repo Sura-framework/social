@@ -26,5 +26,7 @@ class LoadcityController extends Module{
         }
 
         echo '<script type="text/javascript">$(\'#load_mini\').hide();</script>'; //!NB
+
+        return 1;
     }
 }

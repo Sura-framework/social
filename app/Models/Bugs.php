@@ -4,14 +4,23 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Sura\Libs\Date;
 use Sura\Libs\Db;
-use Sura\Libs\Gramatic;
+use Sura\Libs\Model;
 use Sura\Libs\Registry;
-use Sura\Libs\Tools;
+use Sura\Time\Date;
 
 class Bugs
 {
+
+    private \Sura\Database\Connection $database;
+
+    /**
+     * Profile constructor.
+     */
+    public function __construct()
+    {
+        $this->database = Model::getDB();
+    }
 
     public static array $status = array(
         0 => array(
@@ -186,11 +195,10 @@ class Bugs
         return $response;
     }
 
-    public static function getData(array $sql_): array
+    public function getData(array $sql_): array
     {
         $user_info = Registry::get('user_info');
         $user_id = $user_info['user_id'];
-        $db = Db::getDB();
 
         if ($user_info['user_group'] < 5){
             $moderator = true;
@@ -202,9 +210,9 @@ class Bugs
 
             $sql_[$key]['title'] = stripslashes($row['title']);
             $sql_[$key]['text'] = stripslashes($row['text']);
-            $sql_[$key]['date'] = Date::megaDate(Tools::date_convert($row['date'], 'U') );
-            $sql_[$key]['add_date'] = Date::megaDate(Tools::date_convert($row['add_date'], 'U') );
-            $sql_[$key]['datetime'] = Tools::date_convert($row['add_date'], 'Y-m-d H:i:s');
+            $sql_[$key]['date'] = Date::megaDate((int)Date::date_convert($row['date'], 'U'));
+            $sql_[$key]['add_date'] = Date::megaDate((int)Date::date_convert($row['add_date'], 'U'));
+            $sql_[$key]['datetime'] = Date::date_convert($row['add_date'], 'Y-m-d H:i:s');
             $sql_[$key]['id'] = $row['id'];
             $sql_[$key]['uid'] = $row['user_id'];
             $sql_[$key]['user_search_pref'] = $row['user_search_pref'];
@@ -215,7 +223,7 @@ class Bugs
 //                $sql_[$key]['delete'] = '<a href="/" onClick="bugs.Delete(\' '.$row['id'].' \'); return false;" style="color: #000000">Удалить</a>';
 //            }
             $sql_[$key]['status'] = '<span class="'.self::$status[$row['status']]['color_class'].'">'.self::$status[$row['status']]['text'].'</span>';
-            $sql_[$key]['status_bug'] = self::getStatusData($row['status']);
+            $sql_[$key]['status_bug'] = self::getStatusData((int)$row['status']);
             $sql_[$key]['name'] = $row['user_search_pref'];
 
             if ($row['user_sex'] == 1) {
@@ -230,7 +238,7 @@ class Bugs
                 $sql_[$key]['ava'] = '/images/no_ava_50.png';
             }
 
-            $comments = $db->super_query("SELECT id, author_user_id, bug_id, text, add_date, status FROM `bugs_comments` WHERE bug_id = {$row['id']}  ORDER by `add_date`", true);
+            $comments = $this->database->fetchALL("SELECT id, author_user_id, bug_id, text, add_date, status FROM `bugs_comments` WHERE bug_id = {$row['id']}  ORDER by `add_date`", true);
             foreach ($comments as $key2 => $comment){
                 if ($comment['status'] > 0){
                     $comments[$key2]['status_info'] = 'Статус изменен на '.self::$status[$comment['status']]['text'];

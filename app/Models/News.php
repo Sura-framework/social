@@ -55,11 +55,7 @@ class News
 	 */
 	public function row_type11(int $user_id, int $type): array
 	{
-//        $db = Db::getDB();
 		try {
-
-//
-			
 			if ($type == 1) {
 				$res = $this->database->fetch("SELECT user_search_pref, user_last_visit, user_logged_mobile, user_photo, user_sex, user_privacy FROM `users` WHERE user_id = ?", (array)$user_id);
 			} else {
@@ -69,10 +65,7 @@ class News
                 throw new Exception('err');
             }
 			return $res;
-//            var_dump($res);
-//            exit();
-		
-		
+
 		} catch (Exception $e) {
 			return array();
 		}
@@ -85,7 +78,6 @@ class News
 	 */
 	public function friend_info(int $user_id): array
 	{
-		$db = Db::getDB();
 		return $this->database->fetch("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$user_id}'");
 	}
 	
@@ -95,7 +87,6 @@ class News
 	 */
 	public function wall_info(int $id): array
 	{
-		$db = Db::getDB();
 		return $this->database->fetch("SELECT id, author_user_id, for_user_id, text, add_date, tell_uid, tell_date, type, public, attach, tell_comm, fast_comm_id FROM `wall` WHERE id = '{$id}'");
 	}
 	
@@ -130,7 +121,6 @@ class News
 	 */
 	public function audio_info(int $id): array
 	{
-		$db = Db::getDB();
 		return $this->database->fetch("SELECT artist, title, url FROM `audio` WHERE oid = ?", (array)$id);
 	}
 	
@@ -140,7 +130,6 @@ class News
 	 */
 	public function doc_info(int $id): array
 	{
-		$db = Db::getDB();
 		return $this->database->fetch("SELECT dname, dsize FROM `doc` WHERE did = ?", (array)$id);
 	}
 	
@@ -249,7 +238,6 @@ class News
 	 */
 	public function rec_info(int $id): array
 	{
-		$db = Db::getDB();
 		$res = $this->database->fetch("SELECT fasts_num, likes_num, likes_users, tell_uid, tell_date, type, public, attach, tell_comm FROM `wall` WHERE id = ?", (array)$id);
 		if ($res['fasts_num'] < 3) {
 			$res['fasts_num'] = '';
@@ -274,7 +262,6 @@ class News
 	 */
 	public function rec_info_groups(int $id): array
 	{
-		$db = Db::getDB();
 		$res = $this->database->fetch("SELECT fasts_num, likes_num, likes_users, attach, tell_uid, tell_date, tell_comm, public FROM `communities_wall` WHERE id = ?", (array)$id);
 		if ($res['fasts_num'] < 3) {
 			$res['fasts_num'] = '';

@@ -222,24 +222,27 @@ var Profile_edit ={
 	},
 	General: function () {
 		//Сохранение основной информации
-		var sex = $("#sex").val();
 		var day = $("#day").val();
 		var year = $("#year").val();
 		var month = $("#month").val();
 		var country = $("#country").val();
 		var city = $("#select_city").val();
-		var sex = $('#sex').val();
-		if(sex == 1)
+		const sex = $('#sex').val();
+		if(sex === 1)
+		{
 			var sp = $('#sp').val();
+		}
 		else
+		{
 			var sp = $('#sp_w').val();
-		var sp_val = $("#sp_val").val();
+		}
+		const sp_val = $("#sp_val").val();
 
 		$('#saveform_general_load').show();
 		// butloading('saveform', '55', 'disabled', '');
 		$.post('/edit/save_general/', {sex: sex, day: day, month: month, year: year, country: country, city: city, sp: sp, sp_val: sp_val}, function(data){
 			$('#saveform_general').hide();
-			if(data == 'ok'){
+			if(data.status === '1'){
 				$('#saveform_general').show();
 				$('#saveform_general').html(lang_infosave);
 			} else {

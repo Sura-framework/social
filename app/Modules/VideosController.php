@@ -633,12 +633,12 @@ class VideosController extends Module{
 
 
                 if($user_id != $get_user_id)
-                    $check_friend = \App\Libs\Friends::CheckFriends($row['owner_user_id']);
+                    $check_friend = (new \App\Libs\Friends)->CheckFriends($row['owner_user_id']);
                 else
                     $check_friend = null;//bug
 
                 //Blacklist
-                $CheckBlackList = \App\Libs\Friends::CheckBlackList($row['owner_user_id']);
+                $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($row['owner_user_id']);
 
 
                 //Приватность
@@ -1502,7 +1502,7 @@ class VideosController extends Module{
                 $get_user_id = $user_id;
 
             //ЧС
-            $CheckBlackList = \App\Libs\Friends::CheckBlackList($get_user_id);
+            $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($get_user_id);
             if(!$CheckBlackList){
 
                 //Выводи кол-во видео записей
@@ -1515,7 +1515,7 @@ class VideosController extends Module{
 
                     if($user_id != $get_user_id)
                         //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-                        $check_friend = \App\Libs\Friends::CheckFriends($get_user_id);
+                        $check_friend = (new \App\Libs\Friends)->CheckFriends($get_user_id);
 
                     //Настройки приватности
                     if($user_id == $get_user_id)

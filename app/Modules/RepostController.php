@@ -274,11 +274,11 @@ class RepostController extends Module{
                     $user_privacy = xfieldsdataload($row['user_privacy']);
 
                     //ЧС
-                    $CheckBlackList = \App\Libs\Friends::CheckBlackList($for_user_id);
+                    $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($for_user_id);
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if($user_privacy['val_msg'] == 2)
-                        $check_friend = \App\Libs\Friends::CheckFriends($for_user_id);
+                        $check_friend = (new \App\Libs\Friends)->CheckFriends($for_user_id);
 
                     if(!$CheckBlackList AND $user_privacy['val_msg'] == 1 OR $user_privacy['val_msg'] == 2 AND $check_friend)
                         $xPrivasy = 1;

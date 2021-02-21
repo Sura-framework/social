@@ -65,7 +65,7 @@ class FriendsController extends Module{
                     if(!$check_demands){
 
                         //Проверяем нетли этого юзера уже в списке друзей
-                        $check_friendlist = Friends::CheckFriends($for_user_id, $from_user_id);
+                        $check_friendlist = (new \App\Libs\Friends)->CheckFriends($for_user_id, $from_user_id);
                         if(!$check_friendlist){
                             $db->query("INSERT INTO `friends_demands` (for_user_id, from_user_id, demand_date) VALUES ('{$for_user_id}', '{$from_user_id}', NOW())");
                             Antispam::LogInsert(1, $user_info['user_id']);
@@ -319,7 +319,7 @@ class FriendsController extends Module{
 
             //Проверяем на существования юзера в списке друзей
 //            $check = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$delet_user_id}' AND subscriptions = 0");
-            $check = Friends::CheckFriends($delet_user_id, $user_id);
+            $check = (new \App\Libs\Friends)->CheckFriends($delet_user_id, $user_id);
             if($check){
                 //Удаляем друга из таблицы друзей
                 $db->query("DELETE FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$delet_user_id}' AND subscriptions = 0");
@@ -526,7 +526,7 @@ class FriendsController extends Module{
             $params['user_id'] = $get_user_id;
 
             //ЧС
-            $CheckBlackList = Friends::CheckBlackList($get_user_id);
+            $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($get_user_id);
             if(!$CheckBlackList){
 
                 if($get_user_id === $user_info['user_id']) {
@@ -907,7 +907,7 @@ class FriendsController extends Module{
             $params['user_id'] = $get_user_id;
 
             //ЧС
-            $CheckBlackList = Friends::CheckBlackList($get_user_id);
+            $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($get_user_id);
             if(!$CheckBlackList){
                 //Выводим кол-во друзей из таблицы юзеров
                 $friends_sql = $db->super_query("SELECT user_name, user_friends_num FROM `users` WHERE user_id = '{$get_user_id}'");

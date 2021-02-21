@@ -63,11 +63,11 @@ class ImController extends Module{
                     $user_privacy = xfieldsdataload($row['user_privacy']);
 
                     //ЧС
-                    $CheckBlackList = Friends::CheckBlackList($for_user_id);
+                    $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($for_user_id);
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if($user_privacy['val_msg'] == 2)
-                        $check_friend = Friends::CheckFriends($for_user_id);
+                        $check_friend = (new \App\Libs\Friends)->CheckFriends($for_user_id);
                     else{
                         $check_friend = false;
                     }
@@ -81,7 +81,7 @@ class ImController extends Module{
 
                         Antispam::LogInsert(4, $user_id, $msg.$attach_files );
 
-                        if(!Friends::CheckFriends($for_user_id))
+                        if(!(new \App\Libs\Friends)->CheckFriends($for_user_id))
                             Antispam::LogInsert(2, $user_id);
 
                         $server_time = Date::time();

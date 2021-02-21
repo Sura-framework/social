@@ -8,7 +8,6 @@ use Exception;
 use Sura\Cache\Cache;
 use Sura\Cache\Storages\MemcachedStorage;
 use Sura\Libs\Mail;
-use Sura\Libs\Profile_check;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Status;
@@ -52,6 +51,7 @@ class SettingsController extends Module{
                 if(password_verify($request['new_pass'], $request['new_pass2']) == true){
                     $pass_hash = password_hash($request['new_pass'], PASSWORD_DEFAULT);
                     $db->query("UPDATE `users` SET user_password = '{$pass_hash}' WHERE user_id = '{$user_id}'");
+
                     $status = Status::OK;
                 }else{
                     $status = Status::PASSWORD_DOESNT_MATCH;
@@ -91,31 +91,19 @@ class SettingsController extends Module{
             $user_name = Validation::textFilter($request['name']);
             $user_lastname = Validation::textFilter($request['lastname']);
 
+            $errors = 0;
+
             //Проверка имени
-            if(isset($user_name)){
-                if(strlen($user_name) >= 2){
-                    if(!preg_match("/^[a-zA-Zа-яА-Я]+$/iu", $user_name))
-                        $errors = 3;
-                    else
-                        $errors = 0;
-                } else
-                    $errors = 2;
-            } else
-                $errors = 1;
+            if (Validation::check_name($user_name) == false) {
+                $errors++;
+            }
 
             //Проверка фамилии
-            if(isset($user_lastname)){
-                if(strlen($user_lastname) >= 2){
-                    if(!preg_match("/^[a-zA-Zа-яА-Я]+$/iu", $user_lastname))
-                        $errors_lastname = 3;
-                    else
-                        $errors_lastname = 0;
-                } else
-                    $errors_lastname = 2;
-            } else
-                $errors_lastname = 1;
+            if (Validation::check_name($user_lastname) == false) {
+                $errors++;
+            }
 
-            if($errors == 0 AND $errors_lastname == 0){
+            if($errors == 0){
                 $user_name = ucfirst($user_name);
                 $user_lastname = ucfirst($user_lastname);
 
@@ -124,9 +112,7 @@ class SettingsController extends Module{
                 $cache = new Cache($storage, 'users');
                 $cache->remove($user_id.'/profile_'.$user_id);
 
-
                 $status = Status::OK;
-
             } else {
                 $status = Status::BAD;//TODO update
             }
@@ -265,7 +251,7 @@ class SettingsController extends Module{
                     $db->query("INSERT INTO `users_blacklist` SET users = '{$user_id}|{$bad_user_id}'");
 
                     //Если юзер есть в др.
-                    if(Friends::CheckFriends($bad_user_id)){
+                    if((new Friends)->CheckFriends($bad_user_id)){
                         //Удаляем друга из таблицы друзей
                         $db->query("DELETE FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$bad_user_id}' AND subscriptions = 0");
 
@@ -319,7 +305,7 @@ class SettingsController extends Module{
      */
     public function delblacklist(): int
     {
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -443,21 +429,17 @@ class SettingsController extends Module{
 
             $config = Settings::load();
 
-            //Отправляем письмо на обе почты
-//            include_once __DIR__.'/../Classes/mail.php';
-//            $mail = new \dle_mail($config);
+            $mail = new Mail($config);
 
             $request = (Request::getRequest()->getGlobal());
 
             $email = Validation::textFilter($request['email']);
 
             //Проверка E-mail
-            if(preg_match('/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?((25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.))((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i', $email))
-            {
-                $ok_email = true;
-            }
-            else {
+            if (Validation::check_email($email) == false) {
                 $ok_email = false;
+            }else{
+                $ok_email = true;
             }
 
             $row = $db->super_query("SELECT user_email FROM `users` WHERE user_id = '{$user_id}'");
@@ -469,13 +451,7 @@ class SettingsController extends Module{
                 //Удаляем все пред. заявки
                 $db->query("DELETE FROM `restore` WHERE email = '{$email}'");
 
-                $salt = "abchefghjkmnpqrstuvwxyz0123456789";
-                $rand_lost = '';
-                for($i = 0; $i < 15; $i++){
-                    $rand_lost .= $salt[rand(0, 33)];
-                }
-                $server_time = \Sura\Time\Date::time();
-                $hash = md5($server_time.$row['user_email'].rand(0, 100000).$rand_lost);
+                $hash = password_hash($row['user_email'], PASSWORD_DEFAULT);
 
                 $message = <<<HTML
                         Вы получили это письмо, так как зарегистрированы на сайте
@@ -492,18 +468,14 @@ class SettingsController extends Module{
                         проигнорируйте это письмо.С уважением,
                         Администрация {$config['home_url']}
                         HTML;
-//                $mail->send($row['user_email'], 'Изменение почтового адреса', $message);
+                $mail->send($row['user_email'], 'Изменение почтового адреса', $message);
 
                 $_IP = Request::getRequest()->getClientIP();
 
                 //Вставляем в БД код 1
                 $db->query("INSERT INTO `restore` SET email = '{$email}', hash = '{$hash}', ip = '{$_IP}'");
 
-                $salt = "abchefghjkmnpqrstuvwxyz0123456789";
-                for($i = 0; $i < 15; $i++){
-                    $rand_lost .= $salt[rand(0, 33)];
-                }
-                $hash = md5($server_time.$row['user_email'].rand(0, 300000).$rand_lost);
+                $hash = password_hash($row['user_email'], PASSWORD_DEFAULT);
 
                 $message = <<<HTML
                         Вы получили это письмо, так как зарегистрированы на сайте
@@ -520,12 +492,11 @@ class SettingsController extends Module{
                         проигнорируйте это письмо.С уважением,
                         Администрация {$config['home_url']}
                         HTML;
-//                $mail = new Mail();
-//                $mail->send($email, 'Изменение почтового адреса', $message);
+
+                $mail->send($email, 'Изменение почтового адреса', $message);
 
                 //Вставляем в БД код 2
                 $db->query("INSERT INTO `restore` SET email = '{$email}', hash = '{$hash}', ip = '{$_IP}'");
-
 
                 $status = Status::OK;
             }else{
@@ -646,7 +617,7 @@ class SettingsController extends Module{
 
             $params['date_today'] = date("d.m.y H:i:s");
 
-            $params['timezs'] = installationSelected($user_info['time_zone'], $time_list);
+            $params['timezs'] = Tools::installationSelected($user_info['time_zone'], $time_list);
 
             $params['menu'] = Menu::settings();
 

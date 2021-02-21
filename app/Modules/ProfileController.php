@@ -41,42 +41,42 @@ class ProfileController extends Module
         $params['user_id'] = $user_id;
 
         $request = (Request::getRequest()->getGlobal());
+        $config = Settings::load();
+
+        /*
+         * ID user page
+         */
+        if (isset($params['alias'])) {
+            $id = (int)$params['alias'];
+        } else {
+            $server = Request::getRequest()->server;
+
+            $path = explode('/', $server['REQUEST_URI']);
+            $id = str_replace('u', '', $path);
+            $id = (int)$id['1'];
+        }
+
+        $storage = new MemcachedStorage('localhost');
+        $cache = new Cache($storage, 'users');
+
+        $key = $id . '/profile_' . $id;
+        $value = $cache->load($key, function (&$dependencies) {
+            $dependencies[Cache::EXPIRE] = '20 minutes';
+        });
+
+        $Profile = new Profile;
+
+        if ($value == NULL) {
+            $row = $Profile->user_row($id);
+            $value = serialize($row);
+            $cache->save($key, $value);
+        } else {
+            $row = unserialize($value, $options = []);
+        }
 
         if ($logged) {
 
-            $config = Settings::load();
 
-            /*
-             * ID user page
-             */
-            if (isset($params['alias'])) {
-                $id = (int)$params['alias'];
-            } else {
-                $server = Request::getRequest()->server;
-
-                $path = explode('/', $server['REQUEST_URI']);
-                $id = str_replace('u', '', $path);
-                $id = (int)$id['1'];
-            }
-
-
-            $storage = new MemcachedStorage('localhost');
-            $cache = new Cache($storage, 'users');
-
-            $key = $id . '/profile_' . $id;
-            $value = $cache->load($key, function (&$dependencies) {
-                $dependencies[Cache::EXPIRE] = '20 minutes';
-            });
-
-            $Profile = new Profile;
-
-            if ($value == NULL) {
-                $row = $Profile->user_row($id);
-                $value = serialize($row);
-                $cache->save($key, $value);
-            } else {
-                $row = unserialize($value, $options = []);
-            }
 
             $row_online['user_last_visit'] = $row['user_last_visit'];
             $row_online['user_logged_mobile'] = $row['user_logged_mobile'];
@@ -112,8 +112,8 @@ class ProfileController extends Module
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if ($user_id != $id) {
-                        $CheckBlackList = Friends::CheckBlackList($row['user_id']);
-                        $CheckFriends = Friends::CheckFriends($row['user_id']);
+                        $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($row['user_id']);
+                        $CheckFriends = (new \App\Libs\Friends)->CheckFriends($row['user_id']);
 
                     } else {
                         $CheckBlackList = false;
@@ -371,7 +371,7 @@ class ProfileController extends Module
 
                             if ($row['user_wall_num'] > 0) {
                                 //ЧС
-                                $CheckBlackList = Friends::CheckBlackList($id);
+                                $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($id);
                                 if (!$CheckBlackList) {
 
                                     if ($user_privacy['val_wall1'] == 1 or $user_privacy['val_wall1'] == 2 and $CheckFriends or $user_id == $id)
@@ -655,8 +655,8 @@ class ProfileController extends Module
                     //                    $params['quote'] = nl2br(stripslashes($xfields_all['quote']));
                     //                    $tpl->set('{name}', $user_name_lastname_exp[0]);
                     $params['name'] = $user_name_lastname_exp[0];
-                    //                    $tpl->set('{lastname}', $user_name_lastname_exp[1]);
                     $params['lastname'] = $user_name_lastname_exp[1];
+                    //                    $tpl->set('{lastname}', $user_name_lastname_exp[1]);
 
                     //День рождение
                     $user_birthday = explode('-', $row['user_birthday']);
@@ -756,7 +756,7 @@ class ProfileController extends Module
                             $params['yes_friend'] = false;
                         }
 
-                        $CheckFriends = Friends::CheckFriends($row['user_id']);
+                        $CheckFriends = (new \App\Libs\Friends)->CheckFriends($row['user_id']);
 
                         //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                         if ($CheckFriends == true) {
@@ -785,7 +785,7 @@ class ProfileController extends Module
                         }
 
                         //Проверка естьли запрашиваемый юзер в черном списке
-                        $MyCheckBlackList = Friends::CheckBlackList($id);
+                        $MyCheckBlackList = (new \App\Libs\Friends)->CheckBlackList($id);
                         if ($MyCheckBlackList) {
                             $params['yes_blacklist_block'] = true;
                             $params['no_$server_time'] = false;
@@ -1073,9 +1073,33 @@ class ProfileController extends Module
             }
 
         } else {
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
+
+            if (isset($row)) {
+
+
+                $user_name_lastname_exp = explode(' ', $row['user_search_pref']);
+                $params['name'] = $user_name_lastname_exp[0];
+                $params['lastname'] = $user_name_lastname_exp[1];
+
+                /**
+                 * Аватарка
+                 */
+
+                $avaPREFver = '';
+                $noAvaPrf = 'no_ava.gif';
+
+                if ($row['user_photo']) {
+                    $params['ava'] = $config['home_url'] . 'uploads/users/' . $row['user_id'] . '/' . $avaPREFver . $row['user_photo'];
+                    $params['display_ava'] = 'style="display:block;"';
+                } else {
+                    $params['ava'] = '/images/' . $noAvaPrf;
+                    $params['display_ava'] = 'style="display:none;"';
+                }
+            }
+
+
+            $params['title'] = $row['user_search_pref'] . ' | Sura';
+            return view('profile.profile', $params);
         }
     }
 

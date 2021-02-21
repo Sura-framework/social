@@ -66,19 +66,6 @@ if (!function_exists('check_smartphone')) {
     }
 }
 
-if (!function_exists('installationSelected')) {
-    /**
-     * @param $id
-     * @param $options
-     * @return array|string
-     * @deprecated
-     */
-    function installationSelected($id, $options): array|string
-    {
-        return str_replace('value="' . $id . '"', 'value="' . $id . '" selected', $options);
-    }
-}
-
 if (!function_exists('xfieldsdataload')) {
     function xfieldsdataload($string): array
     {

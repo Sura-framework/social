@@ -24,15 +24,16 @@
                 <div class="mb-3">
                     <label for="sex" class="form-label">Пол:</label>
                     <select class="form-select" aria-label="Default select example"  id="sex" onChange="sp.check()">
-                        <option value="0">- Не выбрано -</option>
                         {{ $sex }}
                     </select>
                     <div id="sexHelp" class="form-text"> </div>
                 </div>
                 <div class="mb-3">
-                    <div class="[sp-all]no_display[/sp-all]" id="sp_block"><div class="texta">Семейное положение:</div>
+                    <div class="[sp-all]no_display[/sp-all] d-none" id="sp_block"><div class="texta">Семейное положение:</div>
                         <div class="padstylej">
-                            <div class="[user-m]no_display[/user-m]" id="sp_sel_m"><select id="sp" class="inpst" onChange="sp.openfriends()">
+                            <div class="[user-m]no_display[/user-m]" id="sp_sel_m">
+                                <label for="sp"></label>
+                                <select id="sp" class="inpst" onChange="sp.openfriends()">
                                     <option value="0">- Не выбрано -</option>
                                     <option value="1" [instSelect-sp-1]>Не женат</option>
                                     <option value="2" [instSelect-sp-2]>Есть подруга</option>
@@ -41,8 +42,10 @@
                                     <option value="5" [instSelect-sp-5]>Влюблён</option>
                                     <option value="6" [instSelect-sp-6]>Всё сложно</option>
                                     <option value="7" [instSelect-sp-7]>В активном поиске</option>
-                                </select></div>
-                            <div class="[user-w]no_display[/user-w]" id="sp_sel_w"><select id="sp_w" class="inpst" onChange="sp.openfriends()">
+                                </select>
+                            </div>
+                            <div class="[user-w]no_display[/user-w]" id="sp_sel_w">
+                                <select id="sp_w" class="inpst" onChange="sp.openfriends()">
                                     <option value="0">- Не выбрано -</option>
                                     <option value="1" [instSelect-sp-1]>Не замужем</option>
                                     <option value="2" [instSelect-sp-2]>Есть друг</option>
@@ -51,11 +54,12 @@
                                     <option value="5" [instSelect-sp-5]>Влюблена</option>
                                     <option value="6" [instSelect-sp-6]>Всё сложно</option>
                                     <option value="7" [instSelect-sp-7]>В активном поиске</option>
-                                </select></div>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="[sp]no_display[/sp]" id="sp_type">
+                    <div class="[sp]no_display[/sp] d-none" id="sp_type">
                         <div class="texta" id="sp_text">{{ $sp_text }}</div>
                         <div class="padstylej fl_l"><div style="margin-top:3px;margin-bottom:10px;padding-left:1px;float:left"><a href="/" id="sp_name" onClick="sp.openfriends(); return false">{{ $sp_name }}</a></div><img src="/images/close_a_wall.png" class="sp_del" onClick="sp.del()" /></div>
 
@@ -110,7 +114,7 @@
                 <button id="saveform_general1" class="btn btn-secondary"  onclick="Profile_edit.General()">Сохранить</button>
             </div>
 
-            <div class="card-body mt-3">
+            <div class="card-body mt-3 d-none">
                 <div class="row mb-3">
                     <div class="col">
                         <h5 class="card-title text-info mb-3">Контакты</h5>
@@ -124,27 +128,6 @@
 
                 <div class="err_yellow" id="info_contacts_save" style="display:none;font-weight:normal;"></div>
                 <div class="mb-3">
-                    <div class="mb-3">
-                        <label for="vk" class="form-label">vk:</label>
-                        <input type="text" class="form-control" id="vk" value="{{ $vk }}" aria-describedby="emailHelp">
-                    </div>
-                    <div class="mb-3">
-                        <label for="od" class="form-label">od:</label>
-                        <input type="text" class="form-control" id="od" value="{{ $od }}" aria-describedby="emailHelp">
-                    </div>
-                    <div class="mb-3">
-                        <label for="fb" class="form-label">fb:</label>
-                        <input type="text" class="form-control" id="fb" value="{{ $fb }}" aria-describedby="emailHelp">
-                    </div>
-                    <div class="mb-3">
-                        <label for="skype" class="form-label">skype:</label>
-                        <input type="text" class="form-control" id="skype" value="{{ $skype }}" aria-describedby="emailHelp">
-                    </div>
-                    <div class="mb-3">
-                        <label for="icq" class="form-label">icq:</label>
-                        <input type="text" class="form-control" id="icq" value="{{ $icq }}" aria-describedby="emailHelp">
-                    </div>
-
                     <div class="mb-3">
                         <label for="phone" class="form-label">Мобильный телефон:</label>
                         <input type="text" class="form-control" id="phone" value="{{ $phone }}" aria-describedby="emailHelp">
@@ -163,7 +146,7 @@
             <div class="card-body mt-3">
                 <div class="row mb-3">
                     <div class="col">
-                        <h5 class="card-title text-info mb-3">Интересы</h5>
+                        <h5 class="card-title text-info mb-3">Биография</h5>
                     </div>
                     <div class="col">
                         <div class="spinner-border load_mini float-right" role="status" id="saveform_interests_load">
@@ -173,16 +156,6 @@
                 </div>
 
                 <div class="err_yellow" id="info_interests_save" style="display:none;font-weight:normal;"></div>
-
-                <div class="mb-3">
-                    <label for="activity" class="form-label">Деятельность:</label>
-                    <textarea class="form-control" id="activity" rows="3">{{ $activity }}</textarea>
-                </div>
-
-                <div class="mb-3">
-                    <label for="interests" class="form-label">Интересы:</label>
-                    <textarea class="form-control" id="interests" rows="3">{{ $interests }}</textarea>
-                </div>
                 <div class="mb-3">
                     <label for="myinfo" class="form-label">О себе:</label>
                     <textarea class="form-control" id="myinfo" rows="3">{{ $myinfo }}</textarea>

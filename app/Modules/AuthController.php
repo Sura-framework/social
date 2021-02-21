@@ -212,9 +212,6 @@ class AuthController extends Module
                     $user_city = 0;
                 }
 
-//                $_POST['password_first'] = Validation::textFilter($_POST['password_first']);
-//                $_POST['password_second'] = Validation::textFilter($_POST['password_second']);
-
                 $password_first = Validation::textFilter($_POST['password_first']);
                 $password_second = Validation::textFilter($_POST['password_second']);
                 $user_birthday = $user_year . '-' . $user_month . '-' . $user_day;
@@ -251,7 +248,7 @@ class AuthController extends Module
                 if ($errors == 0) {
 
                     //Если email и существует то пропускаем
-                    $check_email = Register::check_email($user_email);
+                    $check_email = (new \App\Models\Register)->check_email($user_email);
                     if (!$check_email['cnt']) {
                         //$md5_pass = md5(md5($password_first));
                         $pass_hash = password_hash($password_first, PASSWORD_DEFAULT);
@@ -261,8 +258,8 @@ class AuthController extends Module
                         $user_group = '5';
 
                         if ($user_country > 0 or $user_city > 0) {
-                            $country_info = Register::country_info((int)$user_country);
-                            $city_info = Register::city_info((int)$user_city);
+                            $country_info = (new \App\Models\Register)->country_info((int)$user_country);
+                            $city_info = (new \App\Models\Register)->city_info((int)$user_city);
 
                             $user_country_city_name = $country_info['name'] . '|' . $city_info['name'];
                         }else{

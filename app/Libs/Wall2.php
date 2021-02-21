@@ -648,7 +648,7 @@ class Wall2
 				
 				//Приватность
 				$user_privacy = xfieldsdataload($row['user_privacy']);
-				$check_friend = Friends::CheckFriends((int)$row['ac_user_id']);
+				$check_friend = (new Friends)->CheckFriends((int)$row['ac_user_id']);
 				
 				//Выводим кол-во комментов, мне нравится, и список юзеров кто поставил лайки к записи если это не страница "ответов"
 				$rec_info = $News->rec_info((int)$row['obj_id']);
