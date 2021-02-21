@@ -4418,6 +4418,12 @@ ALTER TABLE `photos_mark` ADD FULLTEXT KEY `mphoto_name` (`mphoto_name`)";
   ADD PRIMARY KEY (`id`),
   ADD KEY `alt_name` (`alt_name`)";
 
+        $tableSchema[] = "ALTER TABLE `stories`
+  ADD PRIMARY KEY (`id`)";
+
+        $tableSchema[] = "ALTER TABLE `stories_feed`
+  ADD UNIQUE KEY `id` (`id`)";
+
         $tableSchema[] = "ALTER TABLE `support`
   ADD PRIMARY KEY (`id`),
   ADD KEY `suser_id` (`suser_id`),
@@ -4609,6 +4615,12 @@ ALTER TABLE `videos` ADD FULLTEXT KEY `title` (`title`)";
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `static`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
+
+        $tableSchema[] = "ALTER TABLE `stories`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
+
+        $tableSchema[] = "ALTER TABLE `stories_feed`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT";
 
         $tableSchema[] = "ALTER TABLE `support`

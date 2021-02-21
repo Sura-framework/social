@@ -8,7 +8,7 @@ use App\Models\Menu;
 use Exception;
 use Intervention\Image\ImageManager;
 use RuntimeException;
-use Sura\Libs\Date;
+use Sura\Time\Date;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
@@ -838,13 +838,13 @@ class GroupsController extends Module
             'err' => $err
         ) );
     }
-	
-	/**
-	 * Выводим информацию о пользователе которого
-	 * будем делать админом
-	 *
-	 * @throws \JsonException
-	 */
+
+    /**
+     * Выводим информацию о пользователе которого
+     * будем делать админом
+     *
+     * @throws \JsonException
+     */
     public function new_admin(): int
     {
 //        $lang = $this->get_langs();
@@ -886,12 +886,12 @@ class GroupsController extends Module
                 $status = Status::BAD_RIGHTS;
             }
         }else{
-	        $status = Status::BAD_LOGGED;
-	
+            $status = Status::BAD_LOGGED;
+
         }
-	    return _e_json(array(
-		    'status' => $status,
-	    ) );
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
@@ -1036,7 +1036,7 @@ class GroupsController extends Module
             //Проверка на админа
             $row = $db->super_query("SELECT admin, del, ban FROM `communities` WHERE id = '{$id}'");
             if(stripos($row['admin'], "u{$user_id}|") == false) {
-               //BAD_RIGHTS
+                //BAD_RIGHTS
                 return _e('err');
             }
 
@@ -1369,17 +1369,17 @@ class GroupsController extends Module
                 $params['comment'] = false;
 //                $tpl->set_block("'\\[all-comm\\](.*?)\\[/all-comm\\]'si","");
                 $params['all-comm'] = false;
-	            
+
                 $status = Status::OK;
             }else{
-	            $status = Status::BAD_RIGHTS;
+                $status = Status::BAD_RIGHTS;
             }
         }else{
-	        $status = Status::BAD_LOGGED;
+            $status = Status::BAD_LOGGED;
         }
-	    return _e_json(array(
-		    'status' => $status,
-	    ) );
+        return _e_json(array(
+            'status' => $status,
+        ) );
     }
 
     /**
@@ -2735,7 +2735,7 @@ class GroupsController extends Module
             if(!$page_cnt){
 //                $tpl->load_template('groups/invites_head.tpl');
                 if($user_info['invties_pub_num']){
-                        $params['num'] = $user_info['invties_pub_num'].' '.declOfNum($user_info['invties_pub_num'], array('приглашение', 'приглашения', 'приглашений'));
+                    $params['num'] = $user_info['invties_pub_num'].' '.declOfNum($user_info['invties_pub_num'], array('приглашение', 'приглашения', 'приглашений'));
                     $params['yes'] = true;
                     $params['no'] = false;
                 } else {
@@ -3188,7 +3188,7 @@ class GroupsController extends Module
             else {
                 $foreach = $explode_users;
             }
-                        $users = array();
+            $users = array();
             foreach($foreach as $key => $user) {
                 $user = (string)($user);
                 $p_user = $db->super_query("SELECT user_search_pref, user_photo, alias, user_last_visit FROM `users` WHERE user_id = '{$user}'");

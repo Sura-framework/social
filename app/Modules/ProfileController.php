@@ -841,7 +841,7 @@ class ProfileController extends Module
                     //Семейное положение
                     $user_sp = explode('|', $row['user_sp']);
                     if (isset($user_sp['1'])) {
-                        $rowSpUserName = $Profile->user_sp($user_sp['1']);
+                        $rowSpUserName = $Profile->user_sp((int)$user_sp['1']);
                         if ($row['user_sex'] == 1) $check_sex = 2;
                         if ($row['user_sex'] == 2) $check_sex = 1;
                         if ($rowSpUserName['user_sp'] == $user_sp['0'] . '|' . $id or $user_sp['0'] == 5 and $rowSpUserName['user_sex'] == $check_sex) {
@@ -994,13 +994,13 @@ class ProfileController extends Module
 //                    foreach ($xfields as $value) {
 //                        $preg_safe_name = preg_quote($value[0], "'");
 //                        if (empty($xfieldsdata[$value[0]])) {
-                            //                            $tpl->copy_template = preg_replace("'\\[xfgiven_{$preg_safe_name}](.*?)\\[/xfgiven_{$preg_safe_name}]'is", "", $tpl->copy_template);
+                    //                            $tpl->copy_template = preg_replace("'\\[xfgiven_{$preg_safe_name}](.*?)\\[/xfgiven_{$preg_safe_name}]'is", "", $tpl->copy_template);
 
 //                        } else {
-                            //                            $tpl->copy_template = str_replace("[xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
-                            //                            $tpl->copy_template = str_replace("[/xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
+                    //                            $tpl->copy_template = str_replace("[xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
+                    //                            $tpl->copy_template = str_replace("[/xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
 //                        }
-                        //                        $tpl->copy_template = preg_replace( "'\\[xfvalue_{$preg_safe_name}]'i", stripslashes($xfieldsdata[$value[0]]), $tpl->copy_template);
+                    //                        $tpl->copy_template = preg_replace( "'\\[xfvalue_{$preg_safe_name}]'i", stripslashes($xfieldsdata[$value[0]]), $tpl->copy_template);
 //                    }
 
                     //what? (deprecated)
