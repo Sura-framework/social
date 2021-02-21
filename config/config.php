@@ -54,7 +54,7 @@ return array(
 
     'max_photo_size' => "5000",
 
-    'photo_format' => "jpg, jpeg, jpe, png, gif",
+    'photo_format' => "jpg, jpeg, jpe, png, gif, webp",
 
     'albums_drag' => "yes",
 
@@ -96,11 +96,11 @@ return array(
 
     'dbhost' => 'localhost',
 
-    'dbname' => 'admin_sura',
+    'dbname' => 'admin',
 
-    'dbuser' => 'admin_sura',
+    'dbuser' => 'admin',
 
-    'dbpass' => 'ub2axvfg',
+    'dbpass' => 'pass',
 
     'collate' => 'utf8',
 
