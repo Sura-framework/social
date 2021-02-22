@@ -18,6 +18,7 @@ use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 use Sura\Time\Date;
+use function Sura\resolve;
 
 class AuthController extends Module
 {
@@ -162,7 +163,7 @@ class AuthController extends Module
         $request = ($requests = Request::getRequest()->getGlobal());
 
         $res = '';
-        $err = '';
+//        $err = '';
 
         //Проверяем была ли нажата кнопка, если нет, то делаем редирект на главную
         $token = $_POST['token'] . '|' . $_SERVER['REMOTE_ADDR'];
@@ -248,7 +249,7 @@ class AuthController extends Module
                 if ($errors == 0) {
 
                     //Если email и существует то пропускаем
-                    $check_email = (new \App\Models\Register)->check_email($user_email);
+                    $check_email = (new Register)->check_email($user_email);
                     if (!$check_email['cnt']) {
                         //$md5_pass = md5(md5($password_first));
                         $pass_hash = password_hash($password_first, PASSWORD_DEFAULT);
@@ -258,8 +259,8 @@ class AuthController extends Module
                         $user_group = '5';
 
                         if ($user_country > 0 or $user_city > 0) {
-                            $country_info = (new \App\Models\Register)->country_info((int)$user_country);
-                            $city_info = (new \App\Models\Register)->city_info((int)$user_city);
+                            $country_info = (new Register)->country_info((int)$user_country);
+                            $city_info = (new Register)->city_info((int)$user_city);
 
                             $user_country_city_name = $country_info['name'] . '|' . $city_info['name'];
                         }else{
@@ -381,7 +382,13 @@ class AuthController extends Module
 //                        Cache::mozg_create_folder_cache("user_{$id}");
 
                         //Директория юзеров
-                        $uploaddir = __DIR__ . '/../../public/uploads/users/';
+
+                        $dir = resolve('app')->get('path.base');
+                        $uploaddir = $dir . '/public/uploads/users/';
+
+                        if (!mkdir($concurrentDirectory = $uploaddir, 0777) && !is_dir($concurrentDirectory)) {
+                            throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+                        }
 
                         if (!mkdir($concurrentDirectory = $uploaddir . $id, 0777) && !is_dir($concurrentDirectory)) {
                             throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
@@ -425,6 +432,9 @@ class AuthController extends Module
             }
         } else {
             $status = Status::LOGGED;
+        }
+        if (!isset($res)){
+            $res = '0';
         }
         return _e(json_encode(array(
             'status' => $status,
