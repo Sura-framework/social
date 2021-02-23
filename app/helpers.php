@@ -26,6 +26,7 @@ if (!function_exists('msg_box')) {
      * @param $text
      * @param $tpl
      * @return false|string
+     * @deprecated
      */
     function msg_box(string $text, string $tpl): string|false
     {
@@ -49,6 +50,9 @@ if (!function_exists('msg_box')) {
 }
 
 if (!function_exists('check_smartphone')) {
+    /**
+     * @deprecated
+     */
     #[Pure] function check_smartphone(): bool
     {
 
@@ -67,6 +71,9 @@ if (!function_exists('check_smartphone')) {
 }
 
 if (!function_exists('xfieldsdataload')) {
+    /**
+     * @deprecated
+     */
     function xfieldsdataload($string): array
     {
         $x_fields_data = array_trim_end(explode("||", $string));
@@ -81,6 +88,11 @@ if (!function_exists('xfieldsdataload')) {
     }
 }
 
+/**
+ * @param $array
+ * @return mixed
+ * @uses xfieldsdataload()
+ */
 function array_trim_end($array)
 {
     $num = count($array);
@@ -91,6 +103,9 @@ function array_trim_end($array)
 }
 
 if (!function_exists('profileload')) {
+    /**
+     * @deprecated
+     */
     function profileload(): bool|array
     {
         $path = __DIR__ . '/../config/xfields.txt';
@@ -108,31 +123,6 @@ if (!function_exists('profileload')) {
             }
         }
         return $filecontents;
-    }
-}
-
-if (!function_exists('Hacking')) {
-    /**
-     * @deprecated
-     */
-    function Hacking()
-    {
-        $ajax = $_POST['ajax'];
-        $lang = langs::get_langs();
-
-        if ($ajax) {
-//            NoAjaxQuery();
-            echo <<<HTML
-        <script type="text/javascript">
-        document.title = '{$lang['error']}';
-        document.getElementById('speedbar').innerHTML = '{$lang['error']}';
-        document.getElementById('page').innerHTML = '{$lang['no_notes']}';
-        </script>
-        HTML;
-            die();
-        }
-//	else
-//		return header('Location: /index.php?go=none');
     }
 }
 

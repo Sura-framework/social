@@ -1101,7 +1101,7 @@ class AlbumsController extends Module{
                 $album_privacy = explode('|', $row_album['privacy']);
                 $uid = $row_album['user_id'];
                 if(!$uid) {
-                    Hacking();
+//                    Hacking();
                 }
             }
 
@@ -1415,8 +1415,9 @@ class AlbumsController extends Module{
             $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($row_album['user_id']);
             if(!$CheckBlackList){
                 $album_privacy = explode('|', $row_album['privacy']);
-                if(!$row_album)
-                    Hacking();
+                if(!$row_album){
+//                    Hacking();
+                }
 
                 //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                 if($user_id != $row_album['user_id'])

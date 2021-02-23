@@ -17,7 +17,7 @@ class Profile
 	 * @param $user_day
 	 * @return false|string
 	 */
-	public static function user_age($user_year, $user_month, $user_day): false|string
+	public static function user_age($user_year, $user_month, $user_day): string
 	{
 		$server_time = Date::time();
 		
@@ -37,7 +37,7 @@ class Profile
 			$titles = array('год', 'года', 'лет');
 			return $user_age . ' ' . Gramatic::declOfNum($user_age, $titles);
 		} else
-			return false;
+			return '';
 	}
 	
 	/**
