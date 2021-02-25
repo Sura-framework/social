@@ -74,7 +74,7 @@ class FeedController extends Module
      * @return int
      * @throws \Throwable
      */
-    public function feed(): int
+    public function feed($params): int
     {
         if(!isset($params['title'])) {
             $params['title'] = 'Новости' . ' | Sura';

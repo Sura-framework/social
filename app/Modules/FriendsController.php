@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Modules;
 
 use App\Libs\Antispam;
-use App\Libs\Friends;
-use App\Libs\Profile;
+use App\Models\Friends;
+use App\Models\Profile;
 use App\Models\Menu;
 use JsonException;
 use Sura\Cache\Cache;
