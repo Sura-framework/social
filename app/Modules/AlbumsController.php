@@ -21,6 +21,7 @@ class AlbumsController extends Module{
     /**
      * Создание альбома
      * @throws JsonException
+     * @return int
      */
     public function create(): int
     {
@@ -111,6 +112,7 @@ class AlbumsController extends Module{
      * Страница создания альбома
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function create_page1(): int
     {
@@ -233,6 +235,7 @@ class AlbumsController extends Module{
      * @throws JsonException
      * @throws Exception
      * @throws \Throwable
+     * @return int
      */
     public function upload(): int
     {
@@ -405,6 +408,7 @@ class AlbumsController extends Module{
      * Удаление фотографии из альбома
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function del_photo(): int
     {
@@ -492,6 +496,7 @@ class AlbumsController extends Module{
      * Установка новой обложки для альбома
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function set_cover(): int
     {
@@ -534,6 +539,7 @@ class AlbumsController extends Module{
     /**
      * Сохранение описания к фотографии
      * @throws JsonException
+     * @return int
      */
     public function save_descr(): int
     {
@@ -573,6 +579,7 @@ class AlbumsController extends Module{
     /**
      * Страница редактирование фотографии
      * @throws JsonException
+     * @return int
      */
     public function editphoto(): int
     {
@@ -609,6 +616,7 @@ class AlbumsController extends Module{
      * Сохранение сортировки альбомов
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function save_pos_albums(): int
     {
@@ -663,6 +671,7 @@ class AlbumsController extends Module{
      * Сохранение сортировки фотографий
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function save_pos_photos(): int
     {
@@ -722,8 +731,7 @@ class AlbumsController extends Module{
 
     /**
      * Страница редактирование альбома
-     * @return string
-     * @throws Exception
+     * @return int
      */
     public function edit_page(): int
     {
@@ -765,6 +773,7 @@ class AlbumsController extends Module{
      * Сохранение настроек альбома
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function save_album(): int
     {
@@ -901,6 +910,7 @@ class AlbumsController extends Module{
 
     /**
      * Страница всех фотографий юзера, для прикрепления своей фотки кому-то на стену
+     * @return int
      */
     public function all_photos_box(): int
     {
@@ -970,6 +980,7 @@ class AlbumsController extends Module{
      * Удаление альбома
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function del_album(): int
     {
@@ -1360,8 +1371,7 @@ class AlbumsController extends Module{
 
     /**
      * Просмотр альбома
-     * @return string
-     * @throws Exception
+     * @return int
      */
     public function view(): int
     {
@@ -1524,8 +1534,7 @@ class AlbumsController extends Module{
 
     /**
      *  Просмотр всех альбомов юзера
-     * @return string
-     * @throws Exception
+     * @return int
      */
     public function index(): int
     {
