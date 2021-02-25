@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Sura\Libs\Db;
+use Sura\Database\Connection;
 use Sura\Libs\Model;
 use Sura\Libs\Registry;
 use Sura\Time\Date;
@@ -12,7 +12,7 @@ use Sura\Time\Date;
 class Bugs
 {
 
-    private \Sura\Database\Connection $database;
+    private Connection $database;
 
     /**
      * Profile constructor.
