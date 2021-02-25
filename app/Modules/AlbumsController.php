@@ -134,7 +134,7 @@ class AlbumsController extends Module{
 
             if(isset($name) AND !empty($name)){
 
-                //Выводи кол-во альбомов у юзера
+                /** Выводи кол-во альбомов у юзера $row */
                 $row = $db->super_query("SELECT user_albums_num FROM `users` WHERE user_id = '{$user_info['user_id']}'");
                 $config = Settings::load();
                 if($row['user_albums_num'] < $config['max_albums']){
