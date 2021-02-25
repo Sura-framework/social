@@ -495,11 +495,9 @@ class AlbumsController extends Module{
      */
     public function set_cover(): int
     {
-//        $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-//        $lang = $this->get_langs();
 
         $request = (Request::getRequest()->getGlobal());
 
