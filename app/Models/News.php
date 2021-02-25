@@ -6,6 +6,7 @@ namespace App\Models;
 
 
 use Exception;
+use Sura\Database\Connection;
 use Sura\Libs\Db;
 use Sura\Libs\Model;
 
@@ -16,7 +17,7 @@ class News
 	 * @var Db|null
 	 */
 	private static ?Db $db;
-	private \Sura\Database\Connection $database;
+	private Connection $database;
 	
 	public function __construct()
 	{
