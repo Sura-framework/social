@@ -51,8 +51,8 @@ class Profile
 		$config = Settings::load();
 		$server_time = (int)$_SERVER['REQUEST_TIME'];
 		$online_time = $server_time - $config['online_time'];
-		
-		//Если человек сидит с мобильнйо версии
+
+		/** Если человек сидит с мобильнйо версии */
 		if ($mobile) {
 			$mobile_icon = '<img src="/images/spacer.gif" class="mobile_online"  alt=""/>';
 		} else {
