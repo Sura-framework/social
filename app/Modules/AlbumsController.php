@@ -550,7 +550,7 @@ class AlbumsController extends Module{
 
             $id = (int)$request['id'];
             $user_id = $user_info['user_id'];
-            $descr = Validation::ajax_utf8(Validation::textFilter($request['descr']));
+            $descr = Validation::textFilter($request['descr']);
 
             //Выводим фотку из БД, если она есть
             $row = $db->super_query("SELECT id FROM `photos` WHERE id = '{$id}' AND user_id = '{$user_id}'");
