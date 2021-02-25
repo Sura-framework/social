@@ -6,17 +6,16 @@ namespace App\Libs;
 
 use Sura\Cache\Cache;
 use Sura\Cache\Storages\MemcachedStorage;
-use Sura\Libs\Db;
+use Sura\Database\Connection;
 use Sura\Libs\Langs;
 use Sura\Libs\Model;
 use Sura\Libs\Registry;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
-use function PHPUnit\Framework\exactly;
 
 class Support
 {
-    private \Sura\Database\Connection $database;
+    private Connection $database;
 
     /**
      * Profile constructor.

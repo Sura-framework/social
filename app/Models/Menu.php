@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-
 use Sura\Libs\Langs;
 use Sura\Libs\Registry;
 use Sura\Menu\Html;

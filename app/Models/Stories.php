@@ -3,11 +3,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Sura\Database\Connection;
 use Sura\Libs\Model;
 
 class Stories
 {
-    private \Sura\Database\Connection $database;
+    private Connection $database;
 
     /**
      * Profile constructor.

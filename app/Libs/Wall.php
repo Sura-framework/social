@@ -3,15 +3,11 @@ declare(strict_types=1);
 
 namespace App\Libs;
 
-
-use App\Models\News;
 use App\Models\Profile;
-use Sura\Time\Date;
 use Sura\Libs\Db;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
-use Sura\Libs\Tools;
 
 class Wall
 {

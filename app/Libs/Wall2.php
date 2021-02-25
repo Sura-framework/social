@@ -8,7 +8,6 @@ use App\Models\News;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
-use Sura\Libs\Tools;
 
 class Wall2
 {
