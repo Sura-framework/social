@@ -537,11 +537,9 @@ class AlbumsController extends Module{
      */
     public function save_descr(): int
     {
-//        $tpl = Registry::get('tpl');
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-//        $lang = $this->get_langs();
 
         Tools::NoAjaxRedirect();
 
@@ -557,7 +555,7 @@ class AlbumsController extends Module{
             if($row){
                 $db->query("UPDATE `photos` SET descr = '{$descr}' WHERE id = '{$id}' AND user_id = '{$user_id}'");
 
-                //Ответ скрипта
+                //TODO Ответ скрипта
 //                echo stripslashes(Validation::myBr(htmlspecialchars(Validation::ajax_utf8(trim($request['descr'])))));
 
                 $status = Status::OK;
