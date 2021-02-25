@@ -67,21 +67,17 @@ class AlbumsController extends Module{
 
 //                    mozg_mass_clear_cache_file("user_{$user_info['user_id']}/albums|user_{$user_info['user_id']}/albums_all|user_{$user_info['user_id']}/albums_friends|user_{$user_info['user_id']}/albums_cnt_friends|user_{$user_info['user_id']}/albums_cnt_all|user_{$user_info['user_id']}/profile_{$user_info['user_id']}");
                     if($sql_){
-//                        echo '/albums/add/'.$id;
                         $status = Status::OK;
                         $data = '/albums/add/'.$id;
                     }else{
-//                        echo 'no';
                         $status = Status::BAD;
                         $data = null;
                     }
                 } else{
-//                    echo 'max';
                     $status = Status::BIG_SIZE;
                     $data = null;
                 }
             } else{
-//                echo 'no_name';
                 $status = Status::NOT_DATA;
                 $data = null;
             }
