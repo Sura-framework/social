@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Libs;
+namespace App\Models;
 
 use Sura\Libs\Gramatic;
 use Sura\Libs\Langs;
@@ -11,12 +11,12 @@ use Sura\Time\Date;
 
 class Profile
 {
-	/**
-	 * @param $user_year
-	 * @param $user_month
-	 * @param $user_day
-	 * @return false|string
-	 */
+    /**
+     * @param $user_year
+     * @param $user_month
+     * @param $user_day
+     * @return string
+     */
 	public static function user_age($user_year, $user_month, $user_day): string
 	{
 		$server_time = Date::time();
