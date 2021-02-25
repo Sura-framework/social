@@ -8,6 +8,8 @@ use App\Libs\Antispam;
 use App\Models\Bugs;
 use App\Models\Menu;
 use Intervention\Image\ImageManager;
+use JsonException;
+use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
 use Sura\Libs\Status;
 use Sura\Libs\Tools;
@@ -19,7 +21,7 @@ class BugsController extends Module
 
     /**
      * @return int
-     * @throws \JsonException
+     * @throws JsonException
      */
     public function add_box(): int
     {
@@ -66,14 +68,13 @@ class BugsController extends Module
             $file = Validation::textFilter($request['file']);
 
             if (!$file) {
-//            die();//////}
                 $file = '';
             }
 
             $user_info = $this->user_info();
             $user_id = $user_info['user_id'];
 
-            $server_time = \Sura\Time\Date::time();
+            $server_time = Date::time();
             $date = Date::date_convert($server_time, 'Y-m-d H:i:s');
 
             $row = $db->query("INSERT INTO `bugs` (uids, title, text, date, add_date, images) VALUES ('{$user_id}', '{$title}', '{$text}', '{$date}','{$date}', '{$file}')");
@@ -119,7 +120,7 @@ class BugsController extends Module
 //                $user_info = $this->user_info();
 //                $user_id = $user_info['user_id'];
 
-                $server_time = \Sura\Time\Date::time();
+                $server_time = Date::time();
                 $date = Date::date_convert($server_time, 'Y-m-d H:i:s');
 
                 $row = $db->query("INSERT INTO `bugs_comments` (author_user_id, text, add_date, status, bug_id) VALUES ('{$user_id}', '{$text}', '{$date}', '{$status}', '{$bug_id}')");
@@ -140,15 +141,15 @@ class BugsController extends Module
 
     /**
      * @return int
-     * @throws \JsonException
+     * @throws JsonException
      */
     public function load_img(): int
     {
 
 
         $image_tmp = $_FILES['uploadfile']['tmp_name'];
-        $image_name = totranslit($_FILES['uploadfile']['name']);
-        $server_time = \Sura\Time\Date::time();
+        $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']);
+        $server_time = Date::time();
         $image_rename = substr(md5($server_time + rand(1, 100000)), 0, 20);
         $image_size = $_FILES['uploadfile']['size'];
         $exp = explode(".", $image_name);
@@ -213,7 +214,7 @@ class BugsController extends Module
     }
 
     /**
-     * @throws \JsonException
+     * @throws JsonException
      */
     public function delete(): int
     {
@@ -388,7 +389,7 @@ class BugsController extends Module
 
     /**
      * @return int
-     * @throws \JsonException
+     * @throws JsonException
      */
     public function view(): int
     {
