@@ -51,6 +51,7 @@ class BugsController extends Module
     /**
      *
      * @throws \Exception
+     * @return int
      */
     public function create(): int
     {
@@ -92,6 +93,7 @@ class BugsController extends Module
     /**
      *
      * @throws \Exception
+     * @return int
      */
     public function create_comment(): int
     {
@@ -214,6 +216,7 @@ class BugsController extends Module
 
     /**
      * @throws JsonException
+     * @return int
      */
     public function delete(): int
     {
