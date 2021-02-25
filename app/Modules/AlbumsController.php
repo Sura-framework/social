@@ -24,7 +24,7 @@ class AlbumsController extends Module{
      */
     public function create(): int
     {
-        $lang = $this->get_langs();
+//        $lang = $this->get_langs();
 
         $db = $this->db();
         $user_info = $this->user_info();
