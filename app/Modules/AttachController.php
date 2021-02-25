@@ -177,7 +177,7 @@ class AttachController extends Module{
 
                             //Результат для ответа
 //                            echo $image_rename.$res_type;
-                            $status = Status::TTT;
+                            $status = Status::OK;
                             $img = $image_rename.$res_type;
                         } else{
                             $img = '';
