@@ -612,12 +612,10 @@ class AlbumsController extends Module{
      */
     public function save_pos_albums(): int
     {
-//        $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
         $user_id = $user_info['user_id'];
         $logged = $this->logged();
-//        $lang = $this->get_langs();
 
         Tools::NoAjaxRedirect();
 
