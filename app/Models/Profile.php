@@ -28,16 +28,19 @@ class Profile
 		$current_str = strtotime($current_year . '-' . $current_month . '-' . $current_day);
 		$current_user = strtotime($current_year . '-' . $user_month . '-' . $user_day);
 		
-		if ($current_str >= $current_user)
-			$user_age = $current_year - $user_year;
-		else
-			$user_age = $current_year - $user_year - 1;
+		if ($current_str >= $current_user) {
+            $user_age = $current_year - $user_year;
+        }
+		else {
+            $user_age = $current_year - $user_year - 1;
+        }
 		
-		if ($user_month and $user_day) {
+		if ($user_month && $user_day) {
 			$titles = array('год', 'года', 'лет');
 			return $user_age . ' ' . Gramatic::declOfNum($user_age, $titles);
-		} else
-			return '';
+		} else {
+            return '';
+        }
 	}
 	
 	/**
