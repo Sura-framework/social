@@ -34,7 +34,7 @@ class AttachController extends Module{
             $upload_dir = __DIR__."/../../public/uploads/attach/{$user_id}/";
             if(!is_dir($upload_dir)){
                 if (!mkdir($upload_dir, 0777) && !is_dir($upload_dir)) {
-//                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $upload_dir));
+                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $upload_dir));
                 }
 //                @chmod($upload_dir, 0777);
             }
@@ -87,6 +87,7 @@ class AttachController extends Module{
                             'url' => $img_url,
                             'user' => $user_id,
                         );
+                        //FIXME
                         $status = Status::TTT;
                     } else{
                         $res = '';
@@ -294,7 +295,7 @@ class AttachController extends Module{
 
             $request = (Request::getRequest()->getGlobal());
 
-            $text = Validation::ajax_utf8(Validation::textFilter($request['text']));
+            $text = Validation::textFilter($request['text']);
             $purl = $db->safesql(Gramatic::totranslit($request['purl']));
 
             //Проверка на существования фотки в таблице PREFIX_attach

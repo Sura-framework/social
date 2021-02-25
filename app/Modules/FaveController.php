@@ -120,7 +120,7 @@ class FaveController extends Module{
         if($logged){
             $user_id = $user_info['user_id'];
 
-            $request = (Request::getRequest()->getGlobal());
+            $request = Request::getRequest()->getGlobal();
 
             if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 70;

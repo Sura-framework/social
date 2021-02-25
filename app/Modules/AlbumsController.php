@@ -5,6 +5,8 @@ namespace App\Modules;
 use Exception;
 use Intervention\Image\ImageManager;
 use JsonException;
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
@@ -20,7 +22,8 @@ class AlbumsController extends Module{
      * Создание альбома
      * @throws JsonException
      */
-    public function create(){
+    public function create(): int
+    {
         $lang = $this->get_langs();
 
         $db = $this->db();
@@ -32,8 +35,8 @@ class AlbumsController extends Module{
         $request = (Request::getRequest()->getGlobal());
 
         if ($logged){
-            $name = Validation::ajax_utf8(Validation::textFilter($request['name'], 25000, true));
-            $descr = Validation::ajax_utf8(Validation::textFilter($request['descr']));
+            $name = Validation::textFilter($request['name'], 25000, true);
+            $descr = Validation::textFilter($request['descr']);
             $privacy = (int)$request['privacy'];
             $privacy_comm = (int)($request['privacy_comm']);
             if($privacy <= 0 OR $privacy > 3) {
@@ -125,8 +128,8 @@ class AlbumsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $name = Validation::ajax_utf8(Validation::textFilter($request['name'], 25000, true));
-            $descr = Validation::ajax_utf8(Validation::textFilter($request['descr']));
+            $name = Validation::textFilter($request['name'], 25000, true);
+            $descr = Validation::textFilter($request['descr']);
             $privacy = (int)($request['privacy']);
             $privacy_comm = (int)($request['privacy_comm']);
             if($privacy <= 0 OR $privacy > 3) $privacy = 1;
@@ -149,8 +152,8 @@ class AlbumsController extends Module{
                     $id = $db->insert_id();
                     $db->query("UPDATE `users` SET user_albums_num = user_albums_num+1 WHERE user_id = '{$user_info['user_id']}'");
 
-                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $storage = new MemcachedStorage('localhost');
+                    $cache = new Cache($storage, 'users');
                     $cache->remove("{$user_info['user_id']}/albums");
                     $cache->remove("{$user_info['user_id']}/albums_all");
                     $cache->remove("{$user_info['user_id']}/albums_friends");
@@ -181,12 +184,12 @@ class AlbumsController extends Module{
             'status' => $status,
         ) );
     }
-	
-	/**
-	 * Страница добавление фотографий в альбом
-	 * @return bool
-	 * @throws JsonException
-	 */
+
+    /**
+     * Страница добавление фотографий в альбом
+     * @return int
+     * @throws JsonException
+     */
     public function add(): int
     {
 //        $tpl = Registry::get('tpl');
@@ -351,8 +354,8 @@ class AlbumsController extends Module{
                                 $photos_num = null; // bug !!!
 
 
-                                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                                $cache = new \Sura\Cache\Cache($storage, 'users');
+                                $storage = new MemcachedStorage('localhost');
+                                $cache = new Cache($storage, 'users');
 
                                 //Удаляем кеш позиций фотографий
                                 if(!$photos_num)
@@ -458,8 +461,8 @@ class AlbumsController extends Module{
                 $db->query("UPDATE `albums` SET photo_num = photo_num-1, comm_num = comm_num-{$row['comm_num']} {$set_cover} WHERE aid = '{$row['album_id']}'");
 
                 //Чистим кеш
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
 
                 $cache->remove("{$user_id}/albums");
                 $cache->remove("{$user_id}/albums_all");
@@ -516,8 +519,8 @@ class AlbumsController extends Module{
                 $db->query("UPDATE `albums` SET cover = '{$row['photo_name']}' WHERE aid = '{$row['album_id']}'");
 
                 //Чистим кеш
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 $cache->remove("{$user_id}/albums");
                 $cache->remove("{$user_id}/albums_all");
                 $cache->remove("{$user_id}/albums_friends");
@@ -645,8 +648,8 @@ class AlbumsController extends Module{
 		            }
 		
 		            //Чистим кеш
-		            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-		            $cache = new \Sura\Cache\Cache($storage, 'users');
+		            $storage = new MemcachedStorage('localhost');
+		            $cache = new Cache($storage, 'users');
 		            $cache->remove("{$user_id}/albums");
 		            $cache->remove("{$user_id}/albums_all");
 		            $cache->remove("{$user_id}/albums_friends");
@@ -705,8 +708,8 @@ class AlbumsController extends Module{
 //                    Cache::mozg_create_cache('
 //                    user_'.$user_info['user_id'].'/position_photos_album_'.$row['album_id'], $photo_info);
 
-                        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                        $cache = new \Sura\Cache\Cache($storage, 'users');
+                        $storage = new MemcachedStorage('localhost');
+                        $cache = new Cache($storage, 'users');
                         $key = "{$user_id}/position_photos_album_{$row['album_id']}";
                         $value = $photo_info;
                         $cache->save($key, $value);
@@ -806,8 +809,8 @@ class AlbumsController extends Module{
                     echo stripslashes($name).'|#|||#row#|||#|'.stripslashes($descr);
 
 
-                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $storage = new MemcachedStorage('localhost');
+                    $cache = new Cache($storage, 'users');
                     $cache->remove("{$user_id}/albums");
                     $cache->remove("{$user_id}/albums_all");
                     $cache->remove("{$user_id}/albums_friends");
@@ -1022,8 +1025,8 @@ class AlbumsController extends Module{
                 //Обновлям кол-во альбом в юзера
                 $db->query("UPDATE `users` SET user_albums_num = user_albums_num-1 WHERE user_id = '{$user_id}'");
 
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 //Удаляем кеш позиций фотографий и кеш профиля
                 $cache->remove("{$row['user_id']}/position_photos_album_{$row['aid']}");
                 $cache->remove("{$user_info['user_id']}/profile_{$user_info['user_id']}");

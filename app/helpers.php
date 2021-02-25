@@ -72,6 +72,8 @@ if (!function_exists('check_smartphone')) {
 
 if (!function_exists('xfieldsdataload')) {
     /**
+     * @param $string
+     * @return array
      * @deprecated
      */
     function xfieldsdataload($string): array
@@ -93,7 +95,7 @@ if (!function_exists('xfieldsdataload')) {
  * @return mixed
  * @uses xfieldsdataload()
  */
-function array_trim_end($array)
+function array_trim_end($array): mixed
 {
     $num = count($array);
     --$num;

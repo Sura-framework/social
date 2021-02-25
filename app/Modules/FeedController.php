@@ -5,6 +5,7 @@ namespace App\Modules;
 use App\Libs\Wall;
 use App\Libs\Wall2;
 use App\Models\News;
+use App\Models\Stories;
 use Exception;
 use Sura\Libs\Request;
 use Sura\Libs\Status;
@@ -90,7 +91,7 @@ class FeedController extends Module
 
             $user_info = $this->user_info();
             $user_id = $user_info['user_id'];
-            $params['stories'] = (new \App\Models\Stories)->all($user_id);
+            $params['stories'] = (new Stories)->all($user_id);
             $params['user_id'] = $user_id;
 
             //Сообщения
