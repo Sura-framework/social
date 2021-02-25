@@ -10,6 +10,7 @@ use Sura\Libs\Db;
 use Sura\Libs\Langs;
 use Sura\Libs\Model;
 use Sura\Libs\Registry;
+use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 use function PHPUnit\Framework\exactly;
 
@@ -66,10 +67,10 @@ class Support
         }
 
         return '
-        <script src="' . $url . '/js/' . $jquery . '?=' . $v . '"></script>
-    <script src="' . $url . '/js/' . $lang . '/lang.js?=' . $v . '"></script>
-    <script src="' . $url . '/js/main.js?=' . $v . '"></script>
-    <script src="' . $url . '/js/auth.js?=' . $v . '"></script>';
+            <script src="' . $url . '/js/' . $jquery . '?=' . $v . '"></script>
+            <script src="' . $url . '/js/' . $lang . '/lang.js?=' . $v . '"></script>
+            <script src="' . $url . '/js/main.js?=' . $v . '"></script>
+            <script src="' . $url . '/js/auth.js?=' . $v . '"></script>';
     }
 
     /**
@@ -87,7 +88,7 @@ class Support
     public static function theme(): string
     {
         if (!isset($_COOKIE['theme'])) {
-            \Sura\Libs\Tools::set_cookie("theme", '0', 30);
+            Tools::set_cookie("theme", '0', 30);
             return '';
         }
 
@@ -210,7 +211,6 @@ class Support
         if (isset($_GET['query'])) {
             return Validation::strip_data(urldecode($_GET['query']));
         }
-
         return '';
     }
 
