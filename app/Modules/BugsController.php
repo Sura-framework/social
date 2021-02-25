@@ -12,7 +12,6 @@ use JsonException;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
 use Sura\Libs\Status;
-use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 use Sura\Time\Date;
 
@@ -274,7 +273,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id  {$where} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
 
         if ($sql_) {
-            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
+            $params['bugs'] = (new Bugs)->getData($sql_);
         }
         $params['menu'] = Menu::bugs();
 //        $tpl->load_template('bugs/head.tpl');
@@ -307,7 +306,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id  {$where} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
 
         if ($sql_) {
-            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
+            $params['bugs'] = (new Bugs)->getData($sql_);
         }
         $params['menu'] = Menu::bugs();
 //        $tpl->load_template('bugs/head.tpl');
@@ -339,7 +338,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id  {$where} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
 
         if ($sql_) {
-            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
+            $params['bugs'] = (new Bugs)->getData($sql_);
         }
         $params['menu'] = Menu::bugs();
 //        $tpl->load_template('bugs/head.tpl');
@@ -376,7 +375,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id  {$where} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", 1);
 
         if ($sql_) {
-            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
+            $params['bugs'] = (new Bugs)->getData($sql_);
         }
 //        $tpl->load_template('bugs/head.tpl');
 //        $tpl->set('{load}', $tpl->result['bugs']);
@@ -405,7 +404,7 @@ class BugsController extends Module
 //        $bugs = $db->super_query("SELECT admin_id, admin_text FROM `bugs` WHERE admin_id = '{$sql_['user_id']}'");
 
         if ($sql_) {
-            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
+            $params['bugs'] = (new Bugs)->getData($sql_);
             $status = Status::OK;
         }else{
             $status = Status::NOT_FOUND;
@@ -458,7 +457,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.id = '{$id}' AND tb1.uids = tb2.user_id", true);
 //        $bugs = $db->super_query("SELECT admin_id, admin_text FROM `bugs` WHERE admin_id = '{$sql_['user_id']}'");
         if ($sql_) {
-            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
+            $params['bugs'] = (new Bugs)->getData($sql_);
         }
         $params['menu'] = Menu::bugs();
         return view('bugs.view_page', $params);
@@ -488,7 +487,7 @@ class BugsController extends Module
         $sql_ = $db->super_query("SELECT tb1.*, tb2.user_id, user_search_pref, user_photo, user_sex FROM `bugs` tb1, `users` tb2 WHERE tb1.uids = tb2.user_id {$where_sql} {$where_cat} ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_num}", true);
 
         if ($sql_) {
-            $params['bugs'] = (new \App\Models\Bugs)->getData($sql_);
+            $params['bugs'] = (new Bugs)->getData($sql_);
         }
 //        $query = Validation::strip_data(urldecode($request['query']));
 //        Tools::navigation($page_cnt, $limit_num, '/index.php'.$query.'&page_cnt=');
