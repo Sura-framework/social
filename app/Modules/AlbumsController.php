@@ -431,8 +431,8 @@ class AlbumsController extends Module{
                 $del_dir = __DIR__.'/../../public/uploads/users/'.$user_id.'/albums/'.$row['album_id'].'/';
 
                 //Удаление фотки с сервера
-                @unlink($del_dir.'c_'.$row['photo_name']);
-                @unlink($del_dir.$row['photo_name']);
+                unlink($del_dir.'c_'.$row['photo_name']);
+                unlink($del_dir.$row['photo_name']);
 
                 //Удаление фотки из БД
                 $db->query("DELETE FROM `photos` WHERE id = '{$id}'");
