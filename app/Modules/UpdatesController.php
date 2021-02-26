@@ -11,7 +11,7 @@ use Sura\Time\Date;
 use Sura\Libs\Status;
 use Throwable;
 
-class UpdatesController extends Module
+final class UpdatesController extends Module
 {
 
     /**

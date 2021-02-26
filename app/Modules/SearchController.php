@@ -11,7 +11,7 @@ use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 use Sura\Time\Date;
 
-class SearchController extends Module
+final class SearchController extends Module
 {
 
     /**

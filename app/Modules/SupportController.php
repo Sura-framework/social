@@ -8,7 +8,7 @@ use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
-class SupportController extends Module{
+final class SupportController extends Module{
 
     /**
      * Страница создание нового вопроса

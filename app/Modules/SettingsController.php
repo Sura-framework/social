@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace App\Modules;
 
-use App\Libs\Friends;
+use App\Models\Friends;
 use App\Models\Menu;
 use Exception;
 use Sura\Cache\Cache;
@@ -17,7 +17,7 @@ use Sura\Libs\Validation;
 use Sura\Time\Zone;
 
 
-class SettingsController extends Module{
+final class SettingsController extends Module{
 
     /**
      * Изменение пароля

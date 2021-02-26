@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Modules;
 
-use App\Libs\Friends;
+use App\Models\Friends;
 use App\Libs\Wall;
 use JetBrains\PhpStorm\NoReturn;
 use Sura\Cache\Cache;
@@ -18,7 +18,7 @@ use App\Models\Profile;
 use Sura\Time\Date;
 use Throwable;
 
-class ProfileController extends Module
+final class ProfileController extends Module
 {
 
     /**

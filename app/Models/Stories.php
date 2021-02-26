@@ -50,4 +50,8 @@ class Stories
 	{
 		return $this->database->fetch("SELECT * FROM `stories` WHERE id = '{$story_id}'");
 	}
+
+    public function all(mixed $user_id)
+    {
+    }
 }
