@@ -20,7 +20,7 @@ final class HomeController extends Module implements HomeInterface {
      * @return int
      * @throws Throwable
      */
-    public function index($params): int
+    public function index(array $params): int
     {
         if ($this->logged()){
             return (new FeedController)->feed($params);
@@ -65,7 +65,7 @@ final class HomeController extends Module implements HomeInterface {
      * @param $params
      * @return int
      */
-    public function alias($params): int
+    public function alias(array $params): int
     {
         $db = $this->db();
         $server = Request::getRequest()->server;
