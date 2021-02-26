@@ -5,11 +5,11 @@ namespace App\Contracts\Modules;
 interface HomeInterface
 {
 
-    public function index(array $params): string;
+    public function index(array $params): int;
 
-    public function login(array $params): string;
+    public function login(array $params): int;
 
-    public function Test(array $params): void;
+    public function Test(array $params): int;
 
 
 }

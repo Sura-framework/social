@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Modules;
 
+use App\Contracts\Modules\HomeInterface;
 use JsonException;
 use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Throwable;
 
-class HomeController extends Module{
-    public int $counter;
+final class HomeController extends Module implements HomeInterface {
+     public int $counter;
 
     /**
      * Главная страница
@@ -58,16 +59,6 @@ class HomeController extends Module{
     }
 
     /**
-     * Test page
-     *
-     */
-    public function Test(): int
-    {
-
-        return 1;
-    }
-
-    /**
      * Alias
      * (Profile OR Group)
      *
@@ -112,8 +103,17 @@ class HomeController extends Module{
             $foo = new $class();
             $string =  call_user_func_array(array($foo, $action = 'Index'), $params);
             return _e((string)$string);
-        }else{
-            return 0;
         }
+
+        return 0;
+    }
+
+    /**
+     * @param array $params
+     * @return int
+     */
+    public function login(array $params): int
+    {
+        // TODO: Implement login() method.
     }
 }
