@@ -11,6 +11,7 @@ use Sura\Libs\Tools;
 use Throwable;
 
 final class HomeController extends Module implements HomeInterface {
+
      public int $counter;
 
     /**
@@ -115,6 +116,7 @@ final class HomeController extends Module implements HomeInterface {
     public function login(array $params): int
     {
         // TODO: Implement login() method.
+        return 1;
     }
 
     /**
@@ -124,5 +126,6 @@ final class HomeController extends Module implements HomeInterface {
     public function Test(array $params): int
     {
         // TODO: Implement Test() method.
+        return 1;
     }
 }
