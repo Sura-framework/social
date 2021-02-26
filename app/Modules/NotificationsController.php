@@ -9,7 +9,7 @@ use Sura\Libs\Request;
 use Exception;
 use Sura\Libs\Status;
 
-class NotificationsController extends Module{
+final class NotificationsController extends Module{
 
     /**
      * settings
