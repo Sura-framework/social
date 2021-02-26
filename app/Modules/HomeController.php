@@ -23,7 +23,7 @@ final class HomeController extends Module implements HomeInterface {
     public function index($params): int
     {
         if ($this->logged()){
-            return (new FeedController)->feed();
+            return (new FeedController)->feed($params);
         }else{
             $params['title'] = 'Sura';
             return view('reg', $params);
@@ -115,5 +115,14 @@ final class HomeController extends Module implements HomeInterface {
     public function login(array $params): int
     {
         // TODO: Implement login() method.
+    }
+
+    /**
+     * @param array $params
+     * @return int
+     */
+    public function Test(array $params): int
+    {
+        // TODO: Implement Test() method.
     }
 }
