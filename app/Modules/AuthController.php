@@ -258,7 +258,7 @@ class AuthController extends Module
 
                         $user_group = '5';
 
-                        if ($user_country > 0 or $user_city > 0) {
+                        if ($user_country > 0 || $user_city > 0) {
                             $country_info = (new Register)->country_info((int)$user_country);
                             $city_info = (new Register)->city_info((int)$user_city);
 
@@ -447,6 +447,7 @@ class AuthController extends Module
      *
      * @return int
      * @throws JsonException
+     * @throws \Exception
      */
     public function restore_send(): int
     {
@@ -473,9 +474,9 @@ class AuthController extends Module
                 $salt = "abchefghjkmnpqrstuvwxyz0123456789";
                 $rand_lost = '';
                 for ($i = 0; $i < 15; $i++) {
-                    $rand_lost .= $salt[rand(0, 33)];
+                    $rand_lost .= $salt[random_int(0, 33)];
                 }
-                $hash = md5($server_time . $email . rand(0, 100000) . $rand_lost . $check['user_name']);
+                $hash = md5($server_time . $email . random_int(0, 100000) . $rand_lost . $check['user_name']);
 
                 $_IP = Request::getRequest()->getClientIP();
 
