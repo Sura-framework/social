@@ -73,10 +73,10 @@ final class NotificationsController extends Module{
         if($logged){
             $request = (Request::getRequest()->getGlobal());
 
-            $settings_likes_posts = intval($request['settings_likes_posts']);
-            $settings_likes_photos = intval($request['settings_likes_photos']);
-            $settings_likes_compare = intval($request['settings_likes_compare']);
-            $settings_likes_gifts = intval($request['settings_likes_gifts']);
+            $settings_likes_posts = (int)$request['settings_likes_posts'];
+            $settings_likes_photos = (int)$request['settings_likes_photos'];
+            $settings_likes_compare = (int)$request['settings_likes_compare'];
+            $settings_likes_gifts = (int)$request['settings_likes_gifts'];
             $notifications_list = '';
             if($settings_likes_posts)
                 $notifications_list .= '|settings_likes_posts|';
