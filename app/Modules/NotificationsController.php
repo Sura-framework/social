@@ -319,10 +319,8 @@ final class NotificationsController extends Module{
                 {
                     $content .= '<div class="show_all_button" onclick="QNotifications.MoreShow();">Показать больше уведомлений</div>';
                 }
-
                 return _e_json(array('content' => $content, 'count' => $count['cnt']));
             }
-
             return _e_json(array('content' => '<p>Нет оповещений.</p>', 'count' => $count['cnt']));
         }
         return _e_json(array('content' => '<p>Нет оповещений.</p>', 'count' => 0));
