@@ -25,32 +25,38 @@ final class NotificationsController extends Module{
         $request = (Request::getRequest()->getGlobal());
 
         if($logged){
-//            $act = $request['act'];
-
-            if(stripos($user_info['notifications_list'], "settings_likes_posts|") === false)
+            if(stripos($user_info['notifications_list'], "settings_likes_posts|") === false) {
                 $settings_likes_posts = 'html_checked';
-            else
+            }
+            else {
                 $settings_likes_posts = '';
-            if(stripos($user_info['notifications_list'], "settings_likes_photos|") === false)
+            }
+            if(stripos($user_info['notifications_list'], "settings_likes_photos|") === false) {
                 $settings_likes_photos = 'html_checked';
-            else
+            }
+            else {
                 $settings_likes_photos = '';
-            if(stripos($user_info['notifications_list'], "settings_likes_compare|") === false)
+            }
+            if(stripos($user_info['notifications_list'], "settings_likes_compare|") === false) {
                 $settings_likes_compare = 'html_checked';
-            else
+            }
+            else {
                 $settings_likes_compare = '';
-            if(stripos($user_info['notifications_list'], "settings_likes_gifts|") === false)
+            }
+            if(stripos($user_info['notifications_list'], "settings_likes_gifts|") === false) {
                 $settings_likes_gifts = 'html_checked';
-            else
+            }
+            else {
                 $settings_likes_gifts = '';
+            }
 
             return _e('<div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_posts");><i class="icn icn-gray icn-like"></i><span>Оценки записей</span> <div class="html_checkbox '.$settings_likes_posts.'" id="settings_likes_posts"></div></div>
             <div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_photos");><i class="icn icn-gray icn-like"></i><span>Оценки фотографий</span> <div class="html_checkbox '.$settings_likes_photos.'" id="settings_likes_photos"></div></div>
             <div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_compare");><i class="icn icn-gray icn-like"></i><span>Оценки в дуэлях</span> <div class="html_checkbox '.$settings_likes_compare.'" id="settings_likes_compare"></div></div>
             <div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_gifts");><i class="icn icn-gray icn-gift"></i><span>Новый подарок</span> <div class="html_checkbox '.$settings_likes_gifts.'" id="settings_likes_gifts"></div></div>');
-        }else{
-            return _e('');
         }
+
+        return _e('');
     }
 
     /**
