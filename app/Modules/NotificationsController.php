@@ -6,7 +6,6 @@ namespace App\Modules;
 
 use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
-use Exception;
 use Sura\Libs\Status;
 use Sura\Time\Date;
 
