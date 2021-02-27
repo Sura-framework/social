@@ -8,6 +8,7 @@ use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
 use Exception;
 use Sura\Libs\Status;
+use Sura\Time\Date;
 
 final class NotificationsController extends Module{
 
@@ -159,8 +160,12 @@ final class NotificationsController extends Module{
                     foreach($likesUseList as $key => $likeUser){
                         if($likeUser){
                             $rowUser = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$likeUser}'");
-                            if($rowUser['user_photo']) $luAva = '/uploads/users/'.$likeUser.'/100_'.$rowUser['user_photo'];
-                            else $luAva = '/images/100_no_ava.png';
+                            if($rowUser['user_photo']) {
+                                $luAva = '/uploads/users/' . $likeUser . '/100_' . $rowUser['user_photo'];
+                            }
+                            else {
+                                $luAva = '/images/100_no_ava.png';
+                            }
                             if($row['action_type'] == 7){
                                 $a = $db->super_query("SELECT date FROM `wall_like` WHERE rec_id = '{$row['obj_id']}' and user_id = '{$likeUser}'");
                                 $row['action_time'] = $a['date'];
@@ -182,8 +187,7 @@ final class NotificationsController extends Module{
                             $params['ava'] = $luAva;
                             $params['uid'] = $likeUser;
                             $params['name'] = $rowUser['user_search_pref'];
-                            $date = \Sura\Time\Date::megaDate(strtotime($row['action_time']), 1, 1);
-                            $params['date'] = $date;
+                            $params['date'] = Date::megaDate( strtotime($row['action_time']), '1', '1');
                             //$last_date = date('d.m.Y', $row['action_time']);
                         }
                     }
@@ -230,10 +234,12 @@ final class NotificationsController extends Module{
             $last = true;
             if($last)
             {
-                if ($last_id)
+                if ($last_id) {
                     $sql_ = $db->super_query("SELECT tb1.ac_id, ac_user_id, action_text, action_time, action_type, obj_id, answer_text, link FROM `news` tb1 WHERE tb1.action_type IN (7,20,21,22) AND tb1.for_user_id = '{$user_info['user_id']}' AND tb1.ac_id < '{$last_id}' ORDER BY tb1.action_time DESC LIMIT 0, {$limit_news}", 1);
-                else
+                }
+                else {
                     $sql_ = $db->super_query("SELECT tb1.ac_id, ac_user_id, action_text, action_time, action_type, obj_id, answer_text, link FROM `news` tb1 WHERE tb1.action_type IN (7,20,21,22) AND tb1.for_user_id = '{$user_info['user_id']}' ORDER BY tb1.action_time DESC LIMIT 0, {$limit_news}", true);
+                }
 
                 /*
                 Лайки фотографий 20
@@ -257,10 +263,12 @@ final class NotificationsController extends Module{
                         if($likeUser){
                             if($cntUse < 4){
                                 $rowUser = $db->super_query("SELECT user_photo FROM `users` WHERE user_id = '{$likeUser}'");
-                                if($rowUser['user_photo'])
-                                    $luAva = '/uploads/users/'.$likeUser.'/100_'.$rowUser['user_photo'];
-                                else
+                                if($rowUser['user_photo']) {
+                                    $luAva = '/uploads/users/' . $likeUser . '/100_' . $rowUser['user_photo'];
+                                }
+                                else {
                                     $luAva = '/images/100_no_ava.png';
+                                }
                                 $rList .= '<a class="user" href="/u'.$likeUser.'" onClick="Page.Go(this.href); return false"><div><img src="'.$luAva.'" style="margin: 4px 4px 0px 0px;width: 64px;border-radius: 0;" /></div></a>';
                             }
                             $cntUse++;
@@ -321,9 +329,9 @@ final class NotificationsController extends Module{
                 }
 
                 return _e_json(array('content' => $content, 'count' => $count['cnt']));
-            }else{
-                return _e_json(array('content' => '<p>Нет оповещений.</p>', 'count' => $count['cnt']));
             }
+
+            return _e_json(array('content' => '<p>Нет оповещений.</p>', 'count' => $count['cnt']));
         }
         return _e_json(array('content' => '<p>Нет оповещений.</p>', 'count' => 0));
     }
