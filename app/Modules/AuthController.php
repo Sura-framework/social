@@ -184,32 +184,32 @@ class AuthController extends Module
                 $user_last_name = ucfirst($user_last_name);
 
                 $user_sex = (int)$_POST['sex'];
-                if ($user_sex < 0 or $user_sex > 2) {
+                if ($user_sex < 0 || $user_sex > 2) {
                     $user_sex = 0;
                 }
 
                 $user_day = (int)$_POST['day'];
-                if ($user_day < 0 or $user_day > 31) {
+                if ($user_day < 0 || $user_day > 31) {
                     $user_day = 0;
                 }
 
                 $user_month = (int)$_POST['month'];
-                if ($user_month < 0 or $user_month > 12) {
+                if ($user_month < 0 || $user_month > 12) {
                     $user_month = 0;
                 }
 
                 $user_year = (int)$_POST['year'];
-                if ($user_year < 1930 or $user_year > 2007) {
+                if ($user_year < 1930 || $user_year > 2007) {
                     $user_year = 0;
                 }
 
                 $user_country = (int)$_POST['country'];
-                if ($user_country < 0 or $user_country > 10) {
+                if ($user_country < 0 || $user_country > 10) {
                     $user_country = 0;
                 }
 
                 $user_city = (int)$_POST['city'];
-                if ($user_city < 0 or $user_city > 1587) {
+                if ($user_city < 0 || $user_city > 1587) {
                     $user_city = 0;
                 }
 
