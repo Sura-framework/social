@@ -22,8 +22,6 @@ final class NotificationsController extends Module{
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $request = (Request::getRequest()->getGlobal());
-
         if($logged){
             if(stripos($user_info['notifications_list'], "settings_likes_posts|") === false) {
                 $settings_likes_posts = 'html_checked';
