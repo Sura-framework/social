@@ -115,7 +115,7 @@ final class NotificationsController extends Module{
         if($logged){
             $request = (Request::getRequest()->getGlobal());
 
-            $id = intval($request['id']);
+            $id = (int)$request['id'];
             if($id){
                 $sql_ = $db->super_query("SELECT COUNT(*) as cnt FROM `news` WHERE ac_id = '{$id}' AND action_type IN (7,20,21,22) AND for_user_id = '{$user_info['user_id']}'");
                 if($sql_){
