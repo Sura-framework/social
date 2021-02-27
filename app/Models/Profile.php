@@ -38,10 +38,10 @@ class Profile
 		if ($user_month && $user_day) {
 			$titles = array('год', 'года', 'лет');
 			return $user_age . ' ' . Gramatic::declOfNum($user_age, $titles);
-		} else {
-            return '';
-        }
-	}
+		}
+
+        return '';
+    }
 	
 	/**
 	 * @param $time
