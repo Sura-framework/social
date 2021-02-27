@@ -78,14 +78,18 @@ final class NotificationsController extends Module{
             $settings_likes_compare = (int)$request['settings_likes_compare'];
             $settings_likes_gifts = (int)$request['settings_likes_gifts'];
             $notifications_list = '';
-            if($settings_likes_posts)
+            if($settings_likes_posts) {
                 $notifications_list .= '|settings_likes_posts|';
-            if($settings_likes_photos)
+            }
+            if($settings_likes_photos) {
                 $notifications_list .= '|settings_likes_photos|';
-            if($settings_likes_compare)
+            }
+            if($settings_likes_compare) {
                 $notifications_list .= '|settings_likes_compare|';
-            if($settings_likes_gifts)
+            }
+            if($settings_likes_gifts) {
                 $notifications_list .= '|settings_likes_gifts|';
+            }
             $db->super_query("UPDATE `users` SET notifications_list = '{$notifications_list}' WHERE user_id = '{$user_info['user_id']}'");
 
             $status = Status::OK;
