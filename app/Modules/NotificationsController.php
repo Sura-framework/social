@@ -17,8 +17,6 @@ final class NotificationsController extends Module{
      */
     public function settings(): int
     {
-//        $lang = $this->get_langs();
-//        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
@@ -184,7 +182,7 @@ final class NotificationsController extends Module{
                             $params['ava'] = $luAva;
                             $params['uid'] = $likeUser;
                             $params['name'] = $rowUser['user_search_pref'];
-                            $params['date'] = Date::megaDate( strtotime($row['action_time']), '1', '1');
+                            $params['date'] = Date::megaDate( strtotime($row['action_time']), '1', true);
                             //$last_date = date('d.m.Y', $row['action_time']);
                         }
                     }
@@ -206,12 +204,9 @@ final class NotificationsController extends Module{
      */
     public function index(): int
     {
-
         $logged = $this->logged();
         if ($logged){
             $content = '';//временно
-
-            //$lang = $this->get_langs();
             $db = $this->db();
             $user_info = $this->user_info();
 
@@ -312,7 +307,7 @@ final class NotificationsController extends Module{
                     $sql_[$key]['users'] = $rList;
 //                    $date = megaDate(strtotime($row['action_time']), 1, 1);
 //                    $sql_[$key]['date'] = $date;
-                    $sql_[$key]['date'] = Date::megaDate($row['action_time'], 1, 1);
+                    $sql_[$key]['date'] = Date::megaDate($row['action_time'], '1', true);
                     $last_date = date('d.m.Y', $row['action_time']);
                 }
 
