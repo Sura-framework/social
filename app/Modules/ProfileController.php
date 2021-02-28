@@ -166,7 +166,7 @@ final class ProfileController extends Module
                         $online_friends = $Profile->friends_online_cnt($id, $online_time);
                         //Если друзья на сайте есть то идем дальше
                         if ($online_friends['cnt']) {
-                            $sql_friends_online = $Profile->friends_online($id, (int)$online_time);
+                            $sql_friends_online = $Profile->friends_online($id, (string)$online_time);
                             foreach ($sql_friends_online as $key => $row_friends_online) {
                                 $friend_info_online = explode(' ', $row_friends_online['user_search_pref']);
                                 $sql_friends_online[$key]['user_id'] = $row_friends_online['user_id'];
@@ -737,8 +737,9 @@ final class ProfileController extends Module
                         }
                         $params['albums_num'] = $albums_count['cnt'];
                         $params['albums'] = $sql_albums;
-                    } else
+                    } else {
                         $params['albums'] = false;
+                    }
 
                     //Делаем проверки на существования запрашиваемого юзера у себя в друзьяз, заклаках, в подписка, делаем всё это если страницу смотрет другой человек
                     if ($user_id != $id) {
@@ -756,7 +757,7 @@ final class ProfileController extends Module
                             $params['yes_friend'] = false;
                         }
 
-                        $CheckFriends = (new \App\Libs\Friends)->CheckFriends($row['user_id']);
+                        $CheckFriends = (new Friends)->CheckFriends($row['user_id']);
 
                         //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                         if ($CheckFriends == true) {
@@ -785,7 +786,7 @@ final class ProfileController extends Module
                         }
 
                         //Проверка естьли запрашиваемый юзер в черном списке
-                        $MyCheckBlackList = (new \App\Libs\Friends)->CheckBlackList($id);
+                        $MyCheckBlackList = (new Friends)->CheckBlackList($id);
                         if ($MyCheckBlackList) {
                             $params['yes_blacklist_block'] = true;
                             $params['no_$server_time'] = false;
@@ -797,7 +798,7 @@ final class ProfileController extends Module
                     }
 //                    else{
 //                                 }
-                    $author_info = explode(' ', $row['user_search_pref']);
+                    $author_info = explode(' ', $row['user_search_pref'], 2);
                     $params['gram_name'] = Gramatic::gramatikName($author_info[0]);
 
                     //Стена
@@ -1052,10 +1053,12 @@ final class ProfileController extends Module
 
                         if (!$check_user_stat['cnt']) {
                             $check_stat = $db->super_query("SELECT COUNT(*) AS cnt FROM `users_stats` WHERE user_id = '{$id}' AND date = '{$stat_date}'");
-                            if ($check_stat['cnt'])
+                            if ($check_stat['cnt']) {
                                 $db->query("UPDATE `users_stats` SET users = users + 1, views = views + 1 WHERE user_id = '{$id}' AND date = '{$stat_date}'");
-                            else
+                            }
+                            else {
                                 $db->query("INSERT INTO `users_stats` SET user_id = '{$id}', date = '{$stat_date}', users = '1', views = '1', date_x = '{$stat_x_date}'");
+                            }
                             $db->query("INSERT INTO `users_stats_log` SET user_id = '{$user_info['user_id']}', date = '{$stat_date}', for_user_id = '{$id}'");
                         } else {
                             $db->query("UPDATE `users_stats` SET views = views + 1 WHERE user_id = '{$id}' AND date = '{$stat_date}'");
