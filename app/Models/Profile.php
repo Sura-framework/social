@@ -319,10 +319,10 @@ class Profile
     }
 
     /**
-     * @param $id
-     * @param $albums_privacy
+     * @param int $id
+     * @param string $albums_privacy
      * @param $cache_pref
-     * @return array|string
+     * @return array|string|null
      */
     public function row_albums(int $id, string $albums_privacy, $cache_pref): array|string|null
     {
