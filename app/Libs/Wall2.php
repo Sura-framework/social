@@ -15,6 +15,7 @@ class Wall2
     /**
      * @param array $query
      * @return array
+     * @throws \Throwable
      */
     public static function build_news(array $query): array
     {
