@@ -14,6 +14,7 @@ use Sura\Libs\Request;
 use Sura\Libs\Status;
 use Sura\Libs\Validation;
 use Sura\Time\Date;
+use Sura\Utils\FileSystem;
 
 class BugsController extends Module
 {
@@ -191,7 +192,7 @@ class BugsController extends Module
                     });
                     $image->save($upload_dir . 'c_' . $image_rename . '.webp', 90);
 
-                    unlink($upload_dir . $image_rename . $res_type);
+                    FileSystem::delete($upload_dir . $image_rename . $res_type);
                     $res_type = '.webp';
 
                     $img = ($user_id . '|' . $image_rename . $res_type);
@@ -237,8 +238,8 @@ class BugsController extends Module
                 $url_1 = __DIR__ . '/../../public/uploads/bugs/' . $row['uids'] . '/o_' . $row['images'];
                 $url_2 = __DIR__ . '/../../public/uploads/bugs/' . $row['uids'] . '/' . $row['images'];
 
-                unlink($url_1);
-                unlink($url_2);
+                FileSystem::delete($url_1);
+                FileSystem::delete($url_2);
 
                 $db->query("DELETE FROM `bugs` WHERE id = '{$id}'");
                 $status = Status::OK;

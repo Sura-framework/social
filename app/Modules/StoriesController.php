@@ -9,6 +9,7 @@ use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
+use Sura\Utils\FileSystem;
 
 class StoriesController  extends Module
 {
@@ -97,7 +98,7 @@ class StoriesController  extends Module
                         });
                         $image->save($upload_dir.$image_rename.'.webp', 75);
 
-                        unlink($upload_dir.$image_rename.$res_type);
+                        FileSystem::delete($upload_dir.$image_rename.$res_type);
                         $res_type = '.webp';
 
                         // Зачем это?
@@ -242,9 +243,9 @@ class StoriesController  extends Module
 
                 //Удаление фотки с сервера
                 if (file_exists($del_dir.$stories_file))
-                unlink($del_dir.$stories_file);
+                    FileSystem::delete($del_dir.$stories_file);
                 if (file_exists($del_dir.$stories_file2))
-                    unlink($del_dir.$stories_file2);
+                    FileSystem::delete($del_dir.$stories_file2);
 
 
                 if ($stories_count['cnt'] == 1){

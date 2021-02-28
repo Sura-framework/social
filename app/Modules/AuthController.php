@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules;
 
 
+use App\Libs\Support;
 use App\Models\Register;
 use JetBrains\PhpStorm\NoReturn;
 use JsonException;
@@ -18,6 +19,7 @@ use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 use Sura\Time\Date;
+use Sura\Utils\FileSystem;
 use function Sura\resolve;
 
 class AuthController extends Module
@@ -44,7 +46,7 @@ class AuthController extends Module
         $request = ($requests = Request::getRequest()->getGlobal());
         $token = $request['token'] . '|' . $_SERVER['REMOTE_ADDR'];
         $check_token = false;
-        if ($token == $_SESSION['_mytoken'] and $check_token == true) {
+        if ($token == $_SESSION['_mytoken'] && $check_token == true) {
             $user_token = true;
         } elseif ($check_token == false) {
             $user_token = true;
@@ -57,7 +59,7 @@ class AuthController extends Module
         $res = '';
         $logged = false;
         //Если данные поступили через пост запрос и пользователь не авторизован
-        if (isset($request['login']) and $logged == false and $user_token == true) {
+        if (isset($request['login']) && $logged == false && $user_token == true) {
             //Приготавливаем данные
 
             /** Проверка E-mail */
@@ -82,7 +84,7 @@ class AuthController extends Module
                 $check_user = $db->super_query("SELECT user_id, user_password FROM `users` WHERE user_email = '" . $email . "'");
 
                 //Если есть юзер то пропускаем
-                if ($check_user['user_password'] == true and is_array($check_user) and password_verify($password, $check_user['user_password']) == true) {
+                if ($check_user['user_password'] == true && is_array($check_user) && password_verify($password, $check_user['user_password']) == true) {
                     //Hash ID
                     $_IP = Request::getRequest()->getClientIP();
                     $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -111,7 +113,7 @@ class AuthController extends Module
 //                    return _e('ok|'.$check_user['user_id']);
                 } else {
                     header('Location: /');
-                    $status = '2 ' . $password . ' ' . $check_user['user_password'];
+//                    $status = '2 ' . $password . ' ' . $check_user['user_password'];
                     $status = Status::NOT_USER;
 //                    return _e( 'error|no_val|no_user|'.$password);
 //                    var_dump(password_verify($password, $check_user['user_password']));
@@ -143,7 +145,7 @@ class AuthController extends Module
         /**
          * Загружаем Страны
          */
-        $all_country = (new \App\Libs\Support)->allCountry();
+        $all_country = (new Support)->allCountry();
         return view('sign_up', array("title" => $title, "country" => $all_country));
     }
 
@@ -160,14 +162,14 @@ class AuthController extends Module
 
         Tools::NoAjaxRedirect();
 
-        $request = ($requests = Request::getRequest()->getGlobal());
+//        $request = ($requests = Request::getRequest()->getGlobal());
 
         $res = '';
 //        $err = '';
 
         //Проверяем была ли нажата кнопка, если нет, то делаем редирект на главную
         $token = $_POST['token'] . '|' . $_SERVER['REMOTE_ADDR'];
-        if (!$logged and $token == $_SESSION['_mytoken']) {
+        if (!$logged && $token == $_SESSION['_mytoken']) {
             //Код безопасности
             $session_sec_code = $_SESSION['s_code'];
             $sec_code = $_POST['sec_code'];
@@ -386,18 +388,9 @@ class AuthController extends Module
                         $dir = resolve('app')->get('path.base');
                         $uploaddir = $dir . '/public/uploads/users/';
 
-                        if (!mkdir($concurrentDirectory = $uploaddir, 0777) && !is_dir($concurrentDirectory)) {
-                            throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
-                        }
-
-                        if (!mkdir($concurrentDirectory = $uploaddir . $id, 0777) && !is_dir($concurrentDirectory)) {
-                            throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
-                        }
-//                        chmod($uploaddir . $id, 0777);
-                        if (!mkdir($concurrentDirectory = $uploaddir . $id . '/albums', 0777) && !is_dir($concurrentDirectory)) {
-                            throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
-                        }
-//                        chmod($uploaddir . $id . '/albums', 0777);
+                        FileSystem::createDir($uploaddir);
+                        FileSystem::createDir($uploaddir . $id);
+                        FileSystem::createDir($uploaddir . $id. '/albums/');
 
                         //Если юзер регался по реф ссылки, то начисляем рефералу 10 убм
                         if ($_SESSION['ref_id']) {
@@ -482,8 +475,6 @@ class AuthController extends Module
                     $db->query("INSERT INTO `restore` SET email = '{$request['email']}', hash = '{$hash}', ip = '{$_IP}'");
 
                     //Отправляем письмо на почту для воостановления
-//                include_once __DIR__.'/../Classes/mail.php';
-
                     $config = Settings::load();
 
                     $mail = new Mail($config);
@@ -502,6 +493,10 @@ class AuthController extends Module
 
                     $status = Status::OK;
                     $err = 'yes';
+                    return _e_json(array(
+                        'status' => $status,
+                        'err' => $err
+                    ));
                 }
             }
             $status = Status::NOT_FOUND;
