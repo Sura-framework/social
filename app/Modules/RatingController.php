@@ -5,16 +5,18 @@ namespace App\Modules;
 use Exception;
 use Sura\Libs\Status;
 use Sura\Libs\Tools;
+use Sura\Time\Date;
 
 class RatingController extends Module{
 
     /**
      * view
      *
+     * @param $params
      * @return int
      * @throws \JsonException
      */
-    public function view(): int
+    public function view($params): int
     {
         Tools::NoAjaxRedirect();
         $logged = $this->logged();
@@ -23,8 +25,12 @@ class RatingController extends Module{
             $user_info = $this->user_info();
             $limit_news = 10;
 
-            if($_POST['page_cnt'] > 0) $page_cnt = (int)$_POST['page_cnt'] * $limit_news;
-            else $page_cnt = 0;
+            if($_POST['page_cnt'] > 0) {
+                $page_cnt = (int)$_POST['page_cnt'] * $limit_news;
+            }
+            else {
+                $page_cnt = 0;
+            }
 
             $params = array();
 
@@ -32,13 +38,14 @@ class RatingController extends Module{
             $sql_ = $db->super_query("SELECT tb1.user_id, addnum, date, tb2.user_search_pref, user_photo FROM `users_rating` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND for_user_id = '{$user_info['user_id']}' ORDER by `date` DESC LIMIT {$page_cnt}, {$limit_news}", 1);
             if($sql_){
                 foreach($sql_ as $key => $row){
-                    if($row['user_photo'])
+                    if($row['user_photo']) {
                         $sql_[$key]['ava'] = "/uploads/users/{$row['user_id']}/50_{$row['user_photo']}";
-                    else
+                    }
+                    else {
                         $sql_[$key]['ava'] = "/images/no_ava_50.png";
+                    }
                     $sql_[$key]['rate'] = $row['addnum'];
-                    $date = \Sura\Time\Date::megaDate($row['date']);
-                    $sql_[$key]['date'] = $date;
+                    $sql_[$key]['date'] = Date::megaDate($row['date']);
                 }
                 $params['users'] = $sql_;
             }
@@ -92,7 +99,7 @@ class RatingController extends Module{
                     $db->query("UPDATE `users` SET user_rating = user_rating + {$num} WHERE user_id = '{$for_user_id}'");
 
                     //Вставляем в лог
-                    $server_time = \Sura\Time\Date::time();
+                    $server_time = Date::time();
                     $db->query("INSERT INTO `users_rating` SET user_id = '{$user_id}', for_user_id = '{$for_user_id}', addnum = '{$num}', date = '{$server_time}'");
 
                     /** Чистим кеш */
