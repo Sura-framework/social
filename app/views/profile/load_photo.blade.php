@@ -1,4 +1,4 @@
-<script src="https://sura.qd2.ru/js/Uploader.js"></script>
+<script src="/js/Uploader.js"></script>
 <script type="text/javascript">
     // $(document).ready(function(){
     //     Xajax = new AjaxUpload('upload', {
