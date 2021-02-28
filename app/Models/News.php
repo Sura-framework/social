@@ -43,7 +43,13 @@ class News
                 WHERE user_id = '{$user_id}' AND tb1.action_type = 11 AND subscriptions = 2) 
             AND tb1.action_type IN (1,2,3,11)	ORDER BY tb1.action_time DESC LIMIT {$page}, 20", 1);
 	}
-	
+
+    /**
+     * @param int $user_id
+     * @param int $page
+     * @param int $limit
+     * @return array
+     */
 	public function load_news_profile(int $user_id, int $page, int $limit = 20): array
 	{
 		return $this->database->fetchAll("SELECT ac_id, ac_user_id, for_user_id, action_text, action_time, action_type, obj_id, answer_text, link
