@@ -7,15 +7,17 @@ use function Sura\resolve;
 
 class Migrate
 {
-    public static function main()
+    /**
+     * Migrate
+     */
+    public static function main(): void
     {
         $tableSchema = array();
 
         $dir = resolve('app')->get('path.base').'/config/';
 
         $files = scandir($dir,1);
-        unset($files[count($files)-1]);
-        unset($files[count($files)-1]);
+        unset($files[count($files) - 1], $files[count($files) - 1]);
         foreach ($files as $v){
             require_once($v);
         }
