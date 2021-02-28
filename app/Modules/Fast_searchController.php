@@ -34,25 +34,29 @@ class Fast_searchController extends Module{
 
             $limit_sql = 7;
 
-            $query = $db->safesql(Validation::ajax_utf8(Validation::strip_data($request['query'])));
+            $query = $db->safesql(Validation::strip_data($request['query']));
             $query = strtr($query, array(' ' => '%')); //Замеянем пробелы на проценты чтоб тоиск был точнее
             $type = (int)$request['se_type'];
 
             if(isset($query) AND !empty($query)){
 
                 //Если критерий поиск "по людям"
-                if($type == 1)
-                    $sql_query = "SELECT user_id, user_search_pref, user_photo, user_birthday, user_country_city_name FROM `users` WHERE user_search_pref LIKE '%".$query."%' AND user_delet = '0' AND user_ban = '0' ORDER by `user_photo` DESC, `user_country_city_name` DESC LIMIT 0, ".$limit_sql;
+                if($type == 1) {
+                    $sql_query = "SELECT user_id, user_search_pref, user_photo, user_birthday, user_country_city_name FROM `users` WHERE user_search_pref LIKE '%" . $query . "%' AND user_delet = '0' AND user_ban = '0' ORDER by `user_photo` DESC, `user_country_city_name` DESC LIMIT 0, " . $limit_sql;
+                }
 
                 //Если критерий поиск "по видеозаписям"
-                else if($type == 2)
-                    $sql_query = "SELECT id, photo, title, add_date, owner_user_id FROM `videos` WHERE title LIKE '%".$query."%' AND privacy = 1 ORDER by `views` DESC LIMIT 0, ".$limit_sql;
+                else if($type == 2) {
+                    $sql_query = "SELECT id, photo, title, add_date, owner_user_id FROM `videos` WHERE title LIKE '%" . $query . "%' AND privacy = 1 ORDER by `views` DESC LIMIT 0, " . $limit_sql;
+                }
 
                 //Если критерий поиск "по сообществам"
-                else if($type == 4)
-                    $sql_query = "SELECT id, title, photo, traf, adres FROM `communities` WHERE title LIKE '%".$query."%' AND del = '0' AND ban = '0' ORDER by `traf` DESC, `photo` DESC LIMIT 0, ".$limit_sql;
-                else
+                else if($type == 4) {
+                    $sql_query = "SELECT id, title, photo, traf, adres FROM `communities` WHERE title LIKE '%" . $query . "%' AND del = '0' AND ban = '0' ORDER by `traf` DESC, `photo` DESC LIMIT 0, " . $limit_sql;
+                }
+                else {
                     $sql_query = false;
+                }
 
                 if($sql_query){
                     $sql_ = $db->super_query($sql_query, 1);

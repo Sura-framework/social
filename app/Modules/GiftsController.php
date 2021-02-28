@@ -2,6 +2,8 @@
 
 namespace App\Modules;
 
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Status;
@@ -76,13 +78,15 @@ class GiftsController extends Module{
             $for_user_id = (int)$request['for_user_id'];
             $gift = (int)$request['gift'];
             $privacy = (int)$request['privacy'];
-            if($privacy < 0 OR $privacy > 3) $privacy = 1;
-            $msg = Validation::ajax_utf8(Validation::textFilter($request['msg']));
+            if($privacy < 0 || $privacy > 3) {
+                $privacy = 1;
+            }
+            $msg = Validation::textFilter($request['msg']);
             $gifts = $db->super_query("SELECT price FROM `gifts_list` WHERE img = '".$gift."'");
 
             //Выводим текущий баланс свой
             $row = $db->super_query("SELECT user_balance FROM `users` WHERE user_id = '{$user_id}'");
-            if($gifts['price'] AND $user_id != $for_user_id){
+            if($gifts['price'] && $user_id != $for_user_id){
                 if($row['user_balance'] >= $gifts['price']){
                     $server_time = \Sura\Time\Date::time();
                     $db->query("INSERT INTO `gifts` SET uid = '{$for_user_id}', gift = '{$gift}', msg = '{$msg}', privacy = '{$privacy}', gdate = '{$server_time}', from_uid = '{$user_id}', status = 1");
@@ -94,8 +98,8 @@ class GiftsController extends Module{
 
                     $update_time = $server_time - 70;
 
-                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $storage = new MemcachedStorage('localhost');
+                    $cache = new Cache($storage, 'users');
 
                     if($check2['user_last_visit'] >= $update_time){
 
@@ -105,8 +109,9 @@ class GiftsController extends Module{
                             $user_info['user_search_pref'] = 'Неизвестный отправитель';
                             $from_user_id = $for_user_id;
 
-                        } else
+                        } else {
                             $from_user_id = $user_id;
+                        }
 
                         $action_update_text = "<img src=\"/uploads/gifts/{$gift}.png\" width=\"50\" align=\"right\"  alt=\"\"/>{$msg}";
 
@@ -150,6 +155,7 @@ class GiftsController extends Module{
                     if($config['news_mail_6'] == 'yes'){
                         $rowUserEmail = $db->super_query("SELECT user_name, user_email FROM `users` WHERE user_id = '".$for_user_id."'");
                         if($rowUserEmail['user_email']){
+                            //FIXME
 //                            include_once __DIR__.'/../Classes/mail.php';
 //                            $mail = new \dle_mail($config);
                             $rowMyInfo = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '".$user_id."'");
@@ -184,8 +190,6 @@ class GiftsController extends Module{
      */
     public function del(): int
     {
-//        $tpl = $params['tpl'];
-//        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
@@ -204,8 +208,8 @@ class GiftsController extends Module{
                 $db->query("DELETE FROM `gifts` WHERE gid = '{$gid}'");
                 $db->query("UPDATE `users` SET user_gifts = user_gifts-1 WHERE user_id = '{$user_id}'");
 
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 $cache->remove("{$user_id}/profile_{$user_id}");
                 $cache->remove("{$user_id}/gifts");
 
@@ -228,8 +232,6 @@ class GiftsController extends Module{
      */
     public function index(): int
     {
-//        $tpl = $params['tpl'];
-
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -281,8 +283,8 @@ class GiftsController extends Module{
                 $sql_where = "AND status = 1";
                 $gcount = 50;
 
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 $cache->save("{$user_id}/new_gift", '');
             } else {
                 $sql_where = '';
