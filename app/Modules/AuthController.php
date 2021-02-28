@@ -62,7 +62,7 @@ class AuthController extends Module
 
             /** Проверка E-mail */
             $email = strip_tags($request['email']);
-            if (Validation::check_email($email) == false) {
+            if (!Validation::check_email($email)) {
                 $errors++;
 //                $err .= 'mail|'.$email;
                 $err['mail'] = $email;
@@ -222,25 +222,25 @@ class AuthController extends Module
                 $res = '';
 
                 //Проверка E-mail
-                if (Validation::check_email($user_email) == false) {
+                if (!Validation::check_email($user_email)) {
                     $errors++;
                     $err['mail'] = $user_email;
                 }
 
                 //Проверка имени
-                if (Validation::check_name($user_name) == false) {
+                if (!Validation::check_name($user_name)) {
                     $errors++;
                     $err['user_name'] = $user_name;
                 }
 
                 //Проверка фамилии
-                if (Validation::check_name($user_last_name) == false) {
+                if (!Validation::check_name($user_last_name)) {
                     $errors++;
                     $err['user_surname'] = $user_last_name;
                 }
 
                 //Проверка Паролей
-                if (Validation::check_password($password_first, $password_second) == false) {
+                if (!Validation::check_password($password_first, $password_second)) {
                     $errors++;
                     $err['password'] = $password_first;
                 }
@@ -462,34 +462,32 @@ class AuthController extends Module
 
             $request = (Request::getRequest()->getGlobal());
 //
-            $email = Validation::check_email($request['email']);
-            $check = $db->super_query("SELECT user_name FROM `users` WHERE user_email = '{$email}'");
+            if (Validation::check_email($request['email'])){
+                $check = $db->super_query("SELECT user_name FROM `users` WHERE user_email = '{$request['email']}'");
+                if ($check) {
+                    //Удаляем все предыдущие запросы на воостановление
+                    $db->query("DELETE FROM `restore` WHERE email = '{$request['email']}'");
 
-            $server_time = Date::time();
+                    $salt = "abchefghjkmnpqrstuvwxyz0123456789";
+                    $rand_lost = '';
+                    for ($i = 0; $i < 15; $i++) {
+                        $rand_lost .= $salt[random_int(0, 33)];
+                    }
+                    $server_time = Date::time();
+                    $hash = md5($server_time . $request['email'] . random_int(0, 100000) . $rand_lost . $check['user_name']);
 
-            if ($check) {
-                //Удаляем все предыдущие запросы на воостановление
-                $db->query("DELETE FROM `restore` WHERE email = '{$email}'");
+                    $_IP = Request::getRequest()->getClientIP();
 
-                $salt = "abchefghjkmnpqrstuvwxyz0123456789";
-                $rand_lost = '';
-                for ($i = 0; $i < 15; $i++) {
-                    $rand_lost .= $salt[random_int(0, 33)];
-                }
-                $hash = md5($server_time . $email . random_int(0, 100000) . $rand_lost . $check['user_name']);
+                    //Вставляем в базу
+                    $db->query("INSERT INTO `restore` SET email = '{$request['email']}', hash = '{$hash}', ip = '{$_IP}'");
 
-                $_IP = Request::getRequest()->getClientIP();
-
-                //Вставляем в базу
-                $db->query("INSERT INTO `restore` SET email = '{$email}', hash = '{$hash}', ip = '{$_IP}'");
-
-                //Отправляем письмо на почту для воостановления
+                    //Отправляем письмо на почту для воостановления
 //                include_once __DIR__.'/../Classes/mail.php';
 
-                $config = Settings::load();
+                    $config = Settings::load();
 
-                $mail = new Mail($config);
-                $message = <<<HTML
+                    $mail = new Mail($config);
+                    $message = <<<HTML
                         Здравствуйте, {$check['user_name']}.
                         
                         Чтобы сменить ваш пароль, пройдите по этой ссылке:
@@ -500,14 +498,14 @@ class AuthController extends Module
                         {$config['home_url']}
                         HTML;
 
-                $mail->send($email, $lang['lost_subj'], $message);
+                    $mail->send($request['email'], $lang['lost_subj'], $message);
 
-                $status = Status::OK;
-                $err = 'yes';
-            } else {
-                $status = Status::NOT_FOUND;
-                $err = 'hacking';
+                    $status = Status::OK;
+                    $err = 'yes';
+                }
             }
+            $status = Status::NOT_FOUND;
+            $err = 'hacking';
         } else {
             $status = Status::BAD_LOGGED;
             $err = 'hacking';
@@ -655,24 +653,26 @@ class AuthController extends Module
 
             $request = (Request::getRequest()->getGlobal());
 
-            $email = Validation::check_email($request['email']);
-            $check = $db->super_query("SELECT user_id, user_search_pref, user_photo FROM `users` WHERE user_email = '{$email}'");
-            if ($check) {
-                if ($check['user_photo']) {
-                    $check['user_photo'] = "/uploads/users/{$check['user_id']}/50_{$check['user_photo']}";
-                }
-                else {
-                    $check['user_photo'] = "/images/no_ava_50.png";
-                }
-           
+            if (Validation::check_email($request['email'])){
+                $check = $db->super_query("SELECT user_id, user_search_pref, user_photo FROM `users` WHERE user_email = '{$request['email']}'");
+                if ($check) {
+                    if ($check['user_photo']) {
+                        $check['user_photo'] = "/uploads/users/{$check['user_id']}/50_{$check['user_photo']}";
+                    }
+                    else {
+                        $check['user_photo'] = "/images/no_ava_50.png";
+                    }
+
 //                echo $check['user_search_pref'] . "|" . $check['user_photo'];
-	            $status = Status::OK;
-                return _e_json(array(
-                    'status' => $status,
-                    'name' => $check['user_search_pref'],
-                    'photo' => $check['user_photo'],
-                ) );
+                    $status = Status::OK;
+                    return _e_json(array(
+                        'status' => $status,
+                        'name' => $check['user_search_pref'],
+                        'photo' => $check['user_photo'],
+                    ) );
+                }
             }
+
             $status = Status::NOT_FOUND;
         }else{
             $status = Status::BAD_LOGGED;

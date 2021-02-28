@@ -94,12 +94,12 @@ final class SettingsController extends Module{
             $errors = 0;
 
             //Проверка имени
-            if (Validation::check_name($user_name) == false) {
+            if (!Validation::check_name($user_name)) {
                 $errors++;
             }
 
             //Проверка фамилии
-            if (Validation::check_name($user_lastname) == false) {
+            if (!Validation::check_name($user_lastname)) {
                 $errors++;
             }
 
@@ -436,17 +436,13 @@ final class SettingsController extends Module{
             $email = Validation::textFilter($request['email']);
 
             //Проверка E-mail
-            if (Validation::check_email($email) == false) {
-                $ok_email = false;
-            }else{
-                $ok_email = true;
-            }
+            $ok_email = Validation::check_email($email);
 
             $row = $db->super_query("SELECT user_email FROM `users` WHERE user_id = '{$user_id}'");
 
             $check_email = $db->super_query("SELECT COUNT(*) AS cnt FROM `users`  WHERE user_email = '{$email}'");
 
-            if($row['user_email'] AND $ok_email AND !$check_email['cnt']){
+            if($row['user_email'] && $ok_email && !$check_email['cnt']){
 
                 //Удаляем все пред. заявки
                 $db->query("DELETE FROM `restore` WHERE email = '{$email}'");
