@@ -37,7 +37,7 @@ class GroupsController extends Module
 
         if($logged){
             $user_id = $user_info['user_id'];
-            $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
+            $title = Validation::textFilter($request['title'], false, true);
 
             Antispam::Check(6, $user_id);
 
@@ -475,9 +475,9 @@ class GroupsController extends Module
 //            Tools::NoAjaxQuery();
             $id = (int)$request['id'];
             $upage = (int)$request['upage'];
-            $office = Validation::ajax_utf8(Validation::textFilter($request['office'], false, true));
-            $phone = Validation::ajax_utf8(Validation::textFilter($request['phone'], false, true));
-            $email = Validation::ajax_utf8(Validation::textFilter($request['email'], false, true));
+            $office = Validation::textFilter($request['office'], false, true);
+            $phone = Validation::textFilter($request['phone'], false, true);
+            $email = Validation::textFilter($request['email'], false, true);
 
             //Проверка на то, что действиие делает админ
             $checkAdmin = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$id}'");
@@ -643,9 +643,9 @@ class GroupsController extends Module
 //            Tools::NoAjaxQuery();
             $id = (int)$request['id'];
             $upage = (int)$request['uid'];
-            $office = Validation::ajax_utf8(Validation::textFilter($request['office'], false, true));
-            $phone = Validation::ajax_utf8(Validation::textFilter($request['phone'], false, true));
-            $email = Validation::ajax_utf8(Validation::textFilter($request['email'], false, true));
+            $office = Validation::textFilter($request['office'], false, true);
+            $phone = Validation::textFilter($request['phone'], false, true);
+            $email = Validation::textFilter($request['email'], false, true);
 
             //Проверка на то, что действиие делает админ
             $checkAdmin = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$id}'");
@@ -789,12 +789,12 @@ class GroupsController extends Module
             $id = (int)$request['id'];
             $comments = (int)$request['comments'];
             $discussion = (int)$request['discussion'];
-            $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
-            $adres_page = Validation::ajax_utf8(strtolower(Validation::textFilter($request['adres_page'], false, true)));
-            $descr = Validation::ajax_utf8(Validation::textFilter($request['descr'], 5000));
+            $title = Validation::textFilter($request['title'], false, true);
+            $adres_page = strtolower(Validation::textFilter($request['adres_page'], false, true));
+            $descr = Validation::textFilter($request['descr'], 5000);
 
             $request['web'] = str_replace(array('"', "'"), '', $request['web']);
-            $web = Validation::ajax_utf8(Validation::textFilter($request['web'], false, true));
+            $web = Validation::textFilter($request['web'], false, true);
 
             if(!preg_match("/^[a-zA-Z0-9_-]+$/", $adres_page)) $adress_ok = false;
             else $adress_ok = true;
@@ -1030,8 +1030,8 @@ class GroupsController extends Module
 
 //            Tools::NoAjaxQuery();
             $id = (int)$request['id'];
-            $wall_text = Validation::ajax_utf8(Validation::textFilter($request['wall_text']));
-            $attach_files = Validation::ajax_utf8(Validation::textFilter($request['attach_files'], false, true));
+            $wall_text = Validation::textFilter($request['wall_text']);
+            $attach_files = Validation::textFilter($request['attach_files'], false, true);
 
             //Проверка на админа
             $row = $db->super_query("SELECT admin, del, ban FROM `communities` WHERE id = '{$id}'");
@@ -1096,8 +1096,8 @@ class GroupsController extends Module
                 $attach_files = str_replace(array('vote|', '&amp;#124;', '&amp;raquo;', '&amp;quot;'), array('hack|', '&#124;', '&raquo;', '&quot;'), $attach_files);
 
                 //Голосование
-                $vote_title = Validation::ajax_utf8(Validation::textFilter($request['vote_title'], false, true));
-                $vote_answer_1 = Validation::ajax_utf8(Validation::textFilter($request['vote_answer_1'], false, true));
+                $vote_title = Validation::textFilter($request['vote_title'], false, true);
+                $vote_answer_1 = Validation::textFilter($request['vote_answer_1'], false, true);
 
                 $ansers_list = array();
 
@@ -1105,7 +1105,7 @@ class GroupsController extends Module
 
                     for($vote_i = 1; $vote_i <= 10; $vote_i++){
 
-                        $vote_answer = Validation::ajax_utf8(Validation::textFilter($request['vote_answer_'.$vote_i], false, true));
+                        $vote_answer = Validation::textFilter($request['vote_answer_'.$vote_i], false, true);
                         $vote_answer = str_replace('|', '&#124;', $vote_answer);
 
                         if($vote_answer) {
@@ -1189,7 +1189,7 @@ class GroupsController extends Module
 
             $rec_id = (int)$request['rec_id'];
             $public_id = (int)$request['public_id'];
-            $wall_text = Validation::ajax_utf8(Validation::textFilter($request['wall_text']));
+            $wall_text = Validation::textFilter($request['wall_text']);
             $answer_comm_id = (int)$request['answer_comm_id'];
 
             //Проверка на админа и проверяем включены ли комменты
