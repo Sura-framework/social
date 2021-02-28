@@ -40,12 +40,12 @@ class WallController extends Module{
             $request = (Request::getRequest()->getGlobal());
 
             if (isset($request['wall_text'])){
-                $wall_text = Validation::ajax_utf8($request['wall_text']);
+                $wall_text = $request['wall_text'];
             }else{
                 $wall_text = '';
             }
             if (isset($request['attach_files'])){
-                $attach_files = Validation::ajax_utf8($request['attach_files']);
+                $attach_files = $request['attach_files'];
             }else{
                 $attach_files = '';
             }
@@ -171,13 +171,13 @@ class WallController extends Module{
 
                             //Голосование
                             if (isset($request['vote_title'])) {
-                                $vote_title = Validation::ajax_utf8($request['vote_title']);
+                                $vote_title = $request['vote_title'];
                             }
                             else{
                                 $vote_title = '';
                             }
                             if (isset($request['vote_answer_1'])) {
-                                $vote_answer_1 = Validation::ajax_utf8($request['vote_answer_1']);
+                                $vote_answer_1 = $request['vote_answer_1'];
                             }
                             else{
                                 $vote_answer_1 = '';
@@ -189,7 +189,7 @@ class WallController extends Module{
 
                                 for($vote_i = 1; $vote_i <= 10; $vote_i++){
 
-                                    $vote_answer = Validation::ajax_utf8($request['vote_answer_'.$vote_i]);
+                                    $vote_answer = $request['vote_answer_'.$vote_i];
                                     $vote_answer = str_replace('|', '&#124;', $vote_answer);
 
                                     if($vote_answer)
@@ -1487,10 +1487,10 @@ class WallController extends Module{
             $check_url = get_headers(stripslashes($lnk));
 
             if(strpos($check_url['0'], '200')){
-                $open_lnk = @file_get_contents($lnk);
+                $open_lnk = file_get_contents($lnk);
 
-                if(stripos(strtolower($open_lnk), 'charset=utf-8') OR stripos(strtolower($check_url['2']), 'charset=utf-8')) {
-                    $open_lnk = Validation::ajax_utf8($open_lnk);
+                if(stripos(strtolower($open_lnk), 'charset=utf-8') || stripos(strtolower($check_url['2']), 'charset=utf-8')) {
+                    $open_lnk = $open_lnk;
                 }
                 else {
                     $open_lnk = iconv('windows-1251', 'utf-8', $open_lnk);

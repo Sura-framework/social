@@ -464,7 +464,7 @@ class EditprofileController extends Module{
                 if($expxfielddatavalue[1])
                     $xfielddatavalue = str_replace('|1', '', Validation::textFilter($xfielddatavalue));
                 else
-                    $xfielddatavalue = Validation::ajax_utf8(Validation::textFilter($xfielddatavalue));
+                    $xfielddatavalue = Validation::textFilter($xfielddatavalue);
 
                 $xfielddataname = $db->safesql($xfielddataname);
 

@@ -3,7 +3,7 @@
 namespace App\Modules;
 
 
-use App\Libs\Friends;
+use App\Models\Friends;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
 use Sura\Libs\Tools;

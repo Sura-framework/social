@@ -29,7 +29,7 @@ class RepostController extends Module{
             $user_id = $user_info['user_id'];
             $request = (Request::getRequest()->getGlobal());
             $rid = (int)$request['rec_id'];
-            $comm = Validation::ajax_utf8(Validation::textFilter($request['comm']));
+            $comm = Validation::textFilter($request['comm']);
 
             //Проверка на существование записи
             if($request['g_tell'] == 1){
@@ -121,7 +121,7 @@ class RepostController extends Module{
             $request = (Request::getRequest()->getGlobal());
             $rid = (int)$request['rec_id'];
             $sel_group = (int)$request['sel_group'];
-            $comm = Validation::ajax_utf8(Validation::textFilter($request['comm']));
+            $comm = Validation::textFilter($request['comm']);
 
             //Проверка на существование записи
             $row = $db->super_query("SELECT add_date, text, author_user_id, tell_uid, tell_date, public, attach FROM `wall` WHERE fast_comm_id = '0' AND id = '{$rid}'");
@@ -191,7 +191,7 @@ class RepostController extends Module{
             $request = (Request::getRequest()->getGlobal());
             $rid = (int)$request['rec_id'];
             $sel_group = (int)$request['sel_group'];
-            $comm = Validation::ajax_utf8(Validation::textFilter($request['comm']));
+            $comm = Validation::textFilter($request['comm']);
 
             //Проверка на существование записи
             $row = $db->super_query("SELECT add_date, text, public_id, attach, tell_uid, tell_date, public FROM `communities_wall` WHERE fast_comm_id = 0 AND id = '{$rid}'");
@@ -261,7 +261,7 @@ class RepostController extends Module{
 
 
             $for_user_id = (int)$request['for_user_id'];
-            $tell_comm = Validation::ajax_utf8(Validation::textFilter($request['comm']));
+            $tell_comm = Validation::textFilter($request['comm']);
             $rid = (int)$request['rec_id'];
 
             if($user_id !== $for_user_id){
