@@ -132,7 +132,7 @@
         </div>
         @endif
         @if(!$row['comment_form'])
-        <div class="wall_fast_opened_form" id="fast_form" style="margin: 0;padding: 20px 10px;">
+        <div class="wall_fast_opened_form d-none" id="fast_form" style="margin: 0;padding: 20px 10px;">
             <label for="fast_inpt_{{ $row['id'] }}"></label>
             <input type="text" class="wall_inpst fast_form_width wall_fast_input" value="Комментировать..." id="fast_inpt_{{ $row['id'] }}" onMouseDown="wall.fast_open_textarea('{{ $row['id'] }}', 2); return false"  />
             <div class="no_display wall_fast_texatrea" id="fast_textarea_{{ $row['id'] }}">
