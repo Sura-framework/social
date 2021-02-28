@@ -195,6 +195,11 @@ class Bugs
         return $response;
     }
 
+    /**
+     * @param array $sql_
+     * @return array
+     * @throws \Exception
+     */
     public function getData(array $sql_): array
     {
         $user_info = Registry::get('user_info');
