@@ -21,12 +21,12 @@
     "char0n/ffmpeg-php": "^3.0.0",
     "intervention/image": "^2.5",
     "james-heinrich/getid3": "^1.9",
-    "sura/framework": "^0.11.4",
-    "sura/cache": "^2.0",
+    "sura/framework": "^0.12.0",
+    "sura/cache": "^2.1",
     "sura/database": "^1.1",
     "sura/url": "^1.1",
-    "sura/menu": "^1.1",
-    "sura/view": "^1.4",
+    "sura/menu": "^1.2",
+    "sura/view": "^1.11",
     "gregwar/captcha": "1.*"
   },
   "require-dev": {
