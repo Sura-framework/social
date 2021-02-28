@@ -820,7 +820,7 @@ final class ProfileController extends Module
                         $params['status_block2'] = '';
                     }
                     //Приватность сообщений
-                    if ($user_privacy['val_msg'] == 1 or $user_privacy['val_msg'] == 2 and $CheckFriends and !$CheckBlackList) {
+                    if ($user_privacy['val_msg'] == 1 || ($user_privacy['val_msg'] == 2 && $CheckFriends && !$CheckBlackList)) {
                         $params['privacy_msg'] = '<a href="#" onClick="messages.new_(' . $params['user_id'] . '); return false">
                                         <svg class="bi bi-envelope" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                             <path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>
