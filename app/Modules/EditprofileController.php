@@ -382,20 +382,21 @@ class EditprofileController extends Module{
         if($logged){
 
             $xfields = array();
-            $xfields['activity'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['activity'], 0, 5000))));
-            $xfields['interests'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['interests'], 0, 5000))));
-            $xfields['myinfo'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['myinfo'], 0, 5000))));
-            $xfields['music'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['music'], 0, 5000))));
-            $xfields['kino'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['kino'], 0, 5000))));
-            $xfields['books'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['books'], 0, 5000))));
-            $xfields['games'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['games'], 0, 5000))));
-            $xfields['quote'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['quote'], 0, 5000))));
+            $xfields['activity'] = $db->safesql(htmlspecialchars(substr($request['activity'], 0, 5000), ENT_QUOTES | ENT_HTML5));
+            $xfields['interests'] = $db->safesql(htmlspecialchars(substr($request['interests'], 0, 5000), ENT_QUOTES | ENT_HTML5));
+            $xfields['myinfo'] = $db->safesql(htmlspecialchars(substr($request['myinfo'], 0, 5000), ENT_QUOTES | ENT_HTML5));
+            $xfields['music'] = $db->safesql(htmlspecialchars(substr($request['music'], 0, 5000), ENT_QUOTES | ENT_HTML5));
+            $xfields['kino'] = $db->safesql(htmlspecialchars(substr($request['kino'], 0, 5000), ENT_QUOTES | ENT_HTML5));
+            $xfields['books'] = $db->safesql(htmlspecialchars(substr($request['books'], 0, 5000), ENT_QUOTES | ENT_HTML5));
+            $xfields['games'] = $db->safesql(htmlspecialchars(substr($request['games'], 0, 5000), ENT_QUOTES | ENT_HTML5));
+            $xfields['quote'] = $db->safesql(htmlspecialchars(substr($request['quote'], 0, 5000), ENT_QUOTES | ENT_HTML5));
 
             $xfieldsdata = '';
             foreach($xfields as $name => $value){
                 $value = str_replace("|", "&#124;", $value);
-                if($value != '')
-                    $xfieldsdata .= $name.'|'.$value.'||';
+                if($value != '') {
+                    $xfieldsdata .= $name . '|' . $value . '||';
+                }
             }
 
             $db->query("UPDATE `users` SET user_xfields_all = '{$xfieldsdata}' WHERE user_id = '{$user_info['user_id']}'");
@@ -419,7 +420,6 @@ class EditprofileController extends Module{
      */
     public function save_xfields(): int
     {
-        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
         $user_id = $user_info['user_id'];
