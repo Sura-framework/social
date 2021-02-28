@@ -152,8 +152,7 @@ class News
 		$cache = new Cache($storage, 'users');
 		$value = $cache->load("{$id}/votes/vote_{$id}");
 		if ($value == null) {
-			$db = Db::getDB();
-			$row = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$id}'", false);
+			$row = $this->database->fetch("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$id}'");
 			$value = serialize($row);
 			$cache->save("{$id}/votes/vote_{$id}", $value);
 		} else {
@@ -176,7 +175,7 @@ class News
 		$value = $cache->load("user_{$id}/votes/check{$user_id}_{$id}");
 		if ($value == null) {
 			$db = Db::getDB();
-			$row = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$id}'", false);
+			$row = $this->database->fetch("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$id}'");
 			$value = serialize($row);
 			$cache->save("user_{$id}/votes/check{$user_id}_{$id}", $value);
 		} else {
@@ -214,10 +213,10 @@ class News
 	{
 		$db = Db::getDB();
 		if ($type == 1) {
-			return $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$user_id}'");
+			return $this->database->fetch("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$user_id}'");
 		}
 
-        return $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$user_id}'", false);
+        return $this->database->fetch("SELECT title, photo FROM `communities` WHERE id = '{$user_id}'");
     }
 	
 	/**
@@ -226,8 +225,7 @@ class News
 	 */
 	public function likes_info(int $id): array
 	{
-		$db = Db::getDB();
-		return $db->super_query("SELECT id, author_user_id, for_user_id, text, add_date, tell_uid, tell_date, type, public, attach, tell_comm FROM `wall` WHERE id = '{$id}'");
+		return $this->database->fetch("SELECT id, author_user_id, for_user_id, text, add_date, tell_uid, tell_date, type, public, attach, tell_comm FROM `wall` WHERE id = '{$id}'");
 	}
 	
 	/**
@@ -236,8 +234,7 @@ class News
 	 */
 	public function delete(int $id): array
 	{
-		$db = Db::getDB();
-		return $db->super_query("DELETE FROM `news` WHERE ac_id = '{$id}'");
+		return $this->database->fetch("DELETE FROM `news` WHERE ac_id = '{$id}'");
 	}
 	
 	/**
@@ -261,7 +258,7 @@ class News
 	public function comments(int $id, int $limit): array
 	{
 		$db = Db::getDB();
-		return $db->super_query("SELECT tb1.id, author_user_id, text, add_date, tb2.user_photo, user_search_pref FROM `wall` tb1, `users` tb2 WHERE tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = '{$id}' ORDER by `add_date` LIMIT {$limit}, 3", 1);
+		return $this->database->fetchAll("SELECT tb1.id, author_user_id, text, add_date, tb2.user_photo, user_search_pref FROM `wall` tb1, `users` tb2 WHERE tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = '{$id}' ORDER by `add_date` LIMIT {$limit}, 3");
 	}
 	
 	/**
