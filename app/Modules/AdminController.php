@@ -3,10 +3,22 @@
 namespace App\Modules;
 
 use App\Models\Admin;
+use Sura\Database\Connection;
+use Sura\Libs\Model;
 
 class AdminController extends Module
 {
-	
+
+    private Connection $database;
+
+    /**
+     * Profile constructor.
+     */
+    public function __construct()
+    {
+        $this->database = Model::getDB();
+    }
+
 	/**
 	 * @throws \Exception
 	 */
@@ -37,20 +49,20 @@ class AdminController extends Module
 //            $tpl = $params['tpl'];
 			
 			$db = $this->db();
-			$users = $db->super_query("SELECT COUNT(*) AS cnt FROM `users`");
-			$albums = $db->super_query("SELECT COUNT(*) AS cnt FROM `albums`");
-			$attach = $db->super_query("SELECT COUNT(*) AS cnt FROM `attach`");
-			$audio = $db->super_query("SELECT COUNT(*) AS cnt FROM `audio`");
-			$groups = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities`");
-			//$clubs = $db->super_query("SELECT COUNT(*) AS cnt FROM `clubs`");
-			$groups_wall = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_wall`");
-			$invites = $db->super_query("SELECT COUNT(*) AS cnt FROM `invites`");
-//            $notes = $db->super_query("SELECT COUNT(*) AS cnt FROM `notes`");
-			$videos = $db->super_query("SELECT COUNT(*) AS cnt FROM `videos`");
+			$users = $this->database->fetch("SELECT COUNT(*) AS cnt FROM `users`");
+			$albums = $this->database->fetch("SELECT COUNT(*) AS cnt FROM `albums`");
+			$attach = $this->database->fetch("SELECT COUNT(*) AS cnt FROM `attach`");
+			$audio = $this->database->fetch("SELECT COUNT(*) AS cnt FROM `audio`");
+			$groups = $this->database->fetch("SELECT COUNT(*) AS cnt FROM `communities`");
+			//$clubs = $this->database->fetch("SELECT COUNT(*) AS cnt FROM `clubs`");
+			$groups_wall = $this->database->fetch("SELECT COUNT(*) AS cnt FROM `communities_wall`");
+			$invites = $this->database->fetch("SELECT COUNT(*) AS cnt FROM `invites`");
+//            $notes = $this->database->fetch("SELECT COUNT(*) AS cnt FROM `notes`");
+			$videos = $this->database->fetch("SELECT COUNT(*) AS cnt FROM `videos`");
 			
 			//Баланс
 			//SELECT user_id, SUM(user_balance) AS user_balance FROM `users` GROUP BY user_id
-			$balance_full = $db->super_query("SELECT SUM(user_balance) AS user_balance FROM `users` ");
+			$balance_full = $this->database->fetch("SELECT SUM(user_balance) AS user_balance FROM `users` ");
 
 //            $tpl->load_template('admin/stats.tpl');
 			//$tpl->set('{modules}', $tpl->result['modules']);
