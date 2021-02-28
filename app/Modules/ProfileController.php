@@ -112,8 +112,8 @@ final class ProfileController extends Module
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if ($user_id != $id) {
-                        $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($row['user_id']);
-                        $CheckFriends = (new \App\Libs\Friends)->CheckFriends($row['user_id']);
+                        $CheckBlackList = (new Friends)->CheckBlackList($row['user_id']);
+                        $CheckFriends = (new Friends)->CheckFriends($row['user_id']);
 
                     } else {
                         $CheckBlackList = false;
