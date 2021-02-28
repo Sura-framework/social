@@ -29,6 +29,7 @@ final class SettingsController extends Module{
     {
 //        $lang = $this->get_langs();
         $db = $this->db();
+        $database = self::getDB();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
@@ -45,7 +46,7 @@ final class SettingsController extends Module{
             $request['new_pass2'] = Validation::textFilter($request['new_pass2']);
 
             //Выводим текущий пароль
-            $row = $db->super_query("SELECT user_password FROM `users` WHERE user_id = '{$user_id}'");
+            $row = $database->fetch("SELECT user_password FROM `users` WHERE user_id = '{$user_id}'");
 
             if(password_verify($request['old_pass'], $row['user_password']) == true){
                 if(password_verify($request['new_pass'], $request['new_pass2']) == true){
@@ -185,7 +186,7 @@ final class SettingsController extends Module{
     {
         $params = array();
         $lang = $this->get_langs();
-        $db = $this->db();
+        $database = self::getDB();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
@@ -193,7 +194,7 @@ final class SettingsController extends Module{
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['settings'].' | Sura';
 
-            $sql_ = $db->super_query("SELECT user_privacy FROM `users` WHERE user_id = '{$user_id}'");
+            $sql_ = $database->fetch("SELECT user_privacy FROM `users` WHERE user_id = '{$user_id}'");
             $row = xfieldsdataload($sql_['user_privacy']);
 //            $tpl->load_template('settings/privacy.tpl');
             $params['val_msg'] = $row['val_msg'];
@@ -231,6 +232,7 @@ final class SettingsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $database = self::getDB();
             $user_id = $user_info['user_id'];
 
             $request = (Request::getRequest()->getGlobal());
@@ -238,11 +240,11 @@ final class SettingsController extends Module{
             $bad_user_id = (int)$request['bad_user_id'];
 
             //Проверяем на существование юзера
-            $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `users` WHERE user_id = '{$bad_user_id}'");
+            $row = $database->fetch("SELECT COUNT(*) AS cnt FROM `users` WHERE user_id = '{$bad_user_id}'");
 
             //Выводим свой блеклист для проверка
             //Проверяем юзера на блеклист
-            $row_blacklist = $db->super_query("SELECT id FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
+            $row_blacklist = $database->fetch("SELECT id FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
 
             if ($row['cnt'] AND $user_id != $bad_user_id){
                 if( !$row_blacklist['id']){
@@ -313,6 +315,7 @@ final class SettingsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $database = self::getDB();
             $user_id = $user_info['user_id'];
 
             $request = (Request::getRequest()->getGlobal());
@@ -320,11 +323,11 @@ final class SettingsController extends Module{
             $bad_user_id = (int)$request['bad_user_id'];
 
             //Проверяем на существование юзера
-            $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `users` WHERE user_id = '{$bad_user_id}'");
+            $row = $database->fetch("SELECT COUNT(*) AS cnt FROM `users` WHERE user_id = '{$bad_user_id}'");
 
             //Выводим свой блеклист для проверки
             //Проверяем юзера на блеклист
-            $row_blacklist = $db->super_query("SELECT id FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
+            $row_blacklist = $database->fetch("SELECT id FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
 
             if ($row['cnt'] AND $user_id != $bad_user_id){
                 if($row_blacklist['id']){
@@ -355,18 +358,18 @@ final class SettingsController extends Module{
     {
         $params = array();
         $lang = $this->get_langs();
-        $db = $this->db();
 
         $logged = $this->logged();
 
         if($logged){
+            $database = self::getDB();
             $params['title'] = $lang['settings'].' | Sura';
-            $row = $db->super_query("SELECT user_blacklist, user_blacklist_num FROM `users` WHERE user_id = '{$params['user']['user_id']}'");
+            $row = $database->fetch("SELECT user_blacklist, user_blacklist_num FROM `users` WHERE user_id = '{$params['user']['user_id']}'");
             if($row['user_blacklist_num'] > 0 AND $row['user_blacklist_num'] <= 100){
                 $array_blacklist = explode('|', $row['user_blacklist']);
                 foreach($array_blacklist as $user){
                     if($user){
-                        $infoUser = $db->super_query("SELECT user_photo, user_search_pref FROM `users` WHERE user_id = '{$user}'");
+                        $infoUser = $database->fetch("SELECT user_photo, user_search_pref FROM `users` WHERE user_id = '{$user}'");
 
                         $params['user_blacklist']['$user'] = array();
 
@@ -425,6 +428,7 @@ final class SettingsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
+            $database = self::getDB();
             $user_id = $user_info['user_id'];
 
             $config = Settings::load();
@@ -438,9 +442,9 @@ final class SettingsController extends Module{
             //Проверка E-mail
             $ok_email = Validation::check_email($email);
 
-            $row = $db->super_query("SELECT user_email FROM `users` WHERE user_id = '{$user_id}'");
+            $row = $database->fetch("SELECT user_email FROM `users` WHERE user_id = '{$user_id}'");
 
-            $check_email = $db->super_query("SELECT COUNT(*) AS cnt FROM `users`  WHERE user_email = '{$email}'");
+            $check_email = $database->fetch("SELECT COUNT(*) AS cnt FROM `users`  WHERE user_email = '{$email}'");
 
             if($row['user_email'] && $ok_email && !$check_email['cnt']){
 
@@ -553,6 +557,7 @@ final class SettingsController extends Module{
         $logged = $this->logged();
 
         if($logged){
+            $database = self::getDB();
             $params['title'] = $lang['settings'].' | Sura';
 
             $request = (Request::getRequest()->getGlobal());
@@ -569,9 +574,9 @@ final class SettingsController extends Module{
                 if(strlen($code1) == 32){
                     $_IP = Request::getRequest()->getClientIP();
                     $code2 = '';
-                    $check_code1 = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$code1}' AND ip = '{$_IP}'");
+                    $check_code1 = $database->fetch("SELECT email FROM `restore` WHERE hash = '{$code1}' AND ip = '{$_IP}'");
                     if($check_code1['email']){
-                        $check_code2 = $db->super_query("SELECT COUNT(*) AS cnt FROM `restore` WHERE hash != '{$code1}' AND email = '{$check_code1['email']}' AND ip = '{$_IP}'");
+                        $check_code2 = $database->fetch("SELECT COUNT(*) AS cnt FROM `restore` WHERE hash != '{$code1}' AND email = '{$check_code1['email']}' AND ip = '{$_IP}'");
                         if($check_code2['cnt'])
                             $params['code_1'] = '';
                         else {
@@ -586,9 +591,9 @@ final class SettingsController extends Module{
                 }
 
                 if(strlen($code2) == 32){
-                    $check_code2 = $db->super_query("SELECT email FROM `restore` WHERE hash = '{$code2}' AND ip = '{$_IP}'");
+                    $check_code2 = $database->fetch("SELECT email FROM `restore` WHERE hash = '{$code2}' AND ip = '{$_IP}'");
                     if($check_code2['email']){
-                        $check_code1 = $db->super_query("SELECT COUNT(*) AS cnt FROM `restore` WHERE hash != '{$code2}' AND email = '{$check_code2['email']}' AND ip = '{$_IP}'");
+                        $check_code1 = $database->fetch("SELECT COUNT(*) AS cnt FROM `restore` WHERE hash != '{$code2}' AND email = '{$check_code2['email']}' AND ip = '{$_IP}'");
                         if($check_code1['cnt'])
                             $params['code_2'] = '';
                         else {

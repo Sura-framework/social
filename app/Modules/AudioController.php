@@ -575,7 +575,7 @@ class AudioController extends Module{
                         </div>
                         HTML;
 
-                if (!$pid && $row['oid'] == $user_info['user_id'] || $pid && stripos($info['admin'], "u{$user_info['user_id']}|") !== false && $row['oid'] == $pid) {
+                if ((!$pid && $row['oid'] == $user_info['user_id']) || ($pid && stripos($info['admin'], "u{$user_info['user_id']}|") !== false && $row['oid'] == $pid)) {
                     $res = str_replace(array('[tools]', '[/tools]'), '', $res);
                     $res = preg_replace("'\\[add\\](.*?)\\[/add\\]'si", "", $res);
                 } else {
