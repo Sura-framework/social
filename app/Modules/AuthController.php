@@ -643,7 +643,6 @@ class AuthController extends Module
      */
     public function restore_next(): int
     {
-//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -656,13 +655,15 @@ class AuthController extends Module
 
             $request = (Request::getRequest()->getGlobal());
 
-            $email = Validation::ajax_utf8($request['email']);
+            $email = Validation::check_email($request['email']);
             $check = $db->super_query("SELECT user_id, user_search_pref, user_photo FROM `users` WHERE user_email = '{$email}'");
             if ($check) {
-                if ($check['user_photo'])
+                if ($check['user_photo']) {
                     $check['user_photo'] = "/uploads/users/{$check['user_id']}/50_{$check['user_photo']}";
-                else
+                }
+                else {
                     $check['user_photo'] = "/images/no_ava_50.png";
+                }
            
 //                echo $check['user_search_pref'] . "|" . $check['user_photo'];
 	            $status = Status::OK;
@@ -671,9 +672,8 @@ class AuthController extends Module
                     'name' => $check['user_search_pref'],
                     'photo' => $check['user_photo'],
                 ) );
-            } else{
-                $status = Status::NOT_FOUND;
             }
+            $status = Status::NOT_FOUND;
         }else{
             $status = Status::BAD_LOGGED;
         }
