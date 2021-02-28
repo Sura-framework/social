@@ -15,8 +15,6 @@ use Sura\Libs\Db;
 class Profile
 {
 
-    private ?Db $db;
-
     private Connection $database;
 
     /**
@@ -24,8 +22,6 @@ class Profile
      */
     public function __construct()
     {
-        $this->db = Db::getDB();
-
         $this->database = Model::getDB();
     }
 
