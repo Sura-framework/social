@@ -188,7 +188,7 @@ class DocController extends Module{
             $request = (Request::getRequest()->getGlobal());
 
             $did = (int)$request['did'];
-            $name = Validation::ajax_utf8(Validation::textFilter($request['name'], false, true));
+            $name = Validation::textFilter($request['name'], false, true);
             $strLn = strlen($name);
             if($strLn > 50)
                 $name = substr($name, 0, 50);

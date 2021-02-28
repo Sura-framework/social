@@ -35,7 +35,7 @@ class DistinguishController extends Module{
             $i_height = (int)$request['i_height']; if($i_height < 0) $i_height = 0;
             $photo_id = (int)$request['photo_id'];
             $muser_id = (int)$request['user_id'];
-            $mphoto_name = Validation::ajax_utf8(Validation::strip_data(Validation::textFilter($request['user_name'], false, true)));
+            $mphoto_name = Validation::strip_data(Validation::textFilter($request['user_name'], false, true));
             $msettings_pos = $i_left.", ".$i_top.", ".$i_width.", ".$i_height;
             if($user_id == $muser_id) {
                 $approve = 1;
@@ -102,7 +102,7 @@ class DistinguishController extends Module{
 
             $photo_id = (int)$request['photo_id'];
             $muser_id = (int)$request['user_id'];
-            $mphoto_name = Validation::ajax_utf8(Validation::strip_data(Validation::textFilter($request['user_name'], false, true)));
+            $mphoto_name = Validation::strip_data(Validation::textFilter($request['user_name'], false, true));
             $row = $db->super_query("SELECT user_id FROM `photos` WHERE id = '".$photo_id."'");
 
             if($mphoto_name AND $muser_id == 0) {

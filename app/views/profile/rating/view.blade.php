@@ -23,11 +23,13 @@
                         <div class="info_center pb-5 pt-5">@_e('rating_no_update')</div>
                     @endif
                 </div>
+            @if($users)
                 @if(count($users) > 9)
                     <div class="rate_alluser cursor_pointer" onClick="rating.page()" id="rate_prev_ubut">
                         <div id="load_rate_prev_ubut">@_e('rating_next')</div>
                     </div>
                 @endif
+            @endif
         </div>
 
     </div>

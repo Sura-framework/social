@@ -8,7 +8,7 @@ use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 
-class SupportController extends Module{
+final class SupportController extends Module{
 
     /**
      * Страница создание нового вопроса
@@ -73,8 +73,8 @@ class SupportController extends Module{
 //            $gcount = 20;
 //            $limit_page = ($page-1)*$gcount;
 
-              $title = Validation::ajax_utf8(Validation::textFilter($request['title']));
-            $question = Validation::ajax_utf8(Validation::textFilter($request['question']));
+              $title = Validation::textFilter($request['title']);
+            $question = Validation::textFilter($request['question']);
             $server_time = \Sura\Time\Date::time();
             $limitTime = $server_time-3600;
             $rowLast = $db->super_query("SELECT COUNT(*) AS cnt FROM `support` WHERE сdate > '{$limitTime}'");
@@ -259,7 +259,6 @@ class SupportController extends Module{
      */
     public function answer(): int
     {
-        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -272,12 +271,12 @@ class SupportController extends Module{
 
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
+            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $qid = intval($request['qid']);
-            $answer = Validation::ajax_utf8(Validation::textFilter($request['answer']));
+            $qid = (int)$request['qid'];
+            $answer = Validation::textFilter($request['answer']);
             $check = $db->super_query("SELECT suser_id FROM `support` WHERE id = '{$qid}'");
             if($check['suser_id'] == $user_id OR $user_info['user_group'] == 4 AND isset($answer) AND !empty($answer)){
                 if($user_info['user_group'] == 4){

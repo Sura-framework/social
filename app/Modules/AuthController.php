@@ -18,6 +18,7 @@ use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
 use Sura\Time\Date;
+use function Sura\resolve;
 
 class AuthController extends Module
 {
@@ -61,7 +62,7 @@ class AuthController extends Module
 
             /** Проверка E-mail */
             $email = strip_tags($request['email']);
-            if (Validation::check_email($email) == false) {
+            if (!Validation::check_email($email)) {
                 $errors++;
 //                $err .= 'mail|'.$email;
                 $err['mail'] = $email;
@@ -162,7 +163,7 @@ class AuthController extends Module
         $request = ($requests = Request::getRequest()->getGlobal());
 
         $res = '';
-        $err = '';
+//        $err = '';
 
         //Проверяем была ли нажата кнопка, если нет, то делаем редирект на главную
         $token = $_POST['token'] . '|' . $_SERVER['REMOTE_ADDR'];
@@ -183,32 +184,32 @@ class AuthController extends Module
                 $user_last_name = ucfirst($user_last_name);
 
                 $user_sex = (int)$_POST['sex'];
-                if ($user_sex < 0 or $user_sex > 2) {
+                if ($user_sex < 0 || $user_sex > 2) {
                     $user_sex = 0;
                 }
 
                 $user_day = (int)$_POST['day'];
-                if ($user_day < 0 or $user_day > 31) {
+                if ($user_day < 0 || $user_day > 31) {
                     $user_day = 0;
                 }
 
                 $user_month = (int)$_POST['month'];
-                if ($user_month < 0 or $user_month > 12) {
+                if ($user_month < 0 || $user_month > 12) {
                     $user_month = 0;
                 }
 
                 $user_year = (int)$_POST['year'];
-                if ($user_year < 1930 or $user_year > 2007) {
+                if ($user_year < 1930 || $user_year > 2007) {
                     $user_year = 0;
                 }
 
                 $user_country = (int)$_POST['country'];
-                if ($user_country < 0 or $user_country > 10) {
+                if ($user_country < 0 || $user_country > 10) {
                     $user_country = 0;
                 }
 
                 $user_city = (int)$_POST['city'];
-                if ($user_city < 0 or $user_city > 1587) {
+                if ($user_city < 0 || $user_city > 1587) {
                     $user_city = 0;
                 }
 
@@ -221,25 +222,25 @@ class AuthController extends Module
                 $res = '';
 
                 //Проверка E-mail
-                if (Validation::check_email($user_email) == false) {
+                if (!Validation::check_email($user_email)) {
                     $errors++;
                     $err['mail'] = $user_email;
                 }
 
                 //Проверка имени
-                if (Validation::check_name($user_name) == false) {
+                if (!Validation::check_name($user_name)) {
                     $errors++;
                     $err['user_name'] = $user_name;
                 }
 
                 //Проверка фамилии
-                if (Validation::check_name($user_last_name) == false) {
+                if (!Validation::check_name($user_last_name)) {
                     $errors++;
                     $err['user_surname'] = $user_last_name;
                 }
 
                 //Проверка Паролей
-                if (Validation::check_password($password_first, $password_second) == false) {
+                if (!Validation::check_password($password_first, $password_second)) {
                     $errors++;
                     $err['password'] = $password_first;
                 }
@@ -248,7 +249,7 @@ class AuthController extends Module
                 if ($errors == 0) {
 
                     //Если email и существует то пропускаем
-                    $check_email = (new \App\Models\Register)->check_email($user_email);
+                    $check_email = (new Register)->check_email($user_email);
                     if (!$check_email['cnt']) {
                         //$md5_pass = md5(md5($password_first));
                         $pass_hash = password_hash($password_first, PASSWORD_DEFAULT);
@@ -257,9 +258,9 @@ class AuthController extends Module
 
                         $user_group = '5';
 
-                        if ($user_country > 0 or $user_city > 0) {
-                            $country_info = (new \App\Models\Register)->country_info((int)$user_country);
-                            $city_info = (new \App\Models\Register)->city_info((int)$user_city);
+                        if ($user_country > 0 || $user_city > 0) {
+                            $country_info = (new Register)->country_info((int)$user_country);
+                            $city_info = (new Register)->city_info((int)$user_city);
 
                             $user_country_city_name = $country_info['name'] . '|' . $city_info['name'];
                         }else{
@@ -381,7 +382,13 @@ class AuthController extends Module
 //                        Cache::mozg_create_folder_cache("user_{$id}");
 
                         //Директория юзеров
-                        $uploaddir = __DIR__ . '/../../public/uploads/users/';
+
+                        $dir = resolve('app')->get('path.base');
+                        $uploaddir = $dir . '/public/uploads/users/';
+
+                        if (!mkdir($concurrentDirectory = $uploaddir, 0777) && !is_dir($concurrentDirectory)) {
+                            throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
+                        }
 
                         if (!mkdir($concurrentDirectory = $uploaddir . $id, 0777) && !is_dir($concurrentDirectory)) {
                             throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
@@ -426,6 +433,9 @@ class AuthController extends Module
         } else {
             $status = Status::LOGGED;
         }
+        if (!isset($res)){
+            $res = '0';
+        }
         return _e(json_encode(array(
             'status' => $status,
             'res' => $res,
@@ -437,6 +447,7 @@ class AuthController extends Module
      *
      * @return int
      * @throws JsonException
+     * @throws \Exception
      */
     public function restore_send(): int
     {
@@ -451,34 +462,32 @@ class AuthController extends Module
 
             $request = (Request::getRequest()->getGlobal());
 //
-            $email = Validation::check_email($request['email']);
-            $check = $db->super_query("SELECT user_name FROM `users` WHERE user_email = '{$email}'");
+            if (Validation::check_email($request['email'])){
+                $check = $db->super_query("SELECT user_name FROM `users` WHERE user_email = '{$request['email']}'");
+                if ($check) {
+                    //Удаляем все предыдущие запросы на воостановление
+                    $db->query("DELETE FROM `restore` WHERE email = '{$request['email']}'");
 
-            $server_time = Date::time();
+                    $salt = "abchefghjkmnpqrstuvwxyz0123456789";
+                    $rand_lost = '';
+                    for ($i = 0; $i < 15; $i++) {
+                        $rand_lost .= $salt[random_int(0, 33)];
+                    }
+                    $server_time = Date::time();
+                    $hash = md5($server_time . $request['email'] . random_int(0, 100000) . $rand_lost . $check['user_name']);
 
-            if ($check) {
-                //Удаляем все предыдущие запросы на воостановление
-                $db->query("DELETE FROM `restore` WHERE email = '{$email}'");
+                    $_IP = Request::getRequest()->getClientIP();
 
-                $salt = "abchefghjkmnpqrstuvwxyz0123456789";
-                $rand_lost = '';
-                for ($i = 0; $i < 15; $i++) {
-                    $rand_lost .= $salt[rand(0, 33)];
-                }
-                $hash = md5($server_time . $email . rand(0, 100000) . $rand_lost . $check['user_name']);
+                    //Вставляем в базу
+                    $db->query("INSERT INTO `restore` SET email = '{$request['email']}', hash = '{$hash}', ip = '{$_IP}'");
 
-                $_IP = Request::getRequest()->getClientIP();
-
-                //Вставляем в базу
-                $db->query("INSERT INTO `restore` SET email = '{$email}', hash = '{$hash}', ip = '{$_IP}'");
-
-                //Отправляем письмо на почту для воостановления
+                    //Отправляем письмо на почту для воостановления
 //                include_once __DIR__.'/../Classes/mail.php';
 
-                $config = Settings::load();
+                    $config = Settings::load();
 
-                $mail = new Mail($config);
-                $message = <<<HTML
+                    $mail = new Mail($config);
+                    $message = <<<HTML
                         Здравствуйте, {$check['user_name']}.
                         
                         Чтобы сменить ваш пароль, пройдите по этой ссылке:
@@ -489,14 +498,14 @@ class AuthController extends Module
                         {$config['home_url']}
                         HTML;
 
-                $mail->send($email, $lang['lost_subj'], $message);
+                    $mail->send($request['email'], $lang['lost_subj'], $message);
 
-                $status = Status::OK;
-                $err = 'yes';
-            } else {
-                $status = Status::NOT_FOUND;
-                $err = 'hacking';
+                    $status = Status::OK;
+                    $err = 'yes';
+                }
             }
+            $status = Status::NOT_FOUND;
+            $err = 'hacking';
         } else {
             $status = Status::BAD_LOGGED;
             $err = 'hacking';
@@ -632,7 +641,6 @@ class AuthController extends Module
      */
     public function restore_next(): int
     {
-//        $tpl = $params['tpl'];
         $lang = $this->get_langs();
         $db = $this->db();
         $logged = Registry::get('logged');
@@ -645,24 +653,27 @@ class AuthController extends Module
 
             $request = (Request::getRequest()->getGlobal());
 
-            $email = Validation::ajax_utf8($request['email']);
-            $check = $db->super_query("SELECT user_id, user_search_pref, user_photo FROM `users` WHERE user_email = '{$email}'");
-            if ($check) {
-                if ($check['user_photo'])
-                    $check['user_photo'] = "/uploads/users/{$check['user_id']}/50_{$check['user_photo']}";
-                else
-                    $check['user_photo'] = "/images/no_ava_50.png";
-           
+            if (Validation::check_email($request['email'])){
+                $check = $db->super_query("SELECT user_id, user_search_pref, user_photo FROM `users` WHERE user_email = '{$request['email']}'");
+                if ($check) {
+                    if ($check['user_photo']) {
+                        $check['user_photo'] = "/uploads/users/{$check['user_id']}/50_{$check['user_photo']}";
+                    }
+                    else {
+                        $check['user_photo'] = "/images/no_ava_50.png";
+                    }
+
 //                echo $check['user_search_pref'] . "|" . $check['user_photo'];
-	            $status = Status::OK;
-                return _e_json(array(
-                    'status' => $status,
-                    'name' => $check['user_search_pref'],
-                    'photo' => $check['user_photo'],
-                ) );
-            } else{
-                $status = Status::NOT_FOUND;
+                    $status = Status::OK;
+                    return _e_json(array(
+                        'status' => $status,
+                        'name' => $check['user_search_pref'],
+                        'photo' => $check['user_photo'],
+                    ) );
+                }
             }
+
+            $status = Status::NOT_FOUND;
         }else{
             $status = Status::BAD_LOGGED;
         }

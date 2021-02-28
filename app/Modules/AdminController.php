@@ -23,11 +23,12 @@ class AdminController extends Module
 		}
 		return view('info.info', $params);
 	}
-	
-	/**
-	 * @return int
-	 */
-	public function stats(): int
+
+    /**
+     * @param $params
+     * @return int
+     */
+	public function stats($params): int
 	{
 		$logged = $params['user']['logged'];
 		$user_info = $params['user']['user_info'];

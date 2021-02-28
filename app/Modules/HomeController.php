@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Modules;
 
+use App\Contracts\Modules\HomeInterface;
 use JsonException;
 use Sura\Libs\Request;
 use Sura\Libs\Tools;
 use Throwable;
 
-class HomeController extends Module{
-    public int $counter;
+final class HomeController extends Module implements HomeInterface {
+
+     public int $counter;
 
     /**
      * Главная страница
@@ -19,10 +21,10 @@ class HomeController extends Module{
      * @return int
      * @throws Throwable
      */
-    public function index($params): int
+    public function index(array $params): int
     {
         if ($this->logged()){
-            return (new FeedController)->feed();
+            return (new FeedController)->feed($params);
         }else{
             $params['title'] = 'Sura';
             return view('reg', $params);
@@ -58,23 +60,13 @@ class HomeController extends Module{
     }
 
     /**
-     * Test page
-     *
-     */
-    public function Test(): int
-    {
-
-        return 1;
-    }
-
-    /**
      * Alias
      * (Profile OR Group)
      *
      * @param $params
      * @return int
      */
-    public function alias($params): int
+    public function alias(array $params): int
     {
         $db = $this->db();
         $server = Request::getRequest()->server;
@@ -112,8 +104,28 @@ class HomeController extends Module{
             $foo = new $class();
             $string =  call_user_func_array(array($foo, $action = 'Index'), $params);
             return _e((string)$string);
-        }else{
-            return 0;
         }
+
+        return 0;
+    }
+
+    /**
+     * @param array $params
+     * @return int
+     */
+    public function login(array $params): int
+    {
+        // TODO: Implement login() method.
+        return 1;
+    }
+
+    /**
+     * @param array $params
+     * @return int
+     */
+    public function Test(array $params): int
+    {
+        // TODO: Implement Test() method.
+        return 1;
     }
 }

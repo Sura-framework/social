@@ -2,7 +2,8 @@
 @section('content')
     <div class="container">
         {{ $menu }}
-        @foreach($friends as $row)
+        @if(!empty($friends))
+            @foreach($friends as $row)
                 <div class="friends_onefriend width_100" id="friend_{{ $row['user_id'] }}">
                     <a href="/u{{ $row['user_id'] }}" onClick="Page.Go(this.href); return false">
                         <div class="friends_ava"><img src="{{ $row['ava'] }}" alt="" id="ava_{{ $row['user_id'] }}" /></div>
@@ -20,7 +21,7 @@
                         <a href="/albums/{{ $row['user_id'] }}/" onClick="Page.Go(this.href); return false"><div>@_e('albums')</div></a>
                     </div>
                 </div>
-        @endforeach
-        </div>
+            @endforeach
+        @endif
     </div>
 @endsection

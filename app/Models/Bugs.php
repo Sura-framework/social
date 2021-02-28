@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Sura\Libs\Db;
+use Sura\Database\Connection;
 use Sura\Libs\Model;
 use Sura\Libs\Registry;
 use Sura\Time\Date;
@@ -12,7 +12,7 @@ use Sura\Time\Date;
 class Bugs
 {
 
-    private \Sura\Database\Connection $database;
+    private Connection $database;
 
     /**
      * Profile constructor.
@@ -24,62 +24,62 @@ class Bugs
 
     public static array $status = array(
         0 => array(
-            'text' =>'Открыто',
+            'text' => 'Открыто',
             'color_class' => 'text-danger',
             'tooltip' => 'Мы проверяем ваше сообщение об ошибке.',
         ),
         1 => array(
-            'text' =>'Открыто',
+            'text' => 'Открыто',
             'color_class' => 'text-danger',
             'tooltip' => 'Мы проверяем ваше сообщение об ошибке.',
         ),
         9 => array(
-            'text' =>'В работе',
+            'text' => 'В работе',
             'color_class' => 'text-muted',
             'tooltip' => 'Нам удалось воспроизвести эту ошибку. Она передана специалистам соответствующего продукта для дальнейшего изучения.',
         ),
         2 => array(
-            'text' =>'Исправлено',
+            'text' => 'Исправлено',
             'color_class' => 'text-success',
             'tooltip' => 'ttt',
         ),
         3 => array(
-            'text' =>'Отклонено',
+            'text' => 'Отклонено',
             'color_class' => 'text-muted',
             'tooltip' => 'ttt',
         ),
         4 => array(
-            'text' =>'На рассмотрении',
+            'text' => 'На рассмотрении',
             'color_class' => 'text-success',
             'tooltip' => 'Мы рассматриваем ваше сообщение с учетом предоставленной информации.',
         ),
         6 => array(
-            'text' =>'Решено',
+            'text' => 'Решено',
             'color_class' => 'text-muted',
             'tooltip' => 'Ошибка закрыта.',
         ),
         8 => array(
-            'text' =>'Заблокировано',
+            'text' => 'Заблокировано',
             'color_class' => 'text-muted',
             'tooltip' => 'ttt',
         ),
         5 => array(
-            'text' =>'Переоткрыто',
+            'text' => 'Переоткрыто',
             'color_class' => 'text-warning',
             'tooltip' => 'ttt',
         ),
         10 => array(
-            'text' =>'Не воспроизводится',
+            'text' => 'Не воспроизводится',
             'color_class' => 'text-warning',
             'tooltip' => 'Нам не удалось воспроизвести эту ошибку.',
         ),
         7 => array(
-            'text' =>'Отложено',
+            'text' => 'Отложено',
             'color_class' => 'text-warning',
             'tooltip' => 'Отложено',
         ),
         11 => array(
-            'text' =>'Требует корректировки',
+            'text' => 'Требует корректировки',
             'color_class' => 'text-warning',
             'tooltip' => 'Нам нужна дополнительная информация от вас, чтобы воспроизвести ошибку, о которой вы сообщили.',
         ),
@@ -91,7 +91,7 @@ class Bugs
      */
     public static function getStatusData(int $status): string
     {
-        if ($status == 0 || $status == 1){
+        if ($status == 0 || $status == 1) {
             $response = '            
             <div class="_3t4q _3t4s">
                 <div class="_3t4u" style="left: 25%; width: 50%;"></div>
@@ -114,7 +114,7 @@ class Bugs
                     </li>
                 </ul>
             </div>';
-        }elseif($status == 8 || $status == 6 || $status == 3){
+        } elseif ($status == 8 || $status == 6 || $status == 3) {
             $response = '
             <div class="_3t4q _3t4s">
                 <div class="_3t4u" style="left: 25%; width: 50%;"></div>
@@ -129,15 +129,15 @@ class Bugs
                         <label class="_3t4m">Открыто</label>
                     </li>
                     <li class="_3t4j active _71_e" 
-                    onmouseover="myhtml.title(\'1\', \''.self::$status[$status]['tooltip'].'.\', \'step\', 5)"
+                    onmouseover="myhtml.title(\'1\', \'' . self::$status[$status]['tooltip'] . '.\', \'step\', 5)"
                     data-tooltip-content="Ошибка закрыта." data-hover="tooltip"
                         data-tooltip-position="above" data-tooltip-alignh="center" id="step1" style="width: 50%;">
                         <span class="_3t4l"></span>
-                        <label class="_3t4m">'.self::$status[$status]['text'].'</label>
+                        <label class="_3t4m">' . self::$status[$status]['text'] . '</label>
                     </li>
                 </ul>
             </div>';
-        }elseif($status == 2 || $status == 4 || $status == 5 || $status == 7 || $status == 9 || $status == 10 || $status == 11){
+        } elseif ($status == 2 || $status == 4 || $status == 5 || $status == 7 || $status == 9 || $status == 10 || $status == 11) {
             $response = '
             <div class="_3t4q _3t4s">
                 <div class="_3t4u" style="left: 16.6667%; width: 66.6667%;"></div>
@@ -152,12 +152,12 @@ class Bugs
                         <label class="_3t4m">Открыто</label>
                     </li>
                     <li class="_3t4j active _71_e"
-                    onmouseover="myhtml.title(\'1\', \''.self::$status[$status]['tooltip'].'\', \'step\', 5)"
+                    onmouseover="myhtml.title(\'1\', \'' . self::$status[$status]['tooltip'] . '\', \'step\', 5)"
                         data-tooltip-content="Нам удалось воспроизвести эту ошибку. Она передана специалистам соответствующего продукта для дальнейшего изучения."
                         data-hover="tooltip" data-tooltip-position="above" data-tooltip-alignh="center" id="step1"
                         style="width: 33.3333%;">
                         <span class="_3t4l"></span>
-                        <label class="_3t4m">'.self::$status[$status]['text'].'</label>
+                        <label class="_3t4m">' . self::$status[$status]['text'] . '</label>
                     </li>
                     <li class="_3t4j active _71_e"
                      onmouseover="myhtml.title(\'2\', \'Ошибка закрыта.\', \'step\', 5)"
@@ -168,7 +168,7 @@ class Bugs
                     </li>
                 </ul>
             </div>';
-        }else{
+        } else {
             $response = '            
             <div class="_3t4q _3t4s">
                 <div class="_3t4u" style="left: 25%; width: 50%;"></div>
@@ -200,9 +200,9 @@ class Bugs
         $user_info = Registry::get('user_info');
         $user_id = $user_info['user_id'];
 
-        if ($user_info['user_group'] < 5){
+        if ($user_info['user_group'] < 5) {
             $moderator = true;
-        }else{
+        } else {
             $moderator = false;
         }
 
@@ -222,7 +222,7 @@ class Bugs
 //            if ($moderator == true || $row['user_id'] == $user_id){
 //                $sql_[$key]['delete'] = '<a href="/" onClick="bugs.Delete(\' '.$row['id'].' \'); return false;" style="color: #000000">Удалить</a>';
 //            }
-            $sql_[$key]['status'] = '<span class="'.self::$status[$row['status']]['color_class'].'">'.self::$status[$row['status']]['text'].'</span>';
+            $sql_[$key]['status'] = '<span class="' . self::$status[$row['status']]['color_class'] . '">' . self::$status[$row['status']]['text'] . '</span>';
             $sql_[$key]['status_bug'] = self::getStatusData((int)$row['status']);
             $sql_[$key]['name'] = $row['user_search_pref'];
 
@@ -239,10 +239,10 @@ class Bugs
             }
 
             $comments = $this->database->fetchALL("SELECT id, author_user_id, bug_id, text, add_date, status FROM `bugs_comments` WHERE bug_id = {$row['id']}  ORDER by `add_date`", true);
-            foreach ($comments as $key2 => $comment){
-                if ($comment['status'] > 0){
-                    $comments[$key2]['status_info'] = 'Статус изменен на '.self::$status[$comment['status']]['text'];
-                }else{
+            foreach ($comments as $key2 => $comment) {
+                if ($comment['status'] > 0) {
+                    $comments[$key2]['status_info'] = 'Статус изменен на ' . self::$status[$comment['status']]['text'];
+                } else {
                     $comments[$key2]['status_info'] = '';
                 }
 

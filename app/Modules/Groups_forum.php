@@ -32,9 +32,9 @@ class Groups_forum extends Module{
             $request = (Request::getRequest()->getGlobal());
 
             $public_id = (int)$request['public_id'];
-            $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
-            $attach_files = Validation::ajax_utf8(Validation::textFilter($request['attach_files'], false, true));
-            $text = Validation::ajax_utf8(Validation::textFilter($request['text']));
+            $title = Validation::textFilter($request['title'], false, true);
+            $attach_files = Validation::textFilter($request['attach_files'], false, true);
+            $text = Validation::textFilter($request['text']);
 
             $row = $db->super_query("SELECT ulist, discussion FROM `communities` WHERE id = '{$public_id}'");
 
@@ -124,7 +124,7 @@ class Groups_forum extends Module{
 
             $fid = (int)$request['fid'];
             $answer_id = (int)$request['answer_id'];
-            $msg = Validation::ajax_utf8(Validation::textFilter($request['msg']));
+            $msg = Validation::textFilter($request['msg']);
 
             $row = $db->super_query("SELECT status, public_id FROM `communities_forum` WHERE fid = '{$fid}'");
             $row2 = $db->super_query("SELECT discussion FROM `communities` WHERE id = '{$row['public_id']}'");
@@ -336,7 +336,7 @@ class Groups_forum extends Module{
             $request = (Request::getRequest()->getGlobal());
 
             $fid = (int)$request['fid'];
-            $text = Validation::ajax_utf8(Validation::textFilter($request['text']));
+            $text = Validation::textFilter($request['text']);
 
             $row = $db->super_query("SELECT fuser_id, public_id FROM `communities_forum` WHERE fid = '{$fid}'");
             $row2 = $db->super_query("SELECT admin, discussion FROM `communities` WHERE id = '{$row['public_id']}'");
@@ -386,7 +386,7 @@ class Groups_forum extends Module{
             $request = (Request::getRequest()->getGlobal());
 
             $fid = (int)$request['fid'];
-            $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
+            $title = Validation::textFilter($request['title'], false, true);
 
             $row = $db->super_query("SELECT fuser_id, public_id FROM `communities_forum` WHERE fid = '{$fid}'");
             $row2 = $db->super_query("SELECT admin, discussion FROM `communities` WHERE id = '{$row['public_id']}'");
@@ -719,16 +719,16 @@ class Groups_forum extends Module{
             if($user_info['user_group'] == 1 OR $public_admin OR $row['fuser_id'] == $user_id AND $row2['discussion']){
 
                 //Голосование
-                $vote_title = Validation::ajax_utf8(Validation::textFilter($request['vote_title'], false, true));
-                $vote_answer_1 = Validation::ajax_utf8(Validation::textFilter($request['vote_answer_1'], false, true));
+                $vote_title = Validation::textFilter($request['vote_title'], false, true);
+                $vote_answer_1 = Validation::textFilter($request['vote_answer_1'], false, true);
 
                 $ansers_list = array();
 
-                if(isset($vote_title) AND !empty($vote_title) AND isset($vote_answer_1) AND !empty($vote_answer_1)){
+                if(!empty($vote_title) && !empty($vote_answer_1)){
 
                     for($vote_i = 1; $vote_i <= 10; $vote_i++){
 
-                        $vote_answer = Validation::ajax_utf8(Validation::textFilter($request['vote_answer_'.$vote_i], false, true));
+                        $vote_answer = Validation::textFilter($request['vote_answer_'.$vote_i], false, true);
                         $vote_answer = str_replace('|', '&#124;', $vote_answer);
 
                         if($vote_answer)

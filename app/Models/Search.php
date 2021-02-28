@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-
+use Sura\Database\Connection;
 use Sura\Libs\Model;
 
 class Search
 {
 	
-	private \Sura\Database\Connection $database;
+	private Connection $database;
 	
 	/**
 	 * Profile constructor.

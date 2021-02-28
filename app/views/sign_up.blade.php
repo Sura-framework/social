@@ -4,7 +4,7 @@
     <div class="col-5 mt-2">
         <div class="card">
             <div class="card-body">
-                <h1 class="display-4 text-center mb-3">Spiso</h1>
+                <h1 class="display-4 text-center mb-3">Sura</h1>
                 <p class="text-muted text-center mb-5">Чтобы продолжить, создайте аккаунт или войдите.</p>
                 <h1 onClick="reg.step1(); return false" id="reg_lnk">Моментальная регистрация</h1>
                 <div class="no_display" id="step2">

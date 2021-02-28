@@ -5,6 +5,10 @@ namespace App\Libs;
 
 use Sura\Libs\Db;
 
+/**
+ * Class Antispam
+ * @package App\Libs
+ */
 class Antispam
 {
 	/** @var array|int[] Лимиты на день */

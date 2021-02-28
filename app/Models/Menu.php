@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-
 use Sura\Libs\Langs;
 use Sura\Libs\Registry;
 use Sura\Menu\Html;
@@ -78,7 +77,6 @@ class Menu
     public static function friends(): string
     {
         $path = explode('/', $_SERVER['REQUEST_URI']);
-//        $id = $path['2'];
         $user_info = Registry::get('user_info');
         $lang = langs::get_langs();
         $go = 'Page.Go(this.href); return false;';
@@ -96,26 +94,24 @@ class Menu
                 ->setActive($_SERVER['REQUEST_URI'])
                 ->wrap('div', ['class' => 'wrapper'])
                 ->render();
-        }else{
-            $id = $path['2'];
-            return \Sura\Menu\Menu::new()
-                ->addClass('navigation nav text-left pl-2')
-                ->add(Link::to('/friends/'.$id.'/', $lang['friends_all'])->setAttribute('onClick', $go))
-                ->add(Link::to('/friends/'.$id.'/online/', $lang['friends_online'])->setAttribute('onClick', $go))
-                ->add(Link::to('/friends/'.$id.'/common/', $lang['friends_common'])->setAttribute('onClick', $go))
-                ->add(Link::to('/u'.$id, $lang['to_page'])->setAttribute('onClick', $go))
-                ->setActive($_SERVER['REQUEST_URI'])
-                ->wrap('div', ['class' => 'wrapper'])
-                ->render();
         }
+
+        $id = $path['2'];
+        return \Sura\Menu\Menu::new()
+            ->addClass('navigation nav text-left pl-2')
+            ->add(Link::to('/friends/'.$id.'/', $lang['friends_all'])->setAttribute('onClick', $go))
+            ->add(Link::to('/friends/'.$id.'/online/', $lang['friends_online'])->setAttribute('onClick', $go))
+            ->add(Link::to('/friends/'.$id.'/common/', $lang['friends_common'])->setAttribute('onClick', $go))
+            ->add(Link::to('/u'.$id, $lang['to_page'])->setAttribute('onClick', $go))
+            ->setActive($_SERVER['REQUEST_URI'])
+            ->wrap('div', ['class' => 'wrapper'])
+            ->render();
 
     }
 
     public static function bugs(): string
     {
-//        $lang = langs::get_langs();
         $go = 'Page.Go(this.href); return false;';
-
         return \Sura\Menu\Menu::new()
             ->addClass('navigation nav text-left pl-2')
             ->add(Link::to('/bugs/', 'Все баги')->setAttribute('onClick', $go))

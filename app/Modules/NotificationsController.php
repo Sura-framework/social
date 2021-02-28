@@ -6,10 +6,10 @@ namespace App\Modules;
 
 use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
-use Exception;
 use Sura\Libs\Status;
+use Sura\Time\Date;
 
-class NotificationsController extends Module{
+final class NotificationsController extends Module{
 
     /**
      * settings
@@ -17,40 +17,42 @@ class NotificationsController extends Module{
      */
     public function settings(): int
     {
-//        $lang = $this->get_langs();
-//        $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
 
-        $request = (Request::getRequest()->getGlobal());
-
         if($logged){
-//            $act = $request['act'];
-
-            if(stripos($user_info['notifications_list'], "settings_likes_posts|") === false)
+            if(stripos($user_info['notifications_list'], "settings_likes_posts|") === false) {
                 $settings_likes_posts = 'html_checked';
-            else
+            }
+            else {
                 $settings_likes_posts = '';
-            if(stripos($user_info['notifications_list'], "settings_likes_photos|") === false)
+            }
+            if(stripos($user_info['notifications_list'], "settings_likes_photos|") === false) {
                 $settings_likes_photos = 'html_checked';
-            else
+            }
+            else {
                 $settings_likes_photos = '';
-            if(stripos($user_info['notifications_list'], "settings_likes_compare|") === false)
+            }
+            if(stripos($user_info['notifications_list'], "settings_likes_compare|") === false) {
                 $settings_likes_compare = 'html_checked';
-            else
+            }
+            else {
                 $settings_likes_compare = '';
-            if(stripos($user_info['notifications_list'], "settings_likes_gifts|") === false)
+            }
+            if(stripos($user_info['notifications_list'], "settings_likes_gifts|") === false) {
                 $settings_likes_gifts = 'html_checked';
-            else
+            }
+            else {
                 $settings_likes_gifts = '';
+            }
 
             return _e('<div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_posts");><i class="icn icn-gray icn-like"></i><span>Оценки записей</span> <div class="html_checkbox '.$settings_likes_posts.'" id="settings_likes_posts"></div></div>
             <div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_photos");><i class="icn icn-gray icn-like"></i><span>Оценки фотографий</span> <div class="html_checkbox '.$settings_likes_photos.'" id="settings_likes_photos"></div></div>
             <div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_compare");><i class="icn icn-gray icn-like"></i><span>Оценки в дуэлях</span> <div class="html_checkbox '.$settings_likes_compare.'" id="settings_likes_compare"></div></div>
             <div class="settings_elem" onclick=QNotifications.settings_save("settings_likes_gifts");><i class="icn icn-gray icn-gift"></i><span>Новый подарок</span> <div class="html_checkbox '.$settings_likes_gifts.'" id="settings_likes_gifts"></div></div>');
-        }else{
-            return _e('');
         }
+
+        return _e('');
     }
 
     /**
@@ -67,19 +69,23 @@ class NotificationsController extends Module{
         if($logged){
             $request = (Request::getRequest()->getGlobal());
 
-            $settings_likes_posts = intval($request['settings_likes_posts']);
-            $settings_likes_photos = intval($request['settings_likes_photos']);
-            $settings_likes_compare = intval($request['settings_likes_compare']);
-            $settings_likes_gifts = intval($request['settings_likes_gifts']);
+            $settings_likes_posts = (int)$request['settings_likes_posts'];
+            $settings_likes_photos = (int)$request['settings_likes_photos'];
+            $settings_likes_compare = (int)$request['settings_likes_compare'];
+            $settings_likes_gifts = (int)$request['settings_likes_gifts'];
             $notifications_list = '';
-            if($settings_likes_posts)
+            if($settings_likes_posts) {
                 $notifications_list .= '|settings_likes_posts|';
-            if($settings_likes_photos)
+            }
+            if($settings_likes_photos) {
                 $notifications_list .= '|settings_likes_photos|';
-            if($settings_likes_compare)
+            }
+            if($settings_likes_compare) {
                 $notifications_list .= '|settings_likes_compare|';
-            if($settings_likes_gifts)
+            }
+            if($settings_likes_gifts) {
                 $notifications_list .= '|settings_likes_gifts|';
+            }
             $db->super_query("UPDATE `users` SET notifications_list = '{$notifications_list}' WHERE user_id = '{$user_info['user_id']}'");
 
             $status = Status::OK;
@@ -105,7 +111,7 @@ class NotificationsController extends Module{
         if($logged){
             $request = (Request::getRequest()->getGlobal());
 
-            $id = intval($request['id']);
+            $id = (int)$request['id'];
             if($id){
                 $sql_ = $db->super_query("SELECT COUNT(*) as cnt FROM `news` WHERE ac_id = '{$id}' AND action_type IN (7,20,21,22) AND for_user_id = '{$user_info['user_id']}'");
                 if($sql_){
@@ -149,8 +155,12 @@ class NotificationsController extends Module{
                     foreach($likesUseList as $key => $likeUser){
                         if($likeUser){
                             $rowUser = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$likeUser}'");
-                            if($rowUser['user_photo']) $luAva = '/uploads/users/'.$likeUser.'/100_'.$rowUser['user_photo'];
-                            else $luAva = '/images/100_no_ava.png';
+                            if($rowUser['user_photo']) {
+                                $luAva = '/uploads/users/' . $likeUser . '/100_' . $rowUser['user_photo'];
+                            }
+                            else {
+                                $luAva = '/images/100_no_ava.png';
+                            }
                             if($row['action_type'] == 7){
                                 $a = $db->super_query("SELECT date FROM `wall_like` WHERE rec_id = '{$row['obj_id']}' and user_id = '{$likeUser}'");
                                 $row['action_time'] = $a['date'];
@@ -172,8 +182,7 @@ class NotificationsController extends Module{
                             $params['ava'] = $luAva;
                             $params['uid'] = $likeUser;
                             $params['name'] = $rowUser['user_search_pref'];
-                            $date = \Sura\Time\Date::megaDate(strtotime($row['action_time']), 1, 1);
-                            $params['date'] = $date;
+                            $params['date'] = Date::megaDate( strtotime($row['action_time']), '1', true);
                             //$last_date = date('d.m.Y', $row['action_time']);
                         }
                     }
@@ -195,12 +204,9 @@ class NotificationsController extends Module{
      */
     public function index(): int
     {
-
         $logged = $this->logged();
         if ($logged){
             $content = '';//временно
-
-            //$lang = $this->get_langs();
             $db = $this->db();
             $user_info = $this->user_info();
 
@@ -220,10 +226,12 @@ class NotificationsController extends Module{
             $last = true;
             if($last)
             {
-                if ($last_id)
+                if ($last_id) {
                     $sql_ = $db->super_query("SELECT tb1.ac_id, ac_user_id, action_text, action_time, action_type, obj_id, answer_text, link FROM `news` tb1 WHERE tb1.action_type IN (7,20,21,22) AND tb1.for_user_id = '{$user_info['user_id']}' AND tb1.ac_id < '{$last_id}' ORDER BY tb1.action_time DESC LIMIT 0, {$limit_news}", 1);
-                else
+                }
+                else {
                     $sql_ = $db->super_query("SELECT tb1.ac_id, ac_user_id, action_text, action_time, action_type, obj_id, answer_text, link FROM `news` tb1 WHERE tb1.action_type IN (7,20,21,22) AND tb1.for_user_id = '{$user_info['user_id']}' ORDER BY tb1.action_time DESC LIMIT 0, {$limit_news}", true);
+                }
 
                 /*
                 Лайки фотографий 20
@@ -247,10 +255,12 @@ class NotificationsController extends Module{
                         if($likeUser){
                             if($cntUse < 4){
                                 $rowUser = $db->super_query("SELECT user_photo FROM `users` WHERE user_id = '{$likeUser}'");
-                                if($rowUser['user_photo'])
-                                    $luAva = '/uploads/users/'.$likeUser.'/100_'.$rowUser['user_photo'];
-                                else
+                                if($rowUser['user_photo']) {
+                                    $luAva = '/uploads/users/' . $likeUser . '/100_' . $rowUser['user_photo'];
+                                }
+                                else {
                                     $luAva = '/images/100_no_ava.png';
+                                }
                                 $rList .= '<a class="user" href="/u'.$likeUser.'" onClick="Page.Go(this.href); return false"><div><img src="'.$luAva.'" style="margin: 4px 4px 0px 0px;width: 64px;border-radius: 0;" /></div></a>';
                             }
                             $cntUse++;
@@ -297,7 +307,7 @@ class NotificationsController extends Module{
                     $sql_[$key]['users'] = $rList;
 //                    $date = megaDate(strtotime($row['action_time']), 1, 1);
 //                    $sql_[$key]['date'] = $date;
-                    $sql_[$key]['date'] = Date::megaDate($row['action_time'], 1, 1);
+                    $sql_[$key]['date'] = Date::megaDate($row['action_time'], '1', true);
                     $last_date = date('d.m.Y', $row['action_time']);
                 }
 
@@ -309,11 +319,9 @@ class NotificationsController extends Module{
                 {
                     $content .= '<div class="show_all_button" onclick="QNotifications.MoreShow();">Показать больше уведомлений</div>';
                 }
-
                 return _e_json(array('content' => $content, 'count' => $count['cnt']));
-            }else{
-                return _e_json(array('content' => '<p>Нет оповещений.</p>', 'count' => $count['cnt']));
             }
+            return _e_json(array('content' => '<p>Нет оповещений.</p>', 'count' => $count['cnt']));
         }
         return _e_json(array('content' => '<p>Нет оповещений.</p>', 'count' => 0));
     }

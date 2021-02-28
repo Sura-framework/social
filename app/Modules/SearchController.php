@@ -11,7 +11,7 @@ use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 use Sura\Time\Date;
 
-class SearchController extends Module
+final class SearchController extends Module
 {
 
     /**
@@ -50,7 +50,7 @@ class SearchController extends Module
         $limit_page = ($page - 1) * $g_count;
 
         if (isset($request['query'])) {
-//                $query = $db->safesql(Validation::ajax_utf8(Validation::strip_data(urldecode($request['query']))));
+//                $query = $db->safesql(Validation::strip_data(urldecode($request['query']))));
             $query = Validation::strip_data(urldecode($request['query']));
             if (isset($request['n']) and $request['n']) {
                 $query = Validation::strip_data(urldecode($request['query']));

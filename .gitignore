@@ -1,6 +1,7 @@
 /vendor/
 /app/cache/
 /public/uploads/
+/config/config.php
 .idea
 .env
 .phpunit.result.cache

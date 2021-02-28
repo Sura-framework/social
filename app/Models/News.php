@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-
 use Exception;
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
+use Sura\Database\Connection;
 use Sura\Libs\Db;
 use Sura\Libs\Model;
 
@@ -16,7 +18,7 @@ class News
 	 * @var Db|null
 	 */
 	private static ?Db $db;
-	private \Sura\Database\Connection $database;
+	private Connection $database;
 	
 	public function __construct()
 	{
@@ -62,7 +64,7 @@ class News
                 $res = $this->database->fetch("SELECT title, photo, comments FROM `communities` WHERE id = ?", (array)$user_id);
 			}
 			if (empty($res)){
-                throw new Exception('err');
+                throw new \RuntimeException('err');
             }
 			return $res;
 
@@ -97,12 +99,12 @@ class News
 	 */
 	public function video_info(int $id): array
 	{
-		$storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-		$cache = new \Sura\Cache\Cache($storage, 'users');
+		$storage = new MemcachedStorage('localhost');
+		$cache = new Cache($storage, 'users');
 		$key = $id . '/wall/video' . $id;
 		
-		$value = $cache->load($key, function (&$dependencies) {
-			$dependencies[\Sura\Cache\Cache::EXPIRE] = '20 minutes';
+		$value = $cache->load($key, static function (&$dependencies) {
+			$dependencies[Cache::EXPIRE] = '20 minutes';
 		});
 		
 		if ($value == null) {
@@ -140,8 +142,8 @@ class News
 	 */
 	public function vote_info(int $id): array
 	{
-		$storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-		$cache = new \Sura\Cache\Cache($storage, 'users');
+		$storage = new MemcachedStorage('localhost');
+		$cache = new Cache($storage, 'users');
 		$value = $cache->load("{$id}/votes/vote_{$id}");
 		if ($value == null) {
 			$db = Db::getDB();
@@ -163,8 +165,8 @@ class News
 	 */
 	public function vote_info_check(int $id, int $user_id): array
 	{
-		$storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-		$cache = new \Sura\Cache\Cache($storage, 'users');
+		$storage = new MemcachedStorage('localhost');
+		$cache = new Cache($storage, 'users');
 		$value = $cache->load("user_{$id}/votes/check{$user_id}_{$id}");
 		if ($value == null) {
 			$db = Db::getDB();
@@ -184,8 +186,8 @@ class News
 	 */
 	public function vote_info_answer(int $id): array
 	{
-		$storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-		$cache = new \Sura\Cache\Cache($storage, 'votes');
+		$storage = new MemcachedStorage('localhost');
+		$cache = new Cache($storage, 'votes');
 		$value = $cache->load("vote_answer_cnt_{$id}");
 		if ($value == null) {
 			$row = $this->database->fetchAll("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = ? GROUP BY answer", (array)$id);
@@ -207,10 +209,10 @@ class News
 		$db = Db::getDB();
 		if ($type == 1) {
 			return $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$user_id}'");
-		} else {
-			return $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$user_id}'", false);
 		}
-	}
+
+        return $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$user_id}'", false);
+    }
 	
 	/**
 	 * @param $id

@@ -3,15 +3,11 @@ declare(strict_types=1);
 
 namespace App\Libs;
 
-
-use App\Models\News;
 use App\Models\Profile;
-use Sura\Libs\Date;
 use Sura\Libs\Db;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
-use Sura\Libs\Tools;
 
 class Wall
 {
@@ -364,10 +360,10 @@ class Wall
                 }
 
                 if (is_int($row['tell_date'])) {
-                    $dateTell = \Sura\Libs\Date::megaDate((int)$row['tell_date']);
+                    $dateTell = \Sura\Time\Date::megaDate((int)$row['tell_date']);
                 } else {
 //                    $dateTell = 'N/A';
-                    $dateTell = \Sura\Libs\Date::megaDate((int)$row['tell_date']);
+                    $dateTell = \Sura\Time\Date::megaDate((int)$row['tell_date']);
                 }
 
                 if ($row['public']) {
@@ -416,7 +412,7 @@ class Wall
 
             $query[$key]['privacy_comment'] = false;
 
-            $query[$key]['date'] = \Sura\Libs\Date::megaDate((int)$row['add_date']);
+            $query[$key]['date'] = \Sura\Time\Date::megaDate((int)$row['add_date']);
 
             if ($action_type == 1) {
                 $query[$key]['text'] = stripslashes($row['text']);
@@ -560,7 +556,7 @@ class Wall
 
                             $sql_comments[$key2]['text'] = stripslashes($row_comments['text']);
 
-                            $sql_comments[$key2]['date'] = \Sura\Libs\Date::megaDate((int)$row_comments['add_date']);
+                            $sql_comments[$key2]['date'] = \Sura\Time\Date::megaDate((int)$row_comments['add_date']);
 
                             if ($user_id == $row_comments['author_user_id'] || $user_id == $id) {
                                 $sql_comments[$key2]['owner'] = true;
@@ -705,7 +701,7 @@ class Wall
 
                             $sql_comments[$key2]['text'] = stripslashes($row_comments['text']);
 
-                            $date = \Sura\Libs\Date::megaDate((int)$row_comments['add_date']);
+                            $date = \Sura\Time\Date::megaDate((int)$row_comments['add_date']);
 
                             $sql_comments[$key2]['date'] = $date;
                             if ($query[$key]['owner'] or $user_id == $row_comments['public_id']) {

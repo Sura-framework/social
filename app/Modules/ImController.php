@@ -43,10 +43,10 @@ class ImController extends Module{
             $request = (Request::getRequest()->getGlobal());
 
             $for_user_id = (int)$request['for_user_id'];
-            $msg = Validation::ajax_utf8($request['msg']);
-            $my_ava = Validation::ajax_utf8($request['my_ava']);
-            $my_name = Validation::ajax_utf8($request['my_name']);
-            $attach_files = Validation::ajax_utf8($request['attach_files']);
+            $msg = Validation::textFilter($request['msg']);
+            $my_ava = Validation::textFilter($request['my_ava']);
+            $my_name = Validation::textFilter($request['my_name']);
+            $attach_files = Validation::textFilter($request['attach_files']);
 
             $attach_files = str_replace('vote|', 'hack|', $attach_files);
 
@@ -63,11 +63,11 @@ class ImController extends Module{
                     $user_privacy = xfieldsdataload($row['user_privacy']);
 
                     //ЧС
-                    $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($for_user_id);
+                    $CheckBlackList = (new \App\Models\Friends)->CheckBlackList($for_user_id);
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if($user_privacy['val_msg'] == 2)
-                        $check_friend = (new \App\Libs\Friends)->CheckFriends($for_user_id);
+                        $check_friend = (new \App\Models\Friends)->CheckFriends($for_user_id);
                     else{
                         $check_friend = false;
                     }
@@ -81,7 +81,7 @@ class ImController extends Module{
 
                         Antispam::LogInsert(4, $user_id, $msg.$attach_files );
 
-                        if(!(new \App\Libs\Friends)->CheckFriends($for_user_id))
+                        if(!(new \App\Models\Friends)->CheckFriends($for_user_id))
                             Antispam::LogInsert(2, $user_id);
 
                         $server_time = Date::time();

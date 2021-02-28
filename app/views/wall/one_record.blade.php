@@ -87,7 +87,7 @@
                         <div class="wall_fast_form no_display" id="fast_form_{{ $row['id'] }}">
                             <div class="no_display wall_fast_texatrea" id="fast_textarea_{{ $row['id'] }}">
                                 <label for="fast_text_{{ $row['id'] }}"></label>
-                                <textarea class="wall_inpst fast_form_width wall_fast_text" style="height:33px;color:#000;margin:0px;width:688px" id="fast_text_{{ $row['id'] }}"
+                                <textarea class="wall_inpst fast_form_width wall_fast_text" style="height:33px;color:#000;margin:0px;" id="fast_text_{{ $row['id'] }}"
                                   onKeyPress="if(event.keyCode == 10 || (event.ctrlKey && event.keyCode == 13))wall.fast_send('{{ $row['id'] }}', '{{ $row['user_id'] }}', 2)">
                                 </textarea>
                                 <div class="button_div fl_l margin_top_5"><button onClick="wall.fast_send('{{ $row['id'] }}', '{{ $row['user_id'] }}', 2); return false" id="fast_buts_{{ $row['id'] }}">Отправить</button></div>

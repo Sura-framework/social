@@ -4,10 +4,10 @@ declare(strict_types=1);
 use Sura\Console;
 use Sura\Exception\SuraException;
 use Sura\Libs\Auth;
-use Sura\Libs\Profile_check;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
+use Sura\Time\Zone;
 
 
 if (PHP_SAPI === 'cli') {
@@ -22,8 +22,6 @@ if (PHP_SAPI === 'cli') {
         session_id($_POST["PHPSESSID"]);
     }
     session_start();
-//$requests->unsetGlobal();
-//    $server = $requests->server;
 
     $user = Auth::index();
     $config = Settings::load();
@@ -35,15 +33,7 @@ if (PHP_SAPI === 'cli') {
     }
 
     if (Registry::get('logged')) {
-//        if ($user['user_info']['user_delet'] == 1) {
-//            App\Modules\ProfileController::delete();
-//        }
-//        $server_time = Tools::time();
-//        if($user['user_info']['user_ban_date'] >= $server_time OR $user['user_info']['user_ban_date'] == '0') {
-//            App\Modules\ProfileController::ban();
-//        }
-
-        \Sura\Time\Zone::zone($user['user_info']['time_zone']);
+        Zone::zone($user['user_info']['time_zone']);
     }
 
     $app->make('app');

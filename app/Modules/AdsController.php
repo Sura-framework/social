@@ -131,9 +131,10 @@ class AdsController extends Module{
 
     /**
      * @param $params
-     * @return bool
+     * @return int
      */
-    public function cabinet(){
+    public function cabinet($params): int
+    {
         $tpl = $params['tpl'];
         $db = $this->db();
         $user_info = $this->user_info();

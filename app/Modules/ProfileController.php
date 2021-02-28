@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Modules;
 
-use App\Libs\Friends;
+use App\Models\Friends;
 use App\Libs\Wall;
 use JetBrains\PhpStorm\NoReturn;
 use Sura\Cache\Cache;
@@ -18,7 +18,7 @@ use App\Models\Profile;
 use Sura\Time\Date;
 use Throwable;
 
-class ProfileController extends Module
+final class ProfileController extends Module
 {
 
     /**
@@ -112,8 +112,8 @@ class ProfileController extends Module
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                     if ($user_id != $id) {
-                        $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($row['user_id']);
-                        $CheckFriends = (new \App\Libs\Friends)->CheckFriends($row['user_id']);
+                        $CheckBlackList = (new Friends)->CheckBlackList($row['user_id']);
+                        $CheckFriends = (new Friends)->CheckFriends($row['user_id']);
 
                     } else {
                         $CheckBlackList = false;
@@ -166,7 +166,7 @@ class ProfileController extends Module
                         $online_friends = $Profile->friends_online_cnt($id, $online_time);
                         //Если друзья на сайте есть то идем дальше
                         if ($online_friends['cnt']) {
-                            $sql_friends_online = $Profile->friends_online($id, (int)$online_time);
+                            $sql_friends_online = $Profile->friends_online($id, (string)$online_time);
                             foreach ($sql_friends_online as $key => $row_friends_online) {
                                 $friend_info_online = explode(' ', $row_friends_online['user_search_pref']);
                                 $sql_friends_online[$key]['user_id'] = $row_friends_online['user_id'];
@@ -737,8 +737,9 @@ class ProfileController extends Module
                         }
                         $params['albums_num'] = $albums_count['cnt'];
                         $params['albums'] = $sql_albums;
-                    } else
+                    } else {
                         $params['albums'] = false;
+                    }
 
                     //Делаем проверки на существования запрашиваемого юзера у себя в друзьяз, заклаках, в подписка, делаем всё это если страницу смотрет другой человек
                     if ($user_id != $id) {
@@ -756,7 +757,7 @@ class ProfileController extends Module
                             $params['yes_friend'] = false;
                         }
 
-                        $CheckFriends = (new \App\Libs\Friends)->CheckFriends($row['user_id']);
+                        $CheckFriends = (new Friends)->CheckFriends($row['user_id']);
 
                         //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                         if ($CheckFriends == true) {
@@ -785,7 +786,7 @@ class ProfileController extends Module
                         }
 
                         //Проверка естьли запрашиваемый юзер в черном списке
-                        $MyCheckBlackList = (new \App\Libs\Friends)->CheckBlackList($id);
+                        $MyCheckBlackList = (new Friends)->CheckBlackList($id);
                         if ($MyCheckBlackList) {
                             $params['yes_blacklist_block'] = true;
                             $params['no_$server_time'] = false;
@@ -797,7 +798,7 @@ class ProfileController extends Module
                     }
 //                    else{
 //                                 }
-                    $author_info = explode(' ', $row['user_search_pref']);
+                    $author_info = explode(' ', $row['user_search_pref'], 2);
                     $params['gram_name'] = Gramatic::gramatikName($author_info[0]);
 
                     //Стена
@@ -820,7 +821,7 @@ class ProfileController extends Module
                         $params['status_block2'] = '';
                     }
                     //Приватность сообщений
-                    if ($user_privacy['val_msg'] == 1 or $user_privacy['val_msg'] == 2 and $CheckFriends and !$CheckBlackList) {
+                    if ($user_privacy['val_msg'] == 1 || ($user_privacy['val_msg'] == 2 && $CheckFriends && !$CheckBlackList)) {
                         $params['privacy_msg'] = '<a href="#" onClick="messages.new_(' . $params['user_id'] . '); return false">
                                         <svg class="bi bi-envelope" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                             <path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>
@@ -841,7 +842,7 @@ class ProfileController extends Module
                     //Семейное положение
                     $user_sp = explode('|', $row['user_sp']);
                     if (isset($user_sp['1'])) {
-                        $rowSpUserName = $Profile->user_sp($user_sp['1']);
+                        $rowSpUserName = $Profile->user_sp((int)$user_sp['1']);
                         if ($row['user_sex'] == 1) $check_sex = 2;
                         if ($row['user_sex'] == 2) $check_sex = 1;
                         if ($rowSpUserName['user_sp'] == $user_sp['0'] . '|' . $id or $user_sp['0'] == 5 and $rowSpUserName['user_sex'] == $check_sex) {
@@ -994,13 +995,13 @@ class ProfileController extends Module
 //                    foreach ($xfields as $value) {
 //                        $preg_safe_name = preg_quote($value[0], "'");
 //                        if (empty($xfieldsdata[$value[0]])) {
-                            //                            $tpl->copy_template = preg_replace("'\\[xfgiven_{$preg_safe_name}](.*?)\\[/xfgiven_{$preg_safe_name}]'is", "", $tpl->copy_template);
+                    //                            $tpl->copy_template = preg_replace("'\\[xfgiven_{$preg_safe_name}](.*?)\\[/xfgiven_{$preg_safe_name}]'is", "", $tpl->copy_template);
 
 //                        } else {
-                            //                            $tpl->copy_template = str_replace("[xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
-                            //                            $tpl->copy_template = str_replace("[/xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
+                    //                            $tpl->copy_template = str_replace("[xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
+                    //                            $tpl->copy_template = str_replace("[/xfgiven_{$preg_safe_name}]", "", $tpl->copy_template);
 //                        }
-                        //                        $tpl->copy_template = preg_replace( "'\\[xfvalue_{$preg_safe_name}]'i", stripslashes($xfieldsdata[$value[0]]), $tpl->copy_template);
+                    //                        $tpl->copy_template = preg_replace( "'\\[xfvalue_{$preg_safe_name}]'i", stripslashes($xfieldsdata[$value[0]]), $tpl->copy_template);
 //                    }
 
                     //what? (deprecated)
@@ -1052,10 +1053,12 @@ class ProfileController extends Module
 
                         if (!$check_user_stat['cnt']) {
                             $check_stat = $db->super_query("SELECT COUNT(*) AS cnt FROM `users_stats` WHERE user_id = '{$id}' AND date = '{$stat_date}'");
-                            if ($check_stat['cnt'])
+                            if ($check_stat['cnt']) {
                                 $db->query("UPDATE `users_stats` SET users = users + 1, views = views + 1 WHERE user_id = '{$id}' AND date = '{$stat_date}'");
-                            else
+                            }
+                            else {
                                 $db->query("INSERT INTO `users_stats` SET user_id = '{$id}', date = '{$stat_date}', users = '1', views = '1', date_x = '{$stat_x_date}'");
+                            }
                             $db->query("INSERT INTO `users_stats_log` SET user_id = '{$user_info['user_id']}', date = '{$stat_date}', for_user_id = '{$id}'");
                         } else {
                             $db->query("UPDATE `users_stats` SET views = views + 1 WHERE user_id = '{$id}' AND date = '{$stat_date}'");

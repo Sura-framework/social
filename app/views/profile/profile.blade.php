@@ -1,7 +1,6 @@
 @extends('app.app')
 @section('content')
 <script type="text/javascript">
-    {{-- [group=0][after-auth]Profile.LoadPhoto();[/after-reg][/group] --}}
         var startResizeCss = false;
     var user_id = '{{ $user_id }}';
     $(document).ready(function(){
@@ -10,9 +9,6 @@
         if($('.profile_onefriend_happy').size() > 4) $('#happyAllLnk').show();
         @endif
     });
-/*    // $(document).click(function(event){
-    // 	wall.event(event);
-    // });*/
 </script>
 
 
@@ -132,9 +128,9 @@
                                         </button>
                                         <div class="dropdown-menu dropdown-menu-right user_menu" onmouseover="removeTimer('hideusermenu')" onmouseout="hideUserMenu()">
                                             @if($owner)
-                                            <a href="/my_stats/" class="dropdown-item">@_e('stats_profile')</a>
-                                            <a href="/docs/" class="dropdown-item">@_e('my_docs')</a>
-                                            <a href="/edit/" class="dropdown-item">@_e('edit_profile')</a>
+{{--                                            <a href="/my_stats/" class="dropdown-item">@_e('stats_profile')</a>--}}
+{{--                                            <a href="/docs/" class="dropdown-item">@_e('my_docs')</a>--}}
+{{--                                            <a href="/edit/" class="dropdown-item">@_e('edit_profile')</a>--}}
                                             <a href="#" onClick="Profile.LoadPhoto(); return false;" class="dropdown-item">@_e('edit_photo')</a>
                                             <a href="#" onClick="Profile.LoadPhoto(); return false;" class="dropdown-item">@_e('edit_min_photo')</a>
                                             <a href="#" onClick="Profile.DelPhoto(); return false;" id="del_pho_but" {{ $display_ava }} class="dropdown-item">@_e('dell_min_photo')</a>

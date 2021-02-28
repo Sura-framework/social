@@ -2,9 +2,11 @@
 declare(strict_types = 1);
 namespace App\Modules;
 
+use App\Contracts\FeedInterface;
 use App\Libs\Wall;
 use App\Libs\Wall2;
 use App\Models\News;
+use App\Models\Stories;
 use Exception;
 use Sura\Libs\Request;
 use Sura\Libs\Status;
@@ -15,7 +17,7 @@ use Sura\Libs\Status;
  *
  * Class FeedController
  */
-class FeedController extends Module
+final class FeedController extends Module implements FeedInterface
 {
 
     /** @var int  */
@@ -70,10 +72,11 @@ class FeedController extends Module
     /**
      * Вывод новостей
      *
+     * @param array $params
      * @return int
      * @throws \Throwable
      */
-    public function feed(): int
+    public function feed(array $params): int
     {
         if(!isset($params['title'])) {
             $params['title'] = 'Новости' . ' | Sura';
@@ -90,7 +93,7 @@ class FeedController extends Module
 
             $user_info = $this->user_info();
             $user_id = $user_info['user_id'];
-            $params['stories'] = (new \App\Models\Stories)->all($user_id);
+            $params['stories'] = (new Stories)->all($user_id);
             $params['user_id'] = $user_id;
 
             //Сообщения

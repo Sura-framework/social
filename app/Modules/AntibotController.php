@@ -8,7 +8,10 @@ use Sura\Libs\Status;
 
 class AntibotController extends Module
 {
-	
+
+    /**
+     *
+     */
 	public function index(): void
 	{
 		session_start();

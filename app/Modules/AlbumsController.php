@@ -5,6 +5,8 @@ namespace App\Modules;
 use Exception;
 use Intervention\Image\ImageManager;
 use JsonException;
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
@@ -19,9 +21,11 @@ class AlbumsController extends Module{
     /**
      * Создание альбома
      * @throws JsonException
+     * @return int
      */
-    public function create(){
-        $lang = $this->get_langs();
+    public function create(): int
+    {
+//        $lang = $this->get_langs();
 
         $db = $this->db();
         $user_info = $this->user_info();
@@ -32,8 +36,8 @@ class AlbumsController extends Module{
         $request = (Request::getRequest()->getGlobal());
 
         if ($logged){
-            $name = Validation::ajax_utf8(Validation::textFilter($request['name'], 25000, true));
-            $descr = Validation::ajax_utf8(Validation::textFilter($request['descr']));
+            $name = Validation::textFilter($request['name'], 25000, true);
+            $descr = Validation::textFilter($request['descr']);
             $privacy = (int)$request['privacy'];
             $privacy_comm = (int)($request['privacy_comm']);
             if($privacy <= 0 OR $privacy > 3) {
@@ -64,21 +68,17 @@ class AlbumsController extends Module{
 
 //                    mozg_mass_clear_cache_file("user_{$user_info['user_id']}/albums|user_{$user_info['user_id']}/albums_all|user_{$user_info['user_id']}/albums_friends|user_{$user_info['user_id']}/albums_cnt_friends|user_{$user_info['user_id']}/albums_cnt_all|user_{$user_info['user_id']}/profile_{$user_info['user_id']}");
                     if($sql_){
-//                        echo '/albums/add/'.$id;
                         $status = Status::OK;
                         $data = '/albums/add/'.$id;
                     }else{
-//                        echo 'no';
                         $status = Status::BAD;
                         $data = null;
                     }
                 } else{
-//                    echo 'max';
                     $status = Status::BIG_SIZE;
                     $data = null;
                 }
             } else{
-//                echo 'no_name';
                 $status = Status::NOT_DATA;
                 $data = null;
             }
@@ -112,6 +112,7 @@ class AlbumsController extends Module{
      * Страница создания альбома
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function create_page1(): int
     {
@@ -125,8 +126,8 @@ class AlbumsController extends Module{
         Tools::NoAjaxRedirect();
 
         if($logged){
-            $name = Validation::ajax_utf8(Validation::textFilter($request['name'], 25000, true));
-            $descr = Validation::ajax_utf8(Validation::textFilter($request['descr']));
+            $name = Validation::textFilter($request['name'], 25000, true);
+            $descr = Validation::textFilter($request['descr']);
             $privacy = (int)($request['privacy']);
             $privacy_comm = (int)($request['privacy_comm']);
             if($privacy <= 0 OR $privacy > 3) $privacy = 1;
@@ -135,7 +136,7 @@ class AlbumsController extends Module{
 
             if(isset($name) AND !empty($name)){
 
-                //Выводи кол-во альбомов у юзера
+                /** Выводи кол-во альбомов у юзера $row */
                 $row = $db->super_query("SELECT user_albums_num FROM `users` WHERE user_id = '{$user_info['user_id']}'");
                 $config = Settings::load();
                 if($row['user_albums_num'] < $config['max_albums']){
@@ -149,8 +150,8 @@ class AlbumsController extends Module{
                     $id = $db->insert_id();
                     $db->query("UPDATE `users` SET user_albums_num = user_albums_num+1 WHERE user_id = '{$user_info['user_id']}'");
 
-                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $storage = new MemcachedStorage('localhost');
+                    $cache = new Cache($storage, 'users');
                     $cache->remove("{$user_info['user_id']}/albums");
                     $cache->remove("{$user_info['user_id']}/albums_all");
                     $cache->remove("{$user_info['user_id']}/albums_friends");
@@ -181,12 +182,12 @@ class AlbumsController extends Module{
             'status' => $status,
         ) );
     }
-	
-	/**
-	 * Страница добавление фотографий в альбом
-	 * @return bool
-	 * @throws JsonException
-	 */
+
+    /**
+     * Страница добавление фотографий в альбом
+     * @return int
+     * @throws JsonException
+     */
     public function add(): int
     {
 //        $tpl = Registry::get('tpl');
@@ -234,6 +235,7 @@ class AlbumsController extends Module{
      * @throws JsonException
      * @throws Exception
      * @throws \Throwable
+     * @return int
      */
     public function upload(): int
     {
@@ -351,8 +353,8 @@ class AlbumsController extends Module{
                                 $photos_num = null; // bug !!!
 
 
-                                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                                $cache = new \Sura\Cache\Cache($storage, 'users');
+                                $storage = new MemcachedStorage('localhost');
+                                $cache = new Cache($storage, 'users');
 
                                 //Удаляем кеш позиций фотографий
                                 if(!$photos_num)
@@ -406,6 +408,7 @@ class AlbumsController extends Module{
      * Удаление фотографии из альбома
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function del_photo(): int
     {
@@ -432,8 +435,8 @@ class AlbumsController extends Module{
                 $del_dir = __DIR__.'/../../public/uploads/users/'.$user_id.'/albums/'.$row['album_id'].'/';
 
                 //Удаление фотки с сервера
-                @unlink($del_dir.'c_'.$row['photo_name']);
-                @unlink($del_dir.$row['photo_name']);
+                unlink($del_dir.'c_'.$row['photo_name']);
+                unlink($del_dir.$row['photo_name']);
 
                 //Удаление фотки из БД
                 $db->query("DELETE FROM `photos` WHERE id = '{$id}'");
@@ -458,8 +461,8 @@ class AlbumsController extends Module{
                 $db->query("UPDATE `albums` SET photo_num = photo_num-1, comm_num = comm_num-{$row['comm_num']} {$set_cover} WHERE aid = '{$row['album_id']}'");
 
                 //Чистим кеш
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
 
                 $cache->remove("{$user_id}/albums");
                 $cache->remove("{$user_id}/albums_all");
@@ -493,14 +496,13 @@ class AlbumsController extends Module{
      * Установка новой обложки для альбома
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function set_cover(): int
     {
-//        $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
         $logged = $this->logged();
-//        $lang = $this->get_langs();
 
         $request = (Request::getRequest()->getGlobal());
 
@@ -516,8 +518,8 @@ class AlbumsController extends Module{
                 $db->query("UPDATE `albums` SET cover = '{$row['photo_name']}' WHERE aid = '{$row['album_id']}'");
 
                 //Чистим кеш
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 $cache->remove("{$user_id}/albums");
                 $cache->remove("{$user_id}/albums_all");
                 $cache->remove("{$user_id}/albums_friends");
@@ -537,14 +539,13 @@ class AlbumsController extends Module{
     /**
      * Сохранение описания к фотографии
      * @throws JsonException
+     * @return int
      */
     public function save_descr(): int
     {
-//        $tpl = Registry::get('tpl');
         $db = $this->db();
         $logged = Registry::get('logged');
         $user_info = Registry::get('user_info');
-//        $lang = $this->get_langs();
 
         Tools::NoAjaxRedirect();
 
@@ -553,14 +554,14 @@ class AlbumsController extends Module{
 
             $id = (int)$request['id'];
             $user_id = $user_info['user_id'];
-            $descr = Validation::ajax_utf8(Validation::textFilter($request['descr']));
+            $descr = Validation::textFilter($request['descr']);
 
             //Выводим фотку из БД, если она есть
             $row = $db->super_query("SELECT id FROM `photos` WHERE id = '{$id}' AND user_id = '{$user_id}'");
             if($row){
                 $db->query("UPDATE `photos` SET descr = '{$descr}' WHERE id = '{$id}' AND user_id = '{$user_id}'");
 
-                //Ответ скрипта
+                //TODO Ответ скрипта
 //                echo stripslashes(Validation::myBr(htmlspecialchars(Validation::ajax_utf8(trim($request['descr'])))));
 
                 $status = Status::OK;
@@ -578,6 +579,7 @@ class AlbumsController extends Module{
     /**
      * Страница редактирование фотографии
      * @throws JsonException
+     * @return int
      */
     public function editphoto(): int
     {
@@ -614,15 +616,14 @@ class AlbumsController extends Module{
      * Сохранение сортировки альбомов
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function save_pos_albums(): int
     {
-//        $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
         $user_id = $user_info['user_id'];
         $logged = $this->logged();
-//        $lang = $this->get_langs();
 
         Tools::NoAjaxRedirect();
 
@@ -645,8 +646,8 @@ class AlbumsController extends Module{
 		            }
 		
 		            //Чистим кеш
-		            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-		            $cache = new \Sura\Cache\Cache($storage, 'users');
+		            $storage = new MemcachedStorage('localhost');
+		            $cache = new Cache($storage, 'users');
 		            $cache->remove("{$user_id}/albums");
 		            $cache->remove("{$user_id}/albums_all");
 		            $cache->remove("{$user_id}/albums_friends");
@@ -670,15 +671,14 @@ class AlbumsController extends Module{
      * Сохранение сортировки фотографий
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function save_pos_photos(): int
     {
-//        $tpl = Registry::get('tpl');
         $db = $this->db();
         $user_info = $this->user_info();
         $user_id = $user_info['user_id'];
         $logged = $this->logged();
-//        $lang = $this->get_langs();
 
         Tools::NoAjaxRedirect();
 
@@ -705,8 +705,8 @@ class AlbumsController extends Module{
 //                    Cache::mozg_create_cache('
 //                    user_'.$user_info['user_id'].'/position_photos_album_'.$row['album_id'], $photo_info);
 
-                        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                        $cache = new \Sura\Cache\Cache($storage, 'users');
+                        $storage = new MemcachedStorage('localhost');
+                        $cache = new Cache($storage, 'users');
                         $key = "{$user_id}/position_photos_album_{$row['album_id']}";
                         $value = $photo_info;
                         $cache->save($key, $value);
@@ -731,8 +731,7 @@ class AlbumsController extends Module{
 
     /**
      * Страница редактирование альбома
-     * @return string
-     * @throws Exception
+     * @return int
      */
     public function edit_page(): int
     {
@@ -774,6 +773,7 @@ class AlbumsController extends Module{
      * Сохранение настроек альбома
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function save_album(): int
     {
@@ -789,8 +789,8 @@ class AlbumsController extends Module{
 
             $id = (int)$request['id'];
             $user_id = $user_info['user_id'];
-            $name = Validation::ajax_utf8(Validation::textFilter($request['name']));
-            $descr = Validation::ajax_utf8(Validation::textFilter($request['descr']));
+            $name = Validation::textFilter($request['name']);
+            $descr = Validation::textFilter($request['descr']);
 
             $privacy = (int)$request['privacy'];
             $privacy_comm = (int)$request['privacy_comm'];
@@ -806,8 +806,8 @@ class AlbumsController extends Module{
                     echo stripslashes($name).'|#|||#row#|||#|'.stripslashes($descr);
 
 
-                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $storage = new MemcachedStorage('localhost');
+                    $cache = new Cache($storage, 'users');
                     $cache->remove("{$user_id}/albums");
                     $cache->remove("{$user_id}/albums_all");
                     $cache->remove("{$user_id}/albums_friends");
@@ -910,6 +910,7 @@ class AlbumsController extends Module{
 
     /**
      * Страница всех фотографий юзера, для прикрепления своей фотки кому-то на стену
+     * @return int
      */
     public function all_photos_box(): int
     {
@@ -979,6 +980,7 @@ class AlbumsController extends Module{
      * Удаление альбома
      * @throws JsonException
      * @throws \Throwable
+     * @return int
      */
     public function del_album(): int
     {
@@ -1022,8 +1024,8 @@ class AlbumsController extends Module{
                 //Обновлям кол-во альбом в юзера
                 $db->query("UPDATE `users` SET user_albums_num = user_albums_num-1 WHERE user_id = '{$user_id}'");
 
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 //Удаляем кеш позиций фотографий и кеш профиля
                 $cache->remove("{$row['user_id']}/position_photos_album_{$row['aid']}");
                 $cache->remove("{$user_info['user_id']}/profile_{$user_info['user_id']}");
@@ -1101,7 +1103,7 @@ class AlbumsController extends Module{
                 $album_privacy = explode('|', $row_album['privacy']);
                 $uid = $row_album['user_id'];
                 if(!$uid) {
-                    Hacking();
+//                    Hacking();
                 }
             }
 
@@ -1369,8 +1371,7 @@ class AlbumsController extends Module{
 
     /**
      * Просмотр альбома
-     * @return string
-     * @throws Exception
+     * @return int
      */
     public function view(): int
     {
@@ -1415,8 +1416,9 @@ class AlbumsController extends Module{
             $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($row_album['user_id']);
             if(!$CheckBlackList){
                 $album_privacy = explode('|', $row_album['privacy']);
-                if(!$row_album)
-                    Hacking();
+                if(!$row_album){
+//                    Hacking();
+                }
 
                 //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
                 if($user_id != $row_album['user_id'])
@@ -1532,8 +1534,7 @@ class AlbumsController extends Module{
 
     /**
      *  Просмотр всех альбомов юзера
-     * @return string
-     * @throws Exception
+     * @return int
      */
     public function index(): int
     {

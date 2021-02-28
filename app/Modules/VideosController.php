@@ -180,10 +180,10 @@ class VideosController extends Module{
             $config = Settings::load();
 
             if($config['video_mod_add'] == 'yes'){
-                $good_video_lnk = Validation::ajax_utf8(Validation::textFilter($request['good_video_lnk']));
-                $title = Validation::ajax_utf8(Validation::textFilter($request['title']));
-                $descr = Validation::ajax_utf8(Validation::textFilter($_POST['descr'], 3000));
-                $privacy = intval($request['privacy']);
+                $good_video_lnk = Validation::textFilter($request['good_video_lnk']);
+                $title = Validation::textFilter($request['title']);
+                $descr = Validation::textFilter($_POST['descr'], 3000);
+                $privacy = (int)$request['privacy'];
                 if($privacy <= 0 OR $privacy > 3) $privacy = 1;
 
                 //Если youtube то добавляем префикс src=" и составляем ответ для скрипта, для вставки в БД
@@ -213,7 +213,7 @@ class VideosController extends Module{
                 }
 
                 //Формируем данные о фото
-                $photo = $db->safesql(Validation::ajax_utf8(htmlspecialchars(trim($request['photo']))));
+                $photo = $db->safesql(htmlspecialchars(trim($request['photo']), ENT_QUOTES | ENT_HTML5));
                 $photo = str_replace("\\", "/", $photo);
                 $img_name_arr = explode(".", $photo);
                 $img_format = Gramatic::totranslit(end($img_name_arr));
@@ -342,7 +342,7 @@ class VideosController extends Module{
                     //Если сервис Vimeo, то сразу применяем кодировку utf-8, win-1251
                     if(preg_match("/https:\/\/www.vimeo.com|https:\/\/vimeo.com/i", $video_lnk)){
                         while(!feof($sock)){
-                            $html .= Validation::ajax_utf8(fgets($sock));
+                            $html .= fgets($sock);//todo validation textfilter
                         }
                     }
 
@@ -352,7 +352,7 @@ class VideosController extends Module{
                     $data = str_replace(array('[', ']'), array('&iqu;', '&iqu2;'), $html);
 
                     //Если сервис youtube применяем кодировку utf-8, win-1251
-                    $data_all = Validation::ajax_utf8(str_replace(array('[', ']'), array('&iqu;', '&iqu2;'), $html));
+                    $data_all = str_replace(array('[', ']'), array('&iqu;', '&iqu2;'), $html);
 
                     //Если видеосервис youtube
                     if(preg_match("/https:\/\/www.youtube.com|https:\/\/youtube.com/i", $video_lnk)){
@@ -559,9 +559,9 @@ class VideosController extends Module{
             $vid = intval($request['vid']);
 
             if($vid){
-                $title = Validation::ajax_utf8(Validation::textFilter($request['title'], false, true));
-                $descr = Validation::ajax_utf8(Validation::textFilter($request['descr'], 3000));
-                $privacy = intval($request['privacy']);
+                $title = Validation::textFilter($request['title'], false, true);
+                $descr = Validation::textFilter($request['descr'], 3000);
+                $privacy = (int)$request['privacy'];
                 if($privacy <= 0 OR $privacy > 3) $privacy = 1;
 
                 //Проверка на существования записи
@@ -871,7 +871,7 @@ class VideosController extends Module{
 
             if($config['video_mod_comm'] == 'yes'){
                 $vid = intval($request['vid']);
-                $comment = Validation::ajax_utf8(Validation::textFilter($request['comment']));
+                $comment = Validation::textFilter($request['comment']);
 
                 //Провекра на существования видео
                 $check_video = $db->super_query("SELECT owner_user_id, photo, public_id FROM `videos` WHERE id = '{$vid}'");

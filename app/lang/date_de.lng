@@ -13,6 +13,7 @@ return array (
 'October'		=>	"октября",
 'November'		=>	"ноября",
 'December'		=>	"декабря",
+
 'Jan'			=>	"янв",
 'Feb'			=>	"фев",
 'Mar'			=>	"мар",
