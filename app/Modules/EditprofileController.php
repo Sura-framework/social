@@ -331,19 +331,20 @@ class EditprofileController extends Module{
 
         if($logged){
             $xfields = array();
-            $xfields['vk'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['vk'], 0, 200))));
-            $xfields['od'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['od'], 0, 200))));
-            $xfields['phone'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['phone'], 0, 200))));
-            $xfields['skype'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['skype'], 0, 200))));
-            $xfields['fb'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['fb'], 0, 200))));
-            $xfields['icq'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['icq'], 0, 200))));
-            $xfields['site'] = $db->safesql(Validation::ajax_utf8(htmlspecialchars(substr($request['site'], 0, 200))));
+            $xfields['vk'] = $db->safesql(htmlspecialchars(substr($request['vk'], 0, 200), ENT_QUOTES | ENT_HTML5));
+            $xfields['od'] = $db->safesql(htmlspecialchars(substr($request['od'], 0, 200), ENT_QUOTES | ENT_HTML5));
+            $xfields['phone'] = $db->safesql(htmlspecialchars(substr($request['phone'], 0, 200), ENT_QUOTES | ENT_HTML5));
+            $xfields['skype'] = $db->safesql(htmlspecialchars(substr($request['skype'], 0, 200), ENT_QUOTES | ENT_HTML5));
+            $xfields['fb'] = $db->safesql(htmlspecialchars(substr($request['fb'], 0, 200), ENT_QUOTES | ENT_HTML5));
+            $xfields['icq'] = $db->safesql(htmlspecialchars(substr($request['icq'], 0, 200), ENT_QUOTES | ENT_HTML5));
+            $xfields['site'] = $db->safesql(htmlspecialchars(substr($request['site'], 0, 200), ENT_QUOTES | ENT_HTML5));
 
             $xfieldsdata = '';
             foreach($xfields as $name => $value){
                 $value = str_replace("|", "&#124;", $value);
-                if($value != '')
-                    $xfieldsdata .= $name.'|'.$value.'||';
+                if($value != '') {
+                    $xfieldsdata .= $name . '|' . $value . '||';
+                }
             }
 
             $db->query("UPDATE `users` SET user_xfields = '{$xfieldsdata}' WHERE user_id = '{$user_info['user_id']}'");

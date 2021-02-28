@@ -789,8 +789,8 @@ class AlbumsController extends Module{
 
             $id = (int)$request['id'];
             $user_id = $user_info['user_id'];
-            $name = Validation::ajax_utf8(Validation::textFilter($request['name']));
-            $descr = Validation::ajax_utf8(Validation::textFilter($request['descr']));
+            $name = Validation::textFilter($request['name']);
+            $descr = Validation::textFilter($request['descr']);
 
             $privacy = (int)$request['privacy'];
             $privacy_comm = (int)$request['privacy_comm'];
