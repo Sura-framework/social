@@ -14,6 +14,7 @@ use Sura\Libs\Validation;
 use FFMpeg\FFMpeg;
 use FFMpeg\Coordinate\Dimension;
 use FFMpeg\Coordinate\TimeCode;
+use Sura\Utils\FileSystem;
 
 class VideosController extends Module{
 
@@ -242,7 +243,7 @@ class VideosController extends Module{
                     $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(175, 131);
                     $image->save($upload_dir.$image_rename.'.webp', 90);
 
-                    unlink($upload_dir.$image_rename.$res_type);
+                    FileSystem::delete($upload_dir.$image_rename.$res_type);
                     $res_type = '.webp';
                 }
 
@@ -455,20 +456,20 @@ class VideosController extends Module{
                     $exp_photo = explode('/', $row['photo']);
                     $photo_name = end($exp_photo);
                     if (file_exists(__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$photo_name)) {
-                        unlink(__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$photo_name);
+                        FileSystem::delete(__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$photo_name);
                     }
 
                     // original && 240 && 720
                     $type = 'jpg';
                     $file_name = str_replace('.'.$type, '', $photo_name);
                     if (__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$file_name.'.mp4') {
-                        unlink(__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$file_name.'.mp4');
+                        FileSystem::delete(__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$file_name.'.mp4');
                     }
                     if (__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$file_name.'_240.mp4') {
-                        unlink(__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$file_name.'_240.mp4');
+                        FileSystem::delete(__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$file_name.'_240.mp4');
                     }
                     if (__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$file_name.'_720.mp4') {
-                        unlink(__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$file_name.'_720.mp4');
+                        FileSystem::delete(__DIR__.'/../../public/uploads/videos/'.$row['owner_user_id'].'/'.$file_name.'_720.mp4');
                     }
 
                     //Чистим кеш

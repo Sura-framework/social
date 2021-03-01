@@ -15,6 +15,7 @@ use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
+use Sura\Utils\FileSystem;
 
 class WallController extends Module{
 
@@ -156,7 +157,7 @@ class WallController extends Module{
                                                 $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(100, 80);
                                                 $image->save($upload_dir.$image_rename.'.webp', 90);
 
-                                                unlink($upload_dir.$image_rename.$res_type);
+                                                FileSystem::delete($upload_dir.$image_rename.$res_type);
                                                 $res_type = '.webp';
 
                                                 $attach_files = str_replace($attach_type[4], '/uploads/attach/'.$user_id.'/'.$image_rename.$res_type, $attach_files);
@@ -974,7 +975,7 @@ class WallController extends Module{
                         $attach_arr3 = explode('||', $attach_arr2[1]);
                         if($attach_arr3['0']){
                             if (file_exists(__DIR__.'/../../public/uploads/attach/'.$user_id.'/'.$attach_arr3['0']))
-                                unlink(__DIR__.'/../../public/uploads/attach/'.$user_id.'/'.$attach_arr3['0']);
+                                FileSystem::delete(__DIR__.'/../../public/uploads/attach/'.$user_id.'/'.$attach_arr3['0']);
                             //else error
                         }
                     }

@@ -17,12 +17,10 @@ class News
 	/**
 	 * @var Db|null
 	 */
-	private static ?Db $db;
 	private Connection $database;
 	
 	public function __construct()
 	{
-		self::$db = Db::getDB();
 		$this->database = Model::getDB();
 	}
 	
@@ -35,15 +33,20 @@ class News
 	 */
 	public function load_news(int $user_id, int $page, int $limit = 20): array
 	{
-		$db = Db::getDB();
-		return $db->super_query("SELECT tb1.ac_id, ac_user_id, action_text, action_time, action_type, obj_id, answer_text, link FROM `news` tb1 WHERE tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2
+		return $this->database->fetchAll("SELECT tb1.ac_id, ac_user_id, action_text, action_time, action_type, obj_id, answer_text, link FROM `news` tb1 WHERE tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2
                 WHERE user_id = '{$user_id}' AND tb1.action_type IN (1,2,3) AND subscriptions != 2) 
             OR 
                 tb1.ac_user_id IN (SELECT tb2.friend_id FROM `friends` tb2 
                 WHERE user_id = '{$user_id}' AND tb1.action_type = 11 AND subscriptions = 2) 
-            AND tb1.action_type IN (1,2,3,11)	ORDER BY tb1.action_time DESC LIMIT {$page}, 20", 1);
+            AND tb1.action_type IN (1,2,3,11)	ORDER BY tb1.action_time DESC LIMIT {$page}, 20");
 	}
-	
+
+    /**
+     * @param int $user_id
+     * @param int $page
+     * @param int $limit
+     * @return array
+     */
 	public function load_news_profile(int $user_id, int $page, int $limit = 20): array
 	{
 		return $this->database->fetchAll("SELECT ac_id, ac_user_id, for_user_id, action_text, action_time, action_type, obj_id, answer_text, link
@@ -146,8 +149,7 @@ class News
 		$cache = new Cache($storage, 'users');
 		$value = $cache->load("{$id}/votes/vote_{$id}");
 		if ($value == null) {
-			$db = Db::getDB();
-			$row = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$id}'", false);
+			$row = $this->database->fetch("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$id}'");
 			$value = serialize($row);
 			$cache->save("{$id}/votes/vote_{$id}", $value);
 		} else {
@@ -169,8 +171,7 @@ class News
 		$cache = new Cache($storage, 'users');
 		$value = $cache->load("user_{$id}/votes/check{$user_id}_{$id}");
 		if ($value == null) {
-			$db = Db::getDB();
-			$row = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$id}'", false);
+			$row = $this->database->fetch("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$id}'");
 			$value = serialize($row);
 			$cache->save("user_{$id}/votes/check{$user_id}_{$id}", $value);
 		} else {
@@ -206,12 +207,11 @@ class News
 	 */
 	public function user_tell_info(int $user_id, int $type): array
 	{
-		$db = Db::getDB();
 		if ($type == 1) {
-			return $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$user_id}'");
+			return $this->database->fetch("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$user_id}'");
 		}
 
-        return $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$user_id}'", false);
+        return $this->database->fetch("SELECT title, photo FROM `communities` WHERE id = '{$user_id}'");
     }
 	
 	/**
@@ -220,8 +220,7 @@ class News
 	 */
 	public function likes_info(int $id): array
 	{
-		$db = Db::getDB();
-		return $db->super_query("SELECT id, author_user_id, for_user_id, text, add_date, tell_uid, tell_date, type, public, attach, tell_comm FROM `wall` WHERE id = '{$id}'");
+		return $this->database->fetch("SELECT id, author_user_id, for_user_id, text, add_date, tell_uid, tell_date, type, public, attach, tell_comm FROM `wall` WHERE id = '{$id}'");
 	}
 	
 	/**
@@ -230,8 +229,7 @@ class News
 	 */
 	public function delete(int $id): array
 	{
-		$db = Db::getDB();
-		return $db->super_query("DELETE FROM `news` WHERE ac_id = '{$id}'");
+		return $this->database->fetch("DELETE FROM `news` WHERE ac_id = '{$id}'");
 	}
 	
 	/**
@@ -254,8 +252,7 @@ class News
 	 */
 	public function comments(int $id, int $limit): array
 	{
-		$db = Db::getDB();
-		return $db->super_query("SELECT tb1.id, author_user_id, text, add_date, tb2.user_photo, user_search_pref FROM `wall` tb1, `users` tb2 WHERE tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = '{$id}' ORDER by `add_date` LIMIT {$limit}, 3", 1);
+		return $this->database->fetchAll("SELECT tb1.id, author_user_id, text, add_date, tb2.user_photo, user_search_pref FROM `wall` tb1, `users` tb2 WHERE tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = '{$id}' ORDER by `add_date` LIMIT {$limit}, 3");
 	}
 	
 	/**

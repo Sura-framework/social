@@ -14,6 +14,7 @@ use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Intervention\Image\ImageManager;
 use Sura\Libs\Validation;
+use Sura\Utils\FileSystem;
 
 class EditprofileController extends Module{
 
@@ -24,7 +25,6 @@ class EditprofileController extends Module{
      */
     public function upload(): int
     {
-//        $tpl = $params['tpl'];
 //        $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
@@ -40,12 +40,8 @@ class EditprofileController extends Module{
 
             //Если нет папок юзера, то создаём её
             if(!is_dir($upload_dir.$user_id)){
-                if (!mkdir($concurrentDirectory = $upload_dir . $user_id, 0777) && !is_dir($concurrentDirectory)) {
-                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
-                }
-                if (!mkdir($concurrentDirectory = $upload_dir . $user_id . '/albums', 0777) && !is_dir($concurrentDirectory)) {
-                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
-                }
+                FileSystem::createDir($upload_dir . $user_id);
+                FileSystem::createDir($upload_dir . $user_id. '/albums/');
             }
             //Разрешенные форматы
             $allowed_files = array('jpg', 'jpeg', 'jpe', 'png', 'gif');
@@ -92,7 +88,7 @@ class EditprofileController extends Module{
                         $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(100, 100);
                         $image->save($upload_dir.'100_'.$image_rename.'.webp', 90);
 
-                        unlink($upload_dir.$image_rename.$res_type);
+                        FileSystem::delete($upload_dir.$image_rename.$res_type);
                         $res_type = '.webp';
 
                         // Зачем это?
@@ -134,9 +130,9 @@ class EditprofileController extends Module{
                             'status' => $status,
                             'img' => $config['home_url'].'uploads/users/'.$user_id.'/'.$image_rename.$res_type,
                         ) );
-                    } else {
-                        $status = Status::BAD_MOVE;
                     }
+
+                    $status = Status::BAD_MOVE;
                 } else {
                     $status = Status::BIG_SIZE;
                 }
@@ -183,11 +179,11 @@ class EditprofileController extends Module{
 
                 $db->query("UPDATE `users` SET user_photo = '', user_wall_id = '' {$update_wall} WHERE user_id = '{$user_id}'");
 
-                unlink($upload_dir.$row['user_photo']);
-                unlink($upload_dir.'50_'.$row['user_photo']);
-                unlink($upload_dir.'100_'.$row['user_photo']);
-                unlink($upload_dir.'o_'.$row['user_photo']);
-                unlink($upload_dir.'130_'.$row['user_photo']);
+                FileSystem::delete($upload_dir.$row['user_photo']);
+                FileSystem::delete($upload_dir.'50_'.$row['user_photo']);
+                FileSystem::delete($upload_dir.'100_'.$row['user_photo']);
+                FileSystem::delete($upload_dir.'o_'.$row['user_photo']);
+                FileSystem::delete($upload_dir.'130_'.$row['user_photo']);
 
                 $storage = new MemcachedStorage('localhost');
                 $cache = new Cache($storage, 'users');

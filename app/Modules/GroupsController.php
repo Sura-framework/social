@@ -16,6 +16,7 @@ use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
+use Sura\Utils\FileSystem;
 
 class GroupsController extends Module
 {
@@ -224,13 +225,13 @@ class GroupsController extends Module
                             $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(100, 100);
                             $image->save($upload_dir.'100_'.$image_rename.'.webp', 90);
 
-                            unlink($upload_dir.$image_rename.$res_type);
+                            FileSystem::delete($upload_dir.$image_rename.$res_type);
                             $res_type = '.webp';
 
                             if($row['photo']){
-                                unlink($upload_dir.$row['photo']);
-                                unlink($upload_dir.'50_'.$row['photo']);
-                                unlink($upload_dir.'100_'.$row['photo']);
+                                FileSystem::delete($upload_dir.$row['photo']);
+                                FileSystem::delete($upload_dir.'50_'.$row['photo']);
+                                FileSystem::delete($upload_dir.'100_'.$row['photo']);
                             }
 
                             //Вставляем фотографию
@@ -305,9 +306,9 @@ class GroupsController extends Module
             $row = $db->super_query("SELECT photo, admin FROM `communities` WHERE id = '{$id}'");
             if(stripos($row['admin'], "u{$user_id}|") !== false){
                 $upload_dir = __DIR__."/../../public/uploads/groups/{$id}/";
-                unlink($upload_dir.$row['photo']);
-                unlink($upload_dir.'50_'.$row['photo']);
-                unlink($upload_dir.'100_'.$row['photo']);
+                FileSystem::delete($upload_dir.$row['photo']);
+                FileSystem::delete($upload_dir.'50_'.$row['photo']);
+                FileSystem::delete($upload_dir.'100_'.$row['photo']);
                 $db->query("UPDATE `communities` SET photo = '' WHERE id = '{$id}'");
 
                 $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
@@ -1082,7 +1083,7 @@ class GroupsController extends Module
                                     $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(100, 80);
                                     $image->save($upload_dir.$image_rename.'.webp', 90);
 
-                                    unlink($upload_dir.$image_rename.$res_type);
+                                    FileSystem::delete($upload_dir.$image_rename.$res_type);
                                     $res_type = '.webp';
 
                                     $attach_files = str_replace($attach_type[4], '/uploads/attach/'.$user_id.'/'.$image_rename.$res_type, $attach_files);
@@ -1439,7 +1440,7 @@ class GroupsController extends Module
                         $attach_arr2 = explode('|/uploads/attach/'.$user_id.'/', $attach_arr[1]);
                         $attach_arr3 = explode('||', $attach_arr2[1]);
                         if($attach_arr3[0])
-                            @unlink(__DIR__.'/../../uploads/attach/'.$user_id.'/'.$attach_arr3[0]);
+                            FileSystem::delete(__DIR__.'/../../uploads/attach/'.$user_id.'/'.$attach_arr3[0]);
                     }
 
                     $db->query("DELETE FROM `communities_wall` WHERE id = '{$rec_id}'");
@@ -2350,13 +2351,13 @@ class GroupsController extends Module
                             $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(800, null);
                             $image->save($upload_dir.$image_rename.'.webp', 90);
 
-                            unlink($upload_dir.$image_rename.$res_type);
+                            FileSystem::delete($upload_dir.$image_rename.$res_type);
                             $res_type = '.webp';
 
                             //Выводим и удаляем пред. обложку
                             $row = $db->super_query("SELECT cover FROM `communities` WHERE id = '{$public_id}'");
                             if($row){
-                                @unlink($upload_dir.$row['cover']);
+                                FileSystem::delete($upload_dir.$row['cover']);
                             }
 
                             $imgData = getimagesize($upload_dir.$image_rename.$res_type);
@@ -2474,7 +2475,7 @@ class GroupsController extends Module
                 if($row){
 
                     $upDir = __DIR__."/../../uploads/groups/{$public_id}/";
-                    @unlink($upDir.$row['cover']);
+                    FileSystem::delete($upDir.$row['cover']);
 
                 }
 

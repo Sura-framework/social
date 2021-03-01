@@ -3,14 +3,19 @@ declare(strict_types=1);
 
 namespace App\Libs;
 
+use App\Models\Friends;
 use App\Models\Profile;
+use Sura\Database\Connection;
 use Sura\Libs\Db;
 use Sura\Libs\Gramatic;
+use Sura\Libs\Model;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
 
 class Wall
 {
+
+
     /**
      * @param array $query
      * @return array
@@ -19,6 +24,7 @@ class Wall
     public static function build(array $query): array
     {
         $db = Db::getDB();
+        $database = Model::getDB();
 
         $user_info = Registry::get('user_info');
         $user_id = $user_info['user_id'];
@@ -149,7 +155,7 @@ class Wall
 
                             $video_id = (int)$attach_type[2];
 
-                            $row_video = $db->super_query("SELECT video, title FROM `videos` WHERE id = '{$video_id}'", false, "wall/video{$video_id}");
+                            $row_video = $database->fetch("SELECT video, title FROM `videos` WHERE id = '{$video_id}'", false, "wall/video{$video_id}");
                             $row_video['title'] = stripslashes($row_video['title']);
                             $row_video['video'] = stripslashes($row_video['video']);
                             $row_video['video'] = strtr($row_video['video'], array('width="770"' => 'width="390"', 'height="420"' => 'height="310"'));
@@ -169,7 +175,7 @@ class Wall
                     } elseif ($attach_type[0] == 'audio') {
                         $data = explode('_', $attach_type[1]);
                         $audioId = (int)$data[0];
-                        $row_audio = $db->super_query("SELECT id, oid, artist, title, url, duration FROM
+                        $row_audio = $database->fetch("SELECT id, oid, artist, title, url, duration FROM
 						        `audio` WHERE id = '{$audioId}'");
                         if ($row_audio) {
                             $stime = gmdate("i:s", (int)$row_audio['duration']);
@@ -262,7 +268,7 @@ class Wall
 
                         $doc_id = (int)$attach_type[1];
 
-                        $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false, "wall/doc{$doc_id}");
+                        $row_doc = $database->fetch("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false, "wall/doc{$doc_id}");
 
                         if ($row_doc) {
 
@@ -276,11 +282,11 @@ class Wall
 
                         $vote_id = (int)$attach_type[1];
 
-                        $row_vote = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false, "votes/vote_{$vote_id}");
+                        $row_vote = $database->fetch("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false, "votes/vote_{$vote_id}");
 
                         if ($vote_id) {
 
-                            $checkMyVote = $db->super_query("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$vote_id}'", false, "votes/check{$user_id}_{$vote_id}");
+                            $checkMyVote = $database->fetch("SELECT COUNT(*) AS cnt FROM `votes_result` WHERE user_id = '{$user_id}' AND vote_id = '{$vote_id}'");
 
                             $row_vote['title'] = stripslashes($row_vote['title']);
 
@@ -289,7 +295,7 @@ class Wall
                             $arr_answe_list = explode('|', stripslashes($row_vote['answers']));
                             $max = $row_vote['answer_num'];
 
-                            $sql_answer = $db->super_query("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$vote_id}' GROUP BY answer", 1, "votes/vote_answer_cnt_{$vote_id}");
+                            $sql_answer = $database->fetchAll("SELECT answer, COUNT(*) AS cnt FROM `votes_result` WHERE vote_id = '{$vote_id}' GROUP BY answer");
                             $answer = array();
                             foreach ($sql_answer as $row_answer) {
 
@@ -466,7 +472,7 @@ class Wall
                     $query[$key]['if_comments'] = true;
                 }
 
-                $row = $db->super_query("SELECT user_privacy FROM `users` WHERE user_id = '{$row['author_user_id']}'");
+                $row = $database->fetch("SELECT user_privacy FROM `users` WHERE user_id = '{$row['author_user_id']}'");
                 if ($row['user_privacy']) {
                     $user_privacy = xfieldsdataload($row['user_privacy']);
                 } else {
@@ -612,7 +618,7 @@ class Wall
                 }
                 $query[$key]['public_id'] = $row['public_id'];
 
-                $row = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$row['public_id']}'");
+                $row = $database->fetch("SELECT admin FROM `communities` WHERE id = '{$row['public_id']}'");
                 //Админ
                 if (stripos($row['admin'], "u{$user_id}|") !== false) {
 //                    $public_admin = true;
@@ -657,7 +663,7 @@ class Wall
                             $comments_limit = 0;
                         }
 
-                        $sql_comments = $db->super_query("SELECT tb1.id, public_id, text, add_date, tb2.user_photo, user_search_pref FROM `communities_wall` tb1, `users` tb2 WHERE tb1.public_id = tb2.user_id AND tb1.fast_comm_id = '{$row['id']}' ORDER by `add_date` ASC LIMIT {$comments_limit}, 3", true);
+                        $sql_comments = $database->fetchAll("SELECT tb1.id, public_id, text, add_date, tb2.user_photo, user_search_pref FROM `communities_wall` tb1, `users` tb2 WHERE tb1.public_id = tb2.user_id AND tb1.fast_comm_id = '{$row['id']}' ORDER by `add_date` ASC LIMIT {$comments_limit}, 3");
 
                         //Загружаем кнопку "Показать N запсии"
                         $titles1 = array('предыдущий', 'предыдущие', 'предыдущие');//prev

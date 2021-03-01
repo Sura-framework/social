@@ -7,6 +7,7 @@ use Sura\Libs\Langs;
 use Sura\Libs\Request;
 use Sura\Libs\Status;
 use Sura\Libs\Validation;
+use Sura\Utils\FileSystem;
 
 class DocController extends Module{
 
@@ -143,7 +144,7 @@ class DocController extends Module{
 
             if($row['duser_id'] == $user_id){
 
-                @unlink(__DIR__."/../../public/uploads/doc/{$user_id}/".$row['ddownload_name']);
+                FileSystem::delete(__DIR__."/../../public/uploads/doc/{$user_id}/".$row['ddownload_name']);
 
                 $db->query("DELETE FROM `doc` WHERE did = '{$did}'");
 

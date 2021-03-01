@@ -15,6 +15,7 @@ use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 use Sura\Time\Date;
+use Sura\Utils\FileSystem;
 
 class AlbumsController extends Module{
 
@@ -318,7 +319,7 @@ class AlbumsController extends Module{
                                 $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(140, 100);
                                 $image->save($upload_dir.'c_'.$image_rename.'.webp', 90);
 
-                                unlink($upload_dir.$image_rename.$res_type);
+                                FileSystem::delete($upload_dir.$image_rename.$res_type);
                                 $res_type = '.webp';
 
                                 $date = date('Y-m-d H:i:s', $server_time);
@@ -435,8 +436,8 @@ class AlbumsController extends Module{
                 $del_dir = __DIR__.'/../../public/uploads/users/'.$user_id.'/albums/'.$row['album_id'].'/';
 
                 //Удаление фотки с сервера
-                unlink($del_dir.'c_'.$row['photo_name']);
-                unlink($del_dir.$row['photo_name']);
+                FileSystem::delete($del_dir.'c_'.$row['photo_name']);
+                FileSystem::delete($del_dir.$row['photo_name']);
 
                 //Удаление фотки из БД
                 $db->query("DELETE FROM `photos` WHERE id = '{$id}'");
@@ -1015,8 +1016,9 @@ class AlbumsController extends Module{
 
                     //Удаляем фотки из папки на сервере
                     $fdir = opendir(__DIR__.'/../../public/uploads/users/'.$user_id.'/albums/'.$aid);
-                    while($file = readdir($fdir))
-                        @unlink(__DIR__.'/../../public/uploads/users/'.$user_id.'/albums/'.$aid.'/'.$file);
+                    while($file = readdir($fdir)) {
+                        FileSystem::delete(__DIR__ . '/../../public/uploads/users/' . $user_id . '/albums/' . $aid . '/' . $file);
+                    }
 
                     @rmdir(__DIR__.'/../../public/uploads/users/'.$user_id.'/albums/'.$aid);
                 }

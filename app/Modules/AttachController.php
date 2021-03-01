@@ -9,6 +9,7 @@ use Sura\Libs\Settings;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Status;
 use Sura\Libs\Validation;
+use Sura\Utils\FileSystem;
 
 class AttachController extends Module{
 
@@ -69,7 +70,7 @@ class AttachController extends Module{
                         $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(140, 100);
                         $image->save($upload_dir.'c_'.$image_rename.'.webp', 90);
 
-                        unlink($upload_dir.$image_rename.$res_type);
+                        FileSystem::delete($upload_dir.$image_rename.$res_type);
                         $res_type = '.webp';
 
                         //Вставляем фотографию
@@ -167,7 +168,7 @@ class AttachController extends Module{
                             $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(140, 100);
                             $image->save($upload_dir.'c_'.$image_rename.'.webp', 90);
 
-                            unlink($upload_dir.$image_rename.$res_type);
+                            FileSystem::delete($upload_dir.$image_rename.$res_type);
                             $res_type = '.webp';
 
 
