@@ -117,14 +117,13 @@ class AudioController extends Module{
 	                'status' => Status::OK,
                 ) );
             }
-            else {
-                return _e_json(array(
-                	'reset' => 1,
-	                'res' => $res,
-	                'count' => $sql_count_['cnt'],
-	                'status' => Status::NOT_FOUND,
-                ) );
-            }
+
+            return _e_json(array(
+                'reset' => 1,
+                'res' => $res,
+                'count' => $sql_count_['cnt'],
+                'status' => Status::NOT_FOUND,
+            ) );
         }else{
 	        return _e_json(array(
 		        'status' => Status::BAD_LOGGED,

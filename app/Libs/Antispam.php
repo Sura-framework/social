@@ -62,15 +62,10 @@ class Antispam
 		$check = $db->super_query("SELECT COUNT(*) AS cnt FROM `antispam` WHERE act = '{$type}' AND user_id = '{$user_id}' AND date = '{$antiDate}' AND txt = '{$text}'");
 		/** Если кол-во, логов больше, то ставим блок */
 		if ($check['cnt']) {
-			if ($check['cnt'] >= self::$max_int[$type]) {
-				return true;
-			} else {
-				return false;
-			}
-		} else {
-			return false;
+            return $check['cnt'] >= self::$max_int[$type];
 		}
-	}
+        return false;
+    }
 	
 	/**
 	 * @param int $type

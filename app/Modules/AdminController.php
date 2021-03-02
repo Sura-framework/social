@@ -45,7 +45,7 @@ class AdminController extends Module
 		$logged = $params['user']['logged'];
 		$user_info = $params['user']['user_info'];
 		$group = $user_info['user_group'];
-		if ($logged == true and $group == '1') {
+		if ($logged == true && $group == '1') {
 //            $tpl = $params['tpl'];
 			
 			$db = $this->db();

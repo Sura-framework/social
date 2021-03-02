@@ -262,7 +262,7 @@ class AlbumsController extends Module{
                 if($row['photo_num'] < $config['max_album_photos']){
 
                     //Директория юзеров
-                    $uploaddir = __DIR__.'/../../public/uploads/users/';
+                    $uploaddir = __DIR__.'/../../public/uploads/users/';//FIXME
 
                     //Если нет папок юзера, то создаём их
                     if(!is_dir($uploaddir.$user_id)){
