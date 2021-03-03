@@ -1043,8 +1043,9 @@ final class ProfileController extends Module
                         $params['rating_class_head'] = '';
                     }
 
-                    if (!$row['user_rating'])
+                    if (!$row['user_rating']) {
                         $row['user_rating'] = 0;
+                    }
 
                     //                    $tpl->set('{rating}', $row['user_rating']);
                     $params['rating'] = $row['user_rating'];
