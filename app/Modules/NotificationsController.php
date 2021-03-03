@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules;
 
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
 use Sura\Libs\Status;
@@ -214,8 +216,8 @@ final class NotificationsController extends Module{
             $limit_news = 15;
             $last_id = (int)$request['last_id'];
 
-            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-            $cache = new \Sura\Cache\Cache($storage, 'users');
+            $storage = new MemcachedStorage('localhost');
+            $cache = new Cache($storage, 'users');
             $value = $cache->load("{$_SESSION['user_id']}/new_news");
             if ($value == NULL){
                 $cache->save("{$_SESSION['user_id']}/new_news", "");

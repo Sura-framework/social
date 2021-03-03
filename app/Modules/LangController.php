@@ -17,7 +17,7 @@ class LangController extends Module{
     {
 //        Tools::NoAjaxRedirect();
 
-        if (isset($_COOKIE['lang']) AND $_COOKIE['lang'] > 0) {
+        if (isset($_COOKIE['lang']) && $_COOKIE['lang'] > 0) {
             $useLang = (int)$_COOKIE['lang'];
         }
         else {
@@ -29,7 +29,7 @@ class LangController extends Module{
 
         $lang = '';
         foreach($langs as $key => $value){
-            if($useLang == $key OR $num_Lang == 0) {
+            if($useLang == $key || $num_Lang == 0) {
                 $lang .= "<div class=\"lang_but lang_selected\">".$langs[$key]['flag'] .$langs[$key]['name']."</div>";
             }else{
                 $lang .= "<a href=\"/lang/change/{$key}/\"><div class=\"lang_but\">".$langs[$key]['flag'].$langs[$key]['name']."</div></a>";

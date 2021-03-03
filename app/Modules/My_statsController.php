@@ -5,6 +5,7 @@ namespace App\Modules;
 use Exception;
 use Sura\Libs\Request;
 use Sura\Libs\Tools;
+use Sura\Time\Date;
 
 class My_statsController extends Module{
 
@@ -26,15 +27,19 @@ class My_statsController extends Module{
 
         if($logged){
 
-            $month = intval($request['m']);
-            if($month AND $month <= 0 OR $month > 12) $month = 1;
+            $month = (int)$request['m'];
+            if($month && $month <= 0 && $month > 12) {
+                $month = 1;
+            }
 
-            $year = intval($request['y']);
-            if($year AND $year < 2013 OR $year > 2020) $year = 2013;
+            $year = (int)$request['y'];
+            if($year && $year < 2013 && $year > 2020) {
+                $year = 2013;
+            }
 
-            if($month AND $year){
+            if($month && $year){
 
-                if($month > 1 AND $month < 10){
+                if($month > 1 && $month < 10){
 
 //                    $t_date = langdate('F', strtotime($year.'-'.$month));
 
@@ -52,7 +57,7 @@ class My_statsController extends Module{
 
             } else {
 
-                $server_time = \Sura\Time\Date::time();
+                $server_time = Date::time();
                 $stat_date = date('Ym', $server_time);
                 $r_month = date('m', $server_time);
 
@@ -105,7 +110,9 @@ class My_statsController extends Module{
             $row_max_hits = $db->super_query("SELECT views FROM `users_stats` WHERE user_id = '{$user_info['user_id']}' AND date_x = '{$stat_date}' ORDER by `views` DESC");
 
             $rNum_moenys = round($row_max_hits['views'] / 15);
-            if($rNum_moenys < 1) $rNum_moenys = 1;
+            if($rNum_moenys < 1) {
+                $rNum_moenys = 1;
+            }
 
 //            $tickSize_moneys = $rNum_moenys;
 

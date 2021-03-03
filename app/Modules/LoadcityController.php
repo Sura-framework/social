@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use App\Libs\Support;
 use Sura\Libs\Request;
 
 class LoadcityController extends Module{
@@ -12,9 +13,6 @@ class LoadcityController extends Module{
      */
     public function index(): int
     {
-        //$lang = langs::get_langs();
-//        $db = $this->db();
-
         $request = (Request::getRequest()->getGlobal());
 
         $country_id = (int)$request['country'];
@@ -22,7 +20,7 @@ class LoadcityController extends Module{
         echo '<option value="0">- Выбрать -</option>';
 
         if($country_id > 0){
-            echo   (new \App\Libs\Support)->allCity($country_id, 1);
+            echo   (new Support)->allCity($country_id, 1);
         }
 
         echo '<script type="text/javascript">$(\'#load_mini\').hide();</script>'; //!NB

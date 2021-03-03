@@ -188,7 +188,7 @@ class GroupsController extends Module
 
             //Проверка на то, что фото обновляет адмиH
             $row = $db->super_query("SELECT admin, photo, del, ban FROM `communities` WHERE id = '{$id}'");
-            if(stripos($row['admin'], "u{$user_id}|") !== false AND $row['del'] == 0 AND $row['ban'] == 0){
+            if(stripos($row['admin'], "u{$user_id}|") !== false && $row['del'] == 0 && $row['ban'] == 0){
 
                 //Разришенные форматы
                 $allowed_files = array('jpg', 'jpeg', 'jpe', 'png', 'gif');

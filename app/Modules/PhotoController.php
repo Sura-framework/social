@@ -2,6 +2,7 @@
 
 namespace App\Modules;
 
+use App\Models\Friends;
 use Intervention\Image\ImageManager;
 use Sura\Libs\Db;
 use Sura\Libs\Langs;
@@ -10,6 +11,8 @@ use Sura\Libs\Settings;
 use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
+use Sura\Libs\Validation;
+use Sura\Time\Date;
 
 class PhotoController extends Module{
 
@@ -34,24 +37,24 @@ class PhotoController extends Module{
 
             $request = (Request::getRequest()->getGlobal());
 
-            $pid = intval($request['pid']);
-            $comment = ajax_utf8(textFilter($request['comment']));
-            $server_time = \Sura\Time\Date::time();
+            $pid = (int)$request['pid'];
+            $comment = Validation::textFilter($request['comment']);
+            $server_time = Date::time();
             $date = date('Y-m-d H:i:s', $server_time);
-            $hash = md5($user_id.$server_time.$_IP.$user_info['user_email'].rand(0, 1000000000)).$comment.$pid;
+            $hash = md5($user_id.$server_time.$_IP.$user_info['user_email'].random_int(0, 1000000000)).$comment.$pid;
 
             $check_photo = $db->super_query("SELECT album_id, user_id, photo_name FROM `photos` WHERE id = '{$pid}'");
 
             //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
             if($user_info['user_id'] != $check_photo['user_id']){
-                $check_friend = CheckFriends($check_photo['user_id']);
+                $check_friend = (new \App\Models\Friends)->CheckFriends($check_photo['user_id']);
 
                 $row_album = $db->super_query("SELECT privacy FROM `albums` WHERE aid = '{$check_photo['album_id']}'");
                 $album_privacy = explode('|', $row_album['privacy']);
             }
 
             //ЧС
-            $CheckBlackList = CheckBlackList($check_photo['user_id']);
+            $CheckBlackList = (new \App\Models\Friends)->CheckBlackList($check_photo['user_id']);
 
             //Проверка на существование фотки и приватность
             if(!$CheckBlackList AND $check_photo AND $album_privacy[1] == 1 OR $album_privacy[1] == 2 AND $check_friend OR $user_info['user_id'] == $check_photo['user_id']){
@@ -115,7 +118,7 @@ class PhotoController extends Module{
                         $rowUserEmail = $db->super_query("SELECT user_name, user_email FROM `users` WHERE user_id = '".$check_photo['user_id']."'");
                         if($rowUserEmail['user_email']){
                             include_once __DIR__.'/../Classes/mail.php';
-                            $mail = new \dle_mail($config);
+                            $mail = new \Mail($config);
                             $rowMyInfo = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '".$user_id."'");
                             $rowEmailTpl = $db->super_query("SELECT text FROM `mail_tpl` WHERE id = '4'");
                             $rowEmailTpl['text'] = str_replace('{%user%}', $rowUserEmail['user_name'], $rowEmailTpl['text']);
@@ -131,8 +134,9 @@ class PhotoController extends Module{
                 $cache->remove("{$check_photo['user_id']}/albums_{$check_photo['user_id']}_comm_friends");
 
                 return view('info.info', $params);
-            } else
-                return _e('err_privacy');
+            }
+
+            return _e('err_privacy');
         }
         return view('info.info', $params);
     }
@@ -211,15 +215,15 @@ class PhotoController extends Module{
 
             $request = (Request::getRequest()->getGlobal());
 
-            $pid = intval($request['pid']);
-            $i_left = intval($request['i_left']);
-            $i_top = intval($request['i_top']);
-            $i_width = intval($request['i_width']);
-            $i_height = intval($request['i_height']);
+            $pid = (int)$request['pid'];
+            $i_left = (int)$request['i_left'];
+            $i_top = (int)$request['i_top'];
+            $i_width = (int)$request['i_width'];
+            $i_height = (int)$request['i_height'];
             $check_photo = $db->super_query("SELECT photo_name, album_id FROM `photos` WHERE id = '{$pid}' AND user_id = '{$user_id}'");
-            if($check_photo AND $i_width >= 100 AND $i_height >= 100 AND $i_left >= 0 AND $i_height >= 0){
+            if($check_photo && $i_width >= 100 && $i_height >= 100 && $i_left >= 0 && $i_height >= 0){
                 $imgInfo = explode('.', $check_photo['photo_name']);
-                $server_time = \Sura\Time\Date::time();
+                $server_time = Date::time();
                 $image_rename = substr(md5($server_time.$check_photo['check_photo']), 0, 15).".".$imgInfo[1];
                 $upload_dir = __DIR__."/../../public/uploads/users/{$user_id}/";
 
@@ -231,7 +235,7 @@ class PhotoController extends Module{
                 $image->crop($i_width, $i_height, $i_left, $i_top);
 
                 //Создание главной фотографии
-                $image = $manager->make($upload_dir.$image_rename)->resize(200, null, function ($constraint) {
+                $image = $manager->make($upload_dir.$image_rename)->resize(200, null, static function ($constraint) {
                     $constraint->aspectRatio();
                 });
                 $image->save($upload_dir.$image_rename, 75);
@@ -246,10 +250,12 @@ class PhotoController extends Module{
 
                 //Добавляем на стену
                 $row = $db->super_query("SELECT user_sex FROM `users` WHERE user_id = '{$user_id}'");
-                if($row['user_sex'] == 2)
+                if($row['user_sex'] == 2) {
                     $sex_text = 'обновила';
-                else
+                }
+                else {
                     $sex_text = 'обновил';
+                }
 
                 $wall_text = "<div class=\"profile_update_photo\"><a href=\"\" onClick=\"Photo.Profile(\'{$user_id}\', \'{$image_rename}\'); return false\"><img src=\"/uploads/users/{$user_id}/o_{$image_rename}\" style=\"margin-top:3px\"></a></div>";
 
@@ -299,8 +305,8 @@ class PhotoController extends Module{
 
             $request = (Request::getRequest()->getGlobal());
 
-            $pid = intval($request['pid']);
-            $num = intval($request['num']);
+            $pid = (int)$request['pid'];
+            $num = (int)$request['num'];
             if($num > 7){
                 $limit = $num-3;
                 $sql_comm = $db->super_query("SELECT tb1.user_id,text,date,id,hash,pid, tb2.user_search_pref, user_photo, user_last_visit, user_logged_mobile FROM `photos_comments` tb1, `users` tb2 WHERE tb1.user_id = tb2.user_id AND tb1.pid = '{$pid}' ORDER by `date` ASC LIMIT 0, {$limit}", 1);
@@ -319,9 +325,9 @@ class PhotoController extends Module{
                     else
                         $tpl->set('{ava}', '/images/no_ava_50.png');
 
-                    $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
+                    $online = \App\Models\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                     $tpl->set('{online}', $online);
-                    $date = \Sura\Time\Date::megaDate(strtotime($row_comm['date']));
+                    $date = Date::megaDate(strtotime($row_comm['date']));
                     $tpl->set('{date}', $date);
 
                     $row_photo = $db->super_query("SELECT user_id FROM `photos` WHERE id = '{$row_comm['pid']}'");
@@ -329,8 +335,9 @@ class PhotoController extends Module{
                     if($row_comm['user_id'] == $user_info['user_id'] OR $row_photo['user_id'] == $user_info['user_id']){
                         $tpl->set('[owner]', '');
                         $tpl->set('[/owner]', '');
-                    } else
-                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                    } else {
+                        $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si", "");
+                    }
 
                     $tpl->compile('content');
                 }
@@ -407,7 +414,7 @@ class PhotoController extends Module{
 
             $request = (Request::getRequest()->getGlobal());
 
-            $id = intval($request['id']);
+            $id = (int)$request['id'];
             $row = $db->super_query("SELECT photo_name, album_id, user_id FROM `photos` WHERE id = '".$id."'");
 
             if($row['photo_name'] AND $request['pos'] == 'left' OR $request['pos'] == 'right' AND $user_id == $row['user_id']){
@@ -499,7 +506,7 @@ class PhotoController extends Module{
                 }
 
                 //Вставляем в лог, что юзер поставил оценку
-                $server_time = \Sura\Time\Date::time();
+                $server_time = Date::time();
                 $db->query("INSERT INTO `photos_rating` SET photo_id = '{$pid}', user_id = '{$user_id}', date = '{$server_time}', rating = '{$rating}', owner_user_id = '{$row['user_id']}'");
                 $id = $db->insert_id();
 
@@ -594,7 +601,7 @@ class PhotoController extends Module{
                         if($row['user_photo']) $tpl->set('{ava}', "/uploads/users/{$row['user_id']}/50_{$row['user_photo']}");
                         else $tpl->set('{ava}', "/images/no_ava_50.png");
 
-                        $date = \Sura\Time\Date::megaDate(strtotime($row['date']));
+                        $date = Date::megaDate(strtotime($row['date']));
                         $tpl->set('{date}', $date);
 
                         $tpl->compile('rates_users');
@@ -807,7 +814,7 @@ class PhotoController extends Module{
                                 $online = \App\Libs\Profile::Online($row_comm['user_last_visit'], $row_comm['user_logged_mobile']);
                                 $tpl->set('{online}', $online);
 
-                                $date = \Sura\Time\Date::megaDate(strtotime($row_comm['date']));
+                                $date = Date::megaDate(strtotime($row_comm['date']));
                                 $tpl->set('{date}', $date);
 
                                 if($row_comm['user_id'] == $user_info['user_id'] OR $row['user_id'] == $user_info['user_id']){
@@ -822,7 +829,7 @@ class PhotoController extends Module{
 
                         //Сама фотография
                         $tpl->load_template('photo_view.tpl');
-                        $server_time = \Sura\Time\Date::time();
+                        $server_time = Date::time();
                         $tpl->set('{photo}', $config['home_url'].'uploads/users/'.$row['user_id'].'/albums/'.$check_album['album_id'].'/'.$row['photo_name'].'?'.$server_time);
                         $sizephoto = getimagesize(__DIR__.'/../../public/uploads/users/'.$row['user_id'].'/albums/'.$check_album['album_id'].'/'.$row['photo_name']);
                         $tpl->set('{height}', $sizephoto[1]);
@@ -889,7 +896,7 @@ class PhotoController extends Module{
                         else $tpl->set('{author-info}', '');
                         if($author_info[1]) $tpl->set('{author-info}', $author_info[0].', '.$author_info[1].'<br />');
 
-                        $date = \Sura\Time\Date::megaDate(strtotime($row['date']), 1, 1);
+                        $date = Date::megaDate(strtotime($row['date']), 1, 1);
                         $tpl->set('{date}', $date);
 
                         if($uid == $user_info['user_id']){
