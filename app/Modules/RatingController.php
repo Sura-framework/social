@@ -74,12 +74,15 @@ class RatingController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            if (!isset($_POST['for_user_id']) AND !isset($_POST['num']))
+            if (!isset($_POST['for_user_id']) AND !isset($_POST['num'])) {
                 die('1');
+            }
 
-            $for_user_id = intval($_POST['for_user_id']);
-            $num = intval($_POST['num']);
-            if($num < 0) $num = 0;
+            $for_user_id = (int)$_POST['for_user_id'];
+            $num = (int)$_POST['num'];
+            if($num < 0) {
+                $num = 0;
+            }
 
             //Выводим текущий баланс свой
             $row = $db->super_query("SELECT user_balance FROM `users` WHERE user_id = '{$user_info['user_id']}'");
