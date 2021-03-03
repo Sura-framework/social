@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use Sura\Cache\Cache;
 use Sura\Cache\Storages\MemcachedStorage;
+use Sura\Libs\Mail;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Status;
@@ -40,10 +41,12 @@ class GiftsController extends Module{
 
             foreach($sql_ as $gift){
 
-                if($config['temp'] == 'mobile')
+                if($config['temp'] == 'mobile') {
                     echo "<a href=\"\" class=\"gifts_onegif\" onClick=\"gifts.select('{$gift['img']}', '{$for_user_id}'); return false\"><img src=\"/uploads/gifts/{$gift['img']}.png\"  alt=\"\"/><div class=\"gift_count\" id=\"g{$gift['img']}\">{$gift['price']} голос</div></a>";
-                else
+                }
+                else {
                     echo "<a href=\"\" class=\"gifts_onegif\" onMouseOver=\"gifts.showgift('{$gift['img']}')\" onMouseOut=\"gifts.showhide('{$gift['img']}')\" onClick=\"gifts.select('{$gift['img']}', '{$for_user_id}'); return false\"><img src=\"/uploads/gifts/{$gift['img']}.png\"  alt=\"\"/><div class=\"gift_count no_display\" id=\"g{$gift['img']}\">{$gift['price']} голос</div></a>";
+                }
 
             }
 
@@ -157,13 +160,13 @@ class GiftsController extends Module{
                         if($rowUserEmail['user_email']){
                             //FIXME
 //                            include_once __DIR__.'/../Classes/mail.php';
-//                            $mail = new \dle_mail($config);
+                            $mail = new Mail($config);
                             $rowMyInfo = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '".$user_id."'");
                             $rowEmailTpl = $db->super_query("SELECT text FROM `mail_tpl` WHERE id = '6'");
                             $rowEmailTpl['text'] = str_replace('{%user%}', $rowUserEmail['user_name'], $rowEmailTpl['text']);
                             $rowEmailTpl['text'] = str_replace('{%user-friend%}', $rowMyInfo['user_search_pref'], $rowEmailTpl['text']);
                             $rowEmailTpl['text'] = str_replace('{%rec-link%}', $config['home_url'].'gifts'.$for_user_id, $rowEmailTpl['text']);
-//                            $mail->send($rowUserEmail['user_email'], 'Вам отправили новый подарок', $rowEmailTpl['text']);
+                            $mail->send($rowUserEmail['user_email'], 'Вам отправили новый подарок', $rowEmailTpl['text']);
                         }
                     }
 
@@ -245,7 +248,11 @@ class GiftsController extends Module{
             $params['title'] = $lang['gifts'].' | Sura';
             $uid = (int)$request['uid'];
 
-            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
+            if($request['page'] > 0) {
+                $page = (int)$request['page'];
+            } else {
+                $page = 1;
+            }
             $gcount = 15;
             $limit_page = ($page-1)*$gcount;
 
@@ -353,7 +360,7 @@ class GiftsController extends Module{
 //                navigation($gcount, $owner['user_gifts'], "/gifts{$uid}?page=");
 
                 if($sql_where AND !$sql_)
-                    msg_box('<br /><br />Новых подарков еще нет.<br /><br /><br />', 'info_2');
+//                    msg_box('<br /><br />Новых подарков еще нет.<br /><br /><br />', 'info_2');
             }
 //            $tpl->clear();
 //            $db->free();
