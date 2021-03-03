@@ -73,29 +73,35 @@ class Fast_searchController extends Module{
                                 $city = '';
                                 //Если критерий поиск "по сообществам"
                             } else if($type == 4){
-                                if($row['photo'])
-                                    $ava = '/uploads/groups/'.$row['id'].'/50_'.$row['photo'];
-                                else
+                                if($row['photo']) {
+                                    $ava = '/uploads/groups/' . $row['id'] . '/50_' . $row['photo'];
+                                }
+                                else {
                                     $ava = '/images/no_ava_50.png';
+                                }
 
                                 $img_width = 50;
                                 $row['user_search_pref'] = $row['title'];
                                 $titles = array('участник', 'участника', 'участников');//groups_users
                                 $country = $row['traf'].' '.Gramatic::declOfNum($row['traf'], $titles);
 
-                                if($row['adres'])
+                                if($row['adres']) {
                                     $sql_[$key]['user_id'] = $row['adres'];
-                                else
-                                    $sql_[$key]['user_id'] = 'public'.$row['id'];
+                                }
+                                else {
+                                    $sql_[$key]['user_id'] = 'public' . $row['id'];
+                                }
 
                                 $city = '';
                                 //Если критерий поиск "по людям"
                             } else {
                                 //АВА
-                                if($row['user_photo'])
-                                    $ava = '/uploads/users/'.$row['user_id'].'/50_'.$row['user_photo'];
-                                else
+                                if($row['user_photo']) {
+                                    $ava = '/uploads/users/' . $row['user_id'] . '/50_' . $row['user_photo'];
+                                }
+                                else {
                                     $ava = '/images/no_ava_50.png';
+                                }
 
                                 $img_width = 50;
 
