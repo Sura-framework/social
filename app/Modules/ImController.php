@@ -1701,16 +1701,20 @@ class ImController extends Module{
                                 }
 
                             }
-                            else
+                            else {
                                 $attach_result .= '';
+                            }
                         }
 
-                        if($resLinkTitle AND $row['text'] == $resLinkUrl OR !$row['text'])
-                            $row['text'] = $resLinkTitle.'<div class="clear"></div>'.$attach_result;
-                        else if($attach_result)
-                            $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']).$attach_result;
-                        else
+                        if($resLinkTitle AND $row['text'] == $resLinkUrl OR !$row['text']) {
+                            $row['text'] = $resLinkTitle . '<div class="clear"></div>' . $attach_result;
+                        }
+                        else if($attach_result) {
+                            $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']) . $attach_result;
+                        }
+                        else {
                             $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']);
+                        }
 
                     } else{
                         $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']);
@@ -1720,10 +1724,12 @@ class ImController extends Module{
 
                     //Если это запись с "рассказать друзьям"
                     if($row['tell_uid']){
-                        if($row['public'])
+                        if($row['public']) {
                             $rowUserTell = $db->super_query("SELECT title, photo FROM `communities` WHERE id = '{$row['tell_uid']}'", false);
-                        else
+                        }
+                        else {
                             $rowUserTell = $db->super_query("SELECT user_search_pref, user_photo FROM `users` WHERE user_id = '{$row['tell_uid']}'");
+                        }
 
                         if ($row['tell_date']){
                             if(date('Y-m-d', $row['tell_date']) == date('Y-m-d', $server_time)) {
@@ -1742,16 +1748,20 @@ class ImController extends Module{
                         if($row['public']){
                             $rowUserTell['user_search_pref'] = stripslashes($rowUserTell['title']);
                             $tell_link = 'public';
-                            if($rowUserTell['photo'])
-                                $avaTell = '/uploads/groups/'.$row['tell_uid'].'/50_'.$rowUserTell['photo'];
-                            else
+                            if($rowUserTell['photo']) {
+                                $avaTell = '/uploads/groups/' . $row['tell_uid'] . '/50_' . $rowUserTell['photo'];
+                            }
+                            else {
                                 $avaTell = '/images/no_ava_50.png';
+                            }
                         } else {
                             $tell_link = 'u';
-                            if($rowUserTell['user_photo'])
-                                $avaTell = '/uploads/users/'.$row['tell_uid'].'/50_'.$rowUserTell['user_photo'];
-                            else
+                            if($rowUserTell['user_photo']) {
+                                $avaTell = '/uploads/users/' . $row['tell_uid'] . '/50_' . $rowUserTell['user_photo'];
+                            }
+                            else {
                                 $avaTell = '/images/no_ava_50.png';
+                            }
                         }
 
                         $dateTell = '';//FIXME
@@ -1874,7 +1884,7 @@ class ImController extends Module{
 
         if($logged){
             $user_id = $user_info['user_id'];
-            $im_user_id = intval($_POST['im_user_id']);
+            $im_user_id = (int)$_POST['im_user_id'];
 
             //Выводим информацию о диалоге
             $row = $db->super_query("SELECT msg_num, all_msg_num FROM `im` WHERE iuser_id = '{$user_id}' AND im_user_id = '{$im_user_id}'");
@@ -1951,10 +1961,10 @@ class ImController extends Module{
             $params['title'] = 'Чаты';
 //            $params['info'] = 'not_logged';
             return view('im.im', $params);
-        } else {
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
         }
+
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
     }
 }
