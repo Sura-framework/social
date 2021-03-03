@@ -39,7 +39,7 @@ class FaveController extends Module{
             $fave_id = (int)$request['fave_id'];
             //Проверяем на факт существования юзера которого добавляем в закладки
             $row = $db->super_query("SELECT `user_id` FROM `users` WHERE user_id = '{$fave_id}'");
-            if($row AND $user_id != $fave_id){
+            if($row && $user_id != $fave_id){
 
                 //Проверям на факт существование этого юзера в закладках, если нету то пропускаем
                 $db->query("SELECT `user_id` FROM `fave` WHERE user_id = '{$user_id}' AND fave_id = '{$fave_id}'");
@@ -152,7 +152,7 @@ class FaveController extends Module{
                     }
                     $sql_[$key]['name'] = $row['user_search_pref'];
                     $sql_[$key]['user_id'] = $row['fave_id'];
-                    $online = \App\Libs\Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
+                    $online = \App\Models\Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
                     $sql_[$key]['online'] = $online;
                 }
                 $params['fave'] = $sql_;
@@ -164,10 +164,10 @@ class FaveController extends Module{
 
             }
             return view('fave.fave', $params);
-        } else {
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
         }
+
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
     }
 }
