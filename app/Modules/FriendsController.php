@@ -65,7 +65,7 @@ class FriendsController extends Module{
                     if(!$check_demands){
 
                         //Проверяем нетли этого юзера уже в списке друзей
-                        $check_friendlist = (new \App\Libs\Friends)->CheckFriends($for_user_id, $from_user_id);
+                        $check_friendlist = (new Friends)->CheckFriends($for_user_id, $from_user_id);
                         if(!$check_friendlist){
                             $db->query("INSERT INTO `friends_demands` (for_user_id, from_user_id, demand_date) VALUES ('{$for_user_id}', '{$from_user_id}', NOW())");
                             Antispam::LogInsert(1, $user_info['user_id']);
@@ -319,7 +319,7 @@ class FriendsController extends Module{
 
             //Проверяем на существования юзера в списке друзей
 //            $check = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$delet_user_id}' AND subscriptions = 0");
-            $check = (new \App\Libs\Friends)->CheckFriends($delet_user_id, $user_id);
+            $check = (new \App\Models\Friends)->CheckFriends($delet_user_id, $user_id);
             if($check){
                 //Удаляем друга из таблицы друзей
                 $db->query("DELETE FROM `friends` WHERE user_id = '{$user_id}' AND friend_id = '{$delet_user_id}' AND subscriptions = 0");
@@ -526,7 +526,7 @@ class FriendsController extends Module{
             $params['user_id'] = $get_user_id;
 
             //ЧС
-            $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($get_user_id);
+            $CheckBlackList = (new \App\Models\Friends)->CheckBlackList($get_user_id);
             if(!$CheckBlackList){
 
                 if($get_user_id === $user_info['user_id']) {
@@ -586,20 +586,23 @@ class FriendsController extends Module{
                     foreach($sql_ as $key => $row){
                         $user_country_city_name = explode('|', $row['user_country_city_name']);
                         $sql_[$key]['country'] = $user_country_city_name[0];
-                        if($user_country_city_name[1])
-                            $sql_[$key]['city'] = ', '.$user_country_city_name[1];
-                        else
+                        if($user_country_city_name[1]) {
+                            $sql_[$key]['city'] = ', ' . $user_country_city_name[1];
+                        }
+                        else {
                             $sql_[$key]['city'] = '';
+                        }
                             $sql_[$key]['user_id'] = $row['user_id'];
                             $sql_[$key]['name'] = $row['user_search_pref'];
 
-                        if($row['user_photo'])
-                            $sql_[$key]['ava'] = $config['home_url'].'uploads/users/'.$row['user_id'].'/100_'.$row['user_photo'];
-                        else
+                        if($row['user_photo']) {
+                            $sql_[$key]['ava'] = $config['home_url'] . 'uploads/users/' . $row['user_id'] . '/100_' . $row['user_photo'];
+                        }
+                        else {
                             $sql_[$key]['ava'] = '/images/100_no_ava.png';
+                        }
 
-                            $online = Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
-                        $sql_[$key]['online'] = $online;
+                        $sql_[$key]['online'] = Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
 
                             //Возраст юзера
                         $user_birthday = explode('-', $row['user_birthday']);
@@ -607,11 +610,13 @@ class FriendsController extends Module{
 
                         if($get_user_id == $user_info['user_id']){
                             $sql_[$key]['owner'] = true;
-                        } else
+                        } else {
                             $sql_[$key]['owner'] = false;
+                        }
 
-                        if($row['user_id'] == $user_info['user_id'])
+                        if($row['user_id'] == $user_info['user_id']) {
                             $sql_[$key]['viewer'] = false;
+                        }
                         else {
                             $sql_[$key]['viewer'] = true;
                         }
@@ -632,11 +637,11 @@ class FriendsController extends Module{
             $params['menu'] = Menu::friends();
 
             return view('friends.online', $params);
-        }else{
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
         }
+
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
     }
 
     /**
@@ -668,16 +673,21 @@ class FriendsController extends Module{
 
             $user_id = $user_info['user_id'];
 
-            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
+            if($request['page'] > 0) {
+                $page = (int)$request['page'];
+            } else $page = 1;
             $gcount = 18;
             $limit_page = ($page-1)*$gcount;
 
-            if($request['user_sex'] == 1)
+            if($request['user_sex'] == 1) {
                 $sql_usSex = 2;
-            elseif($request['user_sex'] == 2)
+            }
+            elseif($request['user_sex'] == 2) {
                 $sql_usSex = 1;
-            else
+            }
+            else {
                 $sql_usSex = false;
+            }
 
             //Все друзья
             if($sql_usSex){
@@ -822,9 +832,8 @@ class FriendsController extends Module{
 //                                $tpl->set('{ava}', );
                                 $sql_[$key]['ava'] = "/images/{$noAvaPrf}";
 
-                            $online = Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
-//                            $tpl->set('{online}', );
-                            $sql_[$key]['online'] = $online;
+                            //                            $tpl->set('{online}', );
+                            $sql_[$key]['online'] = Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
 
                             //Возраст юзера
                             $user_birthday = explode('-', $row['user_birthday']);
@@ -866,11 +875,11 @@ class FriendsController extends Module{
 
             return view('friends.common', $params);
 
-        }else{
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
         }
+
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
     }
 
     /**
@@ -907,7 +916,7 @@ class FriendsController extends Module{
             $params['user_id'] = $get_user_id;
 
             //ЧС
-            $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($get_user_id);
+            $CheckBlackList = (new \App\Models\Friends)->CheckBlackList($get_user_id);
             if(!$CheckBlackList){
                 //Выводим кол-во друзей из таблицы юзеров
                 $friends_sql = $db->super_query("SELECT user_name, user_friends_num FROM `users` WHERE user_id = '{$get_user_id}'");
@@ -989,8 +998,7 @@ class FriendsController extends Module{
                                 $sql_[$key]['ava'] = "/images/{$noAvaPrf}";
                             }
 
-                            $online = Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
-                            $sql_[$key]['online'] = $online;
+                            $sql_[$key]['online'] = Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
                             $user_birthday = explode('-', $row['user_birthday']);
                             $sql_[$key]['age'] = Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
                             if($get_user_id == $user_info['user_id']){
@@ -1030,10 +1038,10 @@ class FriendsController extends Module{
             $params['menu'] = Menu::friends();
 
             return view('friends.friends', $params);
-        } else {
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
         }
+
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
     }
 }
