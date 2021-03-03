@@ -49,13 +49,13 @@ final class TagsController  extends Module
                 $yesf = false;
             }
 
-            $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($id);
+            $CheckBlackList = (new \App\Models\Friends)->CheckBlackList($id);
 
             /** check send friend */
             $check2 = $db->super_query("SELECT for_user_id FROM `friends_demands` WHERE for_user_id = '{$id}' AND from_user_id = '{$user_info['user_id']}'");
             /** check friends */
 //            $check1 = $db->super_query("SELECT user_id FROM `friends` WHERE user_id = '{$user_info['user_id']}' AND friend_id = '{$id}' AND subscriptions = 0");
-            $check1 = (new \App\Libs\Friends)->CheckFriends($id);
+            $check1 = (new \App\Models\Friends)->CheckFriends($id);
 
             if (!$CheckBlackList){
                 if($id == $user_info['user_id']){

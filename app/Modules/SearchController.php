@@ -134,7 +134,7 @@ final class SearchController extends Module
 
         $where_sql_gen = null;//bug: undefined
 
-        if ($query or $sql_sort) {
+        if ($query || $sql_sort) {
             $where_sql_gen = "WHERE user_search_pref LIKE '%{$query}%' AND user_delet = '0' AND user_ban = '0'";
         }
 
@@ -204,10 +204,12 @@ final class SearchController extends Module
 
         if ($type == 1) {
 
-            if ($online)
+            if ($online) {
                 $params['checked_online'] = 'checked';
-            else
+            }
+            else {
                 $params['checked_online'] = '';
+            }
 
             if ($user_photo) {
                 $params['checked_user_photo'] = 'checked';
@@ -248,7 +250,7 @@ final class SearchController extends Module
                 }
                 //Возраст юзера
                 $user_birthday = explode('-', $row['user_birthday']);
-                $sql_[$key]['age'] = \App\Libs\Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
+                $sql_[$key]['age'] = \App\Models\Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
                 $user_country_city_name = explode('|', $row['user_country_city_name']);
                 $sql_[$key]['country'] = $user_country_city_name['0'];
                 if (isset($user_country_city_name['1'])) {
@@ -261,7 +263,7 @@ final class SearchController extends Module
                 } else {
                     $sql_[$key]['owner'] = false;
                 }
-                $online = \App\Libs\Profile::Online($row['user_last_visit']);
+                $online = \App\Models\Profile::Online($row['user_last_visit']);
                 if ($online) {
                     $sql_[$key]['online'] = $lang['online'];
                     $sql_[$key]['ava_online'] = 'avatar-online';
@@ -287,9 +289,8 @@ final class SearchController extends Module
 //                        $tpl->set('{comm}', );
                 $sql_[$key]['comm'] = $row['comm_num'] . ' ' . Gramatic::declOfNum((int)$row['comm_num'], $titles);
 
-                $date = Date::megaDate(strtotime($row['add_date']), '1', true);
-//                        $tpl->set('{date}', );
-                $sql_[$key]['date'] = $date;
+                //                        $tpl->set('{date}', );
+                $sql_[$key]['date'] = Date::megaDate(strtotime($row['add_date']), '1', true);
 //                        $tpl->compile('content');
             }
 
@@ -304,7 +305,7 @@ final class SearchController extends Module
                 }
                 //Возраст юзера
                 $user_birthday = explode('-', $row['user_birthday']);
-                $sql_[$key1]['age'] = \App\Libs\Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
+                $sql_[$key1]['age'] = \App\Models\Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
                 $user_country_city_name = explode('|', $row['user_country_city_name']);
                 $sql_[$key1]['country'] = $user_country_city_name['0'];
                 if (isset($user_country_city_name['1'])) {
@@ -317,7 +318,7 @@ final class SearchController extends Module
                 } else {
                     $sql_[$key1]['owner'] = false;
                 }
-                $online = \App\Libs\Profile::Online($row['user_last_visit']);
+                $online = \App\Models\Profile::Online($row['user_last_visit']);
                 if ($online) {
                     $sql_[$key1]['online'] = $lang['online'];
                     $sql_[$key1]['ava_online'] = 'avatar-online';

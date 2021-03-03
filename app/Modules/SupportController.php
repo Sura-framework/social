@@ -138,11 +138,7 @@ final class SupportController extends Module{
 
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-
-            $qid = intval($request['qid']);
+             $qid = (int)$request['qid'];
             $row = $db->super_query("SELECT suser_id FROM `support` WHERE id = '{$qid}'");
             if($row['suser_id'] == $user_id OR $user_info['user_group'] == 4){
                 $db->query("DELETE FROM `support` WHERE id = '{$qid}'");
@@ -180,11 +176,15 @@ final class SupportController extends Module{
 
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
+            if($request['page'] > 0) {
+                $page = (int)$request['page'];
+            } else {
+                $page = 1;
+            }
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
-            $id = intval($request['id']);
+            $id = (int)$request['id'];
             $row = $db->super_query("SELECT auser_id FROM `support_answers` WHERE id = '{$id}'");
             if($row['auser_id'] == $user_id OR $user_info['user_group'] == 4)
             {
@@ -227,11 +227,7 @@ final class SupportController extends Module{
 
 //            $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($request['page'] > 0) $page = intval($request['page']); else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
-
-            $qid = intval($request['qid']);
+            $qid = (int)$request['qid'];
             if($user_info['user_group'] == 4){
                 $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `support` WHERE id = '{$qid}'");
                 if($row['cnt'])
@@ -271,9 +267,6 @@ final class SupportController extends Module{
 
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($request['page'] > 0) $page = (int)$request['page']; else $page = 1;
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
 
             $qid = (int)$request['qid'];
             $answer = Validation::textFilter($request['answer']);
@@ -313,8 +306,9 @@ final class SupportController extends Module{
                 if($auser_id == $user_id OR $user_info['user_group'] == 4){
                     $tpl->set('[owner]', '');
                     $tpl->set('[/owner]', '');
-                } else
-                    $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                } else {
+                    $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si", "");
+                }
 
                 $tpl->set('{uid}', $user_id);
                 $tpl->set('{answer}', stripslashes($answer));
@@ -351,13 +345,6 @@ final class SupportController extends Module{
 
             $user_id = $user_info['user_id'];
             $params['title'] = $lang['support_title'].' | Sura';
-            if($request['page'] > 0) {
-                $page = (int)$request['page'];
-            } else {
-                $page = 1;
-            }
-            $gcount = 20;
-            $limit_page = ($page-1)*$gcount;
 
             $qid = $path[3];
 
@@ -511,8 +498,7 @@ final class SupportController extends Module{
 
                 foreach($sql_ as $key => $row){
                     $sql_[$key]['title'] = stripslashes($row['title']);
-                    $date = \Sura\Time\Date::megaDate($row['sdate']);
-                    $sql_[$key]['date'] = $date;
+                    $sql_[$key]['date'] = \Sura\Time\Date::megaDate($row['sdate']);
                     if($row['sfor_user_id'] == $row['suser_id'] OR $user_info['user_group'] == 4){
                         if($row['sfor_user_id'] == $row['suser_id']){
                             $sql_[$key]['status'] = 'Вопрос ожидает обработки.';

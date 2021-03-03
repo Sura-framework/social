@@ -246,7 +246,7 @@ final class SettingsController extends Module{
             //Проверяем юзера на блеклист
             $row_blacklist = $database->fetch("SELECT id FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
 
-            if ($row['cnt'] AND $user_id != $bad_user_id){
+            if ($row['cnt'] && $user_id != $bad_user_id){
                 if( !$row_blacklist['id']){
                     $db->query("UPDATE `users` SET user_blacklist_num = user_blacklist_num+1 WHERE user_id = '{$user_id}'");
 
