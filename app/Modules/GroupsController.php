@@ -8,6 +8,8 @@ use App\Models\Menu;
 use Exception;
 use Intervention\Image\ImageManager;
 use RuntimeException;
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
 use Sura\Time\Date;
 use Sura\Libs\Registry;
 use Sura\Libs\Request;
@@ -60,8 +62,8 @@ class GroupsController extends Module
                 }
                 chmod(__DIR__.'/../../public/uploads/groups/'.$cid.'/photos/', 0777);
 
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 $cache->remove("{$user_id}/profile_{$user_id}");
 
                 echo $cid;
@@ -120,10 +122,10 @@ class GroupsController extends Module
                     }
                     $db->query("INSERT INTO `communities_stats_log` SET user_id = '{$user_info['user_id']}', date = '{$stat_date}', act = '3', gid = '{$id}'");
                 }
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 $cache->remove("{$user_id}/profile_{$user_id}");
-                $cache = new \Sura\Cache\Cache($storage, 'public');
+                $cache = new Cache($storage, 'public');
                 $cache->remove("{$id}/profile_{$id}");
 
 //                echo 'true';
@@ -240,8 +242,8 @@ class GroupsController extends Module
                             //Результат для ответа
 //                            echo $image_rename.$res_type;
 
-                            $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                            $cache = new \Sura\Cache\Cache($storage, 'wall');
+                            $storage = new MemcachedStorage('localhost');
+                            $cache = new Cache($storage, 'wall');
                             $cache->remove("group{$id}");
 
                             $status = Status::OK;
@@ -311,8 +313,8 @@ class GroupsController extends Module
                 FileSystem::delete($upload_dir.'100_'.$row['photo']);
                 $db->query("UPDATE `communities` SET photo = '' WHERE id = '{$id}'");
 
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'wall');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'wall');
                 $cache->remove("group{$id}");
 
                 $status = Status::OK;
@@ -400,10 +402,10 @@ class GroupsController extends Module
                 $db->query("UPDATE `users` SET user_public_num = user_public_num + 1 {$appSQLDel} WHERE user_id = '{$user_id}'");
 
                 //Чистим кеш
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'users');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'users');
                 $cache->remove("{$user_id}/profile_{$user_id}");
-                $cache = new \Sura\Cache\Cache($storage, 'public');
+                $cache = new Cache($storage, 'public');
                 $cache->remove("{$id}/profile_{$id}");
 
                 echo 'true';
@@ -489,7 +491,7 @@ class GroupsController extends Module
             //Проверяем на то что юзера нет в списке контактов
             $checkSec = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_feedback` WHERE fuser_id = '{$upage}' AND cid = '{$id}'");
 
-            if($row['cnt'] AND stripos($checkAdmin['admin'], "u{$user_id}|") !== false AND !$checkSec['cnt']){
+            if($row['cnt'] && stripos($checkAdmin['admin'], "u{$user_id}|") !== false && !$checkSec['cnt']){
                 $db->query("UPDATE `communities` SET feedback = feedback+1 WHERE id = '{$id}'");
                 $server_time = Date::time();
                 $db->query("INSERT INTO `communities_feedback` SET cid = '{$id}', fuser_id = '{$upage}', office = '{$office}', fphone = '{$phone}', femail = '{$email}', fdate = '{$server_time}'");
@@ -654,11 +656,11 @@ class GroupsController extends Module
             //Проверяем на то что юзера есть в списке контактов
             $checkSec = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_feedback` WHERE fuser_id = '{$upage}' AND cid = '{$id}'");
 
-            if(stripos($checkAdmin['admin'], "u{$user_id}|") !== false AND $checkSec['cnt']){
+            if(stripos($checkAdmin['admin'], "u{$user_id}|") !== false && $checkSec['cnt']){
                 $db->query("UPDATE `communities_feedback` SET office = '{$office}', fphone = '{$phone}', femail = '{$email}' WHERE fuser_id = '{$upage}' AND cid = '{$id}'");
 
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'wall');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'wall');
                 $cache->remove("group{$id}");
 
                 $status = Status::OK;
@@ -754,8 +756,9 @@ class GroupsController extends Module
             } else
                 echo '<div class="text-center" style="padding-top:10px;color:#777;font-size:13px;">Список контактов пуст.</div>';
 
-            if(stripos($owner['admin'], "u{$user_id}|") !== false)
+            if(stripos($owner['admin'], "u{$user_id}|") !== false) {
                 echo "<style>#box_bottom_left_text{padding-top:6px;float:left}</style><script>$('#box_bottom_left_text').html('<a href=\"/\" onClick=\"groups.addcontact({$id}); return false\">Добавить контакт</a>');</script>";
+            }
             return view('groups.all_feedback_box', $params);
         }
         return view('info.info', $params);
@@ -797,15 +800,20 @@ class GroupsController extends Module
             $request['web'] = str_replace(array('"', "'"), '', $request['web']);
             $web = Validation::textFilter($request['web'], false, true);
 
-            if(!preg_match("/^[a-zA-Z0-9_-]+$/", $adres_page)) $adress_ok = false;
-            else $adress_ok = true;
+            if(!preg_match("/^[a-zA-Z0-9_-]+$/", $adres_page)) {
+                $adress_ok = false;
+            }
+            else {
+                $adress_ok = true;
+            }
 
             //Проверка на то, что действиие делает админ
             $checkAdmin = $db->super_query("SELECT admin FROM `communities` WHERE id = '".$id."'");
 
             if(stripos($checkAdmin['admin'], "u{$user_id}|") !== false AND isset($title) AND !empty($title) AND $adress_ok){
-                if(preg_match('/public[0-9]/i', $adres_page))
+                if(preg_match('/public[0-9]/i', $adres_page)) {
                     $adres_page = '';
+                }
 
                 $adres_page = preg_replace('/\b(u([0-9]+)|friends|editmypage|albums|photo([0-9]+)_([0-9]+)|photo([0-9]+)_([0-9]+)_([0-9]+)|fave|notes|videos|video([0-9]+)_([0-9]+)|news|messages|wall([0-9]+)|settings|support|restore|blog|balance|nonsense|reg([0-9]+)|gifts([0-9]+)|groups|wallgroups([0-9]+)_([0-9]+)|audio|audio([0-9]+)|docs|apps|app([0-9]+)|public|forum([0-9]+)|public([0-9]+))\b/i', '', $adres_page);
 
@@ -815,13 +823,15 @@ class GroupsController extends Module
 
                 if(!$checkAdres['cnt'] OR $adres_page == ''){
                     $db->query("UPDATE `communities` SET title = '".$title."', descr = '".$descr."', comments = '".$comments."', discussion = '{$discussion}', adres = '".$adres_page."', web = '{$web}' WHERE id = '".$id."'");
-                    if(!$adres_page)
+                    if(!$adres_page) {
                         echo 'no_new';
-                } else
+                    }
+                } else {
                     echo 'err_adres';
+                }
 
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'wall');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'wall');
                 $cache->remove("group{$id}");
 
                 $status = Status::OK;
@@ -1133,8 +1143,8 @@ class GroupsController extends Module
                 //Вставляем в ленту новотсей
                 $db->query("INSERT INTO `news` SET ac_user_id = '{$id}', action_type = 11, action_text = '{$wall_text}', obj_id = '{$dbid}', action_time = '{$server_time}'");
 
-                $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                $cache = new \Sura\Cache\Cache($storage, 'public');
+                $storage = new MemcachedStorage('localhost');
+                $cache = new Cache($storage, 'public');
                 $cache->remove("{$id}/profile_{$id}");
 
                 $query = $db->super_query("SELECT tb1.id, text, public_id, add_date, fasts_num, attach, likes_num, likes_users, tell_uid, public, tell_date, tell_comm, fixed, tb2.title, photo, comments, adres FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = '{$row['id']}' AND tb1.public_id = tb2.id AND fast_comm_id = 0 ORDER by `fixed` DESC, `add_date` DESC LIMIT {$page_cnt}, {$limit_select}", true);
@@ -1222,8 +1232,8 @@ class GroupsController extends Module
                         //Вставляем событие в моментальные оповещания
                         $update_time = $server_time - 70;
 
-                        $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                        $cache = new \Sura\Cache\Cache($storage, 'public');
+                        $storage = new MemcachedStorage('localhost');
+                        $cache = new Cache($storage, 'public');
                         if($check2['user_last_visit'] >= $update_time){
 
                             $db->query("INSERT INTO `updates` SET for_user_id = '{$row_owner2['public_id']}', from_user_id = '{$user_id}', type = '5', date = '{$server_time}', text = '{$wall_text}', user_photo = '{$user_info['user_photo']}', user_search_pref = '{$user_info['user_search_pref']}', lnk = '/news/notifications'");
@@ -1944,8 +1954,8 @@ class GroupsController extends Module
                     $db->query("INSERT INTO `news` SET ac_user_id = '{$user_id}', action_type = 1, action_text = '{$row['text']}', obj_id = '{$dbid}', action_time = '{$server_time}'");
 
                     //Чистим кеш
-                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $storage = new MemcachedStorage('localhost');
+                    $cache = new Cache($storage, 'users');
                     $cache->remove("{$user_id}/profile_{$user_id}");
 
                     $status = Status::OK;
