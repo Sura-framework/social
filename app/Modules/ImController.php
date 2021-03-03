@@ -1822,7 +1822,6 @@ class ImController extends Module{
      */
     public function upDialogs(): int
     {
-        //$tpl = $params['tpl'];
         //$lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();

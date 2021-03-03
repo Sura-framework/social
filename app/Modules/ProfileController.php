@@ -218,13 +218,13 @@ final class ProfileController extends Module
                             $sql_videos[$key]['title'] = stripslashes($row_videos['title']);
                             $titles = array('комментарий', 'комментария', 'комментариев');//comments
                             $sql_videos[$key]['comm_num'] = $row_videos['comm_num'] . ' ' . Gramatic::declOfNum($row_videos['comm_num'], $titles);
-                            $date = Date::megaDate(strtotime($row_videos['add_date']), '');
-                            $sql_videos[$key]['date'] = $date;
+                            $sql_videos[$key]['date'] = Date::megaDate(strtotime($row_videos['add_date']), '');
                         }
                         $params['videos_num'] = $video_cnt['cnt'];
                         $params['videos'] = $sql_videos;
-                    } else
+                    } else {
                         $params['videos'] = false;
+                    }
 
                     /**
                      * Подписки
@@ -252,13 +252,14 @@ final class ProfileController extends Module
                         $params['subscriptions_num'] = $row['user_subscriptions_num'];
                         //                            Cache::mozg_create_cache('/subscr_user_'.$id, $tpl->result['subscriptions']);
 //                        }
-                    } else
+                    } else {
                         $params['subscriptions'] = false;
+                    }
 
                     /**
                      * Музыка
                      */
-                    if ($row['user_audio'] and !$CheckBlackList and $config['audio_mod'] == 'yes') {
+                    if ($row['user_audio'] && !$CheckBlackList && $config['audio_mod'] == 'yes') {
                         $sql_audio = $Profile->audio($id);
                         foreach ($sql_audio as $key => $row_audio) {
                             $sql_audio[$key]['stime'] = gmdate("i:s", (int)$row_audio['duration']);
@@ -270,13 +271,14 @@ final class ProfileController extends Module
                         $titles = array('песня', 'песни', 'песен');//audio
                         $params['audios_num'] = $row['user_audio'] . ' ' . Gramatic::declOfNum($row['user_audio'], $titles);
                         $params['audios'] = $sql_audio;
-                    } else
+                    } else {
                         $params['audios'] = false;
+                    }
 
                     /**
                      * Праздники друзей
                      */
-                    if ($user_id == $id and !isset($_SESSION['happy_friends_block_hide']) and !$CheckBlackList) {
+                    if ($user_id == $id && !isset($_SESSION['happy_friends_block_hide']) && !$CheckBlackList) {
                         $sql_happy_friends = $Profile->happy_friends($id, $server_time);
                         //                        $tpl->load_template('/profile/profile_happy_friends.tpl');
                         $cnt_happfr = 0;
@@ -285,7 +287,7 @@ final class ProfileController extends Module
                             $sql_happy_friends[$key]['user_id'] = $happy_row_friends['friend_id'];
                             $sql_happy_friends[$key]['name'] = $happy_row_friends['user_search_pref'];
                             $user_birthday = explode('-', $happy_row_friends['user_birthday']);
-                            $sql_happy_friends[$key]['age'] = \App\Libs\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+                            $sql_happy_friends[$key]['age'] = \App\Models\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
                             if ($happy_row_friends['user_photo']) {
                                 $sql_happy_friends[$key]['ava'] = '/uploads/users/' . $happy_row_friends['friend_id'] . '/100_' . $happy_row_friends['user_photo'];
                             } else {
@@ -319,10 +321,12 @@ final class ProfileController extends Module
                             $cnt_rec = $Profile->cnt_rec($id);
                             $row['user_wall_num'] = $cnt_rec['cnt'];
                             $params['wall_rec_num'] = $row['user_wall_num'];
-                        } else
+                        } else {
                             $params['wall_rec_num'] = $row['user_wall_num'];
-                    } else
+                        }
+                    } else {
                         $params['wall_rec_num'] = $row['user_wall_num'];
+                    }
 
                     $row['user_wall_num'] = $row['user_wall_num'] ? $row['user_wall_num'] : '';
                     if ($row['user_wall_num'] > 10) {
@@ -371,7 +375,7 @@ final class ProfileController extends Module
 
                             if ($row['user_wall_num'] > 0) {
                                 //ЧС
-                                $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($id);
+                                $CheckBlackList = (new \App\Models\Friends)->CheckBlackList($id);
                                 if (!$CheckBlackList) {
 
                                     if ($user_privacy['val_wall1'] == 1 or $user_privacy['val_wall1'] == 2 and $CheckFriends or $user_id == $id)
@@ -480,7 +484,7 @@ final class ProfileController extends Module
                     }
 
                     //Общие друзья
-                    if ($row['user_friends_num'] and $id != $user_info['user_id'] and !$CheckBlackList) {
+                    if ($row['user_friends_num'] && $id != $user_info['user_id'] && !$CheckBlackList) {
                         $count_common = $Profile->count_common($id, $user_info['user_id']);
                         if ($count_common['cnt']) {
                             $sql_mutual = $Profile->mutual($id, $user_info['user_id']);
@@ -496,8 +500,9 @@ final class ProfileController extends Module
                                 }
                             }
                             $params['mutual_friends'] = $sql_mutual;
-                        } else
+                        } else {
                             $params['mutual_friends'] = false;
+                        }
                         $params['mutual_num'] = $count_common['cnt'];
                     } else {
                         $params['mutual_friends'] = false;
@@ -542,10 +547,12 @@ final class ProfileController extends Module
 
                         if (date('Y-m-d', (int)$row_online['user_last_visit']) == date('Y-m-d', $server_time)) {
                             $dateTell = Langs::lang_date('сегодня в H:i', (int)$row_online['user_last_visit']);
-                        } elseif (date('Y-m-d', (int)$row_online['user_last_visit']) == date('Y-m-d', ($server_time - 84600)))
+                        } elseif (date('Y-m-d', (int)$row_online['user_last_visit']) == date('Y-m-d', ($server_time - 84600))) {
                             $dateTell = Langs::lang_date('вчера в H:i', (int)$row_online['user_last_visit']);
-                        else
+                        }
+                        else {
                             $dateTell = Langs::lang_date('j F Y в H:i', (int)$row_online['user_last_visit']);
+                        }
                         if ($row['user_sex'] == 2) {
                             $params['online'] = 'последний раз была ' . $dateTell . $mobile_icon;
                         } else {
@@ -563,30 +570,42 @@ final class ProfileController extends Module
 //                            $params['not_contact'.$preg_safq_name] = false;
 //                        }
 //                    }
-                    if (isset($xfields['vk']))
+                    if (isset($xfields['vk'])) {
                         $params['vk'] = '<a href="' . stripslashes($xfields['vk']) . '" target="_blank">' . stripslashes($xfields['vk']) . '</a>';
-                    else
+                    }
+                    else {
                         $params['vk'] = '';
-                    if (isset($xfields['od']))
+                    }
+                    if (isset($xfields['od'])) {
                         $params['od'] = '<a href="' . stripslashes($xfields['od']) . '" target="_blank">' . stripslashes($xfields['od']) . '</a>';
-                    else
+                    }
+                    else {
                         $params['od'] = '';
-                    if (isset($xfields['fb']))
+                    }
+                    if (isset($xfields['fb'])) {
                         $params['fb'] = '<a href="' . stripslashes($xfields['fb']) . '" target="_blank">' . stripslashes($xfields['fb']) . '</a>';
-                    else
+                    }
+                    else {
                         $params['fb'] = '';
-                    if (isset($xfields['skype']))
+                    }
+                    if (isset($xfields['skype'])) {
                         $params['skype'] = stripslashes($xfields['skype']);
-                    else
+                    }
+                    else {
                         $params['skype'] = '';
-                    if (isset($xfields['icq']))
+                    }
+                    if (isset($xfields['icq'])) {
                         $params['icq'] = stripslashes($xfields['icq']);
-                    else
+                    }
+                    else {
                         $params['icq'] = '';
-                    if (isset($xfields['phone']))
+                    }
+                    if (isset($xfields['phone'])) {
                         $params['phone'] = stripslashes($xfields['phone']);
-                    else
+                    }
+                    else {
                         $params['phone'] = '';
+                    }
 
                     if (!empty($xfields['site'])) {
                         if (preg_match('/https:\/\//i', $xfields['site'])) {
@@ -620,10 +639,10 @@ final class ProfileController extends Module
                     $xfields_all = xfieldsdataload($row['user_xfields_all']);
                     $preg_safq_name_exp = explode(', ', 'activity, interests, myinfo, music, kino, books, games, quote');
 
-                    if (empty($xfields_all['activity']) and empty($xfields_all['interests'])
-                        and empty($xfields_all['myinfo']) and empty($xfields_all['music'])
-                        and empty($xfields_all['kino']) and empty($xfields_all['books'])
-                        and empty($xfields_all['games']) and empty($xfields_all['quote'])) {
+                    if (empty($xfields_all['activity']) && empty($xfields_all['interests'])
+                        && empty($xfields_all['myinfo']) && empty($xfields_all['music'])
+                        && empty($xfields_all['kino']) && empty($xfields_all['books'])
+                        && empty($xfields_all['games']) && empty($xfields_all['quote'])) {
                         $params['not_block_info'] = false;
                     } else {
                         $params['not_block_info'] = true;
@@ -723,7 +742,7 @@ final class ProfileController extends Module
 
                     $sql_albums = $Profile->row_albums($id, $albums_privacy, $cache_pref);//cache_pref undefined
                     unset($key2);
-                    if ($sql_albums and $config['album_mod'] == 'yes') {
+                    if ($sql_albums && $config['album_mod'] == 'yes') {
                         foreach ($sql_albums as $key2 => $row_albums) {
                             $sql_albums[$key2]['name'] = stripslashes($row_albums['name']);
                             $sql_albums[$key2]['date'] = Date::megaDate($row_albums['adate']);
@@ -805,7 +824,7 @@ final class ProfileController extends Module
                     //                    $tpl->set('{records}', $tpl->result['wall']);
                     //                    $params['records'] = $tpl->result['wall'];
 
-                    if (!$CheckBlackList and !$params['owner']) {
+                    if (!$CheckBlackList && !$params['owner']) {
                         $params['status_text'] = stripslashes($row['user_status']);
 
                     } elseif ($params['owner']) {
@@ -943,7 +962,7 @@ final class ProfileController extends Module
                     /**
                      * Сообщества
                      */
-                    if ($row['user_public_num'] > 0 and !$CheckBlackList) {
+                    if ($row['user_public_num'] > 0 && !$CheckBlackList) {
                         $sql_groups = $Profile->groups($id);
                         if (is_array($sql_groups)) {
                             foreach ($sql_groups as $key => $row_groups) {
@@ -980,7 +999,7 @@ final class ProfileController extends Module
                     if (!isset($cnt_happfr))
                         $cnt_happfr = null;
 
-                    if ($cnt_happfr and $params['owner'] == true) {
+                    if ($cnt_happfr && $params['owner'] == true) {
                         $params['happy-friends'] = '';
                         $params['happy-friends-num'] = $cnt_happfr;
                         $params['happy_friends_block'] = true;
@@ -1041,7 +1060,7 @@ final class ProfileController extends Module
                     if ($user_info['user_id'] != $id) {
 
                         /**
-                         * StatsUser::add($id, $user_info['user_id']);
+                         * StatsUser::add($id, $user_info['user_id'], $date);
                          * Cron Generate stats
                          */
 
@@ -1069,41 +1088,40 @@ final class ProfileController extends Module
                 }
                 $params['title'] = $row['user_search_pref'] . ' | Sura';
                 return view('profile.profile', $params);
-            } else {
-                $params['title'] = $lang['no_infooo'];
-                $params['info'] = $lang['no_upage'];
-                return view('info.info', $params);
             }
 
-        } else {
+            $params['title'] = $lang['no_infooo'];
+            $params['info'] = $lang['no_upage'];
+            return view('info.info', $params);
 
-            if (isset($row)) {
-
-
-                $user_name_lastname_exp = explode(' ', $row['user_search_pref']);
-                $params['name'] = $user_name_lastname_exp[0];
-                $params['lastname'] = $user_name_lastname_exp[1];
-
-                /**
-                 * Аватарка
-                 */
-
-                $avaPREFver = '';
-                $noAvaPrf = 'no_ava.gif';
-
-                if ($row['user_photo']) {
-                    $params['ava'] = $config['home_url'] . 'uploads/users/' . $row['user_id'] . '/' . $avaPREFver . $row['user_photo'];
-                    $params['display_ava'] = 'style="display:block;"';
-                } else {
-                    $params['ava'] = '/images/' . $noAvaPrf;
-                    $params['display_ava'] = 'style="display:none;"';
-                }
-            }
-
-
-            $params['title'] = $row['user_search_pref'] . ' | Sura';
-            return view('profile.profile', $params);
         }
+
+        if (isset($row)) {
+
+
+            $user_name_lastname_exp = explode(' ', $row['user_search_pref']);
+            $params['name'] = $user_name_lastname_exp[0];
+            $params['lastname'] = $user_name_lastname_exp[1];
+
+            /**
+             * Аватарка
+             */
+
+            $avaPREFver = '';
+            $noAvaPrf = 'no_ava.gif';
+
+            if ($row['user_photo']) {
+                $params['ava'] = $config['home_url'] . 'uploads/users/' . $row['user_id'] . '/' . $avaPREFver . $row['user_photo'];
+                $params['display_ava'] = 'style="display:block;"';
+            } else {
+                $params['ava'] = '/images/' . $noAvaPrf;
+                $params['display_ava'] = 'style="display:none;"';
+            }
+        }
+
+
+        $params['title'] = $row['user_search_pref'] . ' | Sura';
+        return view('profile.profile', $params);
     }
 
     /**
@@ -1121,10 +1139,10 @@ final class ProfileController extends Module
             if ($user_info['user_ban_date']) {
                 return 1;
 //                $tpl->set('{date}', langdate('j F Y в H:i', $user_info['user_ban_date']));
-            } else {
-                return 1;
-                //                $tpl->set('{date}', 'Неограниченно');
             }
+
+            return 1;
+            //                $tpl->set('{date}', 'Неограниченно');
 //            $tpl->compile('main');
 //            echo $tpl->result['main'];
         }
