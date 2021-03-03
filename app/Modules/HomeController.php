@@ -25,10 +25,10 @@ final class HomeController extends Module implements HomeInterface {
     {
         if ($this->logged()){
             return (new FeedController)->feed($params);
-        }else{
-            $params['title'] = 'Sura';
-            return view('reg', $params);
         }
+
+        $params['title'] = 'Sura';
+        return view('reg', $params);
     }
 
     /**

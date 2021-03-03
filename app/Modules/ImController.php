@@ -53,7 +53,7 @@ class ImController extends Module{
             Antispam::Check(4, $user_id, $msg.$attach_files);
             //FIXME update response antispam
 
-            if(isset($msg) AND !empty($msg) OR isset($attach_files) OR !empty($attach_files)){
+            if(!empty($msg) || !empty($attach_files)){
 
                 //Проверка на существование получателя
                 $row = $db->super_query("SELECT user_privacy FROM `users` WHERE user_id = '".$for_user_id."'");
@@ -81,8 +81,9 @@ class ImController extends Module{
 
                         Antispam::LogInsert(4, $user_id, $msg.$attach_files );
 
-                        if(!(new \App\Models\Friends)->CheckFriends($for_user_id))
+                        if(!(new \App\Models\Friends)->CheckFriends($for_user_id)) {
                             Antispam::LogInsert(2, $user_id);
+                        }
 
                         $server_time = Date::time();
 
@@ -152,7 +153,7 @@ class ImController extends Module{
                                 if($attach_type[0] == 'photo_u'){
                                     $attauthor_user_id = $user_id;
 
-                                    if($attach_type[1] == 'attach' AND file_exists(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}")){
+                                    if($attach_type[1] == 'attach' && file_exists(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}")){
 
                                         $size = getimagesize(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}");
 
@@ -176,7 +177,7 @@ class ImController extends Module{
                                 }
                                 //Музыка
                                 elseif($attach_type[0] == 'audio'){
-                                    $audioId = intval($data[0]);
+                                    $audioId = (int)$data[0];
                                     $row_audio = $db->super_query("SELECT id, oid, artist, title, url, duration FROM `audio` WHERE id = '{$audioId}'");
                                     if($row_audio){
                                         $stime = gmdate("i:s", $row_audio['duration']);
@@ -229,7 +230,7 @@ class ImController extends Module{
                                 }
                                 elseif($attach_type[0] == 'doc'){
 
-                                    $doc_id = intval($attach_type[1]);
+                                    $doc_id = (int)$attach_type[1];
 
                                     $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false);
 
@@ -369,16 +370,20 @@ class ImController extends Module{
             if($first_id > 0){
                 $count = $db->super_query("SELECT COUNT(*) AS all_msg_num FROM `messages` WHERE from_user_id = '".$for_user_id."' AND for_user_id = '".$user_id."' AND id < ".$first_id);
                 $sql_sort = "AND id < ".$first_id;
-                if($count['all_msg_num'] > $limit_msg)
-                    $limit = $count['all_msg_num']-$limit_msg;
-                else
+                if($count['all_msg_num'] > $limit_msg) {
+                    $limit = $count['all_msg_num'] - $limit_msg;
+                }
+                else {
                     $limit = 0;
+                }
             } else {
                 $count = $db->super_query("SELECT all_msg_num FROM `im` WHERE iuser_id = '".$user_id."' AND im_user_id = '".$for_user_id."'");
-                if($count['all_msg_num'] > $limit_msg)
-                    $limit = $count['all_msg_num']-$limit_msg;
-                else
+                if($count['all_msg_num'] > $limit_msg) {
+                    $limit = $count['all_msg_num'] - $limit_msg;
+                }
+                else {
                     $limit = 0;
+                }
             }
             if (!isset($sql_sort)){
                 $sql_sort = '';//FIXME
@@ -444,11 +449,17 @@ class ImController extends Module{
                                 //Фото со стены юзера
                             }
                             elseif($attach_type[0] == 'photo_u'){
-                                if($row['tell_uid']) $attauthor_user_id = $row['tell_uid'];
-                                elseif($row['history_user_id'] == $user_id) $attauthor_user_id = $user_id;
-                                else $attauthor_user_id = $row['from_user_id'];
+                                if($row['tell_uid']) {
+                                    $attauthor_user_id = $row['tell_uid'];
+                                }
+                                elseif($row['history_user_id'] == $user_id) {
+                                    $attauthor_user_id = $user_id;
+                                }
+                                else {
+                                    $attauthor_user_id = $row['from_user_id'];
+                                }
 
-                                if($attach_type[1] == 'attach' AND file_exists(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}")){
+                                if($attach_type[1] == 'attach' && file_exists(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}")){
 
                                     $size = getimagesize(__DIR__."/../../public/uploads/attach/{$attauthor_user_id}/c_{$attach_type[2]}");
 
@@ -480,20 +491,29 @@ class ImController extends Module{
                                 //Музыка
                             }
                             elseif($attach_type[0] == 'audio'){
-                                if (!isset($audioId))
-                                    $audioId = null;//bug:undefined
+                                if (!isset($audioId)) {
+                                    $audioId = null;
+                                }//bug:undefined
                                 $row_audio = $db->super_query("SELECT id, oid, artist, title, url, duration FROM `audio` WHERE id = '{$audioId}'");
                                 if($row_audio){
                                     $stime = gmdate("i:s", $row_audio['duration']);
-                                    if(!$row_audio['artist']) $row_audio['artist'] = 'Неизвестный исполнитель';
-                                    if(!$row_audio['title']) $row_audio['title'] = 'Без названия';
+                                    if(!$row_audio['artist']) {
+                                        $row_audio['artist'] = 'Неизвестный исполнитель';
+                                    }
+                                    if(!$row_audio['title']) {
+                                        $row_audio['title'] = 'Без названия';
+                                    }
                                     $plname = 'wall';
-                                    if($row_audio['oid'] != $user_info['user_id']) $q_s = <<<HTML
+                                    if($row_audio['oid'] != $user_info['user_id']) {
+                                        $q_s = <<<HTML
 									<div class="audioSettingsBut"><li class="icon-plus-6"
 									onClick="gSearch.addAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}')" onmouseover="showTooltip(this, {text: 'Добавить в мой список', shift: [6,5,0]});"
 									id="no_play"></li><div class="clear"></div></div>
 									HTML;
-                                    else $q_s = '';
+                                    }
+                                    else {
+                                        $q_s = '';
+                                    }
                                     $qauido = "<div class=\"audioPage audioElem search search_item\"
 									id=\"audio_{$row_audio['id']}_{$row_audio['oid']}_{$plname}\"
 									onclick=\"playNewAudio('{$row_audio['id']}_{$row_audio['oid']}_{$plname}', event);\"><div
@@ -548,12 +568,15 @@ class ImController extends Module{
                                 if(stripos($attach_type[4], '/uploads/attach/') === false){
                                     $attach_type[4] = '/images/no_ava_groups_100.gif';
                                     $no_img = false;
-                                } else
+                                } else {
                                     $no_img = true;
+                                }
 
-                                if(!$attach_type[3]) $attach_type[3] = '';
+                                if(!$attach_type[3]) {
+                                    $attach_type[3] = '';
+                                }
 
-                                if($no_img AND $attach_type[2]){
+                                if($no_img && $attach_type[2]){
 
                                     $attach_result .= '<div style="margin-top:2px" class="clear"><div class="attach_link_block_ic fl_l" style="margin-top:4px;margin-left:0px"></div><div class="attach_link_block_te"><div class="fl_l">Ссылка: <a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$rdomain_url_name.'</a></div></div><div class="clear"></div><div class="wall_show_block_link" style="border:0px"><a href="/away.php?url='.$attach_type[1].'" target="_blank"><div style="width:108px;height:80px;float:left;text-align:center"><img src="'.$attach_type[4].'"  alt=\"photo\"/></div></a><div class="attatch_link_title"><a href="/away.php?url='.$attach_type[1].'" target="_blank">'.$str_title.'</a></div><div style="max-height:50px;overflow:hidden">'.$attach_type[3].'</div></div></div>';
 
@@ -572,7 +595,7 @@ class ImController extends Module{
                             }
                             elseif($attach_type[0] == 'doc'){
 
-                                $doc_id = intval($attach_type[1]);
+                                $doc_id = (int)$attach_type[1];
 
                                 $row_doc = $db->super_query("SELECT dname, dsize FROM `doc` WHERE did = '{$doc_id}'", false);
 
@@ -587,7 +610,7 @@ class ImController extends Module{
                             }
                             elseif($attach_type[0] == 'vote'){
 
-                                $vote_id = intval($attach_type[1]);
+                                $vote_id = (int)$attach_type[1];
 
                                 $row_vote = $db->super_query("SELECT title, answers, answer_num FROM `votes` WHERE id = '{$vote_id}'", false);
 
@@ -613,7 +636,7 @@ class ImController extends Module{
 
                                     $attach_result .= "<div class=\"clear\" style=\"height:10px\"></div><div id=\"result_vote_block{$vote_id}\"><div class=\"wall_vote_title\">{$row_vote['title']}</div>";
 
-                                    for($ai = 0; $ai < sizeof($arr_answe_list); $ai++){
+                                    for($ai = 0; $ai < count($arr_answe_list); $ai++){
 
                                         if(!$checkMyVote['cnt']){
 
@@ -623,9 +646,15 @@ class ImController extends Module{
 
                                             $num = $answer[$ai]['cnt'];
 
-                                            if(!$num ) $num = 0;
-                                            if($max != 0) $proc = (100 * $num) / $max;
-                                            else $proc = 0;
+                                            if(!$num ) {
+                                                $num = 0;
+                                            }
+                                            if($max != 0) {
+                                                $proc = (100 * $num) / $max;
+                                            }
+                                            else {
+                                                $proc = 0;
+                                            }
                                             $proc = round($proc, 2);
 
                                             $attach_result .= "<div class=\"wall_vote_oneanswe cursor_default\">
@@ -638,11 +667,19 @@ class ImController extends Module{
 
                                     }
                                     $titles = array('человек', 'человека', 'человек');//fave
-                                    if($row_vote['answer_num']) $answer_num_text = Gramatic::declOfNum($row_vote['answer_num'], $titles);
-                                    else $answer_num_text = 'человек';
+                                    if($row_vote['answer_num']) {
+                                        $answer_num_text = Gramatic::declOfNum($row_vote['answer_num'], $titles);
+                                    }
+                                    else {
+                                        $answer_num_text = 'человек';
+                                    }
 
-                                    if($row_vote['answer_num'] <= 1) $answer_text2 = 'Проголосовал';
-                                    else $answer_text2 = 'Проголосовало';
+                                    if($row_vote['answer_num'] <= 1) {
+                                        $answer_text2 = 'Проголосовал';
+                                    }
+                                    else {
+                                        $answer_text2 = 'Проголосовало';
+                                    }
 
                                     $attach_result .= "{$answer_text2} <b>{$row_vote['answer_num']}</b> {$answer_num_text}.<div class=\"clear\" style=\"margin-top:10px\"></div></div>";
 
@@ -656,12 +693,15 @@ class ImController extends Module{
                             }
                         }
 
-                        if(!empty($resLinkTitle) AND $row['text'] == $resLinkUrl OR !$row['text'])
-                            $row['text'] = $resLinkTitle.'<div class="clear"></div>'.$attach_result;
-                        else if($attach_result)
-                            $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']).$attach_result;
-                        else
+                        if(!empty($resLinkTitle) AND $row['text'] == $resLinkUrl OR !$row['text']) {
+                            $row['text'] = $resLinkTitle . '<div class="clear"></div>' . $attach_result;
+                        }
+                        else if($attach_result) {
+                            $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']) . $attach_result;
+                        }
+                        else {
                             $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']);
+                        }
 
                     } else{
                         $row['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row['text']);
@@ -693,16 +733,20 @@ class ImController extends Module{
                         if($row['public']){
                             $rowUserTell['user_search_pref'] = stripslashes($rowUserTell['title']);
                             $tell_link = 'public';
-                            if($rowUserTell['photo'])
-                                $avaTell = '/uploads/groups/'.$row['tell_uid'].'/50_'.$rowUserTell['photo'];
-                            else
+                            if($rowUserTell['photo']) {
+                                $avaTell = '/uploads/groups/' . $row['tell_uid'] . '/50_' . $rowUserTell['photo'];
+                            }
+                            else {
                                 $avaTell = '/images/no_ava_50.png';
+                            }
                         } else {
                             $tell_link = 'u';
-                            if($rowUserTell['user_photo'])
-                                $avaTell = '/uploads/users/'.$row['tell_uid'].'/50_'.$rowUserTell['user_photo'];
-                            else
+                            if($rowUserTell['user_photo']) {
+                                $avaTell = '/uploads/users/' . $row['tell_uid'] . '/50_' . $rowUserTell['user_photo'];
+                            }
+                            else {
                                 $avaTell = '/images/no_ava_50.png';
+                            }
                         }
 
                         $row['text'] = "
@@ -757,11 +801,11 @@ class ImController extends Module{
             $params['title'] = 'Чаты';
             $params['info'] = $lang['not_logged'];
             return view('im.user', $params);
-        } else {
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
         }
+
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
     }
 
     /**
@@ -779,11 +823,13 @@ class ImController extends Module{
 
 //            Tools::NoAjaxQuery();
 
-            if($user_info['user_msg_type'] == 0)
-                $db->query("UPDATE `users` SET user_msg_type = 1 WHERE user_id = '".$user_info['user_id']."'");
+            if($user_info['user_msg_type'] == 0) {
+                $db->query("UPDATE `users` SET user_msg_type = 1 WHERE user_id = '" . $user_info['user_id'] . "'");
+            }
 
-            if($user_info['user_msg_type'] == 1)
-                $db->query("UPDATE `users` SET user_msg_type = 1 WHERE user_id = '".$user_info['user_id']."'");
+            if($user_info['user_msg_type'] == 1) {
+                $db->query("UPDATE `users` SET user_msg_type = 1 WHERE user_id = '" . $user_info['user_id'] . "'");
+            }
 
         }
     }
@@ -807,7 +853,7 @@ class ImController extends Module{
             $user_id = $user_info['user_id'];
 
 //            Tools::NoAjaxQuery();
-            $msg_id = intval($_POST['msg_id']);
+            $msg_id = (int)$_POST['msg_id'];
 
             $check = $db->super_query("SELECT from_user_id FROM `messages` WHERE id = '".$msg_id."' AND folder = 'inbox' AND pm_read = 'no'");
 
@@ -857,7 +903,7 @@ class ImController extends Module{
         if($logged){
             $request = (Request::getRequest()->getGlobal());
             $user_id = $user_info['user_id'];
-            $for_user_id = intval($request['for_user_id']);
+            $for_user_id = (int)$request['for_user_id'];
             if ($for_user_id > 0){
                 if(isset($request['stop'] ) AND $request['stop'] == 1){
                     $cache->save("{$for_user_id}/typograf{$user_id}", "");
@@ -881,10 +927,11 @@ class ImController extends Module{
     /**
      *  Обновление окна сообщений каждые 2 сек
      *
+     * @param $params
      * @return int
      * @throws \Throwable
      */
-    public function update(): int
+    public function update($params): int
     {
         if (!isset($params))
         {
@@ -903,8 +950,8 @@ class ImController extends Module{
             $user_id = $user_info['user_id'];
 
 //            Tools::NoAjaxQuery();
-            $for_user_id = intval($_POST['for_user_id']);
-            $last_id = intval($_POST['last_id']);
+            $for_user_id = (int)$_POST['for_user_id'];
+            $last_id = (int)$_POST['last_id'];
 
             $storage = new MemcachedStorage('localhost');
             $cache = new Cache($storage, 'users');
