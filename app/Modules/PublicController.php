@@ -189,8 +189,9 @@ class PublicController extends Module{
                 $expBR = explode('<br />', $row['descr']);
                 $textLength = count($expBR);
                 $strTXT = strlen($row['descr']);
-                if($textLength > 9 OR $strTXT > 600)
-                    $row['descr'] = '<div class="wall_strlen" id="hide_wall_rec'.$row['id'].'">'.$row['descr'].'</div><div class="wall_strlen_full" onMouseDown="wall.FullText('.$row['id'].', this.id)" id="hide_wall_rec_lnk'.$row['id'].'">Показать полностью..</div>';
+                if($textLength > 9 OR $strTXT > 600) {
+                    $row['descr'] = '<div class="wall_strlen" id="hide_wall_rec' . $row['id'] . '">' . $row['descr'] . '</div><div class="wall_strlen_full" onMouseDown="wall.FullText(' . $row['id'] . ', this.id)" id="hide_wall_rec_lnk' . $row['id'] . '">Показать полностью..</div>';
+                }
 
                 $params['descr'] = stripslashes($row['descr']);
 
@@ -252,8 +253,12 @@ class PublicController extends Module{
                 $sql_users = $db->super_query("SELECT tb1.user_id, tb2.user_name, user_lastname, user_photo FROM `friends` tb1, `users` tb2 WHERE tb1.friend_id = '{$row['id']}' AND tb1.user_id = tb2.user_id AND tb1.subscriptions = 2 ORDER by rand() LIMIT 0, 6", 1);
                 $users = '';
                 foreach($sql_users as $row_users){
-                    if($row_users['user_photo']) $ava = "/uploads/users/{$row_users['user_id']}/50_{$row_users['user_photo']}";
-                    else $ava = "/images/no_ava_50.png";
+                    if($row_users['user_photo']) {
+                        $ava = "/uploads/users/{$row_users['user_id']}/50_{$row_users['user_photo']}";
+                    }
+                    else {
+                        $ava = "/images/no_ava_50.png";
+                    }
                     $users .= "<div class=\"onefriend oneusers\" id=\"subUser{$row_users['user_id']}\"><a href=\"/u{$row_users['user_id']}\" onClick=\"Page.Go(this.href); return false\"><img src=\"{$ava}\"  style=\"margin-bottom:3px\" /></a><a href=\"/u{$row_users['user_id']}\" onClick=\"Page.Go(this.href); return false\">{$row_users['user_name']}<br /><span>{$row_users['user_lastname']}</span></a></div>";
                 }
                     $params['users'] = $users;
@@ -355,7 +360,7 @@ class PublicController extends Module{
                 }
                 $params['forum_num'] = $row['forum_num'];
 
-                if($row['forum_num'] AND $row['discussion']){
+                if($row['forum_num'] && $row['discussion']){
 
                     $sql_forum = $db->super_query("SELECT fid, title, lastuser_id, lastdate, msg_num FROM `communities_forum` WHERE public_id = '{$row['id']}' ORDER by `fixed` DESC, `lastdate` DESC, `fdate` DESC LIMIT 0, 5", 1, "groups_forum/forum{$row['id']}");
                     $thems = '';
@@ -364,7 +369,7 @@ class PublicController extends Module{
 
                         $row_last_user = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '{$row_forum['lastuser_id']}'");
                         $last_userX = explode(' ', $row_last_user['user_search_pref']);
-                        $row_last_user['user_search_pref'] = gramatikName($last_userX[0]).' '.gramatikName($last_userX[1]);
+                        $row_last_user['user_search_pref'] = gramatikName($last_userX[0]).' '.gramatikName($last_userX[1]);//FIXME
 
                         $row_forum['title'] = stripslashes($row_forum['title']);
 
