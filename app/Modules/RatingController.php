@@ -3,6 +3,8 @@
 namespace App\Modules;
 
 use Exception;
+use Sura\Cache\Cache;
+use Sura\Cache\Storages\MemcachedStorage;
 use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Time\Date;
@@ -106,8 +108,8 @@ class RatingController extends Module{
                     $db->query("INSERT INTO `users_rating` SET user_id = '{$user_id}', for_user_id = '{$for_user_id}', addnum = '{$num}', date = '{$server_time}'");
 
                     /** Чистим кеш */
-                    $storage = new \Sura\Cache\Storages\MemcachedStorage('localhost');
-                    $cache = new \Sura\Cache\Cache($storage, 'users');
+                    $storage = new MemcachedStorage('localhost');
+                    $cache = new Cache($storage, 'users');
                     $cache->remove("{$for_user_id}/user_{$for_user_id}");
 
                     $status = Status::OK;
