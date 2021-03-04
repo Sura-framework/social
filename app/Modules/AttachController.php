@@ -37,9 +37,6 @@ class AttachController extends Module{
             $dir = resolve('app')->get('path.base');
             $upload_dir = $dir."/public/uploads/attach/{$user_id}/";
             FileSystem::createDir($upload_dir);
-            if(!is_dir($upload_dir)) {
-                throw new \RuntimeException(sprintf('Directory "%s" was not created', $upload_dir));
-            }
 
             //Разрешенные форматы
             $allowed_files = array('jpg', 'jpeg', 'jpe', 'png', 'gif');
