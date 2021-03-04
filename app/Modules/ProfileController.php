@@ -61,7 +61,7 @@ final class ProfileController extends Module
         $cache = new Cache($storage, 'users');
 
         $key = $id . '/profile_' . $id;
-        $value = $cache->load($key, function (&$dependencies) {
+        $value = $cache->load($key, static function (&$dependencies) {
             $dependencies[Cache::EXPIRE] = '20 minutes';
         });
 
@@ -132,7 +132,7 @@ final class ProfileController extends Module
                         $row['user_friends_num'] = 0;
                     }
 
-                    if ($row['user_friends_num'] > 0 and $CheckBlackList == false) {
+                    if ($row['user_friends_num'] > 0 && $CheckBlackList == false) {
                         $sql_friends = $Profile->friends($id);
                         foreach ($sql_friends as $key => $row_friends) {
                             $friend_info = explode(' ', $row_friends['user_search_pref']);
@@ -163,7 +163,7 @@ final class ProfileController extends Module
                      */
                     $online_time = $server_time - 60;
                     //Кол-во друзей в онлайне
-                    if ($row['user_friends_num'] > 0 and !$CheckBlackList) {
+                    if ($row['user_friends_num'] > 0 && !$CheckBlackList) {
                         $online_friends = $Profile->friends_online_cnt($id, $online_time);
                         //Если друзья на сайте есть то идем дальше
                         if ($online_friends['cnt']) {
@@ -174,7 +174,7 @@ final class ProfileController extends Module
                                 $sql_friends_online[$key]['name'] = $friend_info_online['0'];
 //                                $sql_friends_online[$key]['lastname'] = $friend_info_online[1]
                                 if (isset($friend_info_online['1'])) {
-                                    $sql_friends_online[$key]['last_name'] = $friend_info['1'];
+                                    $sql_friends_online[$key]['last_name'] = $friend_info['1'];//FIXME
 
                                 } else {
                                     $sql_friends_online[$key]['last_name'] = 'Неизвестный пользователь';
@@ -195,7 +195,7 @@ final class ProfileController extends Module
                     /**
                      * Видеозаписи
                      */
-                    if ($row['user_videos_num'] > 0 and $config['video_mod'] == 'yes' and !$CheckBlackList) {
+                    if ($row['user_videos_num'] > 0 && $config['video_mod'] == 'yes' && !$CheckBlackList) {
                         //Настройки приватности
                         if ($user_id == $id) {
                             $sql_privacy = "";
@@ -230,7 +230,7 @@ final class ProfileController extends Module
                     /**
                      * Подписки
                      */
-                    if ($row['user_subscriptions_num'] > 0 and !$CheckBlackList) {
+                    if ($row['user_subscriptions_num'] > 0 && !$CheckBlackList) {
                         $cache_pref_subscriptions = '/subscr_user_' . $id;
 //                        if(!$subscriptions){
                         $sql_subscriptions = $Profile->subscriptions($id, $cache_pref_subscriptions);
@@ -306,10 +306,10 @@ final class ProfileController extends Module
 
                     //Приватность стены
                     //кто может писать на стене
-                    if ($user_privacy['val_wall1'] == 1 or $user_privacy['val_wall1'] == 2 and $CheckFriends or $user_id == $id) {
+                    if ($user_privacy['val_wall1'] == 1 || ($user_privacy['val_wall1'] == 2 && $CheckFriends) || $user_id == $id) {
                         //                        $tpl->set('[privacy-wall]', '');
                         $params['privacy_wall_block'] = true;
-                    } elseif ($user_privacy['val_wall2'] == 1 or $user_privacy['val_wall2'] == 2 and $CheckFriends or $user_id == $id) {
+                    } elseif ($user_privacy['val_wall2'] == 1 || ($user_privacy['val_wall2'] == 2 && $CheckFriends) || $user_id == $id) {
                         //                        $tpl->set('[privacy-wall]', '');
                         $params['privacy_wall_block'] = true;
                     } else {
@@ -318,7 +318,7 @@ final class ProfileController extends Module
                     }
 
                     if ($user_id != $id) {
-                        if ($user_privacy['val_wall1'] == 3 or $user_privacy['val_wall1'] == 2 and !$CheckFriends) {
+                        if ($user_privacy['val_wall1'] == 3 || $user_privacy['val_wall1'] == 2 && !$CheckFriends) {
                             $cnt_rec = $Profile->cnt_rec($id);
                             $row['user_wall_num'] = $cnt_rec['cnt'];
                             $params['wall_rec_num'] = $row['user_wall_num'];
@@ -343,7 +343,7 @@ final class ProfileController extends Module
                     }
 
 
-                    if ($row['user_wall_num'] and !$CheckBlackList) {
+                    if ($row['user_wall_num'] && !$CheckBlackList) {
                         //################### Показ последних 10 записей ###################//
 
                         //Если вызвана страница стены, не со страницы юзера
@@ -436,9 +436,10 @@ final class ProfileController extends Module
                         }
 
                         if (!$CheckBlackList) {
-                            if (!isset($where_sql))
+                            if (!isset($where_sql)) {
                                 $where_sql = '';
-                            if ($user_privacy['val_wall1'] == 1 or $user_privacy['val_wall1'] == 2 and $CheckFriends or $user_id == $id) {
+                            }
+                            if ($user_privacy['val_wall1'] == 1 || ($user_privacy['val_wall1'] == 2 && $CheckFriends) || $user_id == $id) {
                                 $query = $db->super_query("SELECT tb1.id, author_user_id, for_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
                             } elseif ($wallAuthorId['author_user_id'] == $id) {
                                 $query = $db->super_query("SELECT tb1.id, author_user_id, for_user_id, text, add_date, fasts_num, likes_num, likes_users, tell_uid, type, tell_date, public, attach, tell_comm, tb2.user_photo, user_search_pref, user_last_visit, user_logged_mobile FROM `wall` tb1, `users` tb2 WHERE for_user_id = '{$id}' AND tb1.author_user_id = tb2.user_id AND tb1.fast_comm_id = 0 {$where_sql} ORDER by `add_date` DESC LIMIT {$limit_page}, {$limit_select}", 1);
@@ -515,7 +516,7 @@ final class ProfileController extends Module
                     $params['user_id'] = $row['user_id'];
 
                     //Страна и город
-                    if ($row['user_city'] and $row['user_country']) {
+                    if ($row['user_city'] && $row['user_country']) {
                         $params['city'] = $user_country_city_name_exp['1'];
                         $params['city_id'] = $row['user_city'];
                         $params['not_all_city_block'] = true;
@@ -853,7 +854,7 @@ final class ProfileController extends Module
                     }
 
                     //Приватность информации
-                    if ($user_privacy['val_info'] == 1 or $user_privacy['val_info'] == 2 and $CheckFriends or $user_id == $id) {
+                    if ($user_privacy['val_info'] == 1 || ($user_privacy['val_info'] == 2 && $CheckFriends) || $user_id == $id) {
                         $params['privacy_info'] = true;
                     } else {
                         $params['privacy_info'] = false;
@@ -865,14 +866,15 @@ final class ProfileController extends Module
                         $rowSpUserName = $Profile->user_sp((int)$user_sp['1']);
                         if ($row['user_sex'] == 1) $check_sex = 2;
                         if ($row['user_sex'] == 2) $check_sex = 1;
-                        if ($rowSpUserName['user_sp'] == $user_sp['0'] . '|' . $id or $user_sp['0'] == 5 and $rowSpUserName['user_sex'] == $check_sex) {
+                        if ($rowSpUserName['user_sp'] == $user_sp['0'] . '|' . $id || ($user_sp['0'] == 5 && $rowSpUserName['user_sex'] == $check_sex)) {
                             $spExpName = explode(' ', $rowSpUserName['user_search_pref']);
                             $spUserName = $spExpName['0'] . ' ' . $spExpName['1'];
                         }
                     }
 
-                    if (!isset($spUserName))
+                    if (!isset($spUserName)) {
                         $spUserName = '';
+                    }
 
                     if ($row['user_sex'] == 1) {
                         $sp1 = '<a href="/search/?sp=1" onClick="Page.Go(this.href); return false">не женат</a>';
@@ -896,11 +898,13 @@ final class ProfileController extends Module
                         $sp5 = "любимый <a href=\"/u{$user_sp['1']}\" onClick=\"Page.Go(this.href); return false\">{$spUserName}</a>";
                         $sp5_5 = '<a href="/search/?sp=5" onClick="Page.Go(this.href); return false">влюблена</a>';
                     }
-                    if (!isset($spUserName))
-                        $spUserName = 'erorr';//bug
+                    if (!isset($spUserName)) {
+                        $spUserName = 'erorr';
+                    }//bug
 
-                    if (!isset($user_sp['1']))
-                        $user_sp['1'] = ''; //FIXME
+                    if (!isset($user_sp['1'])) {
+                        $user_sp['1'] = '';
+                    } //FIXME
 
                     $sp6 = "партнёр <a href=\"/u" . $user_sp['1'] . "\" onClick=\"Page.Go(this.href); return false\">" . $spUserName . "</a>";
                     $sp6_6 = '<a href="/search/?sp=6" onClick="Page.Go(this.href); return false">всё сложно</a>';
@@ -997,8 +1001,9 @@ final class ProfileController extends Module
                     /**
                      * Праздники друзей
                      */
-                    if (!isset($cnt_happfr))
+                    if (!isset($cnt_happfr)) {
                         $cnt_happfr = null;
+                    }
 
                     if ($cnt_happfr && $params['owner'] == true) {
                         $params['happy-friends'] = '';
