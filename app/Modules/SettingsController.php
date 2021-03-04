@@ -154,11 +154,21 @@ final class SettingsController extends Module{
             $val_wall3 = (int)$request['val_wall3'];
             $val_info = (int)$request['val_info'];
 
-            if($val_msg <= 0 OR $val_msg > 3) $val_msg = 1;
-            if($val_wall1 <= 0 OR $val_wall1 > 3) $val_wall1 = 1;
-            if($val_wall2 <= 0 OR $val_wall2 > 3) $val_wall2 = 1;
-            if($val_wall3 <= 0 OR $val_wall3 > 3) $val_wall3 = 1;
-            if($val_info <= 0 OR $val_info > 3) $val_info = 1;
+            if($val_msg <= 0 || $val_msg > 3) {
+                $val_msg = 1;
+            }
+            if($val_wall1 <= 0 || $val_wall1 > 3) {
+                $val_wall1 = 1;
+            }
+            if($val_wall2 <= 0 || $val_wall2 > 3) {
+                $val_wall2 = 1;
+            }
+            if($val_wall3 <= 0 || $val_wall3 > 3) {
+                $val_wall3 = 1;
+            }
+            if($val_info <= 0 || $val_info > 3) {
+                $val_info = 1;
+            }
 
             $user_privacy = "val_msg|{$val_msg}||val_wall1|{$val_wall1}||val_wall2|{$val_wall2}||val_wall3|{$val_wall3}||val_info|{$val_info}||";
 
@@ -329,7 +339,7 @@ final class SettingsController extends Module{
             //Проверяем юзера на блеклист
             $row_blacklist = $database->fetch("SELECT id FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
 
-            if ($row['cnt'] AND $user_id != $bad_user_id){
+            if ($row['cnt'] && $user_id != $bad_user_id){
                 if($row_blacklist['id']){
                     $db->query("UPDATE `users` SET user_blacklist_num = user_blacklist_num-1 WHERE user_id = '{$user_id}'");
                     $db->query("DELETE FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
@@ -365,18 +375,19 @@ final class SettingsController extends Module{
             $database = self::getDB();
             $params['title'] = $lang['settings'].' | Sura';
             $row = $database->fetch("SELECT user_blacklist, user_blacklist_num FROM `users` WHERE user_id = '{$params['user']['user_id']}'");
-            if($row['user_blacklist_num'] > 0 AND $row['user_blacklist_num'] <= 100){
-                $array_blacklist = explode('|', $row['user_blacklist']);
-                foreach($array_blacklist as $user){
+            if($row['user_blacklist_num'] > 0 && $row['user_blacklist_num'] <= 100){
+                foreach(explode('|', $row['user_blacklist']) as $user){
                     if($user){
                         $infoUser = $database->fetch("SELECT user_photo, user_search_pref FROM `users` WHERE user_id = '{$user}'");
 
                         $params['user_blacklist']['$user'] = array();
 
-                        if($infoUser['user_photo'])
-                            $params['user_blacklist']['$user']['ava'] = '/uploads/users/'.$user.'/50_'.$infoUser['user_photo'];
-                        else
+                        if($infoUser['user_photo']) {
+                            $params['user_blacklist']['$user']['ava'] = '/uploads/users/' . $user . '/50_' . $infoUser['user_photo'];
+                        }
+                        else {
                             $params['user_blacklist']['$user']['ava'] = '/images/no_ava_50.png';
+                        }
 
                         $params['user_blacklist']['$user']['name'] = $infoUser['user_search_pref'];
                         $params['user_blacklist']['$user']['user-id'] = $user;//=)
@@ -623,11 +634,11 @@ final class SettingsController extends Module{
             $params['menu'] = Menu::settings();
 
             return view('settings.general', $params);
-        } else {
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
         }
+
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
     }
 
     /**
