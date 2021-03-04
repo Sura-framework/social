@@ -152,7 +152,7 @@ class BugsController extends Module
         $image_tmp = $_FILES['uploadfile']['tmp_name'];
         $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']);
         $server_time = Date::time();
-        $image_rename = substr(md5($server_time + rand(1, 100000)), 0, 20);
+        $image_rename = substr(md5($server_time + random_int(1, 100000)), 0, 20);
         $image_size = $_FILES['uploadfile']['size'];
         $exp = explode(".", $image_name);
         $type = end($exp); // формат файла
@@ -166,12 +166,9 @@ class BugsController extends Module
                 $user_info = $this->user_info();
                 $user_id = $user_info['user_id'];
                 $upload_dir = __DIR__ . '/../../public/uploads/bugs/' . $user_id . '/';
-
+                FileSystem::createDir($upload_dir);
                 if (!is_dir($upload_dir)) {
-                    if (!mkdir($upload_dir, 0777) && !is_dir($upload_dir)) {
                         throw new \RuntimeException(sprintf('Directory "%s" was not created', $upload_dir));
-                    }
-                    @chmod($upload_dir, 0777);
                 }
 
 //                $rImg = $upload_dir.$image_rename.$res_type;
@@ -256,6 +253,7 @@ class BugsController extends Module
 
     /**
      * @return int
+     * @throws \Exception
      */
     public function open(): int
     {
@@ -290,6 +288,7 @@ class BugsController extends Module
 
     /**
      * @return int
+     * @throws \Exception
      */
     public function complete(): int
     {
@@ -323,6 +322,7 @@ class BugsController extends Module
 
     /**
      * @return int
+     * @throws \Exception
      */
     public function close(): int
     {
@@ -355,6 +355,7 @@ class BugsController extends Module
 
     /**
      * @return int
+     * @throws \Exception
      */
     public function my(): int
     {
@@ -393,6 +394,7 @@ class BugsController extends Module
     /**
      * @return int
      * @throws JsonException
+     * @throws \Exception
      */
     public function view(): int
     {
@@ -449,6 +451,7 @@ class BugsController extends Module
 
     /**
      * @return int
+     * @throws \Exception
      */
     public function view_page(): int
     {
@@ -470,6 +473,7 @@ class BugsController extends Module
     /**
      * @return int
      * @ajax
+     * @throws \Exception
      */
     public function index(): int
     {
