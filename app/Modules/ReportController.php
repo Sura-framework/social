@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use Sura\Libs\Status;
 use Sura\Libs\Tools;
+use Sura\Time\Date;
 
 class ReportController extends Module{
 
@@ -29,8 +30,8 @@ class ReportController extends Module{
             $arr_act = array('photo', 'video', 'note', 'wall');
 //            if($act == 'wall')
 //                $type_report = 6;
-            if(in_array($act, $arr_act) AND $mid AND $type_report <= 6 AND $type_report > 0){
-                $server_time = \Sura\Time\Date::time();
+            if(in_array($act, $arr_act, true) && $mid && $type_report <= 6 && $type_report > 0){
+                $server_time = Date::time();
 
                 $check = $db->super_query("SELECT COUNT(*) AS cnt FROM `report` WHERE ruser_id = '".$user_info['user_id']."' AND mid = '".$mid."' AND act = '".$act."'");
                 if(!$check['cnt']) {

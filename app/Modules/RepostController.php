@@ -2,11 +2,13 @@
 
 namespace App\Modules;
 
+use Sura\Libs\Mail;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Status;
 use Sura\Libs\Tools;
 use Sura\Libs\Validation;
+use Sura\Time\Date;
 
 class RepostController extends Module{
 
@@ -65,7 +67,7 @@ class RepostController extends Module{
                         $row['attach'] = $db->safesql($row['attach']);
 
                         //Всталвяем себе на стену
-                        $server_time = \Sura\Time\Date::time();
+                        $server_time = Date::time();
                         $db->query("INSERT INTO `wall` SET author_user_id = '{$user_id}', for_user_id = '{$user_id}', text = '{$row['text']}', add_date = '{$server_time}', fast_comm_id = 0, tell_uid = '{$author_user_id}', tell_date = '{$row['add_date']}', public = '{$row['public']}', attach = '{$row['attach']}', tell_comm = '{$comm}'");
                         $dbid = $db->insert_id();
                         $db->query("UPDATE `users` SET user_wall_num = user_wall_num+1 WHERE user_id = '{$user_id}'");
@@ -139,7 +141,7 @@ class RepostController extends Module{
                 $check_IdGR = '';
             }
 
-            $server_time = \Sura\Time\Date::time();
+            $server_time = Date::time();
 
             //Проверка на админа
             $rowGroup = $db->super_query("SELECT admin, del, ban FROM `communities` WHERE id = '{$sel_group}'");
@@ -147,7 +149,7 @@ class RepostController extends Module{
             //Проверяем на существование этой записи В сообществе
             $myRow = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_wall` WHERE tell_uid = '{$row['author_user_id']}' AND public_id = '{$sel_group}' AND tell_date = '{$row['add_date']}'");
 
-            if($sel_group != $check_IdGR AND $myRow['cnt'] == false AND stripos($rowGroup['admin'], "u{$user_id}|") !== false AND $rowGroup['del'] == 0 AND $rowGroup['ban'] == 0){
+            if($sel_group != $check_IdGR && $myRow['cnt'] == false && stripos($rowGroup['admin'], "u{$user_id}|") !== false && $rowGroup['del'] == 0 && $rowGroup['ban'] == 0){
                 $row['text'] = $db->safesql($row['text']);
                 $row['attach'] = $db->safesql($row['attach']);
 
@@ -213,12 +215,12 @@ class RepostController extends Module{
             //Проверяем на существование этой записи В сообществе
             $myRow = $db->super_query("SELECT COUNT(*) AS cnt FROM `communities_wall` WHERE tell_uid = '{$tell_uid}' AND public_id = '{$sel_group}' AND tell_date = '{$tell_date}'");
 
-            if ($sel_group != $row['public_id'] and $myRow['cnt'] == false and stripos($rowGroup['admin'], "u{$user_id}|") !== false and $rowGroup['del'] == 0 and $rowGroup['ban'] == 0) {
+            if ($sel_group != $row['public_id'] && $myRow['cnt'] == false && stripos($rowGroup['admin'], "u{$user_id}|") !== false && $rowGroup['del'] == 0 && $rowGroup['ban'] == 0) {
 
                 $row['text'] = $db->safesql($row['text']);
                 $row['attach'] = $db->safesql($row['attach']);
 
-                $server_time = \Sura\Time\Date::time();
+                $server_time = Date::time();
 
                 //Вставляем саму запись в БД
                 $db->query("INSERT INTO `communities_wall` SET public_id = '{$sel_group}', text = '{$row['text']}', attach = '{$row['attach']}', add_date = '{$server_time}', tell_uid = '{$tell_uid}', tell_date = '{$tell_date}', public = '{$row['public']}', tell_comm = '{$comm}'");
@@ -274,27 +276,30 @@ class RepostController extends Module{
                     $user_privacy = xfieldsdataload($row['user_privacy']);
 
                     //ЧС
-                    $CheckBlackList = (new \App\Libs\Friends)->CheckBlackList($for_user_id);
+                    $CheckBlackList = (new \App\Models\Friends)->CheckBlackList($for_user_id);
 
                     //Проверка естьли запрашиваемый юзер в друзьях у юзера который смотрит стр
-                    if($user_privacy['val_msg'] == 2)
-                        $check_friend = (new \App\Libs\Friends)->CheckFriends($for_user_id);
+                    if($user_privacy['val_msg'] == 2) {
+                        $check_friend = (new \App\Models\Friends)->CheckFriends($for_user_id);
+                    }
 
-                    if(!$CheckBlackList AND $user_privacy['val_msg'] == 1 OR $user_privacy['val_msg'] == 2 AND $check_friend)
+                    if((!$CheckBlackList && $user_privacy['val_msg'] == 1) || ($user_privacy['val_msg'] == 2 && $check_friend)) {
                         $xPrivasy = 1;
-                    else
+                    }
+                    else {
                         $xPrivasy = 0;
+                    }
 
                     if($xPrivasy){
 
                         //Выводим данные о записи
-                        if($request['g_tell'] == 1)
-
+                        if($request['g_tell'] == 1) {
                             $row_rec = $db->super_query("SELECT add_date, text, public_id, attach, tell_uid, tell_date, public FROM `communities_wall` WHERE fast_comm_id = 0 AND id = '{$rid}'");
+                        }
 
-                        else
-
+                        else {
                             $row_rec = $db->super_query("SELECT add_date, text, author_user_id, tell_uid, tell_date, public, attach FROM `wall` WHERE fast_comm_id = '0' AND id = '{$rid}'");
+                        }
 
                         if($row_rec){
                             $msg = $db->safesql($row_rec['text']);
@@ -320,7 +325,7 @@ class RepostController extends Module{
 
                             }
 
-                            $server_time = \Sura\Time\Date::time();
+                            $server_time = Date::time();
 
                             //Отправляем сообщение получателю
                             $db->query("INSERT INTO `messages` SET theme = '{$theme}', text = '{$msg}', for_user_id = '{$for_user_id}', from_user_id = '{$user_id}', date = '{$server_time}', pm_read = 'no', folder = 'inbox', history_user_id = '{$user_id}', attach = '".$attach_files."', tell_uid = '{$tell_uid}', tell_date = '{$tell_date}', public = '{$row_rec['public']}', tell_comm = '{$tell_comm}'");
@@ -363,11 +368,11 @@ class RepostController extends Module{
 
                             $test = false;
                             //Отправка уведомления на E-mail
-                            if($config['news_mail_8'] == 'yes' AND $user_id != $for_user_id AND $test == true){
+                            if($config['news_mail_8'] == 'yes' && $user_id != $for_user_id && $test == true){
                                 $rowUserEmail = $db->super_query("SELECT user_name, user_email FROM `users` WHERE user_id = '".$for_user_id."'");
                                 if($rowUserEmail['user_email']){
-                                    include_once __DIR__.'/../Classes/mail.php';
-                                    $mail = new \dle_mail($config);
+//                                    include_once __DIR__.'/../Classes/mail.php';
+                                    $mail = new Mail($config);
                                     $rowMyInfo = $db->super_query("SELECT user_search_pref FROM `users` WHERE user_id = '".$user_id."'");
                                     $rowEmailTpl = $db->super_query("SELECT text FROM `mail_tpl` WHERE id = '8'");
                                     $rowEmailTpl['text'] = str_replace('{%user%}', $rowUserEmail['user_name'], $rowEmailTpl['text']);
