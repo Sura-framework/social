@@ -107,18 +107,22 @@ class Fast_searchController extends Module{
 
                                 //Страна город
                                 $expCountry = explode('|', $row['user_country_city_name']);
-                                if($expCountry[0])
+                                if($expCountry[0]) {
                                     $country = $expCountry[0];
-                                else
+                                }
+                                else {
                                     $country = '';
-                                if($expCountry[1])
-                                    $city = ', '.$expCountry[1];
-                                else
+                                }
+                                if($expCountry[1]) {
+                                    $city = ', ' . $expCountry[1];
+                                }
+                                else {
                                     $city = '';
+                                }
 
                                 //Возраст юзера
                                 $user_birthday = explode('-', $row['user_birthday']);
-                                $sql_[$key]['age'] = \App\Libs\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+                                $sql_[$key]['age'] = \App\Models\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
 
 //                                $img_width = '';
 
@@ -140,9 +144,9 @@ class Fast_searchController extends Module{
 
                         $params['search'] = $sql_;
                         return view('search.fast', $params);
-                    }else{
-	                    $status = Status::NOT_FOUND;
                     }
+
+                    $status = Status::NOT_FOUND;
                 }else{
 	                $status = Status::NOT_FOUND;
                 }
