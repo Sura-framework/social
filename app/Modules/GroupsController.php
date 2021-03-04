@@ -19,6 +19,7 @@ use Sura\Libs\Tools;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Validation;
 use Sura\Utils\FileSystem;
+use function Sura\resolve;
 
 class GroupsController extends Module
 {
@@ -52,15 +53,9 @@ class GroupsController extends Module
                 $db->query("INSERT INTO `friends` SET friend_id = '{$cid}', user_id = '{$user_id}', friends_date = NOW(), subscriptions = 2");
                 $db->query("UPDATE `users` SET user_public_num = user_public_num+1 WHERE user_id = '{$user_id}'");
 
-                if (!mkdir($concurrentDirectory = __DIR__ . '/../../public/uploads/groups/' . $cid . '/', 0777) && !is_dir($concurrentDirectory)) {
-                    throw new RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
-                }
-                chmod(__DIR__.'/../../public/uploads/groups/'.$cid.'/', 0777);
-
-                if (!mkdir($concurrentDirectory = __DIR__ . '/../../public/uploads/groups/' . $cid . '/photos/', 0777) && !is_dir($concurrentDirectory)) {
-                    throw new RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
-                }
-                chmod(__DIR__.'/../../public/uploads/groups/'.$cid.'/photos/', 0777);
+                $dir = resolve('app')->get('path.base');
+                FileSystem::createDir($dir . '/public/uploads/groups/' . $cid . '/');
+                FileSystem::createDir($dir . '/public/uploads/groups/' . $cid . '/photos/');
 
                 $storage = new MemcachedStorage('localhost');
                 $cache = new Cache($storage, 'users');
@@ -353,7 +348,7 @@ class GroupsController extends Module
             if (isset($request['id']))
                 $id = (int)$request['id'];
             else{
-                throw new Exception('item not found');
+                throw new \RuntimeException('item not found');
             }
             //Проверка на существования юзера в сообществе
             $row = $db->super_query("SELECT ulist, del, ban FROM `communities` WHERE id = '{$id}'");
