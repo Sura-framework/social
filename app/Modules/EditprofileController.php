@@ -174,8 +174,9 @@ class EditprofileController extends Module{
                     $update_wall = ", user_wall_num = user_wall_num-1";
                     $db->query("DELETE FROM `wall` WHERE id = '{$row['user_wall_id']}'");
                     $db->query("DELETE FROM `news` WHERE obj_id = '{$row['user_wall_id']}'");
-                }else
+                }else {
                     $update_wall = '';
+                }
 
                 $db->query("UPDATE `users` SET user_photo = '', user_wall_id = '' {$update_wall} WHERE user_id = '{$user_id}'");
 
@@ -212,15 +213,16 @@ class EditprofileController extends Module{
 
 //        Tools::NoAjaxRedirect();
 
-        if (!isset($lang['editmyprofile']))
+        if (!isset($lang['editmyprofile'])) {
             $lang['editmyprofile'] = "editmyprofile";
+        }
         if($logged) {
             $params['title'] = $lang['editmyprofile'] . ' | Sura';
             return view('profile.load_photo', $params);
-        }else{
-            $params['title'] = $lang['editmyprofile'] . ' | Sura';
-            return view('profile.load_photo', $params);
         }
+
+        $params['title'] = $lang['editmyprofile'] . ' | Sura';
+        return view('profile.load_photo', $params);
     }
 
     /**
@@ -464,14 +466,14 @@ class EditprofileController extends Module{
 
                 $xfielddataname = $db->safesql($xfielddataname);
 
-                if(isset($xfielddatavalue) AND !empty($xfielddatavalue)){
+                if(!empty($xfielddatavalue)){
                     $xfielddataname = str_replace("|", "&#124;", $xfielddataname);
                     $xfielddatavalue = str_replace("|", "&#124;", $xfielddatavalue);
                     $filecontents[] = "$xfielddataname|$xfielddatavalue";
                 }
             }
 
-            if($filecontents) {
+            if(isset($filecontents)) {
                 $filecontents = implode("||", $filecontents);
             }
             else {
@@ -522,8 +524,9 @@ class EditprofileController extends Module{
             $params['xfields'] = false;
             $params['contact'] = true;
             return view('profile.contacts', $params);
-        }else
+        }else {
             return view('info.info', $params);
+        }
     }
 
     /**
