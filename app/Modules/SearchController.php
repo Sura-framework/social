@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules;
 
+use App\Models\Profile;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
@@ -41,7 +42,7 @@ final class SearchController extends Module
         $query_string = preg_replace("/&page=[0-9]+/i", '', $server['QUERY_STRING']);
         $user_id = $user_info['user_id'];
 
-        if (isset($request['page']) and $request['page'] > 0) {
+        if (isset($request['page']) && $request['page'] > 0) {
             $page = (int)$request['page'];
         } else {
             $page = 1;
@@ -52,7 +53,7 @@ final class SearchController extends Module
         if (isset($request['query'])) {
 //                $query = $db->safesql(Validation::strip_data(urldecode($request['query']))));
             $query = Validation::strip_data(urldecode($request['query']));
-            if (isset($request['n']) and $request['n']) {
+            if (isset($request['n']) && $request['n']) {
                 $query = Validation::strip_data(urldecode($request['query']));
             }
             //Заменяем пробелы на проценты чтоб поиск был точнее
@@ -250,7 +251,7 @@ final class SearchController extends Module
                 }
                 //Возраст юзера
                 $user_birthday = explode('-', $row['user_birthday']);
-                $sql_[$key]['age'] = \App\Models\Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
+                $sql_[$key]['age'] = Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
                 $user_country_city_name = explode('|', $row['user_country_city_name']);
                 $sql_[$key]['country'] = $user_country_city_name['0'];
                 if (isset($user_country_city_name['1'])) {
@@ -263,7 +264,7 @@ final class SearchController extends Module
                 } else {
                     $sql_[$key]['owner'] = false;
                 }
-                $online = \App\Models\Profile::Online($row['user_last_visit']);
+                $online = Profile::Online($row['user_last_visit']);
                 if ($online) {
                     $sql_[$key]['online'] = $lang['online'];
                     $sql_[$key]['ava_online'] = 'avatar-online';
@@ -305,7 +306,7 @@ final class SearchController extends Module
                 }
                 //Возраст юзера
                 $user_birthday = explode('-', $row['user_birthday']);
-                $sql_[$key1]['age'] = \App\Models\Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
+                $sql_[$key1]['age'] = Profile::user_age($user_birthday['0'], $user_birthday['1'], $user_birthday['2']);
                 $user_country_city_name = explode('|', $row['user_country_city_name']);
                 $sql_[$key1]['country'] = $user_country_city_name['0'];
                 if (isset($user_country_city_name['1'])) {
@@ -318,7 +319,7 @@ final class SearchController extends Module
                 } else {
                     $sql_[$key1]['owner'] = false;
                 }
-                $online = \App\Models\Profile::Online($row['user_last_visit']);
+                $online = Profile::Online($row['user_last_visit']);
                 if ($online) {
                     $sql_[$key1]['online'] = $lang['online'];
                     $sql_[$key1]['ava_online'] = 'avatar-online';
