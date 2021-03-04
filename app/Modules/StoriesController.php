@@ -9,6 +9,7 @@ use Sura\Libs\Gramatic;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
 use Sura\Libs\Tools;
+use Sura\Time\Date;
 use Sura\Utils\FileSystem;
 
 class StoriesController  extends Module
@@ -70,8 +71,8 @@ class StoriesController  extends Module
             //Получаем данные о фотографии
             $image_tmp = $_FILES['uploadfile']['tmp_name'];
             $image_name = Gramatic::totranslit($_FILES['uploadfile']['name']); // оригинальное название для оприделения формата
-            $server_time = \Sura\Time\Date::time();
-            $image_rename = substr(md5($server_time+rand(1,100000)), 0, 15); // имя фотографии
+            $server_time = Date::time();
+            $image_rename = substr(md5($server_time+random_int(1,100000)), 0, 15); // имя фотографии
             $image_size = $_FILES['uploadfile']['size']; // размер файла
             $array = explode(".", $image_name);
             $type = end($array); // формат файла
@@ -126,12 +127,15 @@ class StoriesController  extends Module
 
                         echo $config['home_url'].'uploads/users/'.$user_id.'/'.$image_rename.$res_type;
 
-                    } else
-                        echo 'bad';//BAD_MOVE
-                } else
-                    echo 'big_size';//BIG_SIZE
-            } else
-                echo 'bad_format';//BAD_FORMAT
+                    } else {
+                        echo 'bad';
+                    }//BAD_MOVE
+                } else {
+                    echo 'big_size';
+                }//BIG_SIZE
+            } else {
+                echo 'bad_format';
+            }//BAD_FORMAT
         }
     }
 
@@ -228,7 +232,7 @@ class StoriesController  extends Module
             $stories_url = str_replace('stories/', 'stories/o_', $stories['url']);
 
             //Удаляем историю спустя сутки
-            $server_time = \Sura\Time\Date::time();
+            $server_time = Date::time();
             $online_time = $server_time - 86400;//сутки
             if ($stories['add_date'] <= $online_time){
                 $db->query("DELETE FROM `stories` WHERE id = '{$stories['id']}'");
@@ -242,10 +246,12 @@ class StoriesController  extends Module
                 $del_dir = __DIR__.'/../../public/';
 
                 //Удаление фотки с сервера
-                if (file_exists($del_dir.$stories_file))
-                    FileSystem::delete($del_dir.$stories_file);
-                if (file_exists($del_dir.$stories_file2))
-                    FileSystem::delete($del_dir.$stories_file2);
+                if (file_exists($del_dir.$stories_file)) {
+                    FileSystem::delete($del_dir . $stories_file);
+                }
+                if (file_exists($del_dir.$stories_file2)) {
+                    FileSystem::delete($del_dir . $stories_file2);
+                }
 
 
                 if ($stories_count['cnt'] == 1){
