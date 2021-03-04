@@ -4,6 +4,7 @@ namespace App\Modules;
 
 use App\Libs\Profile;
 use App\Models\Menu;
+use App\Models\Profile;
 use Exception;
 use RuntimeException;
 use Sura\Cache\Cache;
@@ -130,9 +131,9 @@ class BalanceController extends Module{
                     //Возраст юзера
                     $user_birthday = explode('-', $row['user_birthday']);
 //                    $tpl->set('{age}', );
-                    $row['age'] = Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
+                    $row['age'] = \App\Models\Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
 
-                    $online = Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
+                    $online = \App\Models\Profile::Online($row['user_last_visit'], $row['user_logged_mobile']);
 //                    $tpl->set('{online}', );
                     $row['online'] = $online;
 
