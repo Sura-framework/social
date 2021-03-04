@@ -44,37 +44,42 @@ class Group_publicController extends Module{
             if($get_adres){
                 $pid = '';
                 $sql_where = "adres = '".$get_adres."'";
-            } else
-
+            } else {
                 echo $get_adres;
+            }
 
             //Если страница вывзана через "к предыдущим записям"
             $limit_select = 10;
-            if($request['page_cnt'] > 0)
-                $page_cnt = (int)$request['page_cnt'] *$limit_select;
-            else
+            if($request['page_cnt'] > 0) {
+                $page_cnt = (int)$request['page_cnt'] * $limit_select;
+            }
+            else {
                 $page_cnt = 0;
+            }
 
             if($page_cnt){
                 $row = $db->super_query("SELECT admin FROM `communities` WHERE id = '{$pid}'");
                 $row['id'] = $pid;
-            } else
-                $row = $db->super_query("SELECT id, title, descr, traf, ulist, photo, date, admin, feedback, comments, real_admin, rec_num, del, ban, adres, audio_num, forum_num, discussion, status_text, web, videos_num, cover, cover_pos FROM `communities` WHERE ".$sql_where."");
+            } else {
+                $row = $db->super_query("SELECT id, title, descr, traf, ulist, photo, date, admin, feedback, comments, real_admin, rec_num, del, ban, adres, audio_num, forum_num, discussion, status_text, web, videos_num, cover, cover_pos FROM `communities` WHERE " . $sql_where . "");
+            }
 
             if($row['del'] == 1){
 //                $user_speedbar = 'Страница удалена';
-                msg_box('<br /><br />Сообщество удалено администрацией.<br /><br /><br />', 'info_2');
+//                msg_box('<br /><br />Сообщество удалено администрацией.<br /><br /><br />', 'info_2');
             } elseif($row['ban'] == 1){
 //                $user_speedbar = 'Страница заблокирована';
-                msg_box( '<br /><br />Сообщество заблокировано администрацией.<br /><br /><br />', 'info_2');
+//                msg_box( '<br /><br />Сообщество заблокировано администрацией.<br /><br /><br />', 'info_2');
             } elseif($row){
                 $params['title'] = stripslashes($row['title']).' | Sura';
 //                $user_speedbar = $lang['public_spbar'];
 
-                if(stripos($row['admin'], "u{$user_id}|") !== false)
+                if(stripos($row['admin'], "u{$user_id}|") !== false) {
                     $public_admin = true;
-                else
+                }
+                else {
                     $public_admin = false;
+                }
 
                 //Стена
                 //Если страница вывзана через "к предыдущим записям"

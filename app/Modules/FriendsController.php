@@ -572,8 +572,9 @@ class FriendsController extends Module{
                     if($user_info['user_friends_demands']) {
                         $params['demands'] = '(' . $user_info['user_friends_demands'] . ')';
                     }
-                    else
+                    else {
                         $params['demands'] = '';
+                    }
                 } else {
                     $params['not_owner'] = true;
                 }
@@ -675,7 +676,9 @@ class FriendsController extends Module{
 
             if($request['page'] > 0) {
                 $page = (int)$request['page'];
-            } else $page = 1;
+            } else {
+                $page = 1;
+            }
             $gcount = 18;
             $limit_page = ($page-1)*$gcount;
 
@@ -809,21 +812,27 @@ class FriendsController extends Module{
                             $sql_[$key]['country'] = $user_country_city_name[0];
                             if ($user_country_city_name[1])
 //                             $tpl->set('{city}', );
+                            {
                                 $sql_[$key]['city'] = ', ' . $user_country_city_name[1];
+                            }
                             else
 //                              $tpl->set('{city}', '');
+                            {
                                 $sql_[$key]['city'] = '';
+                            }
 
 //                            $tpl->set('{user-id}', );
                             $sql_[$key]['user_id'] = $row['friend_id'];
 //                                $tpl->set('{name}', );
                             $sql_[$key]['name'] = $row['user_search_pref'];
 
-                            if (!isset($noAvaPrf))
+                            if (!isset($noAvaPrf)) {
                                 $noAvaPrf = null;
+                            }
 
-                            if (empty($avaPREFver))
+                            if (empty($avaPREFver)) {
                                 $avaPREFver = null;
+                            }
 
                             if ($row['user_photo'])
 //                                $tpl->set('{ava}', );
@@ -840,8 +849,9 @@ class FriendsController extends Module{
 //                            $tpl->set('{age}', );
                             $sql_[$key]['age'] = Profile::user_age($user_birthday[0], $user_birthday[1], $user_birthday[2]);
 
-                            if (!isset($get_user_id))
+                            if (!isset($get_user_id)) {
                                 $get_user_id = null;
+                            }
 
                             if ($get_user_id == $user_info['user_id']) {
 
@@ -850,7 +860,9 @@ class FriendsController extends Module{
                                 $sql_[$key]['owner'] = true;
                             } else
 //                                $tpl->set_block("'\\[owner\\](.*?)\\[/owner\\]'si","");
+                            {
                                 $sql_[$key]['owner'] = false;
+                            }
 
 //                                $tpl->set('[viewer]', '');
 //                            $tpl->set('[/viewer]', '');
