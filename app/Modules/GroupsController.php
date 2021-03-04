@@ -876,10 +876,18 @@ class GroupsController extends Module
                 if($row){
 //                $config = Settings::load();
 
-                    if($row['user_photo']) $ava = "/uploads/users/{$new_admin_id}/100_{$row['user_photo']}";
-                    else $ava = "/images/100_no_ava.png";
-                    if($row['user_sex'] == 1) $gram = 'был';
-                    else $gram = 'была';
+                    if($row['user_photo']) {
+                        $ava = "/uploads/users/{$new_admin_id}/100_{$row['user_photo']}";
+                    }
+                    else {
+                        $ava = "/images/100_no_ava.png";
+                    }
+                    if($row['user_sex'] == 1) {
+                        $gram = 'был';
+                    }
+                    else {
+                        $gram = 'была';
+                    }
                     echo "<div style=\"padding:15px\"><img src=\"{$ava}\" style=\"margin-right:10px\" id=\"adm_ava\" />Вы хотите чтоб <b id=\"adm_name\">{$row['user_search_pref']}</b> {$gram} одним из руководителей страницы?</div>";
                     //FIXME
                     $status = Status::OK;
@@ -978,7 +986,7 @@ class GroupsController extends Module
             $id = (int)$request['id'];
             $uid = (int)$request['uid'];
             $row = $db->super_query("SELECT admin, ulist, real_admin FROM `communities` WHERE id = '{$id}'");
-            if(stripos($row['admin'], "u{$user_id}|") !== false AND stripos($row['admin'], "u{$uid}|") !== false AND $uid != $row['real_admin']){
+            if(stripos($row['admin'], "u{$user_id}|") !== false && stripos($row['admin'], "u{$uid}|") !== false && $uid != $row['real_admin']){
                 $admin = str_replace("u{$uid}|", '', $row['admin']);
                 $db->query("UPDATE `communities` SET admin = '{$admin}' WHERE id = '{$id}'");
 
@@ -1046,7 +1054,7 @@ class GroupsController extends Module
                 return _e('err');
             }
 
-            if(isset($wall_text) AND !empty($wall_text) OR isset($attach_files) AND !empty($attach_files) AND $row['del'] == 0 AND $row['ban'] == 0){
+            if((!empty($wall_text)) || (!empty($attach_files) && $row['del'] == 0 && $row['ban'] == 0)){
 
                 //Оприделение изображения к ссылке
                 if(stripos($attach_files, 'link|') !== false){
@@ -1054,7 +1062,7 @@ class GroupsController extends Module
                     $cnt_attach_link = 1;
                     foreach($attach_arr as $attach_file){
                         $attach_type = explode('|', $attach_file);
-                        if($attach_type[0] == 'link' AND preg_match('/https:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1){
+                        if($attach_type[0] == 'link' && preg_match('/https:\/\/(.*?)+$/i', $attach_type[1]) AND $cnt_attach_link == 1){
 //                            $domain_url_name = explode('/', $attach_type[1]);
                             //$rdomain_url_name = str_replace('https://', '', $domain_url_name[2]);
                             $rImgUrl = $attach_type[4];
@@ -1068,7 +1076,7 @@ class GroupsController extends Module
                             $allowed_files = array('jpg', 'jpeg', 'jpe', 'png', 'gif');
 
                             //Загружаем картинку на сайт
-                            if(in_array(strtolower($img_format), $allowed_files) AND preg_match("/https:\/\/(.*?)(.jpg|.png|.gif|.jpeg|.jpe)/i", $rImgUrl)){
+                            if(in_array(strtolower($img_format), $allowed_files) && preg_match("/https:\/\/(.*?)(.jpg|.png|.gif|.jpeg|.jpe)/i", $rImgUrl)){
 
                                 //Директория загрузки фото
                                 $upload_dir = __DIR__.'/../../public/uploads/attach/'.$user_id.'/';
@@ -1082,10 +1090,8 @@ class GroupsController extends Module
                                 }
 
                                 if(copy($rImgUrl, $upload_dir.'/'.$image_rename.$res_type)){
-                                    $manager = new ImageManager(array('driver' => 'gd'));
-
                                     //Создание оригинала
-                                    $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(100, 80);
+                                    $image = (new ImageManager(array('driver' => 'gd')))->make($upload_dir.$image_rename.$res_type)->resize(100, 80);
                                     $image->save($upload_dir.$image_rename.'.webp', 90);
 
                                     FileSystem::delete($upload_dir.$image_rename.$res_type);
@@ -1107,7 +1113,7 @@ class GroupsController extends Module
 
                 $ansers_list = array();
 
-                if(isset($vote_title) AND !empty($vote_title) AND isset($vote_answer_1) AND !empty($vote_answer_1)){
+                if(!empty($vote_title) && !empty($vote_answer_1)){
 
                     for($vote_i = 1; $vote_i <= 10; $vote_i++){
 
@@ -1148,10 +1154,9 @@ class GroupsController extends Module
 
                 return _e('true');
             }
-            else{
-                //NOT_DATA
-                return _e('err');
-            }
+
+//NOT_DATA
+            return _e('err');
         }else{
             $status = Status::BAD_LOGGED;//BAD_LOGGED
             $err =  'hacking';
@@ -1249,10 +1254,12 @@ class GroupsController extends Module
 
                 $row['fasts_num'] = $row['fasts_num']+1;
 
-                if($row['fasts_num'] > 3)
-                    $comments_limit = $row['fasts_num']-3;
-                else
+                if($row['fasts_num'] > 3) {
+                    $comments_limit = $row['fasts_num'] - 3;
+                }
+                else {
                     $comments_limit = 0;
+                }
 
                 $sql_comments = $db->super_query("SELECT tb1.id, public_id, text, add_date, tb2.user_photo, user_search_pref FROM `communities_wall` tb1, `users` tb2 WHERE tb1.public_id = tb2.user_id AND tb1.fast_comm_id = '{$rec_id}' ORDER by `add_date`  LIMIT {$comments_limit}, 3", true);
 
@@ -1321,10 +1328,9 @@ class GroupsController extends Module
 
 //                    $tpl->set('{text}', );
                     $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
-                    $date = \Sura\Time\Date::megaDate($row['add_date']);
-//                    $tpl->set('{date}', $date);
-                    $sql_comments[$key]['date'] = $date;
-                    if(stripos($row['admin'], "u{$user_id}|") !== false OR $user_id == $row_comments['public_id']){
+                    //                    $tpl->set('{date}', $date);
+                    $sql_comments[$key]['date'] = \Sura\Time\Date::megaDate($row['add_date']);
+                    if(stripos($row['admin'], "u{$user_id}|") !== false || $user_id == $row_comments['public_id']){
 //                        $tpl->set('[owner]', '');
 //                        $tpl->set('[/owner]', '');
                         $sql_comments[$key]['owner'] = true;
@@ -1443,9 +1449,10 @@ class GroupsController extends Module
                     if(stripos($row['attach'], 'link|') !== false){
                         $attach_arr = explode('link|', $row['attach']);
                         $attach_arr2 = explode('|/uploads/attach/'.$user_id.'/', $attach_arr[1]);
-                        $attach_arr3 = explode('||', $attach_arr2[1]);
-                        if($attach_arr3[0])
-                            FileSystem::delete(__DIR__.'/../../uploads/attach/'.$user_id.'/'.$attach_arr3[0]);
+                        $attach_arr3 = explode('||', $attach_arr2[1], 2);
+                        if($attach_arr3[0]) {
+                            FileSystem::delete(__DIR__ . '/../../uploads/attach/' . $user_id . '/' . $attach_arr3[0]);
+                        }
                     }
 
                     $db->query("DELETE FROM `communities_wall` WHERE id = '{$rec_id}'");
@@ -1494,7 +1501,7 @@ class GroupsController extends Module
             //Проверка на админа и проверяем включены ли комменты
             $row = $db->super_query("SELECT tb2.admin, comments FROM `communities_wall` tb1, `communities` tb2 WHERE tb1.public_id = tb2.id AND tb1.id = '{$rec_id}'");
 
-            if($row['comments'] OR stripos($row['admin'], "u{$user_id}|") !== false){
+            if($row['comments'] || stripos($row['admin'], "u{$user_id}|") !== false){
                 $sql_comments = $db->super_query("SELECT tb1.id, public_id, text, add_date, tb2.user_photo, user_search_pref FROM `communities_wall` tb1, `users` tb2 WHERE tb1.public_id = tb2.user_id AND tb1.fast_comm_id = '{$rec_id}' ORDER by `add_date` ASC", 1);
 //                $tpl->load_template('groups/record.tpl');
                 //Сообственно выводим комменты
@@ -1526,18 +1533,18 @@ class GroupsController extends Module
                     $expBR2 = explode('<br />', $row_comments['text']);
                     $textLength2 = count($expBR2);
                     $strTXT2 = strlen($row_comments['text']);
-                    if($textLength2 > 6 OR $strTXT2 > 470)
-                        $row_comments['text'] = '<div class="wall_strlen" id="hide_wall_rec'.$row_comments['id'].'" style="max-height:102px"">'.$row_comments['text'].'</div><div class="wall_strlen_full" onMouseDown="wall.FullText('.$row_comments['id'].', this.id)" id="hide_wall_rec_lnk'.$row_comments['id'].'">Показать полностью..</div>';
+                    if($textLength2 > 6 || $strTXT2 > 470) {
+                        $row_comments['text'] = '<div class="wall_strlen" id="hide_wall_rec' . $row_comments['id'] . '" style="max-height:102px"">' . $row_comments['text'] . '</div><div class="wall_strlen_full" onMouseDown="wall.FullText(' . $row_comments['id'] . ', this.id)" id="hide_wall_rec_lnk' . $row_comments['id'] . '">Показать полностью..</div>';
+                    }
 
                     //Обрабатываем ссылки
                     $row_comments['text'] = preg_replace('`(http(?:s)?://\w+[^\s\[\]\<]+)`i', '<a href="/away.php?url=$1" target="_blank">$1</a>', $row_comments['text']);
 
 //                    $tpl->set('{text}', );
                     $sql_comments[$key]['text'] = stripslashes($row_comments['text']);
-                    $date = \Sura\Time\Date::megaDate(strtotime($row_comments['add_date']));
-//                    $tpl->set('{date}', );
-                    $sql_comments[$key]['date'] = $date;
-                    if(stripos($row['admin'], "u{$user_id}|") !== false OR $user_id == $row_comments['public_id']){
+                    //                    $tpl->set('{date}', );
+                    $sql_comments[$key]['date'] = \Sura\Time\Date::megaDate(strtotime($row_comments['add_date']));
+                    if(stripos($row['admin'], "u{$user_id}|") !== false || $user_id == $row_comments['public_id']){
 //                        $tpl->set('[owner]', '');
 //                        $tpl->set('[/owner]', '');
                         $sql_comments[$key]['owner'] = true;
@@ -1726,7 +1733,7 @@ class GroupsController extends Module
             $user_id = $user_info['user_id'];
             $rec_id = (int)$request['rec_id'];
             $row = $db->super_query("SELECT likes_users FROM `communities_wall` WHERE id = '".$rec_id."'");
-            if($row AND stripos($row['likes_users'], "u{$user_id}|") === false){
+            if($row && stripos($row['likes_users'], "u{$user_id}|") === false){
                 $likes_users = "u{$user_id}|".$row['likes_users'];
                 $db->query("UPDATE `communities_wall` SET likes_num = likes_num+1, likes_users = '{$likes_users}' WHERE id = '".$rec_id."'");
                 $server_time = Date::time();
@@ -1935,7 +1942,7 @@ class GroupsController extends Module
 
                 //Проверяем на существование этой записи у себя на стене
                 $myRow = $db->super_query("SELECT COUNT(*) AS cnt FROM `wall` WHERE tell_uid = '{$row['public_id']}' AND tell_date = '{$row['add_date']}' AND author_user_id = '{$user_id}' AND public = '{$row['public']}'");
-                if($row['tell_uid'] != $user_id AND $myRow['cnt'] == false){
+                if($row['tell_uid'] != $user_id && $myRow['cnt'] == false){
                     $row['text'] = $db->safesql($row['text']);
                     $row['attach'] = $db->safesql($row['attach']);
 
@@ -2134,7 +2141,7 @@ class GroupsController extends Module
 
             $row = $db->super_query("SELECT id, adres, del, ban FROM `communities` WHERE id = '{$pid}'");
 
-            if($row AND !$row['del'] AND !$row['ban']){
+            if(isset($row) && !$row['del'] && !$row['ban']){
 
 //                $tpl->load_template('groups/wall_head.tpl');
 //                $tpl->set('{id}', $id);
@@ -2343,17 +2350,15 @@ class GroupsController extends Module
                     $allowed_files = explode(', ', 'jpg, jpeg, jpe, png, gif');
 
                     //Проверям если, формат верный то пропускаем
-                    if(in_array(strtolower($type), $allowed_files)){
+                    if(in_array(strtolower($type), $allowed_files, true)){
 
                         $res_type = strtolower('.'.$type);
 
                         $upload_dir = __DIR__."/../../uploads/groups/{$public_id}/";
 
                         if(move_uploaded_file($image_tmp, $upload_dir.$image_rename.$res_type)){
-                            $manager = new ImageManager(array('driver' => 'gd'));
-
                             //Создание оригинала
-                            $image = $manager->make($upload_dir.$image_rename.$res_type)->resize(800, null);
+                            $image = (new ImageManager(array('driver' => 'gd')))->make($upload_dir.$image_rename.$res_type)->resize(800, null);
                             $image->save($upload_dir.$image_rename.'.webp', 90);
 
                             FileSystem::delete($upload_dir.$image_rename.$res_type);
@@ -2427,7 +2432,9 @@ class GroupsController extends Module
             if(stripos($row_pub['admin'], "u{$user_id}|") !== false){
 
                 $pos = (int)$request['pos'];
-                if($pos < 0) $pos = 0;
+                if($pos < 0) {
+                    $pos = 0;
+                }
 
                 $db->query("UPDATE `communities` SET cover_pos = '{$pos}' WHERE id = '{$public_id}'");
 
@@ -2644,13 +2651,11 @@ class GroupsController extends Module
                 if($rowPub['id']){
 
                     //Получаем список, которых надо пригласить и формируем его
-                    $arr_list = explode('|', $request['ulist']);
-
-                    foreach($arr_list as $ruser_id){
+                    foreach(explode('|', $request['ulist']) as $ruser_id){
 
                         $ruser_id = (int)$ruser_id;
 
-                        if($ruser_id AND $user_id != $ruser_id AND $i < $limit){
+                        if($ruser_id && $user_id != $ruser_id && $i < $limit){
 
                             //Проверка, такой юзер в базе есть или нет
                             $row = $db->super_query("SELECT COUNT(*) AS cnt FROM `users` WHERE user_id = '{$ruser_id}'");
@@ -2950,11 +2955,10 @@ class GroupsController extends Module
             }
             return view('groups.groups', $params);
         }
-        else {
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
-        }
+
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
     }
 
     /**
@@ -2974,10 +2978,12 @@ class GroupsController extends Module
             $act = '';
             $user_id = $user_info['user_id'];
             $request = (Request::getRequest()->getGlobal());
-            if(isset($request['page']) AND $request['page'] > 0)
+            if(isset($request['page']) && $request['page'] > 0) {
                 $page = (int)$request['page'];
-            else
+            }
+            else {
                 $page = 1;
+            }
             $gcount = 20;
             $limit_page = ($page-1)*$gcount;
 
@@ -3042,11 +3048,11 @@ class GroupsController extends Module
 
             }
             return view('groups.groups', $params);
-        } else {
-            $params['title'] = $lang['no_infooo'];
-            $params['info'] = $lang['not_logged'];
-            return view('info.info', $params);
         }
+
+        $params['title'] = $lang['no_infooo'];
+        $params['info'] = $lang['not_logged'];
+        return view('info.info', $params);
     }
 
     /**
@@ -3073,7 +3079,9 @@ class GroupsController extends Module
             $params['descr'] = stripslashes($row['descr']);
             $params['website'] = stripslashes($row['web']);
             $params['edit_descr'] = Validation::myBrRn(stripslashes($row['descr']));
-            if(!$row['adres']) $row['adres'] = 'public'.$row['id'];
+            if(!$row['adres']) {
+                $row['adres'] = 'public' . $row['id'];
+            }
             $params['adres'] = $row['adres'];
             $privaces = xfieldsdataload($row['privacy']);
 
@@ -3223,13 +3231,21 @@ class GroupsController extends Module
                 } else {
                     $users[$key]['online'] = false;
                 }
-                if($p_user['alias']) $alias = $p_user['alias'];
-                else $alias = 'u'.$user;
+                if($p_user['alias']) {
+                    $alias = $p_user['alias'];
+                }
+                else {
+                    $alias = 'u' . $user;
+                }
                 $users[$key]['adres'] = $alias;
-                if($p_user['user_photo']) $avatar = '/uploads/users/'.$user.'/100_'.$p_user['user_photo'].'';
-                else $avatar = '/images/100_no_ava.png';
+                if($p_user['user_photo']) {
+                    $avatar = '/uploads/users/' . $user . '/100_' . $p_user['user_photo'] . '';
+                }
+                else {
+                    $avatar = '/images/100_no_ava.png';
+                }
                 $users[$key]['ava_photo'] = $avatar;
-                if(in_array($user, $explode_admins)) {
+                if(in_array($user, $explode_admins, true)) {
                     if($user != $row['real_admin']) {
                         $users[$key]['yes_admin'] = true;
                     } else {
@@ -3275,7 +3291,11 @@ class GroupsController extends Module
     public function edit(): int
     {
         $path = explode('/', $_SERVER['REQUEST_URI']);
-        if (isset($path['4'])) $id = $path['4']; else $id = $path['3'];
+        if (isset($path['4'])) {
+            $id = $path['4'];
+        } else {
+            $id = $path['3'];
+        }
         $params['id'] = $id;
 
 
