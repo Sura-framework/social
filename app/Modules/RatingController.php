@@ -149,8 +149,8 @@ class RatingController extends Module{
             return _e_json(array(
                 'content' => $row,
             ) );
-        }else {
-            return view('info.info', $params);
         }
+
+        return view('info.info', $params);
     }
 }
