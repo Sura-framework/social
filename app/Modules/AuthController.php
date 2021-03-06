@@ -72,7 +72,7 @@ class AuthController extends Module
 
             /** Проверка Пароля */
             if (!empty($request['password'])) {
-                $password = GetVar($request['password']); //FIXME
+                $password = $request['password'];
             } else {
                 $password = NUlL;
                 $errors++;
