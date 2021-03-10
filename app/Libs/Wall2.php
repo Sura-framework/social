@@ -4,6 +4,7 @@
 namespace App\Libs;
 
 
+use App\Models\Friends;
 use App\Models\News;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Registry;
@@ -731,7 +732,7 @@ class Wall2
 
                             //Музыка
                         } elseif ($attach_type[0] == 'audio') {
-                            $audioId = intval($attach_type[1]);
+                            $audioId = (int)$attach_type[1];
                             $audioInfo = $News->audio_info($audioId);
                             if ($audioInfo) {
                                 $jid++;
