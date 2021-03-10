@@ -5,12 +5,11 @@ namespace App\Libs;
 
 use App\Models\Friends;
 use App\Models\Profile;
-use Sura\Database\Connection;
-use Sura\Libs\Db;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Model;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
+use Throwable;
 
 class Wall
 {
@@ -19,11 +18,10 @@ class Wall
     /**
      * @param array $query
      * @return array
-     * @throws \Throwable
+     * @throws Throwable
      */
     public static function build(array $query): array
     {
-        $db = Db::getDB();
         $database = Model::getDB();
 
         $user_info = Registry::get('user_info');
