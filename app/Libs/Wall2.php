@@ -9,6 +9,7 @@ use App\Models\News;
 use Sura\Libs\Gramatic;
 use Sura\Libs\Registry;
 use Sura\Libs\Settings;
+use Sura\Time\Date;
 
 class Wall2
 {
@@ -82,7 +83,7 @@ class Wall2
             $query[$key]['online'] = 'online';
 
             //Выводим данные о действии
-            $date = \Sura\Time\Date::megaDate((int)$row['action_time']);
+            $date = Date::megaDate((int)$row['action_time']);
             $query[$key]['date'] = $date;
 //            $query[$key]['action_text'] = stripslashes($row['action_text']);
             $query[$key]['news_id'] = $row['ac_id'];
@@ -350,7 +351,7 @@ class Wall2
                 if (isset($rec_info_groups['tell_uid'])) {
 
                     if ($rec_info_groups['tell_date'] > 0) {
-                        $dateTell = \Sura\Time\Date::megaDate((int)$rec_info_groups['tell_date']);
+                        $dateTell = Date::megaDate((int)$rec_info_groups['tell_date']);
                     } else {
                         $dateTell = 'N/A';
                     }
@@ -553,7 +554,7 @@ class Wall2
 
 //                                    $tpl->set('{text}', );
                             $querycomments[$key2]['text'] = stripslashes($row_comments['text']);
-                            $date = \Sura\Time\Date::megaDate((int)$row_comments['add_date']);
+                            $date = Date::megaDate((int)$row_comments['add_date']);
 //                                    $tpl->set('{date}', $date);
                             $querycomments[$key2]['date'] = $date;
 
@@ -883,7 +884,7 @@ class Wall2
 //                    $server_time = \Sura\Libs\Tools::time();
 
                     if (is_int($rec_info['tell_date'])) {
-                        $dateTell = \Sura\Time\Date::megaDate((int)$rec_info['tell_date']);
+                        $dateTell = Date::megaDate((int)$rec_info['tell_date']);
                     } else {
                         $dateTell = 'N/A';
                     }
@@ -1040,7 +1041,7 @@ class Wall2
 
                             $querycomments[$key2]['text'] = stripslashes($row_comments['text']);
 //                            $querycomments[$key2] = ;
-                            $querycomments[$key2]['date'] = \Sura\Time\Date::megaDate((int)$row_comments['add_date']);
+                            $querycomments[$key2]['date'] = Date::megaDate((int)$row_comments['add_date']);
 
                             $querycomments[$key2]['owner'] = false;//FIXME
 
