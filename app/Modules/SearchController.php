@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules;
 
+use App\Libs\Support;
 use App\Models\Profile;
 use Sura\Libs\Request;
 use Sura\Libs\Settings;
@@ -28,7 +29,7 @@ final class SearchController extends Module
         $lang = $this->get_langs();
         $db = $this->db();
         $user_info = $this->user_info();
-        $logged = $this->logged();
+//        $logged = $this->logged();
 
         $config = Settings::load();
 
@@ -53,7 +54,7 @@ final class SearchController extends Module
         if (isset($request['query'])) {
 //                $query = $db->safesql(Validation::strip_data(urldecode($request['query']))));
             $query = Validation::strip_data(urldecode($request['query']));
-            if (isset($request['n']) && $request['n']) {
+            if (isset($request['n'])) {
                 $query = Validation::strip_data(urldecode($request['query']));
             }
             //Заменяем пробелы на проценты чтоб поиск был точнее
@@ -182,7 +183,7 @@ final class SearchController extends Module
 
         if (isset($sql_query)) {
             $sql_ = $db->super_query($sql_query, true);
-            $count = $db->super_query($sql_count);
+            $count = $db->super_query($sql_count);//FIXME undefined
         } else {
             $sql_ = array();
             $count = array();
@@ -226,8 +227,8 @@ final class SearchController extends Module
             /**
              * Загружаем Страны
              */
-            $params['country'] = (new \App\Libs\Support)->allCountry($country);
-            $params['city'] = (new \App\Libs\Support)->allCity($country, $city);
+            $params['country'] = (new Support)->allCountry($country);
+            $params['city'] = (new Support)->allCity($country, $city);
         } elseif ($type == 3) {
             $sql_ = array();
         } else {
@@ -329,6 +330,8 @@ final class SearchController extends Module
                 }
             }
             $params['last_users'] = $last_users;
+
+            // FIXME $last_tracks undefined
             foreach ($last_tracks as $key2 => $row) {
                 if (!$row['artist']) {
                     $last_tracks[$key2]['artist'] = 'Неизвестный исполнитель';
