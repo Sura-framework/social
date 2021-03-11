@@ -48,8 +48,8 @@ final class SettingsController extends Module{
             //Выводим текущий пароль
             $row = $database->fetch("SELECT user_password FROM `users` WHERE user_id = '{$user_id}'");
 
-            if(password_verify($request['old_pass'], $row['user_password']) == true){
-                if(password_verify($request['new_pass'], $request['new_pass2']) == true){
+            if(password_verify($request['old_pass'], $row['user_password'])){
+                if(password_verify($request['new_pass'], $request['new_pass2'])){
                     $pass_hash = password_hash($request['new_pass'], PASSWORD_DEFAULT);
                     $db->query("UPDATE `users` SET user_password = '{$pass_hash}' WHERE user_id = '{$user_id}'");
 
@@ -256,7 +256,7 @@ final class SettingsController extends Module{
             //Проверяем юзера на блеклист
             $row_blacklist = $database->fetch("SELECT id FROM `users_blacklist` WHERE users = '{$user_id}|{$bad_user_id}'");
 
-            if ($row['cnt'] && $user_id != $bad_user_id){
+            if ($row['cnt'] && $user_id !== $bad_user_id){
                 if( !$row_blacklist['id']){
                     $db->query("UPDATE `users` SET user_blacklist_num = user_blacklist_num+1 WHERE user_id = '{$user_id}'");
 
