@@ -955,7 +955,7 @@ final class ProfileController extends Module
                     }
 
                     //################### Подарки ###################//
-                    if ($row['user_gifts'] > 0 and !$CheckBlackList) {
+                    if ($row['user_gifts'] > 0 && !$CheckBlackList) {
                         $sql_gifts = $Profile->gifts($id);
                         $titles = array('подарок', 'подарка', 'подарков');//gifts
                         $params['gifts_num'] = $row['user_gifts'] . ' ' . Gramatic::declOfNum($row['user_gifts'], $titles);
